@@ -22,9 +22,8 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   
   // Simple development login - works with any backend URL without CORS issues
   const handleTwitterAuth = () => {
-    // Use direct browser redirect to the dev login endpoint
-    // We'll get the backend URL from environment or use fallback
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    // We'll get the backend URL from environment or use Render deployed URL as fallback
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const backendUrl = baseApiUrl.replace('/api', '');
     
     // Open the auth endpoint in a new tab for simplicity

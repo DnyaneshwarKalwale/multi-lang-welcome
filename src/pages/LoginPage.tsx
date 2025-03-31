@@ -21,8 +21,12 @@ export default function LoginPage() {
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Redirect to backend Google auth endpoint
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Redirect to backend Google auth endpoint with the dynamic URL
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth - using our mock for development
