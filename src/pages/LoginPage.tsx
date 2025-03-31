@@ -29,19 +29,14 @@ export default function LoginPage() {
     window.location.href = `${baseUrl}/api/auth/google`;
   };
   
-  // Handle Twitter auth - using our mock for development
+  // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // For development, we'll use direct API endpoint instead of OAuth
-    // Generate a mock Twitter ID and user info
-    const mockTwitterUser = {
-      twitterId: 'twitter_' + Math.random().toString(36).substring(7),
-      name: 'Twitter User',
-      email: 'twitter.user' + Math.random().toString(36).substring(7) + '@example.com',
-      profileImage: 'https://via.placeholder.com/150'
-    };
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Call the Twitter auth function from the AuthContext
-    twitterAuth(mockTwitterUser);
+    // Redirect to backend Twitter auth endpoint
+    window.location.href = `${baseUrl}/api/auth/twitter`;
   };
   
   // Handle login form submission

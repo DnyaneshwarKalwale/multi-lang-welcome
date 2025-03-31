@@ -128,8 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // If CORS error, try browser redirect approach instead
         if (apiErr.message && apiErr.message.includes('Network Error')) {
-          // Use ngrok URL or fallback to localhost
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://ffb3-43-224-158-115.ngrok-free.app/api';
+          // Use environment variable or fallback to Render URL
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
           const baseUrl = baseApiUrl.replace('/api', '');
           
           // Build URL parameters properly
