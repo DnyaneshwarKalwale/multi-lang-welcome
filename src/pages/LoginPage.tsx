@@ -54,10 +54,10 @@ export default function LoginPage() {
         </div>
         
         <div className="max-w-md">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Create LinkedIn content with <span className="scripe-gradient-text">high reach</span> in &lt;5 minutes</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Create Twitter content with <span className="scripe-gradient-text">high reach</span> in &lt;5 minutes</h2>
           
           <p className="text-gray-400 mb-8">
-            Scripe knows what works by analyzing thousands of viral LinkedIn posts daily. No generic AI fluff - train the AI with your knowledge to generate personalized content.
+            Scripe knows what works by analyzing thousands of viral Twitter posts daily. No generic AI fluff - train the AI with your knowledge to generate personalized content.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">

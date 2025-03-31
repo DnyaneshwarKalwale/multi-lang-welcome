@@ -44,13 +44,13 @@ const Index = () => {
               For founders and their teams
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              Create LinkedIn content <br />
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight">
+              Create Twitter content <br />
               with <span className="scripe-gradient-text">high reach</span> in &lt;5 minutes
             </h1>
             
             <p className="text-gray-400 text-lg mb-10 max-w-xl">
-              Scripe knows what works by analyzing thousands of viral LinkedIn posts daily. 
+              Scripe knows what works by analyzing thousands of viral Twitter posts daily. 
               No generic AI fluff - train the AI with your knowledge to generate personalized content.
             </p>
             
@@ -81,7 +81,7 @@ const Index = () => {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="text-sm font-medium">LinkedIn Content</div>
+                    <div className="text-sm font-medium">Twitter Content</div>
                     <div className="bg-purple-600 text-xs text-white px-2 py-1 rounded">Generate</div>
                   </div>
                   <div className="space-y-3">
