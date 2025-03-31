@@ -1,71 +1,121 @@
-
 import React from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { 
+  AlignLeft, AlignCenter, ListChecks, 
+  FileText, MessageSquareText, Check
+} from "lucide-react";
 
 export default function PostFormatPage() {
-  const { postFormat, setPostFormat, nextStep } = useOnboarding();
-  const [postLength, setPostLength] = React.useState([50]);
+  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { current, total } = getStepProgress();
+  const [postLength, setPostLength] = React.useState(50);
 
   const formatOptions = [
-    { id: "standard", label: "Standard", icon: "📄" },
-    { id: "formatted", label: "Formatted", icon: "📝" },
-    { id: "chunky", label: "Chunky", icon: "📋" },
-    { id: "short", label: "Short", icon: "📱" },
-    { id: "emojis", label: "Emojis", icon: "😀" },
+    {
+      id: "standard",
+      title: "Standard",
+      icon: <AlignLeft size={32} className="text-purple-500" />,
+      description: "Clean formatting with paragraphs and bullets"
+    },
+    {
+      id: "formatted",
+      title: "Formatted",
+      icon: <FileText size={32} className="text-blue-500" />,
+      description: "Well-formatted text with visually distinct sections"
+    },
+    {
+      id: "chunky",
+      title: "Chunky",
+      icon: <AlignCenter size={32} className="text-green-500" />,
+      description: "Shorter paragraphs with one idea per paragraph"
+    },
+    {
+      id: "short",
+      title: "Short",
+      icon: <MessageSquareText size={32} className="text-yellow-500" />,
+      description: "Concise posts with minimal text"
+    },
+    {
+      id: "emojis",
+      title: "Emojis",
+      icon: <span className="text-3xl">😀</span>,
+      description: "Posts with emojis to increase engagement"
+    }
   ];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
-      <div className="max-w-lg w-full text-center">
-        <h1 className="text-4xl font-bold mb-4">Pick your preferred post formatting style</h1>
-        <p className="text-lg text-gray-400 mb-12">
-          Scripe is trained on millions of viral posts. When you create posts, 
+      <div className="max-w-3xl w-full">
+        <h1 className="text-4xl font-bold mb-4 text-center">Pick your preferred post formatting style</h1>
+        <p className="text-lg text-gray-400 mb-10 text-center">
+          Scripe is trained on millions of viral posts. When you create posts,
           the best performing posts about the same topics will be used as a reference.
         </p>
         
-        <div className="bg-gray-900 rounded-xl p-6 mb-8">
+        <div className="mb-10">
           <div className="grid grid-cols-5 gap-2 mb-8">
-            {formatOptions.map((option) => (
+            {formatOptions.map((format) => (
               <div 
-                key={option.id}
-                className={`bg-gray-800 border-2 ${postFormat === option.id ? "border-primary" : "border-transparent"} rounded-xl p-4 flex flex-col items-center cursor-pointer hover:border-primary/60 transition-all`}
-                onClick={() => setPostFormat(option.id as any)}
+                key={format.id}
+                className={`
+                  bg-gray-900 rounded-xl p-4 flex flex-col items-center cursor-pointer 
+                  transition-all hover:bg-gray-800
+                  ${postFormat === format.id ? 'ring-2 ring-purple-600' : 'opacity-80'}
+                `}
+                onClick={() => setPostFormat(format.id as any)}
               >
-                <div className="bg-gray-700 w-12 h-12 rounded-lg mb-2 flex items-center justify-center text-2xl">
-                  {option.icon}
+                <div className="w-full aspect-square rounded-lg bg-gray-800 mb-3 relative flex items-center justify-center">
+                  {format.icon}
+                  {postFormat === format.id && (
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
                 </div>
-                <span className="text-sm">{option.label}</span>
+                <span className="text-sm font-medium">{format.title}</span>
               </div>
             ))}
           </div>
           
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>Post length</span>
-              <span>Super long</span>
+          <div className="bg-gray-900 rounded-xl p-6 mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-400">Post length</span>
+              <span className="text-sm text-gray-400">Super long</span>
             </div>
-            <Slider
-              value={postLength}
-              onValueChange={setPostLength}
-              max={100}
+            <Slider 
+              defaultValue={[postLength]} 
+              max={100} 
               step={1}
-              className="[&_[role=slider]]:bg-primary"
+              onValueChange={(values) => setPostLength(values[0])}
+              className="py-5"
             />
           </div>
           
-          <p className="text-sm text-gray-400 mt-6">
+          <p className="text-sm text-gray-400 text-center">
             Scripe will learn your individual preferences over time.
           </p>
         </div>
         
-        <div className="flex justify-center mb-12">
-          <ContinueButton onClick={nextStep} disabled={!postFormat} />
+        <div className="flex justify-between mb-12">
+          <Button 
+            variant="outline" 
+            onClick={prevStep}
+            className="border-gray-700 text-gray-400"
+          >
+            Back
+          </Button>
+          <ContinueButton 
+            onClick={nextStep}
+            disabled={!postFormat} 
+            className="bg-purple-600 hover:bg-purple-700"
+          />
         </div>
         
-        <ProgressDots total={8} current={4} />
+        <ProgressDots total={total} current={current} />
       </div>
     </div>
   );

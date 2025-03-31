@@ -1,19 +1,51 @@
-
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { X, Twitter } from "lucide-react";
+import { X, Twitter, AlertCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const { setCurrentStep } = useOnboarding();
+  const { login, error, clearError, loading, twitterAuth } = useAuth();
   const isMobile = useIsMobile();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
+  // Handle Google auth
+  const handleGoogleAuth = () => {
+    // Redirect to backend Google auth endpoint
+    window.location.href = 'http://localhost:5000/api/auth/google';
+  };
+  
+  // Handle Twitter auth - using our mock for development
+  const handleTwitterAuth = () => {
+    // For development, we'll use direct API endpoint instead of OAuth
+    // Generate a mock Twitter ID and user info
+    const mockTwitterUser = {
+      twitterId: 'twitter_' + Math.random().toString(36).substring(7),
+      name: 'Twitter User',
+      email: 'twitter.user' + Math.random().toString(36).substring(7) + '@example.com',
+      profileImage: 'https://via.placeholder.com/150'
+    };
+    
+    // Call the Twitter auth function from the AuthContext
+    twitterAuth(mockTwitterUser);
+  };
+  
+  // Handle login form submission
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    login(loginEmail, loginPassword);
+  };
   
   return (
     <div className="min-h-screen bg-black flex flex-col md:flex-row">
@@ -45,20 +77,40 @@ export default function LoginPage() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      onClick={() => setIsLoginOpen(false)}
+                      onClick={() => {
+                        setIsLoginOpen(false);
+                        clearError();
+                      }}
                       className="text-gray-400 hover:text-white"
                     >
                       <X size={20} />
                     </Button>
                   </div>
                   
+                  {error && (
+                    <Alert variant="destructive" className="mb-4 bg-red-900/30 border-red-900">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div className="space-y-4 mb-6">
-                    <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full py-6 flex justify-center gap-2"
+                      onClick={handleGoogleAuth}
+                      disabled={loading}
+                    >
                       <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
                       Continue with Google
                     </Button>
                     
-                    <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full py-6 flex justify-center gap-2"
+                      onClick={handleTwitterAuth}
+                      disabled={loading}
+                    >
                       <Twitter size={20} className="text-[#1DA1F2]" />
                       Continue with Twitter
                     </Button>
@@ -73,18 +125,40 @@ export default function LoginPage() {
                     </div>
                   </div>
                   
-                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setCurrentStep("team-selection"); setIsLoginOpen(false); }}>
+                  <form className="space-y-4" onSubmit={handleLogin}>
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
-                      <Input id="email" type="email" placeholder="Enter your email" className="bg-gray-700 border-gray-600" />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        className="bg-gray-700 border-gray-600"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                      />
                     </div>
                     
                     <div>
                       <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
-                      <Input id="password" type="password" placeholder="Enter your password" className="bg-gray-700 border-gray-600" />
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        placeholder="Enter your password" 
+                        className="bg-gray-700 border-gray-600"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                      />
                     </div>
                     
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary/90">Log in</Button>
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary hover:bg-primary/90"
+                      disabled={loading}
+                    >
+                      {loading ? 'Logging in...' : 'Log in'}
+                    </Button>
                   </form>
                   
                   <p className="text-center mt-6 text-sm text-gray-400">

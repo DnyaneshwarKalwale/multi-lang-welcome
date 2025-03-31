@@ -1,11 +1,10 @@
-
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import WelcomePage from "@/pages/WelcomePage";
-import LoginPage from "@/pages/LoginPage";
 import TeamSelectionPage from "@/pages/TeamSelectionPage";
 import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
+import TeamInvitePage from "@/pages/TeamInvitePage";
 import ThemeSelectionPage from "@/pages/ThemeSelectionPage";
 import LanguageSelectionPage from "@/pages/LanguageSelectionPage";
 import PostFormatPage from "@/pages/PostFormatPage";
@@ -14,13 +13,27 @@ import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
 
 export function OnboardingRouter() {
-  const { currentStep } = useOnboarding();
+  const { workspaceType, currentStep } = useOnboarding();
+  const location = useLocation();
+  const navigate = useNavigate();
   
+  // Redirect logic for team vs personal workspace
+  React.useEffect(() => {
+    // If on team-workspace or team-invite but not a team workspace, skip
+    if (workspaceType === "personal") {
+      if (location.pathname.includes("team-workspace") || 
+          location.pathname.includes("team-invite")) {
+        navigate("/onboarding/theme-selection");
+      }
+    }
+  }, [workspaceType, location.pathname, navigate]);
+
   return (
     <Routes>
       <Route path="welcome" element={<WelcomePage />} />
-      <Route path="login" element={<LoginPage />} />
       <Route path="team-selection" element={<TeamSelectionPage />} />
+      <Route path="team-workspace" element={<TeamWorkspacePage />} />
+      <Route path="team-invite" element={<TeamInvitePage />} />
       <Route path="theme-selection" element={<ThemeSelectionPage />} />
       <Route path="language-selection" element={<LanguageSelectionPage />} />
       <Route path="post-format" element={<PostFormatPage />} />

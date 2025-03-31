@@ -1,11 +1,12 @@
-
-import React from "react";
-import { X, Twitter } from "lucide-react";
+import React, { useState } from "react";
+import { X, Twitter, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RegistrationSheetProps {
   open: boolean;
@@ -16,13 +17,50 @@ interface RegistrationSheetProps {
 export function RegistrationSheet({ open, onOpenChange, onSuccess }: RegistrationSheetProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { register, error, clearError, loading, twitterAuth } = useAuth();
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSuccess) onSuccess();
-    else navigate("/onboarding/welcome");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  
+  // Handle Google auth
+  const handleGoogleAuth = () => {
+    // Redirect to backend Google auth endpoint
+    window.location.href = 'http://localhost:5000/api/auth/google';
+  };
+  
+  // Handle Twitter auth - using our mock for development
+  const handleTwitterAuth = () => {
+    // For development, we'll use direct API endpoint instead of OAuth
+    // Generate a mock Twitter ID and user info
+    const mockTwitterUser = {
+      twitterId: 'twitter_' + Math.random().toString(36).substring(7),
+      name: 'Twitter User',
+      email: 'twitter.user' + Math.random().toString(36).substring(7) + '@example.com',
+      profileImage: 'https://via.placeholder.com/150'
+    };
+    
+    // Call the Twitter auth function from the AuthContext
+    twitterAuth(mockTwitterUser);
     onOpenChange(false);
   };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    
+    if (firstName && lastName && email && password) {
+      await register(firstName, lastName, email, password);
+      if (onSuccess) onSuccess();
+      onOpenChange(false);
+    }
+  };
+  
+  const handleClose = () => {
+    clearError();
+    onOpenChange(false);
+  }
   
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -33,20 +71,37 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               className="text-gray-400 hover:text-white"
             >
               <X size={20} />
             </Button>
           </div>
           
+          {error && (
+            <Alert variant="destructive" className="mb-4 bg-red-900/30 border-red-900">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-4 mb-6">
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2" onClick={handleSubmit}>
+            <Button 
+              variant="outline" 
+              className="w-full py-6 flex justify-center gap-2" 
+              onClick={handleGoogleAuth}
+              disabled={loading}
+            >
               <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
               Continue with Google
             </Button>
             
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2" onClick={handleSubmit}>
+            <Button 
+              variant="outline" 
+              className="w-full py-6 flex justify-center gap-2" 
+              onClick={handleTwitterAuth}
+              disabled={loading}
+            >
               <Twitter size={20} className="text-[#1DA1F2]" />
               Continue with Twitter
             </Button>
@@ -64,20 +119,62 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
-              <Input id="firstName" placeholder="Enter your first name" className="bg-gray-700 border-gray-600" />
+              <Input 
+                id="firstName" 
+                placeholder="Enter your first name" 
+                className="bg-gray-700 border-gray-600"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
             </div>
             
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
-              <Input id="lastName" placeholder="Enter your last name" className="bg-gray-700 border-gray-600" />
+              <Input 
+                id="lastName" 
+                placeholder="Enter your last name" 
+                className="bg-gray-700 border-gray-600"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
             </div>
             
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
-              <Input id="email" type="email" placeholder="Enter your email" className="bg-gray-700 border-gray-600" />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="Enter your email" 
+                className="bg-gray-700 border-gray-600"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">Sign up</Button>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="Choose a password (min. 8 characters)" 
+                className="bg-gray-700 border-gray-600"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+              />
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={loading}
+            >
+              {loading ? 'Signing up...' : 'Sign up'}
+            </Button>
           </form>
           
           <p className="text-center mt-6 text-sm text-gray-400">
