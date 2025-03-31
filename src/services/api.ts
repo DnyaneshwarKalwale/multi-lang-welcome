@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Create axios instance with base URL
 // In Vite, we need to use import.meta.env instead of process.env
-// Fall back to hardcoded ngrok URL if environment variable is not available
-const API_URL = import.meta.env.VITE_API_URL || 'https://ffb3-43-224-158-115.ngrok-free.app/api';
+// Fall back to hardcoded backend URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 console.log("Using API URL:", API_URL);
 
