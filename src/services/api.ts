@@ -66,7 +66,7 @@ export const authApi = {
     const response = await api.get(`/auth/verify-email/${token}`);
     return response.data;
   },
-  
+
   // Resend verification email
   resendVerification: async (email: string) => {
     const response = await api.post('/auth/resend-verification', { email });

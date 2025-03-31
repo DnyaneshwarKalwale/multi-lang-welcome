@@ -2,20 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ScripeLogotype } from '@/components/ScripeIcon';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { authApi } from '@/services/api';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function VerifyEmailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { token } = useParams();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
   const [verificationResult, setVerificationResult] = useState<'pending' | 'success' | 'error'>('pending');
   const [error, setError] = useState<string | null>(null);
-  const [email] = useState<string | null>(location.state?.email || null);
+  const [email] = useState<string | null>(location.state?.email || user?.email || null);
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -48,27 +50,32 @@ export default function VerifyEmailPage() {
     verifyToken();
   }, [token, navigate]);
 
-  const handleResendVerification = async () => {
-    if (!email) {
-      setError('Email address is missing. Please go back to the login page.');
-      return;
+  useEffect(() => {
+    // Countdown timer for resend button
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => {
+        setResendCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (resendCountdown === 0 && resendDisabled) {
+      setResendDisabled(false);
     }
+  }, [resendCountdown, resendDisabled]);
 
+  const handleResendVerification = async () => {
+    if (!email) return;
+    
     try {
-      setResendLoading(true);
-      setError(null);
+      setResendDisabled(true);
+      setResendCountdown(60); // 60 seconds cooldown
       
       await authApi.resendVerification(email);
-      setResendSuccess(true);
       
-      // Reset to show original message after 5 seconds
-      setTimeout(() => {
-        setResendSuccess(false);
-      }, 5000);
+      // Show success message
+      setError(null);
+      alert('Verification email has been resent. Please check your inbox.');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to resend verification email. Please try again.');
-    } finally {
-      setResendLoading(false);
+      setError(err.response?.data?.error || 'Failed to resend verification email.');
     }
   };
 
@@ -83,23 +90,6 @@ export default function VerifyEmailPage() {
           // No token - show verification instructions
           <>
             <h1 className="text-3xl font-bold mb-6">Check your inbox</h1>
-            
-            {resendSuccess ? (
-              <Alert className="bg-green-900/20 border-green-900 mb-6">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <AlertDescription>
-                  Verification email has been resent to {email}. Please check your inbox.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-            
-            {error && (
-              <Alert variant="destructive" className="bg-red-900/20 border-red-900 mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
             <p className="text-gray-400 mb-8">
               We've sent a verification link to {email || 'your email address'}. 
               Please check your inbox and click the link to verify your account.
@@ -107,29 +97,23 @@ export default function VerifyEmailPage() {
             <p className="text-gray-500 mb-8">
               The email should arrive within a few minutes. If you don't see it, check your spam folder.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
+            <div className="flex flex-col space-y-4">
+              <Button
+                onClick={handleResendVerification}
+                disabled={resendDisabled}
+                className="bg-gray-800 hover:bg-gray-700 px-8 py-2"
+              >
+                {resendDisabled 
+                  ? `Resend email (${resendCountdown}s)` 
+                  : 'Resend verification email'}
+              </Button>
+              
+              <Button
                 onClick={() => navigate('/')}
                 variant="outline"
                 className="px-8 py-2"
               >
                 Return to login
-              </Button>
-              
-              <Button 
-                onClick={handleResendVerification}
-                className="bg-primary hover:bg-primary/90 px-8 py-2"
-                disabled={resendLoading}
-              >
-                {resendLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  'Resend verification email'
-                )}
               </Button>
             </div>
           </>
@@ -177,19 +161,22 @@ export default function VerifyEmailPage() {
                   The verification link may be expired or invalid. Please try again or request a new verification email.
                 </AlertDescription>
               </Alert>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex gap-4">
+                <Button 
+                  onClick={handleResendVerification}
+                  disabled={resendDisabled}
+                  className="bg-primary hover:bg-primary/90 px-6 py-2"
+                >
+                  {resendDisabled 
+                    ? `Resend (${resendCountdown}s)` 
+                    : 'Resend verification email'}
+                </Button>
                 <Button 
                   onClick={() => navigate('/')}
                   variant="outline"
                   className="px-6 py-2"
                 >
                   Return to login
-                </Button>
-                <Button 
-                  onClick={() => navigate('/verify-email', { state: { email } })}
-                  className="bg-primary hover:bg-primary/90 px-6 py-2"
-                >
-                  Request new link
                 </Button>
               </div>
             </div>

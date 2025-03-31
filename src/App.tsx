@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +33,14 @@ const App = () => (
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
                   <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
-                  <Route path="/onboarding/*" element={<OnboardingRouter />} />
+                  <Route 
+                    path="/onboarding/*" 
+                    element={
+                      <ProtectedRoute requireVerified={true}>
+                        <OnboardingRouter />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </TooltipProvider>

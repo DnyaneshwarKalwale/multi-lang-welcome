@@ -64,10 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.register(firstName, lastName, email, password);
       
       // For email registration, don't set token yet since email verification is required
-      setUser(response.user);
-      
-      // Navigate to email verification page
+      // We just redirect to verification page and show instructions
       navigate('/verify-email', { state: { email } });
+      
+      return response;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
       console.error('Registration error:', err);
