@@ -4,22 +4,19 @@ import { X, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface RegistrationSheetProps {
+interface LoginSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-export function RegistrationSheet({ open, onOpenChange, onSuccess }: RegistrationSheetProps) {
-  const { setCurrentStep } = useOnboarding();
+export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const isMobile = useIsMobile();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentStep("team-selection");
     if (onSuccess) onSuccess();
     onOpenChange(false);
   };
@@ -29,7 +26,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
       <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gray-900 border-gray-800 p-0 w-full sm:max-w-md">
         <div className="bg-gray-900 p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Create your account</h2>
+            <h2 className="text-2xl font-bold">Log in</h2>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -63,30 +60,17 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
           
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
-              <Input id="firstName" placeholder="Enter your first name" className="bg-gray-700 border-gray-600" />
-            </div>
-            
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
-              <Input id="lastName" placeholder="Enter your last name" className="bg-gray-700 border-gray-600" />
-            </div>
-            
-            <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
               <Input id="email" type="email" placeholder="Enter your email" className="bg-gray-700 border-gray-600" />
             </div>
             
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">Sign up</Button>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
+              <Input id="password" type="password" placeholder="Enter your password" className="bg-gray-700 border-gray-600" />
+            </div>
+            
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">Log in</Button>
           </form>
-          
-          <p className="text-center mt-6 text-sm text-gray-400">
-            Already have an account? <a href="#" className="text-primary hover:underline" onClick={(e) => { e.preventDefault(); onOpenChange(false); }}>Log in</a>
-          </p>
-          
-          <p className="text-center mt-6 text-xs text-gray-500">
-            By continuing, you agree to the <a href="#" className="underline">terms of service</a> and <a href="#" className="underline">privacy policy</a>.
-          </p>
         </div>
       </SheetContent>
     </Sheet>

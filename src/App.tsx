@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
-import LoginPage from "./pages/LoginPage";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,8 +21,8 @@ const App = () => (
         <BrowserRouter>
           <OnboardingProvider>
             <Routes>
-              <Route path="/" element={<OnboardingRouter />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/onboarding" element={<OnboardingRouter />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </OnboardingProvider>
