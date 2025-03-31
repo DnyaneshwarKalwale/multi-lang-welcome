@@ -22,7 +22,7 @@ const App = () => (
           <OnboardingProvider>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/onboarding" element={<OnboardingRouter />} />
+              <Route path="/onboarding/*" element={<OnboardingRouter />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </OnboardingProvider>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface LoginSheetProps {
   open: boolean;
@@ -14,10 +15,12 @@ interface LoginSheetProps {
 
 export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSuccess) onSuccess();
+    else navigate("/onboarding/welcome");
     onOpenChange(false);
   };
   
@@ -38,12 +41,12 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
           </div>
           
           <div className="space-y-4 mb-6">
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+            <Button variant="outline" className="w-full py-6 flex justify-center gap-2" onClick={handleSubmit}>
               <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
               Continue with Google
             </Button>
             
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+            <Button variant="outline" className="w-full py-6 flex justify-center gap-2" onClick={handleSubmit}>
               <Twitter size={20} className="text-[#1DA1F2]" />
               Continue with Twitter
             </Button>

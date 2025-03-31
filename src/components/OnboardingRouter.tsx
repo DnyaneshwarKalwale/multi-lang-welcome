@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import WelcomePage from "@/pages/WelcomePage";
 import LoginPage from "@/pages/LoginPage";
@@ -13,28 +14,20 @@ import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
 
 export function OnboardingRouter() {
-  const { currentStep, workspaceType } = useOnboarding();
-
-  switch (currentStep) {
-    case "welcome":
-      return <WelcomePage />;
-    case "login":
-      return <LoginPage />;
-    case "team-selection":
-      return <TeamSelectionPage />;
-    case "theme-selection":
-      return <ThemeSelectionPage />;
-    case "language-selection":
-      return <LanguageSelectionPage />;
-    case "post-format":
-      return <PostFormatPage />;
-    case "post-frequency":
-      return <PostFrequencyPage />;
-    case "registration":
-      return <RegistrationPage />;
-    case "dashboard":
-      return <DashboardPage />;
-    default:
-      return <WelcomePage />;
-  }
+  const { currentStep } = useOnboarding();
+  
+  return (
+    <Routes>
+      <Route path="welcome" element={<WelcomePage />} />
+      <Route path="login" element={<LoginPage />} />
+      <Route path="team-selection" element={<TeamSelectionPage />} />
+      <Route path="theme-selection" element={<ThemeSelectionPage />} />
+      <Route path="language-selection" element={<LanguageSelectionPage />} />
+      <Route path="post-format" element={<PostFormatPage />} />
+      <Route path="post-frequency" element={<PostFrequencyPage />} />
+      <Route path="registration" element={<RegistrationPage />} />
+      <Route path="dashboard" element={<DashboardPage />} />
+      <Route path="" element={<Navigate to="welcome" replace />} />
+    </Routes>
+  );
 }

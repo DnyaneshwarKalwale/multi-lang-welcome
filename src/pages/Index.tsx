@@ -14,6 +14,10 @@ const Index = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   
+  const handleContinue = () => {
+    navigate("/onboarding/welcome");
+  };
+  
   return (
     <div className="min-h-screen bg-black flex flex-col md:flex-row">
       <div className="flex-1 flex flex-col justify-between p-6 md:p-8">
@@ -65,12 +69,12 @@ const Index = () => {
           <p className="text-gray-400 mb-6">Sign up for a new account to get started.</p>
           
           <div className="space-y-4 mb-6">
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+            <Button variant="outline" className="w-full py-6 flex justify-center gap-2" onClick={handleContinue}>
               <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
               Continue with Google
             </Button>
             
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+            <Button variant="outline" className="w-full py-6 flex justify-center gap-2" onClick={handleContinue}>
               <Twitter size={20} className="text-[#1DA1F2]" />
               Continue with Twitter
             </Button>
@@ -85,7 +89,7 @@ const Index = () => {
             </div>
           </div>
           
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); navigate("/onboarding"); }}>
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); navigate("/onboarding/welcome"); }}>
             <div>
               <label htmlFor="firstNameSignup" className="block text-sm font-medium text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
               <input id="firstNameSignup" placeholder="Enter your first name" className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -115,10 +119,10 @@ const Index = () => {
       </div>
 
       {/* Login Sheet */}
-      <LoginSheet open={isLoginOpen} onOpenChange={setIsLoginOpen} onSuccess={() => navigate("/onboarding")} />
+      <LoginSheet open={isLoginOpen} onOpenChange={setIsLoginOpen} onSuccess={() => navigate("/onboarding/welcome")} />
 
       {/* Registration Sheet */}
-      <RegistrationSheet open={isRegisterOpen} onOpenChange={setIsRegisterOpen} onSuccess={() => navigate("/onboarding")} />
+      <RegistrationSheet open={isRegisterOpen} onOpenChange={setIsRegisterOpen} onSuccess={() => navigate("/onboarding/welcome")} />
     </div>
   );
 };
