@@ -11,7 +11,6 @@ export function ScripeIcon({ className = "", size = 24 }: ScripeIconProps) {
     <svg 
       width={size} 
       height={size}
-
       viewBox="0 0 24 24" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
@@ -36,9 +35,9 @@ export function ScripeIcon({ className = "", size = 24 }: ScripeIconProps) {
 
 export function ScripeLogotype({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <ScripeIcon />
-      <span className="font-bold text-xl">scripe.</span>
+    <div className={`flex items-center gap-1 ${className}`}>
+      <ScripeIcon size={28} />
+      <span className="font-bold text-xl tracking-tight">scripe.</span>
     </div>
   );
 }
