@@ -7,6 +7,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+//dashboard page
+
 export default function DashboardPage() {
   const { firstName, workspaceName, workspaceType } = useOnboarding();
   const { theme, toggleTheme } = useTheme();
