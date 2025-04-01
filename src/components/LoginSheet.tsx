@@ -36,8 +36,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
       profileImage: "https://lh3.googleusercontent.com/a/default-user=s400-c"
     });
     
+    // Close the login sheet but don't call onSuccess
+    // as the auth function now handles navigation
     onOpenChange(false);
-    if (onSuccess) onSuccess();
   };
   
   // Handle Twitter auth
@@ -53,8 +54,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
       profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
     });
     
+    // Close the login sheet but don't call onSuccess
+    // as the auth function now handles navigation
     onOpenChange(false);
-    if (onSuccess) onSuccess();
   };
   
   const handleSubmit = async (e: React.FormEvent) => {

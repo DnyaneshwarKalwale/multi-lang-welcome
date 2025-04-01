@@ -273,17 +273,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       };
       
-      // Store credentials and update state
+      // Store credentials and update state - but do this BEFORE navigation
       localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
+      
+      // Update state immediately, not in a timeout
       setUser(mockResponse.user as any);
       
-      // Delay navigation to ensure state is updated
-      setTimeout(() => {
-        // Only continue onboarding after a short delay to ensure state is updated
-        console.log("Google auth complete, continuing to onboarding");
-        continueOnboarding(mockResponse.user as any);
-      }, 100);
+      // Navigate directly to onboarding welcome page - with replace:true to prevent back navigation loops
+      console.log("Google auth complete, navigating to onboarding welcome");
+      navigate('/onboarding/welcome', { replace: true });
       
       return;
     } catch (err: any) {
@@ -332,19 +331,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       };
       
-      // Store auth token and user data
+      // Store auth token and user data - do this BEFORE navigation
       localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
       
-      // Update user state
+      // Update user state immediately, not in a timeout
       setUser(mockResponse.user as any);
       
-      // Delay navigation to ensure state is updated
-      setTimeout(() => {
-        // Only continue onboarding after a short delay to ensure state is updated
-        console.log("Twitter auth complete, continuing to onboarding");
-        continueOnboarding(mockResponse.user as any);
-      }, 100);
+      // Navigate directly to onboarding welcome page - with replace:true to prevent back navigation loops
+      console.log("Twitter auth complete, navigating to onboarding welcome");
+      navigate('/onboarding/welcome', { replace: true });
       
       return;
     } catch (err: any) {

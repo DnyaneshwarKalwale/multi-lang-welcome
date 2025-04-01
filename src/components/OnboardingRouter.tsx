@@ -67,18 +67,26 @@ export const OnboardingRouter = () => {
         'style-selection'
       ];
       
+      // Debug log for helping diagnose login issues
+      console.log(`OnboardingRouter - Current step: ${currentStep}, Path: ${currentPath}, User auth method: ${user?.authMethod}`);
+      
       // If the current path is a valid step, set it as the current step
       if (validSteps.includes(currentPath)) {
         console.log(`Setting current step to: ${currentPath}`);
         setCurrentStep(currentPath as any);
       } else if (currentPath === '' || currentPath === 'onboarding') {
         // Default to welcome page if no specific page is requested
+        // If user comes from Google/Twitter auth, ensure we properly handle it
         const startingPage = user?.lastOnboardingStep || 'welcome';
         console.log(`No specific page requested, starting from: ${startingPage}`);
-        navigate(`/onboarding/${startingPage}`, { replace: true });
+        
+        // Only navigate if we're not already at the welcome page to prevent loops
+        if (location.pathname !== `/onboarding/${startingPage}`) {
+          navigate(`/onboarding/${startingPage}`, { replace: true });
+        }
       }
     }
-  }, [currentPath, currentStep, loading, navigate, setCurrentStep, user, initialized]);
+  }, [currentPath, currentStep, loading, navigate, setCurrentStep, user, initialized, location.pathname]);
   
   // Redirect completed users to dashboard when they try to access onboarding pages
   useEffect(() => {
