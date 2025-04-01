@@ -20,7 +20,7 @@ import { LoadingScreen } from "./LoadingScreen";
 
 export const OnboardingRouter = () => {
   const { currentStep, setCurrentStep } = useOnboarding();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -31,6 +31,12 @@ export const OnboardingRouter = () => {
   useEffect(() => {
     // Only run this if currentStep is 'initial' (app just loaded) or on page reload
     if (currentStep === 'initial' && !loading) {
+      // Redirect to dashboard if onboarding is already completed
+      if (user?.onboardingCompleted) {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+      
       // These are valid onboarding steps
       const validSteps = [
         'welcome', 
@@ -55,10 +61,30 @@ export const OnboardingRouter = () => {
         navigate('/onboarding/welcome', { replace: true });
       }
     }
-  }, [currentPath, currentStep, loading, navigate, setCurrentStep]);
+  }, [currentPath, currentStep, loading, navigate, setCurrentStep, user]);
+  
+  // Redirect completed users to dashboard when they try to access onboarding pages
+  useEffect(() => {
+    if (!loading && user?.onboardingCompleted && location.pathname.includes('/onboarding')) {
+      console.log("Onboarding already completed, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
+    }
+  }, [loading, navigate, user, location.pathname]);
+  
+  // Log for debugging
+  useEffect(() => {
+    console.log("Current step in OnboardingRouter:", currentStep);
+    console.log("Current path:", location.pathname);
+    console.log("User onboarding completed:", user?.onboardingCompleted);
+  }, [currentStep, location.pathname, user]);
   
   if (loading) {
     return <LoadingScreen />;
+  }
+  
+  // If user has completed onboarding, redirect to dashboard
+  if (user?.onboardingCompleted) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return (

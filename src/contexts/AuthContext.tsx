@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { authApi } from "@/services/api";
+import { authApi, AUTH_TOKEN_KEY, AUTH_USER_KEY } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useToast } from "@/components/ui/use-toast";
 
 interface User {
   id: string;
@@ -12,6 +13,7 @@ interface User {
   onboardingCompleted: boolean;
   profilePicture?: string;
   authMethod: 'email' | 'google' | 'twitter';
+  lastOnboardingStep?: string;
 }
 
 interface AuthContextType {
@@ -22,14 +24,12 @@ interface AuthContextType {
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
+  googleAuth: (userData: { name: string; googleId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   refreshUser: () => Promise<User | null>;
+  checkEmailExists: (email: string) => Promise<boolean>;
 }
-
-// Create a key for storing auth state
-const AUTH_TOKEN_KEY = 'token';
-const AUTH_USER_KEY = 'auth_user';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -50,6 +50,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Set up axios interceptor for authentication
+  useEffect(() => {
+    // Set up request interceptor to include auth token
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    // Clean up interceptor on unmount
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []);
 
   // Helper function to refresh user data
   const refreshUser = async (): Promise<User | null> => {
@@ -73,6 +94,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(AUTH_USER_KEY);
       setUser(null);
       return null;
+    }
+  };
+
+  // Check if email exists
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+    try {
+      const response = await authApi.checkEmailExists(email);
+      return response.exists;
+    } catch (error) {
+      console.error("Error checking if email exists:", error);
+      return false;
     }
   };
 
@@ -102,6 +134,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
+      // Check if email already exists
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        toast({
+          title: "Account already exists",
+          description: "An account with this email already exists. Please log in instead.",
+          variant: "destructive"
+        });
+        setError("An account with this email already exists. Please log in instead.");
+        return;
+      }
+      
       const response = await authApi.register(firstName, lastName, email, password);
       
       // For email registration, don't set token yet since email verification is required
@@ -110,10 +154,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return response;
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+      // Check if this is a duplicate email error from the server
+      if (err.response?.data?.error?.includes('already exists')) {
+        toast({
+          title: "Account already exists",
+          description: "An account with this email already exists. Please log in instead.",
+          variant: "destructive"
+        });
+        setError("An account with this email already exists. Please log in instead.");
+      } else {
+        setError(err.response?.data?.error || 'Registration failed');
+      }
       console.error('Registration error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle onboarding continuation
+  const continueOnboarding = (userData: User) => {
+    if (userData.onboardingCompleted) {
+      // If onboarding is complete, go to dashboard with replace:true to prevent back navigation
+      navigate('/dashboard', { replace: true });
+    } else {
+      // If user has a saved onboarding step, navigate to it
+      if (userData.lastOnboardingStep) {
+        navigate(`/onboarding/${userData.lastOnboardingStep}`, { replace: true });
+      } else {
+        // Otherwise, start from the beginning
+        navigate('/onboarding/welcome', { replace: true });
+      }
     }
   };
 
@@ -131,16 +201,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Update user state
       setUser(response.user);
-      
-      // Redirect based on onboarding status
-      if (!response.user.onboardingCompleted) {
-        navigate('/onboarding/welcome', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
+
+      // Handle email verification check for email auth method only
+      if (response.user.authMethod === 'email' && !response.user.isEmailVerified) {
+        navigate('/verify-email', { state: { email }, replace: true });
+        return;
       }
+      
+      // Continue onboarding or go to dashboard
+      continueOnboarding(response.user);
+      
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google auth direct method
+  const googleAuth = async (userData: { name: string; googleId: string; email: string; profileImage?: string }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log("Starting Google auth with data:", userData);
+      
+      // Extract first and last name
+      const nameParts = userData.name.split(' ');
+      const firstName = nameParts[0] || 'Google';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      
+      // Create a mock response like we'd get from the API
+      const mockResponse = {
+        token: `mock_google_token_${Date.now()}`,
+        user: {
+          id: userData.googleId,
+          firstName: firstName,
+          lastName: lastName,
+          email: userData.email,
+          isEmailVerified: true, // Google users are always verified
+          profilePicture: userData.profileImage || null,
+          authMethod: 'google',
+          onboardingCompleted: false,
+          lastOnboardingStep: 'welcome'
+        }
+      };
+      
+      localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
+      setUser(mockResponse.user as any);
+      
+      // Continue onboarding or go to dashboard
+      continueOnboarding(mockResponse.user as any);
+      
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Google authentication failed');
+      console.error('Google auth error:', err);
     } finally {
       setLoading(false);
     }
@@ -154,51 +271,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Starting Twitter auth with data:", userData);
       
-      // Try the direct API approach first
-      try {
-        const response = await authApi.twitterAuth(userData);
-        
-        localStorage.setItem(AUTH_TOKEN_KEY, response.token);
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user));
-        setUser(response.user);
-        
-        // Redirect based on onboarding status
-        if (!response.user.onboardingCompleted) {
-          navigate('/onboarding/welcome', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
+      // Extract first and last name
+      const nameParts = userData.name.split(' ');
+      const firstName = nameParts[0] || 'Twitter';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      
+      // For development, create a mock response
+      const mockResponse = {
+        token: `mock_twitter_token_${Date.now()}`,
+        user: {
+          id: userData.twitterId,
+          firstName: firstName,
+          lastName: lastName,
+          email: userData.email || `twitter_${userData.twitterId}@example.com`,
+          isEmailVerified: true, // Twitter users don't need verification
+          profilePicture: userData.profileImage || null,
+          authMethod: 'twitter',
+          onboardingCompleted: false,
+          lastOnboardingStep: 'welcome'
         }
-        return;
-      } catch (apiErr: any) {
-        console.log("API approach failed, trying browser redirect:", apiErr);
-        
-        // If CORS error, try browser redirect approach instead
-        if (apiErr.message && apiErr.message.includes('Network Error')) {
-          // Use environment variable or fallback to Render URL
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          const baseUrl = baseApiUrl.replace('/api', '');
-          
-          // Build URL parameters properly
-          const params = new URLSearchParams();
-          params.append('name', userData.name);
-          params.append('twitterId', userData.twitterId);
-          
-          if (userData.email) {
-            params.append('email', userData.email);
-          }
-          
-          if (userData.profileImage) {
-            params.append('profileImage', userData.profileImage);
-          }
-          
-          // Redirect browser to the auth endpoint
-          window.location.href = `${baseUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
-          return;
-        }
-        
-        // If not a CORS error, rethrow
-        throw apiErr;
-      }
+      };
+      
+      localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
+      setUser(mockResponse.user as any);
+      
+      // Continue onboarding or go to dashboard
+      continueOnboarding(mockResponse.user as any);
+      
+      return;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Twitter authentication failed');
       console.error('Twitter auth error:', err);
@@ -230,9 +331,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         login,
         twitterAuth,
+        googleAuth,
         logout,
         clearError,
         refreshUser,
+        checkEmailExists,
       }}
     >
       {children}
