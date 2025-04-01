@@ -61,9 +61,12 @@ function ProtectedDashboardRoute() {
     return <Navigate to="/" replace />;
   }
   
-  // Check both the user object and localStorage for onboarding status
-  // This handles the case where the user just completed onboarding
-  const onboardingCompleted = user?.onboardingCompleted || localStorage.getItem('onboardingCompleted') === 'true';
+  // First check localStorage for onboarding status
+  // This gives priority to localStorage which is updated at completion time
+  // and only falls back to the user object if localStorage isn't set
+  const onboardingCompleted = 
+    localStorage.getItem('onboardingCompleted') === 'true' || 
+    (user && user.onboardingCompleted);
   
   if (!onboardingCompleted) {
     const savedStep = localStorage.getItem('onboardingStep') || 'welcome';

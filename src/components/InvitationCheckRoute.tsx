@@ -33,12 +33,18 @@ const InvitationCheckRoute = () => {
         }
 
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        try {
+          const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
 
-        const invitations = response.data.data || [];
-        setHasInvitations(invitations.length > 0);
+          const invitations = response.data.data || [];
+          setHasInvitations(invitations.length > 0);
+        } catch (apiError) {
+          console.error('Failed to check invitations:', apiError);
+          // If API endpoint doesn't exist or returns error, just proceed
+          setHasInvitations(false);
+        }
       } catch (error) {
         console.error('Failed to check invitations:', error);
         setHasInvitations(false);

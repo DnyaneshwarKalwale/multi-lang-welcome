@@ -50,16 +50,22 @@ export default function OAuthCallbackPage() {
         
         // Fetch invitations
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const invitations = response.data.data || [];
-        
-        // If has invitations, go to pending invitations page
-        if (invitations.length > 0) {
-          navigate('/pending-invitations');
-          return;
+        try {
+          const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const invitations = response.data.data || [];
+          
+          // If has invitations, go to pending invitations page
+          if (invitations.length > 0) {
+            navigate('/pending-invitations');
+            return;
+          }
+        } catch (invError) {
+          console.error('Failed to check invitations:', invError);
+          // If the endpoint doesn't exist or returns an error, continue with normal flow
+          // This prevents the app from getting stuck during development
         }
       } catch (err) {
         console.error('Failed to check invitations:', err);

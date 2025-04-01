@@ -27,15 +27,20 @@ export default function CompletionPage() {
 
           // Make API call to mark onboarding as completed
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          await axios.post(
-            `${baseApiUrl}/onboarding/complete`, 
-            {},
-            {
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          );
-          
-          console.log("Onboarding marked as completed");
+          try {
+            await axios.post(
+              `${baseApiUrl}/onboarding/complete`, 
+              {},
+              {
+                headers: { Authorization: `Bearer ${token}` }
+              }
+            );
+            
+            console.log("Onboarding marked as completed");
+          } catch (apiError) {
+            console.error("API call to mark onboarding complete failed:", apiError);
+            // Even if the API call fails, we'll still mark it complete in localStorage
+          }
           
           // Save to local state that we've marked it complete
           setMarkedComplete(true);

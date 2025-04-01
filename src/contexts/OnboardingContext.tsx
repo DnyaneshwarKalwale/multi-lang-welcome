@@ -164,10 +164,21 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           email
         };
         
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        // Save key data to localStorage as a fallback
+        localStorage.setItem('onboardingStep', currentStep);
+        if (workspaceType) localStorage.setItem('workspaceType', workspaceType);
+        if (theme) localStorage.setItem('theme', theme);
+        if (language) localStorage.setItem('language', language);
+        
+        try {
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (apiError) {
+          console.error('Failed to save onboarding progress to API:', apiError);
+          // We'll continue with the local storage backup we created above
+        }
         
       } catch (error) {
         console.error('Failed to save onboarding progress:', error);
