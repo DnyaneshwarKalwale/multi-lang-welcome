@@ -14,9 +14,9 @@ type OnboardingStep =
   | "theme-selection" 
   | "language-selection" 
   | "post-format" 
-  | "post-frequency"
-  | "extension"
-  | "content-generation" 
+  | "post-frequency" 
+  | "extension-download"
+  | "completed"
   | "registration" 
   | "dashboard"
   | "initial";
@@ -73,8 +73,8 @@ const allSteps: OnboardingStep[] = [
   "language-selection",
   "post-format",
   "post-frequency",
-  "extension",
-  "content-generation",
+  "extension-download",
+  "completed",
   "registration",
   "dashboard"
 ];

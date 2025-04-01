@@ -226,20 +226,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Starting Twitter auth with data:", userData);
       
-      // Split name for first/last name
-      const nameParts = userData.name.split(' ');
-      const firstName = nameParts[0] || 'User';
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-      
-      // Store social profile data temporarily in localStorage to populate registration form
-      localStorage.setItem('social_profile', JSON.stringify({
-        firstName,
-        lastName,
-        email: userData.email || '',
-        profileImage: userData.profileImage || '',
-        authMethod: 'twitter'
-      }));
-      
       // Try the direct API approach first
       try {
         const response = await authApi.twitterAuth(userData);

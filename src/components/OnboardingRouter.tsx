@@ -10,12 +10,12 @@ import LanguageSelectionPage from "@/pages/LanguageSelectionPage";
 import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
 import PostFrequencyPage from "@/pages/PostFrequencyPage";
 import PostFormatPage from "@/pages/PostFormatPage";
+import ExtensionDownloadPage from "@/pages/ExtensionDownloadPage";
+import OnboardingCompletedPage from "@/pages/OnboardingCompletedPage";
 import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PlanSelectionPage from "@/pages/PlanSelectionPage";
 import StyleSelectionPage from "@/pages/StyleSelectionPage";
-import ExtensionPage from "@/pages/ExtensionPage";
-import ContentGenerationPage from "@/pages/ContentGenerationPage";
 import { LoadingScreen } from "./LoadingScreen";
 
 export const OnboardingRouter = () => {
@@ -41,8 +41,8 @@ export const OnboardingRouter = () => {
         'language-selection', 
         'post-format', 
         'post-frequency',
-        'extension',
-        'content-generation',
+        'extension-download',
+        'completed',
         'registration', 
         'dashboard'
       ];
@@ -70,8 +70,8 @@ export const OnboardingRouter = () => {
       <Route path="team-workspace" element={<TeamWorkspacePage />} />
       <Route path="post-format" element={<PostFormatPage />} />
       <Route path="post-frequency" element={<PostFrequencyPage />} />
-      <Route path="extension" element={<ExtensionPage />} />
-      <Route path="content-generation" element={<ContentGenerationPage />} />
+      <Route path="extension-download" element={<ExtensionDownloadPage />} />
+      <Route path="completed" element={<OnboardingCompletedPage />} />
       <Route path="registration" element={<RegistrationPage />} />
       <Route path="plan-selection" element={<PlanSelectionPage />} />
       <Route path="style-selection" element={<StyleSelectionPage />} />
