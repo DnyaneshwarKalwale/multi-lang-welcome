@@ -11,14 +11,30 @@ import { ArrowLeft, ChevronRight, Globe, Check } from "lucide-react";
 export default function LanguageSelectionPage() {
   const navigate = useNavigate();
   const { nextStep, prevStep, language, setLanguage, getStepProgress } = useOnboarding();
-  const { changeLanguage } = useLanguage();
+  const { setLanguage: setGlobalLanguage, t } = useLanguage();
   const { current, total } = getStepProgress();
+
+  // Map language codes to onboarding language types
+  const languageMap: Record<string, string> = {
+    "en": "english",
+    "de": "german",
+    "es": "english", // Default to English for unsupported languages
+    "fr": "english",
+    "it": "english",
+    "pt": "english",
+    "ru": "english",
+    "zh": "english",
+    "ja": "english",
+    "ko": "english",
+    "ar": "english",
+    "hi": "english",
+  };
 
   const languages = [
     { value: "en", name: "English", flag: "🇺🇸" },
+    { value: "de", name: "Deutsch", flag: "🇩🇪" },
     { value: "es", name: "Español", flag: "🇪🇸" },
     { value: "fr", name: "Français", flag: "🇫🇷" },
-    { value: "de", name: "Deutsch", flag: "🇩🇪" },
     { value: "it", name: "Italiano", flag: "🇮🇹" },
     { value: "pt", name: "Português", flag: "🇵🇹" },
     { value: "ru", name: "Русский", flag: "🇷🇺" },
@@ -29,19 +45,29 @@ export default function LanguageSelectionPage() {
     { value: "hi", name: "हिन्दी", flag: "🇮🇳" },
   ];
   
-  const handleLanguageSelect = (lang: string) => {
-    setLanguage(lang);
-    changeLanguage(lang);
+  const handleLanguageSelect = (langCode: string) => {
+    // Map the language code to the appropriate onboarding value
+    const onboardingLang = languageMap[langCode] || "english";
+    
+    // Set both onboarding and global language
+    setLanguage(onboardingLang);
+    
+    // Convert to the format expected by the LanguageContext (only supports english and german)
+    const globalLang = langCode === "de" ? "german" : "english";
+    setGlobalLanguage(globalLang);
+    
+    // Store the selected language code in localStorage for future reference
+    localStorage.setItem("languageCode", langCode);
   };
 
   const handleContinue = () => {
     nextStep();
-    navigate("/onboarding/theme-selection");
+    navigate("/onboarding/post-format");
   };
 
   const handlePrev = () => {
     prevStep();
-    navigate("/onboarding/welcome");
+    navigate("/onboarding/theme-selection");
   };
 
   // Animation variants
@@ -108,7 +134,7 @@ export default function LanguageSelectionPage() {
         transition={{ duration: 0.5 }}
       >
         <ArrowLeft size={16} className="mr-2" />
-        Back
+        {t('back')}
       </motion.button>
       
       <motion.div 
@@ -139,7 +165,7 @@ export default function LanguageSelectionPage() {
           >
             <Globe className="w-6 h-6 text-indigo-400" />
           </motion.div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Choose your language</h1>
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">{t('chooseLanguage')}</h1>
         </motion.div>
         
         <motion.p 
@@ -148,7 +174,7 @@ export default function LanguageSelectionPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          Select your preferred language for Twitter content generation and platform navigation
+          {t('languageDescription')}
         </motion.p>
 
         <motion.div 
@@ -157,45 +183,49 @@ export default function LanguageSelectionPage() {
           initial="hidden"
           animate="visible"
         >
-          {languages.map((lang) => (
-            <motion.div
-              key={lang.value}
-              className={`relative bg-gray-900/50 backdrop-blur-sm border-2 overflow-hidden
-                ${language === lang.value ? "border-indigo-500" : "border-gray-800"}
-                rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/60 transition-all duration-300`}
-              onClick={() => handleLanguageSelect(lang.value)}
-              variants={itemVariants}
-              whileHover={{ 
-                y: -5, 
-                boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
-                transition: { duration: 0.2 }
-              }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {language === lang.value && (
-                <motion.div 
-                  className="absolute inset-0 bg-indigo-600/10" 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              )}
-              <span className="text-3xl mb-2">{lang.flag}</span>
-              <span className={`font-medium ${language === lang.value ? "text-white" : "text-gray-300"}`}>
-                {lang.name}
-              </span>
-              {language === lang.value && (
-                <motion.div 
-                  className="absolute top-2 right-2 bg-indigo-600/40 w-5 h-5 flex items-center justify-center rounded-full"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", damping: 10, stiffness: 200 }}
-                >
-                  <Check size={12} className="text-white" />
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
+          {languages.map((lang) => {
+            // Get the mapped onboarding language for checking selection
+            const onboardingLang = languageMap[lang.value] || "english";
+            return (
+              <motion.div
+                key={lang.value}
+                className={`relative bg-gray-900/50 backdrop-blur-sm border-2 overflow-hidden
+                  ${language === onboardingLang ? "border-indigo-500" : "border-gray-800"}
+                  rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/60 transition-all duration-300`}
+                onClick={() => handleLanguageSelect(lang.value)}
+                variants={itemVariants}
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {language === onboardingLang && (
+                  <motion.div 
+                    className="absolute inset-0 bg-indigo-600/10" 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+                <span className="text-3xl mb-2">{lang.flag}</span>
+                <span className={`font-medium ${language === onboardingLang ? "text-white" : "text-gray-300"}`}>
+                  {lang.name}
+                </span>
+                {language === onboardingLang && (
+                  <motion.div 
+                    className="absolute top-2 right-2 bg-indigo-600/40 w-5 h-5 flex items-center justify-center rounded-full"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", damping: 10, stiffness: 200 }}
+                  >
+                    <Check size={12} className="text-white" />
+                  </motion.div>
+                )}
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         <motion.div 
@@ -226,8 +256,7 @@ export default function LanguageSelectionPage() {
           transition={{ duration: 0.5, delay: 0.8 }}
         >
           <p className="text-indigo-300 text-sm">
-            Scripe can generate and optimize Twitter content in multiple languages to help you reach a global audience. 
-            Your selected language will determine the default language for content creation.
+            {t('languageDescription')}
           </p>
         </motion.div>
       </motion.div>

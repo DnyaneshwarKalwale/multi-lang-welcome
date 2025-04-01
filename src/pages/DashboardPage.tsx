@@ -14,6 +14,7 @@ import { DashboardPostCard, DashboardAnalyticsCard, DashboardProfileCard } from 
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { ProfileSettingsSheet } from "@/components/ProfileSettingsSheet";
 
 // Dashboard page
 export default function DashboardPage() {
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [profileSettingsOpen, setProfileSettingsOpen] = useState(false);
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
   const userFullName = `${firstName} ${lastName}`;
@@ -31,6 +33,11 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleOpenProfileSettings = () => {
+    setShowUserMenu(false);
+    setProfileSettingsOpen(true);
   };
 
   const sidebarItems = [
@@ -239,7 +246,11 @@ export default function DashboardPage() {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Button variant="ghost" className="w-full justify-start text-sm text-gray-300 hover:bg-gray-700 rounded-md py-2">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-sm text-gray-300 hover:bg-gray-700 rounded-md py-2"
+                onClick={handleOpenProfileSettings}
+              >
                 <User size={14} className="mr-2" />
                 Profile
               </Button>
@@ -400,6 +411,15 @@ export default function DashboardPage() {
           <Button className="mt-4" onClick={() => setInviteDialogOpen(false)}>Close</Button>
         </DialogContent>
       </Dialog>
+
+      {/* Profile Settings Sheet */}
+      <ProfileSettingsSheet
+        open={profileSettingsOpen}
+        onOpenChange={setProfileSettingsOpen}
+        onSuccess={() => {
+          // Refresh any profile-dependent data if needed
+        }}
+      />
     </div>
   );
 }

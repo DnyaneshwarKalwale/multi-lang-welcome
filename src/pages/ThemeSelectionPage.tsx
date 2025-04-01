@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { ArrowLeft, ChevronRight, Palette, Check, Moon, Sun } from "lucide-react";
@@ -10,12 +11,13 @@ import { ArrowLeft, ChevronRight, Palette, Check, Moon, Sun } from "lucide-react
 export default function ThemeSelectionPage() {
   const navigate = useNavigate();
   const { nextStep, prevStep, theme, setTheme, getStepProgress } = useOnboarding();
+  const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
   const themes = [
     {
       id: "dark",
-      name: "Dark Mode",
+      name: t('dark'),
       description: "A sleek dark interface that's easy on the eyes and perfect for nighttime use",
       icon: <Moon className="w-8 h-8 text-indigo-400" />,
       fallbackBg: "bg-gradient-to-br from-gray-800 to-gray-900",
@@ -23,7 +25,7 @@ export default function ThemeSelectionPage() {
     },
     {
       id: "light",
-      name: "Light Mode",
+      name: t('light'),
       description: "A clean, bright interface with excellent readability in daylight",
       icon: <Sun className="w-8 h-8 text-amber-400" />,
       fallbackBg: "bg-gradient-to-br from-gray-100 to-white",
@@ -33,12 +35,12 @@ export default function ThemeSelectionPage() {
 
   const handleContinue = () => {
     nextStep();
-    navigate("/onboarding/post-format");
+    navigate("/onboarding/language-selection");
   };
 
   const handlePrev = () => {
     prevStep();
-    navigate("/onboarding/language-selection");
+    navigate("/onboarding/team-selection");
   };
 
   // Animation variants
@@ -105,7 +107,7 @@ export default function ThemeSelectionPage() {
         transition={{ duration: 0.5 }}
       >
         <ArrowLeft size={16} className="mr-2" />
-        Back
+        {t('back')}
       </motion.button>
       
       <motion.div 
@@ -136,7 +138,7 @@ export default function ThemeSelectionPage() {
           >
             <Palette className="w-6 h-6 text-indigo-400" />
           </motion.div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Choose your theme</h1>
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">{t('chooseStyle')}</h1>
         </motion.div>
         
         <motion.p 
@@ -145,7 +147,7 @@ export default function ThemeSelectionPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          Select your preferred visual style for the Scripe platform
+          {t('styleDescription')}
         </motion.p>
 
         <motion.div 

@@ -69,7 +69,7 @@ const allSteps: OnboardingStep[] = [
   "team-workspace",
   "team-invite",
   "theme-selection",
-  "language-selection",
+  "language-selection", 
   "post-format",
   "post-frequency",
   "registration",

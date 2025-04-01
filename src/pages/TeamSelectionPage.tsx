@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { ArrowLeft, ChevronRight, Users, User } from "lucide-react";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 export default function TeamSelectionPage() {
   const navigate = useNavigate();
   const { nextStep, prevStep, workspaceType, setWorkspaceType, getStepProgress } = useOnboarding();
+  const { t } = useLanguage();
   
   const [selectedOption, setSelectedOption] = useState<"personal" | "team" | null>(workspaceType);
   
@@ -22,7 +24,7 @@ export default function TeamSelectionPage() {
       nextStep();
       
       if (selectedOption === "personal") {
-        navigate("/onboarding/post-format");
+        navigate("/onboarding/theme-selection");
       } else {
         navigate("/onboarding/team-workspace");
       }
@@ -31,7 +33,7 @@ export default function TeamSelectionPage() {
 
   const handlePrev = () => {
     prevStep();
-    navigate("/onboarding/language-selection");
+    navigate("/onboarding/welcome");
   };
 
   // Animation variants
@@ -73,7 +75,7 @@ export default function TeamSelectionPage() {
         transition={{ duration: 0.5 }}
       >
         <ArrowLeft size={16} className="mr-2" />
-        Back
+        {t('back')}
       </motion.button>
       
       <motion.div 
@@ -96,7 +98,7 @@ export default function TeamSelectionPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          How do you plan to use Scripe?
+          {t('choosePlan')}
         </motion.h1>
         
         <motion.p 
@@ -104,7 +106,7 @@ export default function TeamSelectionPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          We'll streamline your experience based on how you plan to use the platform
+          {t('setupWorkspace')}
         </motion.p>
 
         <motion.div 
@@ -140,9 +142,9 @@ export default function TeamSelectionPage() {
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-medium mb-3">Personal</h3>
+            <h3 className="text-xl font-medium mb-3">{t('forPersonal')}</h3>
             <p className="text-gray-400 text-sm mb-4">
-              For individuals managing their own content and personal brand. Create and optimize your social media presence.
+              {t('personalDescription')}
             </p>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-center">
@@ -188,9 +190,9 @@ export default function TeamSelectionPage() {
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-medium mb-3">Team</h3>
+            <h3 className="text-xl font-medium mb-3">{t('forTeam')}</h3>
             <p className="text-gray-400 text-sm mb-4">
-              For teams collaborating on content strategy. Invite members, assign roles, and streamline your workflow.
+              {t('teamDescription')}
             </p>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-center">
@@ -221,7 +223,7 @@ export default function TeamSelectionPage() {
               !selectedOption ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <span>Continue</span>
+            <span>{t('continue')}</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
           </ContinueButton>
         </motion.div>

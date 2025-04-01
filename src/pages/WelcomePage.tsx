@@ -3,6 +3,7 @@ import { ScripeIcon } from "@/components/ScripeIcon";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ChevronRight, Twitter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,10 +11,11 @@ import { useNavigate } from "react-router-dom";
 export default function WelcomePage() {
   const { nextStep } = useOnboarding();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleGetStarted = () => {
     nextStep();
-    navigate("/onboarding/language-selection");
+    navigate("/onboarding/team-selection");
   };
 
   return (
@@ -71,7 +73,7 @@ export default function WelcomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          Welcome to Scripe
+          {t('welcomeTitle')}
         </motion.h1>
         
         <motion.div
@@ -80,10 +82,10 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.4 }}
         >
           <p className="text-xl text-gray-300 mb-2">
-            Scripe is the content workspace to share valuable Twitter posts everyday.
+            {t('welcomeSubtitle')}
           </p>
           <p className="text-xl text-gray-300 mb-8">
-            Receive tailored, algorithm-optimized Twitter posts in &lt;5 minutes.
+            {t('welcomeDescription')}
           </p>
         </motion.div>
         
@@ -97,7 +99,7 @@ export default function WelcomePage() {
             onClick={handleGetStarted} 
             className="group mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-4 rounded-full text-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
           >
-            <span>Get started</span>
+            <span>{t('getStarted')}</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
           </ContinueButton>
         </motion.div>

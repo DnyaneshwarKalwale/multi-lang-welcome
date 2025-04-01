@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { ArrowLeft, ChevronRight, LayoutTemplate, Twitter } from "lucide-react";
@@ -10,6 +11,7 @@ import { ArrowLeft, ChevronRight, LayoutTemplate, Twitter } from "lucide-react";
 export default function PostFormatPage() {
   const navigate = useNavigate();
   const { nextStep, prevStep, postFormat, setPostFormat, getStepProgress } = useOnboarding();
+  const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
   const formats = [
@@ -73,7 +75,7 @@ export default function PostFormatPage() {
 
   const handlePrev = () => {
     prevStep();
-    navigate("/onboarding/theme-selection");
+    navigate("/onboarding/language-selection");
   };
 
   // Animation variants
@@ -114,7 +116,7 @@ export default function PostFormatPage() {
         transition={{ duration: 0.5 }}
       >
         <ArrowLeft size={16} className="mr-2" />
-        Back
+        {t('back')}
       </motion.button>
       
       <motion.div 
@@ -139,7 +141,7 @@ export default function PostFormatPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <LayoutTemplate className="w-7 h-7 text-indigo-400" />
-          <h1 className="text-4xl font-bold">Choose your content format</h1>
+          <h1 className="text-4xl font-bold">{t('formatTitle')}</h1>
         </motion.div>
         
         <motion.p 
@@ -148,7 +150,7 @@ export default function PostFormatPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          Select how you want your Twitter content to be structured
+          {t('formatDescription')}
         </motion.p>
 
         <motion.div 
@@ -204,7 +206,7 @@ export default function PostFormatPage() {
               !postFormat ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <span>Continue</span>
+            <span>{t('continue')}</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
           </ContinueButton>
         </motion.div>
@@ -226,7 +228,7 @@ export default function PostFormatPage() {
         >
           <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-indigo-400" />
           <p className="text-indigo-300 text-sm">
-            Connect your Twitter account later to publish content directly from Scripe. Our AI will optimize content based on your selected format.
+            {t('formatDescription')}
           </p>
         </motion.div>
       </motion.div>
