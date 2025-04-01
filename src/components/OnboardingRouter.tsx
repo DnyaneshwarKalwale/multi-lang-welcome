@@ -1,84 +1,46 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import WelcomePage from "@/pages/WelcomePage";
 import TeamSelectionPage from "@/pages/TeamSelectionPage";
+import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
+import TeamInvitePage from "@/pages/TeamInvitePage";
 import ThemeSelectionPage from "@/pages/ThemeSelectionPage";
 import LanguageSelectionPage from "@/pages/LanguageSelectionPage";
-import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
-import PostFrequencyPage from "@/pages/PostFrequencyPage";
 import PostFormatPage from "@/pages/PostFormatPage";
+import PostFrequencyPage from "@/pages/PostFrequencyPage";
 import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
-import PlanSelectionPage from "@/pages/PlanSelectionPage";
-import StyleSelectionPage from "@/pages/StyleSelectionPage";
-import { LoadingScreen } from "./LoadingScreen";
 
-export const OnboardingRouter = () => {
-  const { currentStep, setCurrentStep } = useOnboarding();
-  const { isAuthenticated, loading } = useAuth();
+export function OnboardingRouter() {
+  const { workspaceType, currentStep } = useOnboarding();
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Extract the current path without the '/onboarding/' prefix
-  const currentPath = location.pathname.replace('/onboarding/', '');
-  
-  // Handle direct access to pages during refresh or direct URL access
-  useEffect(() => {
-    // Only run this if currentStep is 'initial' (app just loaded) or on page reload
-    if (currentStep === 'initial' && !loading) {
-      // These are valid onboarding steps
-      const validSteps = [
-        'welcome', 
-        'team-selection', 
-        'team-workspace',
-        'team-invite',
-        'theme-selection', 
-        'language-selection', 
-        'post-format', 
-        'post-frequency', 
-        'registration', 
-        'dashboard'
-      ];
-      
-      // If the current path is a valid step, set it as the current step
-      if (validSteps.includes(currentPath)) {
-        setCurrentStep(currentPath as any);
-      } else if (currentPath === '' || currentPath === 'onboarding') {
-        // Default to welcome page if no specific page is requested
-        navigate('/onboarding/welcome', { replace: true });
+  // Redirect logic for team vs personal workspace
+  React.useEffect(() => {
+    // If on team-workspace or team-invite but not a team workspace, skip
+    if (workspaceType === "personal") {
+      if (location.pathname.includes("team-workspace") || 
+          location.pathname.includes("team-invite")) {
+        navigate("/onboarding/theme-selection");
       }
     }
-  }, [currentPath, currentStep, loading, navigate, setCurrentStep]);
-  
-  if (loading) {
-    return <LoadingScreen />;
-  }
-  
+  }, [workspaceType, location.pathname, navigate]);
+
   return (
     <Routes>
       <Route path="welcome" element={<WelcomePage />} />
       <Route path="team-selection" element={<TeamSelectionPage />} />
+      <Route path="team-workspace" element={<TeamWorkspacePage />} />
+      <Route path="team-invite" element={<TeamInvitePage />} />
       <Route path="theme-selection" element={<ThemeSelectionPage />} />
       <Route path="language-selection" element={<LanguageSelectionPage />} />
-      <Route path="team-workspace" element={<TeamWorkspacePage />} />
       <Route path="post-format" element={<PostFormatPage />} />
       <Route path="post-frequency" element={<PostFrequencyPage />} />
       <Route path="registration" element={<RegistrationPage />} />
-      <Route path="plan-selection" element={<PlanSelectionPage />} />
-      <Route path="style-selection" element={<StyleSelectionPage />} />
-      <Route 
-        path="dashboard" 
-        element={<Navigate to="/dashboard" replace />}
-      />
-      <Route 
-        path="*" 
-        element={
-          <Navigate to={currentStep === 'initial' ? '/onboarding/welcome' : `/onboarding/${currentStep}`} replace />
-        } 
-      />
+      <Route path="dashboard" element={<DashboardPage />} />
+      <Route path="" element={<Navigate to="welcome" replace />} />
     </Routes>
   );
-};
+}

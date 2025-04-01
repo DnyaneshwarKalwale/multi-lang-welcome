@@ -116,7 +116,6 @@ const Index = () => {
         open={isLoginOpen} 
         onOpenChange={setIsLoginOpen}
         onSuccess={handleLoginSuccess}
-        onSwitchToRegister={() => setIsRegisterOpen(true)}
       />
 
       {/* Registration Sheet */}
@@ -124,7 +123,6 @@ const Index = () => {
         open={isRegisterOpen} 
         onOpenChange={setIsRegisterOpen}
         onSuccess={handleRegisterSuccess}
-        onSwitchToLogin={() => setIsLoginOpen(true)}
       />
     </div>
   );

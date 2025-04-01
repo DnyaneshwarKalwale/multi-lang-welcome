@@ -1,3 +1,4 @@
+
 import React from "react";
 import { X, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,9 @@ interface LoginSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  onSwitchToRegister?: () => void;
 }
 
-export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }: LoginSheetProps) {
+export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
@@ -22,14 +22,6 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
     if (onSuccess) onSuccess();
     else navigate("/onboarding/welcome");
     onOpenChange(false);
-  };
-  
-  const handleSwitchToRegister = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onOpenChange(false);
-    if (onSwitchToRegister) {
-      setTimeout(() => onSwitchToRegister(), 100);
-    }
   };
   
   return (
@@ -82,10 +74,6 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
             
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90">Log in</Button>
           </form>
-          
-          <p className="text-center mt-6 text-sm text-gray-400">
-            Don't have an account? <a href="#" className="text-primary hover:underline" onClick={handleSwitchToRegister}>Sign up</a>
-          </p>
         </div>
       </SheetContent>
     </Sheet>

@@ -14,8 +14,7 @@ type OnboardingStep =
   | "post-format" 
   | "post-frequency" 
   | "registration" 
-  | "dashboard"
-  | "initial";
+  | "dashboard";
 
 type WorkspaceType = "team" | "personal" | null;
 type ThemeType = "light" | "dark";
@@ -72,80 +71,22 @@ const allSteps: OnboardingStep[] = [
   "dashboard"
 ];
 
-// Create a key for local storage
-const ONBOARDING_STORAGE_KEY = 'onboarding_state';
-
-// Helper to get the initial state from localStorage
-const getInitialState = () => {
-  try {
-    const saved = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (error) {
-    console.error('Error reading from localStorage:', error);
-  }
-  
-  return {
-    currentStep: "welcome" as OnboardingStep,
-    workspaceType: null as WorkspaceType,
-    workspaceName: "",
-    teamMembers: [] as TeamMember[],
-    theme: "light" as ThemeType,
-    language: "english" as LanguageType,
-    postFormat: null as PostFormat,
-    postFrequency: null as PostFrequency,
-    firstName: "",
-    lastName: "",
-    email: ""
-  };
-};
-
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { setTheme: setGlobalTheme } = useTheme();
   const { setLanguage: setGlobalLanguage } = useLanguage();
   
-  // Initialize state from localStorage if available
-  const initialState = getInitialState();
-  
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(initialState.currentStep);
-  const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(initialState.workspaceType);
-  const [workspaceName, setWorkspaceName] = useState(initialState.workspaceName);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialState.teamMembers);
-  const [theme, setTheme] = useState<ThemeType>(initialState.theme);
-  const [language, setLanguage] = useState<LanguageType>(initialState.language);
-  const [postFormat, setPostFormat] = useState<PostFormat>(initialState.postFormat);
-  const [postFrequency, setPostFrequency] = useState<PostFrequency>(initialState.postFrequency);
-  const [firstName, setFirstName] = useState(initialState.firstName);
-  const [lastName, setLastName] = useState(initialState.lastName);
-  const [email, setEmail] = useState(initialState.email);
-
-  // Save state to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      const stateToSave = {
-        currentStep,
-        workspaceType,
-        workspaceName,
-        teamMembers,
-        theme,
-        language,
-        postFormat,
-        postFrequency,
-        firstName,
-        lastName,
-        email
-      };
-      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(stateToSave));
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-    }
-  }, [
-    currentStep, workspaceType, workspaceName, teamMembers,
-    theme, language, postFormat, postFrequency,
-    firstName, lastName, email
-  ]);
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
+  const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [theme, setTheme] = useState<ThemeType>("light");
+  const [language, setLanguage] = useState<LanguageType>("english");
+  const [postFormat, setPostFormat] = useState<PostFormat>(null);
+  const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
 
   // Get applicable steps based on workspace type
   const getApplicableSteps = (): OnboardingStep[] => {
@@ -162,7 +103,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const steps = getApplicableSteps();
     const currentIndex = steps.indexOf(currentStep);
     return {
-      current: currentIndex !== -1 ? currentIndex : 0,
+      current: currentIndex,
       total: steps.length
     };
   };
@@ -174,7 +115,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
       setCurrentStep(nextStep);
-      navigate(`/onboarding/${nextStep}`, { replace: true });
+      navigate(`/onboarding/${nextStep}`);
     }
   };
 
@@ -185,7 +126,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentIndex > 0) {
       const prevStep = steps[currentIndex - 1];
       setCurrentStep(prevStep);
-      navigate(`/onboarding/${prevStep}`, { replace: true });
+      navigate(`/onboarding/${prevStep}`);
     }
   };
 
