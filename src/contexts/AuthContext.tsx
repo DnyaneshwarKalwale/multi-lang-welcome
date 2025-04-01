@@ -173,15 +173,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Handle onboarding continuation
   const continueOnboarding = (userData: User) => {
+    if (!userData) {
+      console.error("Invalid user data in continueOnboarding");
+      navigate('/');
+      return;
+    }
+
+    console.log("Continuing onboarding for user:", userData);
+    
     if (userData.onboardingCompleted) {
       // If onboarding is complete, go to dashboard with replace:true to prevent back navigation
+      console.log("Onboarding completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     } else {
       // If user has a saved onboarding step, navigate to it
       if (userData.lastOnboardingStep) {
+        console.log(`Continuing from saved step: ${userData.lastOnboardingStep}`);
         navigate(`/onboarding/${userData.lastOnboardingStep}`, { replace: true });
       } else {
         // Otherwise, start from the beginning
+        console.log("Starting onboarding from welcome page");
         navigate('/onboarding/welcome', { replace: true });
       }
     }
@@ -257,8 +268,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isEmailVerified: true, // Google users are always verified
           profilePicture: userData.profileImage || null,
           authMethod: 'google',
-          onboardingCompleted: false,
-          lastOnboardingStep: 'welcome'
+          onboardingCompleted: false, // Ensure onboarding is not marked as completed
+          lastOnboardingStep: 'welcome' // Start at welcome step
         }
       };
       
@@ -267,8 +278,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
       setUser(mockResponse.user as any);
       
-      // Continue onboarding or go to dashboard
-      continueOnboarding(mockResponse.user as any);
+      // Delay navigation to ensure state is updated
+      setTimeout(() => {
+        // Only continue onboarding after a short delay to ensure state is updated
+        console.log("Google auth complete, continuing to onboarding");
+        continueOnboarding(mockResponse.user as any);
+      }, 100);
       
       return;
     } catch (err: any) {
@@ -312,17 +327,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isEmailVerified: true, // Twitter users don't need verification
           profilePicture: userData.profileImage || null,
           authMethod: 'twitter',
-          onboardingCompleted: false,
-          lastOnboardingStep: 'welcome'
+          onboardingCompleted: false, // Ensure onboarding is not marked as completed
+          lastOnboardingStep: 'welcome' // Start at welcome step
         }
       };
       
+      // Store auth token and user data
       localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
+      
+      // Update user state
       setUser(mockResponse.user as any);
       
-      // Continue onboarding or go to dashboard
-      continueOnboarding(mockResponse.user as any);
+      // Delay navigation to ensure state is updated
+      setTimeout(() => {
+        // Only continue onboarding after a short delay to ensure state is updated
+        console.log("Twitter auth complete, continuing to onboarding");
+        continueOnboarding(mockResponse.user as any);
+      }, 100);
       
       return;
     } catch (err: any) {

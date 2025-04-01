@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,19 +20,32 @@ import { LoadingScreen } from "./LoadingScreen";
 
 export const OnboardingRouter = () => {
   const { currentStep, setCurrentStep } = useOnboarding();
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, refreshUser } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [initialized, setInitialized] = useState(false);
   
   // Extract the current path without the '/onboarding/' prefix
   const currentPath = location.pathname.replace('/onboarding/', '');
   
+  // Refresh user data when onboarding router loads
+  useEffect(() => {
+    if (isAuthenticated && !loading && !initialized) {
+      refreshUser().then(() => {
+        setInitialized(true);
+      });
+    } else if (!loading) {
+      setInitialized(true);
+    }
+  }, [isAuthenticated, loading, refreshUser, initialized]);
+  
   // Handle direct access to pages during refresh or direct URL access
   useEffect(() => {
     // Only run this if currentStep is 'initial' (app just loaded) or on page reload
-    if (currentStep === 'initial' && !loading) {
+    if ((currentStep === 'initial' || !currentStep) && !loading && initialized) {
       // Redirect to dashboard if onboarding is already completed
       if (user?.onboardingCompleted) {
+        console.log("User already completed onboarding, redirecting to dashboard");
         navigate('/dashboard', { replace: true });
         return;
       }
@@ -49,41 +62,55 @@ export const OnboardingRouter = () => {
         'post-frequency',
         'extension',
         'content-generation',
-        'registration', 
-        'dashboard'
+        'registration',
+        'plan-selection',
+        'style-selection'
       ];
       
       // If the current path is a valid step, set it as the current step
       if (validSteps.includes(currentPath)) {
+        console.log(`Setting current step to: ${currentPath}`);
         setCurrentStep(currentPath as any);
       } else if (currentPath === '' || currentPath === 'onboarding') {
         // Default to welcome page if no specific page is requested
-        navigate('/onboarding/welcome', { replace: true });
+        const startingPage = user?.lastOnboardingStep || 'welcome';
+        console.log(`No specific page requested, starting from: ${startingPage}`);
+        navigate(`/onboarding/${startingPage}`, { replace: true });
       }
     }
-  }, [currentPath, currentStep, loading, navigate, setCurrentStep, user]);
+  }, [currentPath, currentStep, loading, navigate, setCurrentStep, user, initialized]);
   
   // Redirect completed users to dashboard when they try to access onboarding pages
   useEffect(() => {
-    if (!loading && user?.onboardingCompleted && location.pathname.includes('/onboarding')) {
+    if (!loading && initialized && user?.onboardingCompleted && location.pathname.includes('/onboarding')) {
       console.log("Onboarding already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     }
-  }, [loading, navigate, user, location.pathname]);
+  }, [loading, navigate, user, location.pathname, initialized]);
   
   // Log for debugging
   useEffect(() => {
     console.log("Current step in OnboardingRouter:", currentStep);
     console.log("Current path:", location.pathname);
+    console.log("User:", user);
     console.log("User onboarding completed:", user?.onboardingCompleted);
+    console.log("User last onboarding step:", user?.lastOnboardingStep);
   }, [currentStep, location.pathname, user]);
   
-  if (loading) {
+  // Show loading screen while initializing or checking auth
+  if (loading || !initialized) {
     return <LoadingScreen />;
+  }
+  
+  // If user not authenticated, redirect to login
+  if (!isAuthenticated) {
+    console.log("User not authenticated, redirecting to login");
+    return <Navigate to="/?login=true" replace />;
   }
   
   // If user has completed onboarding, redirect to dashboard
   if (user?.onboardingCompleted) {
+    console.log("User completed onboarding, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -108,7 +135,11 @@ export const OnboardingRouter = () => {
       <Route 
         path="*" 
         element={
-          <Navigate to={currentStep === 'initial' ? '/onboarding/welcome' : `/onboarding/${currentStep}`} replace />
+          <Navigate to={
+            currentStep === 'initial' || !currentStep 
+              ? '/onboarding/welcome' 
+              : `/onboarding/${currentStep}`
+          } replace />
         } 
       />
     </Routes>
