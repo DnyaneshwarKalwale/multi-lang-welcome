@@ -74,7 +74,7 @@ export const OnboardingRouter = () => {
       if (validSteps.includes(currentPath)) {
         console.log(`Setting current step to: ${currentPath}`);
         setCurrentStep(currentPath as any);
-      } else if (currentPath === '' || currentPath === 'onboarding') {
+      } else if (location.pathname === '/onboarding' || location.pathname === '/onboarding/') {
         // Default to welcome page if no specific page is requested
         // If user comes from Google/Twitter auth, ensure we properly handle it
         const startingPage = user?.lastOnboardingStep || 'welcome';
