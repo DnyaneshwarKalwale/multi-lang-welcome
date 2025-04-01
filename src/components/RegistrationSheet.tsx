@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginSheet } from "./LoginSheet";
 import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
 
 interface RegistrationSheetProps {
   open: boolean;
@@ -100,27 +101,30 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gray-900 border-gray-800 p-0 w-full sm:max-w-md">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-black border-gray-800 p-0 w-full sm:max-w-md">
           <motion.div 
-            className="bg-gray-900 p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto"
+            className="bg-gradient-to-b from-gray-900 to-black p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <div className="flex justify-between items-center mb-8">
-              <motion.h2 
-                className="text-2xl font-bold text-white"
+            <div className="flex justify-between items-center mb-6">
+              <motion.div 
+                className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                Create your account
-              </motion.h2>
+                <ScripeIconRounded className="w-10 h-10" />
+                <h2 className="text-2xl font-bold text-white">
+                  Create your account
+                </h2>
+              </motion.div>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={handleClose}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white rounded-full"
               >
-                <X size={20} />
+                <X size={18} />
               </Button>
             </div>
             
@@ -133,11 +137,11 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </motion.div>
             )}
             
-            <div className="space-y-5 mb-7">
+            <div className="space-y-4 mb-7">
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full py-6 flex justify-center gap-2 bg-transparent border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
@@ -149,11 +153,11 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full py-6 flex justify-center gap-2 bg-transparent border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
-                  <Twitter size={20} className="text-[#1DA1F2]" />
+                  <Twitter size={18} className="text-[#1DA1F2]" />
                   <span>Continue with Twitter</span>
                 </Button>
               </motion.div>
@@ -164,7 +168,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 <div className="w-full border-t border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-500 uppercase text-xs tracking-wider">Or continue with email</span>
+                <span className="px-2 bg-black text-gray-500 uppercase text-xs tracking-wider">Or continue with email</span>
               </div>
             </motion.div>
             
@@ -182,7 +186,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                     <Input 
                       id="firstName" 
                       placeholder="Enter your first name" 
-                      className="bg-gray-800 border-gray-700 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
@@ -196,7 +200,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                     <Input 
                       id="lastName" 
                       placeholder="Enter your last name" 
-                      className="bg-gray-800 border-gray-700 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
@@ -212,7 +216,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-800 border-gray-700 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -227,7 +231,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                     id="password" 
                     type="password" 
                     placeholder="Create a secure password (min. 8 characters)" 
-                    className="bg-gray-800 border-gray-700 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     minLength={8}
@@ -239,7 +243,8 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   type="submit" 
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium h-12 transition-all duration-200"
+                  variant="gradient"
+                  className="w-full text-white font-medium h-12 transition-all duration-200"
                   disabled={loading}
                 >
                   {loading ? (
@@ -279,16 +284,14 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <a href="#" className="text-indigo-400 hover:text-indigo-300 underline">Privacy Policy</a>.
             </motion.p>
 
-            {/* Add note about progress saving */}
+            {/* Add note about Twitter integration */}
             <motion.div 
               className="mt-8 flex items-center justify-center px-4 py-3 bg-indigo-900/20 border border-indigo-800/30 rounded-lg"
               variants={itemVariants}
             >
-              <svg className="flex-shrink-0 w-5 h-5 mr-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-indigo-400" />
               <p className="text-sm text-indigo-200">
-                Your progress is automatically saved. You can continue from where you left off next time.
+                Connect your Twitter account to share content directly from Scripe to your audience.
               </p>
             </motion.div>
           </motion.div>

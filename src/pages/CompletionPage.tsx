@@ -1,173 +1,230 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ContinueButton } from "@/components/ContinueButton";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { CheckCircle, Loader2, Share2, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function CompletionPage() {
   const navigate = useNavigate();
+  const { nextStep, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency } = useOnboarding();
   const { user, fetchUser } = useAuth();
-  const [youtubeLink, setYoutubeLink] = useState("");
+  
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
-  const [markedComplete, setMarkedComplete] = useState(false);
-
-  // Mark onboarding as completed when the component mounts
+  const [error, setError] = useState("");
+  
+  // Animation variants for staggered animations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.2,
+        delayChildren: 0.3
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+  
+  // Mark onboarding as complete
   useEffect(() => {
     const markOnboardingComplete = async () => {
-      if (user && !user.onboardingCompleted && !isMarkingComplete && !markedComplete) {
+      if (user) {
+        setIsMarkingComplete(true);
         try {
-          setIsMarkingComplete(true);
-          
-          // Get token from localStorage
-          const token = localStorage.getItem('token');
-          if (!token) {
-            console.error("No auth token found");
-            return;
-          }
-
-          // Make API call to mark onboarding as completed
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          try {
-            await axios.post(
-              `${baseApiUrl}/onboarding/complete`, 
-              {},
-              {
-                headers: { Authorization: `Bearer ${token}` }
-              }
-            );
-            
-            console.log("Onboarding marked as completed");
-          } catch (apiError) {
-            console.error("API call to mark onboarding complete failed:", apiError);
-            // Even if the API call fails, we'll still mark it complete in localStorage
-          }
-          
-          // Save to local state that we've marked it complete
-          setMarkedComplete(true);
-          
-          // Update the user object with the new onboarding status
-          await fetchUser();
-          
-          // Also store in localStorage that we've completed onboarding
+          // Save completed state to localStorage first for immediate effect
           localStorage.setItem('onboardingCompleted', 'true');
-        } catch (error) {
-          console.error("Failed to mark onboarding as completed:", error);
-        } finally {
+          
+          // Get API URL from env or fallback
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          
+          // Update the user's onboarding progress on the server
+          await axios.post(
+            `${baseApiUrl}/users/update-onboarding`, 
+            {
+              onboardingCompleted: true,
+              workspaceType,
+              workspaceName,
+              language,
+              theme,
+              postFormat,
+              postFrequency
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          
+          // Fetch updated user data
+          await fetchUser();
+          setIsMarkingComplete(false);
+        } catch (err) {
+          console.error("Error marking onboarding as complete:", err);
+          setError("Failed to update your profile. Please try again.");
           setIsMarkingComplete(false);
         }
       }
     };
-
+    
     markOnboardingComplete();
-  }, [user, isMarkingComplete, markedComplete, fetchUser]);
-
-  const handleGenerateContent = async () => {
-    // Handle content generation logic
-    if (youtubeLink) {
-      try {
-        // Process YouTube link
-        console.log("Generating content from:", youtubeLink);
-        
-        // Here you would add the API call to generate content from the YouTube link
-        // const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        // await axios.post(`${baseApiUrl}/content/generate`, { youtubeLink });
-      } catch (error) {
-        console.error("Failed to generate content:", error);
-      }
-    }
-    // Force navigation to dashboard, not back to onboarding
-    window.location.href = "/dashboard";
-  };
-
-  const handleUploadFile = () => {
-    // Handle file upload logic
-    console.log("File upload clicked");
-    // Force navigation to dashboard, not back to onboarding
-    window.location.href = "/dashboard";
-  };
-
+  }, [user, workspaceType, workspaceName, language, theme, postFormat, postFrequency, fetchUser]);
+  
   const handleSkip = () => {
-    // Force navigation to dashboard, not back to onboarding
-    window.location.href = "/dashboard";
+    navigate("/dashboard");
+  };
+  
+  const handleGenerateContent = () => {
+    setIsGeneratingContent(true);
+    
+    // Simulate content generation (would connect to real API in production)
+    setTimeout(() => {
+      setIsGeneratingContent(false);
+      navigate("/dashboard");
+    }, 2000);
+  };
+  
+  const handleUploadFiles = () => {
+    setIsUploadingFiles(true);
+    
+    // Simulate file upload (would connect to real API in production)
+    setTimeout(() => {
+      setIsUploadingFiles(false);
+      navigate("/dashboard");
+    }, 2000);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
-      <div className="max-w-2xl w-full mx-auto px-4 py-8 space-y-8">
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            </div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+      </div>
+      
+      <motion.div 
+        className="max-w-3xl w-full text-center space-y-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="flex flex-col items-center" variants={itemVariants}>
+          <div className="p-2 mb-4 rounded-full bg-green-500/20 border border-green-500/30">
+            <CheckCircle className="w-16 h-16 text-green-500" />
           </div>
           <h1 className="text-4xl font-bold flex items-center justify-center gap-2">
-            Onboarding Complete! <span role="img" aria-label="party face">🎉</span>
+            Onboarding Complete!
+            <span role="img" aria-label="celebration">🎉</span>
           </h1>
-          <p className="text-lg text-gray-400 max-w-xl mx-auto">
-            Your setup is finished. Now let's make your content strategy easier with Scripe.
+          <p className="text-gray-300 text-xl mt-4 max-w-xl mx-auto">
+            Your setup is finished. Now let's make your Twitter content strategy easier with Scripe.
           </p>
-        </div>
-
-        <div className="space-y-8 pt-8">
-          <h2 className="text-xl text-center font-medium">
-            Turn any file or YouTube link into personalized content.
-          </h2>
-
-          <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-            <div className="flex-1 flex items-center bg-gray-900 rounded-full overflow-hidden pl-4 pr-2 py-2">
-              <svg className="h-5 w-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M11.983 0a.63.63 0 0 0-.444.186L7.152 4.573a.636.636 0 0 0 0 .9.636.636 0 0 0 .9 0l2.99-2.99v6.485a.634.634 0 0 0 .636.636.634.634 0 0 0 .637-.636V2.482l2.99 2.99a.636.636 0 0 0 .9 0 .636.636 0 0 0 0-.9L12.812.186a.63.63 0 0 0-.396-.182.656.656 0 0 0-.433-.004z"/>
-                <path d="M19.38 9.13a.634.634 0 0 0-.636.636v5.09c0 .702-.571 1.272-1.273 1.272H2.545a1.273 1.273 0 0 1-1.272-1.273v-5.09a.634.634 0 0 0-.637-.636.634.634 0 0 0-.636.637v5.09a2.545 2.545 0 0 0 2.545 2.544h14.926a2.545 2.545 0 0 0 2.545-2.545v-5.09a.634.634 0 0 0-.636-.636z"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Enter YouTube Link"
-                value={youtubeLink}
-                onChange={(e) => setYoutubeLink(e.target.value)}
-                className="flex-1 bg-transparent border-none focus:outline-none text-white"
-              />
-              <Button
-                onClick={handleGenerateContent}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full"
-              >
-                Generate content
-              </Button>
+        </motion.div>
+        
+        <motion.div 
+          className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 max-w-2xl mx-auto"
+          variants={itemVariants}
+        >
+          <h2 className="text-2xl font-bold mb-6">What's next?</h2>
+          
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-800/50 p-4 rounded-lg">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
+                <Twitter className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-medium mb-1">Generate your first Twitter content</h3>
+                <p className="text-sm text-gray-400 mb-3">
+                  Let our AI create personalized Twitter content based on your preferences
+                </p>
+                <Button 
+                  variant="gradient"
+                  rounded="full" 
+                  className="w-full md:w-auto"
+                  onClick={handleGenerateContent}
+                  disabled={isGeneratingContent}
+                >
+                  {isGeneratingContent ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : "Generate content"}
+                </Button>
+              </div>
             </div>
-
-            <div className="flex items-center justify-center">
-              <span className="text-gray-500">or</span>
+            
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-800/50 p-4 rounded-lg">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
+                <Share2 className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-medium mb-1">Connect your accounts</h3>
+                <p className="text-sm text-gray-400 mb-3">
+                  Link your Twitter accounts to publish content directly
+                </p>
+                <Button 
+                  variant="outline"
+                  rounded="full" 
+                  className="w-full md:w-auto"
+                  onClick={handleUploadFiles}
+                  disabled={isUploadingFiles}
+                >
+                  {isUploadingFiles ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : "Connect accounts"}
+                </Button>
+              </div>
             </div>
-
-            <Button
-              onClick={handleUploadFile}
-              variant="outline"
-              className="bg-gray-800 hover:bg-gray-700 text-white border-gray-700 rounded-full"
-            >
-              Upload file
-            </Button>
           </div>
-
-          <div className="text-center pt-4">
-            <button
-              onClick={handleSkip}
-              className="text-gray-500 hover:text-gray-400 text-sm"
-            >
-              Skip for now
-            </button>
-          </div>
-        </div>
-
-        <div className="flex justify-center items-center space-x-2 pt-20">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div 
-              key={i} 
-              className={`rounded-full w-2 h-2 ${i === 7 ? 'bg-blue-500' : 'bg-gray-600'}`} 
-            />
-          ))}
-        </div>
-      </div>
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <ContinueButton 
+            onClick={handleSkip}
+            className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
+          >
+            Go to dashboard
+          </ContinueButton>
+        </motion.div>
+        
+        {isMarkingComplete && (
+          <motion.div 
+            className="text-sm text-gray-500 flex items-center justify-center"
+            variants={itemVariants}
+          >
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Saving your preferences...
+          </motion.div>
+        )}
+        
+        {error && (
+          <motion.div 
+            className="bg-red-900/30 border border-red-900 text-red-200 p-3 rounded-lg"
+            variants={itemVariants}
+          >
+            {error}
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 } 

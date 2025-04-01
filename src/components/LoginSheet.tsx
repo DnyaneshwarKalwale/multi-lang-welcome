@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
 
 interface LoginSheetProps {
   open: boolean;
@@ -123,27 +124,30 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gray-900 border-gray-800 p-0 w-full sm:max-w-md">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-black border-gray-800 p-0 w-full sm:max-w-md">
           <motion.div 
-            className="bg-gray-900 p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto"
+            className="bg-gradient-to-b from-gray-900 to-black p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <div className="flex justify-between items-center mb-8">
-              <motion.h2 
-                className="text-2xl font-bold text-white"
+            <div className="flex justify-between items-center mb-6">
+              <motion.div 
+                className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                Log in to Scripe
-              </motion.h2>
+                <ScripeIconRounded className="w-10 h-10" />
+                <h2 className="text-2xl font-bold text-white">
+                  Log in to Scripe
+                </h2>
+              </motion.div>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={handleClose}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white rounded-full"
               >
-                <X size={20} />
+                <X size={18} />
               </Button>
             </div>
             
@@ -156,11 +160,11 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               </motion.div>
             )}
             
-            <div className="space-y-5 mb-7">
+            <div className="space-y-4 mb-7">
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full py-6 flex justify-center gap-2 bg-transparent border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
@@ -172,11 +176,11 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full py-6 flex justify-center gap-2 bg-transparent border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
-                  <Twitter size={20} className="text-[#1DA1F2]" />
+                  <Twitter size={18} className="text-[#1DA1F2]" />
                   <span>Continue with Twitter</span>
                 </Button>
               </motion.div>
@@ -187,7 +191,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 <div className="w-full border-t border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-500 uppercase text-xs tracking-wider">Or continue with email</span>
+                <span className="px-2 bg-black text-gray-500 uppercase text-xs tracking-wider">Or continue with email</span>
               </div>
             </motion.div>
             
@@ -205,7 +209,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-800 border-gray-700 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -223,7 +227,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="password" 
                     type="password" 
                     placeholder="Enter your password" 
-                    className="bg-gray-800 border-gray-700 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -234,7 +238,8 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   type="submit" 
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium h-12 transition-all duration-200"
+                  variant="gradient"
+                  className="w-full text-white font-medium h-12 transition-all duration-200"
                   disabled={loading}
                 >
                   {loading ? (
