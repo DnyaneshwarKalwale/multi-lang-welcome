@@ -104,15 +104,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', response.token);
       setUser(response.user);
       
-      // Redirect based on onboarding status
-      if (!response.user.onboardingCompleted) {
-        navigate('/onboarding/welcome');
+      // Store onboarding info in localStorage
+      if (response.user.onboardingCompleted) {
+        localStorage.setItem('onboardingCompleted', 'true');
       } else {
-        navigate('/dashboard');
+        // Make sure we don't have stale data
+        localStorage.setItem('onboardingCompleted', 'false');
       }
+      
+      // Don't navigate automatically - let the component handle navigation
+      return response.user;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
       console.error('Login error:', err);
+      throw err;
     } finally {
       setLoading(false);
     }

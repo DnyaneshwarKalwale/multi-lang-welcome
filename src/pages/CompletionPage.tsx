@@ -95,12 +95,18 @@ export default function CompletionPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
       <div className="max-w-2xl w-full mx-auto px-4 py-8 space-y-8">
         <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
           <h1 className="text-4xl font-bold flex items-center justify-center gap-2">
-            You completed your onboarding. <span role="img" aria-label="party face">🥳</span>
+            Onboarding Complete! <span role="img" aria-label="party face">🎉</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-xl mx-auto">
-            Before we jump into your new favorite content workspace,
-            let's generate some content.
+            Your setup is finished. Now let's make your content strategy easier with Scripe.
           </p>
         </div>
 

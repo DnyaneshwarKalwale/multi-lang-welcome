@@ -198,6 +198,14 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             <p className="text-center mt-6 text-xs text-gray-500">
               By continuing, you agree to the <a href="#" className="underline">terms of service</a> and <a href="#" className="underline">privacy policy</a>.
             </p>
+
+            {/* Add note about progress saving */}
+            <p className="text-center mt-4 text-xs text-gray-400">
+              <svg className="inline-block w-4 h-4 mr-1 -mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Your progress is automatically saved. You can continue from where you left off next time.
+            </p>
           </div>
         </SheetContent>
       </Sheet>

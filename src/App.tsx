@@ -24,7 +24,29 @@ const queryClient = new QueryClient();
 function ProtectedOnboardingRoute() {
   const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+  
+  // Check for saved onboarding progress when component mounts
+  useEffect(() => {
+    // Only run this if the user is authenticated and hasn't completed onboarding
+    if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
+      setIsLoadingProgress(true);
+      
+      // Get saved step from localStorage
+      const savedStep = localStorage.getItem('onboardingStep');
+      
+      if (savedStep) {
+        // Redirect to the saved step
+        navigate(`/onboarding/${savedStep}`, { replace: true });
+      } else {
+        // If no saved step, start from the beginning
+        navigate('/onboarding/welcome', { replace: true });
+      }
+      
+      setIsLoadingProgress(false);
+    }
+  }, [isAuthenticated, user, navigate, location.pathname]);
   
   // If still loading user or onboarding progress, show loading spinner
   if (loading || isLoadingProgress) {
