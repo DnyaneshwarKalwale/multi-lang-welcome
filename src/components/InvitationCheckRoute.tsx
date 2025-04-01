@@ -51,8 +51,17 @@ const InvitationCheckRoute = () => {
   }, [isAuthenticated, authLoading]);
 
   if (loading || authLoading) {
-    // You could return a loading spinner here
-    return null;
+    // Show loading spinner
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated, redirect to the homepage
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
   // If user has invitations, redirect to the pending invitations page
