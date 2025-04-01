@@ -10,7 +10,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import LoginPage from "./pages/LoginPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -29,7 +28,6 @@ const App = () => (
                 <Sonner />
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<LoginPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
                   <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
