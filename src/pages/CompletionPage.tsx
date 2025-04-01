@@ -1,16 +1,64 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CompletionPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [youtubeLink, setYoutubeLink] = React.useState("");
+  const [isMarkingComplete, setIsMarkingComplete] = React.useState(false);
 
-  const handleGenerateContent = () => {
+  // Mark onboarding as completed when the component mounts
+  useEffect(() => {
+    const markOnboardingComplete = async () => {
+      if (user && !user.onboardingCompleted && !isMarkingComplete) {
+        try {
+          setIsMarkingComplete(true);
+          
+          // Get token from localStorage
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.error("No auth token found");
+            return;
+          }
+
+          // Make API call to mark onboarding as completed
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          await axios.post(
+            `${baseApiUrl}/onboarding/complete`, 
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          );
+          
+          console.log("Onboarding marked as completed");
+        } catch (error) {
+          console.error("Failed to mark onboarding as completed:", error);
+        } finally {
+          setIsMarkingComplete(false);
+        }
+      }
+    };
+
+    markOnboardingComplete();
+  }, [user, isMarkingComplete]);
+
+  const handleGenerateContent = async () => {
     // Handle content generation logic
     if (youtubeLink) {
-      // Process YouTube link
-      console.log("Generating content from:", youtubeLink);
+      try {
+        // Process YouTube link
+        console.log("Generating content from:", youtubeLink);
+        
+        // Here you would add the API call to generate content from the YouTube link
+        // const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        // await axios.post(`${baseApiUrl}/content/generate`, { youtubeLink });
+      } catch (error) {
+        console.error("Failed to generate content:", error);
+      }
     }
     navigate("/dashboard");
   };

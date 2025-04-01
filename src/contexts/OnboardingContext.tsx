@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import axios from "axios";
 
 // Define types for our context
 type OnboardingStep = 
@@ -14,6 +16,8 @@ type OnboardingStep =
   | "post-format" 
   | "post-frequency" 
   | "registration" 
+  | "extension-install"
+  | "completion"
   | "dashboard";
 
 type WorkspaceType = "team" | "personal" | null;
@@ -53,6 +57,7 @@ interface OnboardingContextType {
   nextStep: () => void;
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
+  saveProgress: () => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -68,6 +73,8 @@ const allSteps: OnboardingStep[] = [
   "post-format",
   "post-frequency",
   "registration",
+  "extension-install",
+  "completion",
   "dashboard"
 ];
 
@@ -75,6 +82,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { setTheme: setGlobalTheme } = useTheme();
   const { setLanguage: setGlobalLanguage } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
   
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
@@ -87,6 +95,85 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load saved onboarding progress when user authenticates
+  useEffect(() => {
+    const loadOnboardingProgress = async () => {
+      if (isAuthenticated && user && !user.onboardingCompleted && !isInitialized) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          const response = await axios.get(`${baseApiUrl}/onboarding`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const data = response.data.data;
+          
+          // Only set the state if we have saved data
+          if (data) {
+            // Set the last step the user was on
+            if (data.currentStep) {
+              setCurrentStep(data.currentStep);
+              navigate(`/onboarding/${data.currentStep}`);
+            }
+            
+            if (data.workspaceType) setWorkspaceType(data.workspaceType);
+            if (data.workspaceName) setWorkspaceName(data.workspaceName);
+            if (data.teamMembers) setTeamMembers(data.teamMembers);
+            if (data.theme) setTheme(data.theme);
+            if (data.language) setLanguage(data.language);
+            if (data.postFormat) setPostFormat(data.postFormat);
+            if (data.postFrequency) setPostFrequency(data.postFrequency);
+            if (data.firstName) setFirstName(data.firstName);
+            if (data.lastName) setLastName(data.lastName);
+            if (data.email) setEmail(data.email);
+          }
+          
+          setIsInitialized(true);
+        } catch (error) {
+          console.error('Failed to load onboarding progress:', error);
+          setIsInitialized(true);
+        }
+      }
+    };
+    
+    loadOnboardingProgress();
+  }, [isAuthenticated, user, navigate, isInitialized]);
+
+  // Save onboarding progress to backend
+  const saveProgress = async () => {
+    if (isAuthenticated && user && !user.onboardingCompleted) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const onboardingData = {
+          currentStep,
+          workspaceType,
+          workspaceName,
+          teamMembers,
+          theme,
+          language,
+          postFormat,
+          postFrequency,
+          firstName,
+          lastName,
+          email
+        };
+        
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+      } catch (error) {
+        console.error('Failed to save onboarding progress:', error);
+      }
+    }
+  };
 
   // Get applicable steps based on workspace type
   const getApplicableSteps = (): OnboardingStep[] => {
@@ -115,6 +202,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
       setCurrentStep(nextStep);
+      saveProgress(); // Save progress when moving to next step
       navigate(`/onboarding/${nextStep}`);
     }
   };
@@ -126,9 +214,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentIndex > 0) {
       const prevStep = steps[currentIndex - 1];
       setCurrentStep(prevStep);
+      saveProgress(); // Save progress when moving to previous step
       navigate(`/onboarding/${prevStep}`);
     }
   };
+
+  // Save progress when current step changes
+  useEffect(() => {
+    if (isInitialized) {
+      saveProgress();
+    }
+  }, [currentStep, isInitialized]);
 
   // Update global theme when onboarding theme changes
   useEffect(() => {
@@ -182,7 +278,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setEmail,
     nextStep,
     prevStep,
-    getStepProgress
+    getStepProgress,
+    saveProgress
   };
 
   return (
