@@ -20,12 +20,12 @@ const Index = () => {
 
   const handleLoginSuccess = () => {
     setIsLoginOpen(false);
-    // Login is handled in the AuthContext which will automatically navigate to the dashboard
+    navigate("/onboarding/welcome");
   };
 
   const handleRegisterSuccess = () => {
     setIsRegisterOpen(false);
-    // Registration is handled in the AuthContext which will navigate to email verification
+    navigate("/onboarding/welcome");
   };
   
   return (

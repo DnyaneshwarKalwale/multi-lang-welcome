@@ -22,18 +22,8 @@ export default function ContentGenerationPage() {
     }
   };
 
-  const handleSkip = async () => {
-    setIsGenerating(true);
-    try {
-      // Mark onboarding as completed in the backend
-      await onboardingApi.completeOnboarding();
-      // Navigate to dashboard and replace the route to prevent going back
-      navigate("/dashboard", { replace: true });
-    } catch (error) {
-      console.error("Error completing onboarding:", error);
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleSkip = () => {
+    completeOnboarding();
   };
 
   const handleGenerate = async () => {

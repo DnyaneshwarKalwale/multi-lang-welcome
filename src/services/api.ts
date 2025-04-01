@@ -174,37 +174,6 @@ export const onboardingApi = {
     const response = await api.put('/onboarding/language', { language });
     return response.data;
   },
-  
-  // Invite team members to workspace
-  inviteTeamMembers: async (invitationData: {
-    workspaceId: string;
-    workspaceName: string;
-    invitedBy: string;
-    inviterName: string;
-    inviterEmail: string;
-    members: Array<{ email: string; role: string }>;
-  }) => {
-    const response = await api.post('/workspace/invite', invitationData);
-    return response.data;
-  },
-  
-  // Get workspace invitations for current user
-  getWorkspaceInvitations: async () => {
-    const response = await api.get('/workspace/invitations');
-    return response.data;
-  },
-  
-  // Accept workspace invitation
-  acceptInvitation: async (invitationId: string) => {
-    const response = await api.post(`/workspace/invitations/${invitationId}/accept`);
-    return response.data;
-  },
-  
-  // Decline workspace invitation
-  declineInvitation: async (invitationId: string) => {
-    const response = await api.post(`/workspace/invitations/${invitationId}/decline`);
-    return response.data;
-  }
 };
 
 export default api; 

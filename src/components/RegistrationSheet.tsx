@@ -18,7 +18,7 @@ interface RegistrationSheetProps {
 export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLogin }: RegistrationSheetProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { register, error, clearError, loading, twitterAuth, googleAuth } = useAuth();
+  const { register, error, clearError, loading, twitterAuth } = useAuth();
   
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -27,36 +27,23 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLog
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Generate a random ID for demonstration purposes
-    const googleId = `google_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Call the direct Google auth function
-    googleAuth({
-      name: "John Doe",
-      googleId,
-      email: `${googleId}@gmail.com`,
-      profileImage: "https://lh3.googleusercontent.com/a/default-user=s400-c"
-    });
-    
-    onOpenChange(false);
-    if (onSuccess) onSuccess();
+    // Redirect to backend Google auth endpoint with the dynamic URL
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // Generate a random ID for demonstration purposes
-    const twitterId = `twitter_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Call the direct Twitter auth function
-    twitterAuth({
-      name: "Jane Smith",
-      twitterId,
-      email: `${twitterId}@twitter.com`,
-      profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
-    });
-    
+    // Redirect to backend Twitter auth endpoint
+    window.location.href = `${baseUrl}/api/auth/twitter`;
     onOpenChange(false);
-    if (onSuccess) onSuccess();
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +115,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLog
             </Button>
           </div>
           
-          <div className="relative">
+          <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-700"></div>
             </div>
@@ -137,7 +124,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLog
             </div>
           </div>
           
-          <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
               <Input 

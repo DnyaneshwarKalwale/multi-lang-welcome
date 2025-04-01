@@ -2,24 +2,18 @@ import React, { useState, useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Users, X, UserPlus, Mail, 
-  UserCircle2, UserCog, UserCircle, Check
+  UserCircle2, UserCog, UserCircle 
 } from "lucide-react";
-import { onboardingApi } from "@/services/api";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function TeamInvitePage() {
   const { workspaceName, teamMembers, setTeamMembers, nextStep, prevStep, getStepProgress } = useOnboarding();
-  const { user } = useAuth();
-  const { toast } = useToast();
   const { current, total } = getStepProgress();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [isSending, setIsSending] = useState(false);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,29 +26,17 @@ export default function TeamInvitePage() {
       return;
     }
 
-    // Split by comma and process each email
-    const emails = newMemberEmail.split(',').map(email => email.trim()).filter(email => email);
-    
-    // Validate each email
-    const invalidEmails = emails.filter(email => !validateEmail(email));
-    if (invalidEmails.length > 0) {
-      setEmailError(`Invalid email format: ${invalidEmails.join(', ')}`);
+    if (!validateEmail(newMemberEmail)) {
+      setEmailError("Please enter a valid email address");
       return;
     }
-    
-    // Check for duplicates
-    const duplicates = emails.filter(email => 
-      teamMembers.some(member => member.email.toLowerCase() === email.toLowerCase())
-    );
-    
-    if (duplicates.length > 0) {
-      setEmailError(`Already added: ${duplicates.join(', ')}`);
+
+    if (teamMembers.some(member => member.email === newMemberEmail)) {
+      setEmailError("This email has already been added");
       return;
     }
-    
-    // Add all valid emails
-    const newMembers = emails.map(email => ({ email, role: "member" }));
-    setTeamMembers([...teamMembers, ...newMembers]);
+
+    setTeamMembers([...teamMembers, { email: newMemberEmail, role: "member" }]);
     setNewMemberEmail("");
     setEmailError("");
   };
@@ -71,41 +53,6 @@ export default function TeamInvitePage() {
           : member
       )
     );
-  };
-  
-  const sendInvitations = async () => {
-    if (!user) return;
-    
-    setIsSending(true);
-    try {
-      // Save invitation in the backend
-      await onboardingApi.inviteTeamMembers({
-        workspaceId: user.id + "-" + workspaceName.toLowerCase().replace(/\s+/g, '-'),
-        workspaceName,
-        invitedBy: user.id,
-        inviterName: `${user.firstName} ${user.lastName}`,
-        inviterEmail: user.email,
-        members: teamMembers
-      });
-      
-      toast({
-        title: "Invitations sent!",
-        description: `${teamMembers.length} member${teamMembers.length === 1 ? '' : 's'} will be notified to join your workspace.`,
-        variant: "default"
-      });
-      
-      // Continue to next step
-      nextStep();
-    } catch (error) {
-      console.error("Error sending invitations:", error);
-      toast({
-        title: "Error sending invitations",
-        description: "Please try again later.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
-    }
   };
 
   return (
@@ -129,7 +76,7 @@ export default function TeamInvitePage() {
                 setNewMemberEmail(e.target.value);
                 if (emailError) setEmailError("");
               }}
-              placeholder="colleague@example.com, teammate@company.com"
+              placeholder="colleague@example.com"
               className="bg-gray-800 border-gray-700 rounded-r-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -150,10 +97,6 @@ export default function TeamInvitePage() {
           {emailError && (
             <p className="text-red-500 text-sm mt-1 mb-4">{emailError}</p>
           )}
-          
-          <p className="text-xs text-gray-500 mt-2">
-            You can add multiple emails separated by commas
-          </p>
 
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-400 mb-4">
@@ -217,36 +160,12 @@ export default function TeamInvitePage() {
           >
             Back
           </Button>
-          
-          {teamMembers.length > 0 ? (
-            <Button 
-              onClick={sendInvitations}
-              className="bg-purple-600 hover:bg-purple-700"
-              disabled={isSending}
-            >
-              {isSending ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Sending invites...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <Mail className="mr-2" size={18} />
-                  Send Invitations
-                </span>
-              )}
-            </Button>
-          ) : (
-            <ContinueButton 
-              onClick={nextStep}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              Skip for now
-            </ContinueButton>
-          )}
+          <ContinueButton 
+            onClick={nextStep}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            Continue
+          </ContinueButton>
         </div>
         
         <ProgressDots total={total} current={current} />

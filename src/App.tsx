@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { InvitationProvider } from "@/contexts/InvitationContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -17,7 +16,6 @@ import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { WorkspaceInvitationDialog } from "@/components/WorkspaceInvitationDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -41,45 +39,40 @@ function AppRoutes() {
   }
 
   return (
-    <>
-      <Routes>
-        {/* Public routes accessible to all */}
-        <Route path="/" element={
-          isAuthenticated && user?.onboardingCompleted ? <Navigate to="/dashboard" replace /> : 
-          isAuthenticated ? <Navigate to="/onboarding/welcome" replace /> : <Index />
-        } />
-        <Route path="/login" element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
-        } />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-        <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+    <Routes>
+      {/* Public routes accessible to all */}
+      <Route path="/" element={
+        isAuthenticated && user?.onboardingCompleted ? <Navigate to="/dashboard" replace /> : 
+        isAuthenticated ? <Navigate to="/onboarding/welcome" replace /> : <Index />
+      } />
+      <Route path="/login" element={
+        isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+      } />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
 
-        {/* Protected routes */}
-        <Route 
-          path="/onboarding/*" 
-          element={
-            <ProtectedRoute requireVerified={false}>
-              <OnboardingRouter />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute requireVerified={true}>
-              <DashboardPage />
-            </ProtectedRoute>
-          } 
-        />
+      {/* Protected routes */}
+      <Route 
+        path="/onboarding/*" 
+        element={
+          <ProtectedRoute requireVerified={false}>
+            <OnboardingRouter />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute requireVerified={true}>
+            <DashboardPage />
+          </ProtectedRoute>
+        } 
+      />
 
-        {/* Catch-all for 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-
-      {/* Workspace invitation dialog shown after login */}
-      {isAuthenticated && <WorkspaceInvitationDialog />}
-    </>
+      {/* Catch-all for 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
@@ -90,13 +83,11 @@ const App = () => (
         <LanguageProvider>
           <AuthProvider>
             <OnboardingProvider>
-              <InvitationProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <AppRoutes />
-                </TooltipProvider>
-              </InvitationProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <AppRoutes />
+              </TooltipProvider>
             </OnboardingProvider>
           </AuthProvider>
         </LanguageProvider>

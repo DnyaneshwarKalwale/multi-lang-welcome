@@ -5,90 +5,15 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { NotificationBell } from "@/components/NotificationBell";
-import { useAuth } from "@/contexts/AuthContext";
-import { LoginSheet } from "@/components/LoginSheet";
-import { RegistrationSheet } from "@/components/RegistrationSheet";
-import { useNavigate } from "react-router-dom";
 
 //dashboard page
 
 export default function DashboardPage() {
   const { firstName, workspaceName, workspaceType } = useOnboarding();
   const { theme, toggleTheme } = useTheme();
-  const { user, isAuthenticated } = useAuth();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const navigate = useNavigate();
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
-
-  const handleLoginSuccess = () => {
-    setIsLoginOpen(false);
-    // Login is handled in the AuthContext which will navigate appropriately
-  };
-
-  const handleRegisterSuccess = () => {
-    setIsRegisterOpen(false);
-    // Registration is handled in the AuthContext
-  };
-
-  // Only render dashboard if authenticated; otherwise show login prompt
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-        <div className="max-w-md text-center p-8">
-          <ScripeLogotype className="mx-auto mb-8" />
-          <h1 className="text-3xl font-semibold mb-4">Sign in to access your dashboard</h1>
-          <p className="text-gray-400 mb-8">Please log in or create an account to view your Scripe dashboard.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => setIsLoginOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-white font-semibold py-6 px-8 rounded-full"
-            >
-              Log in
-            </Button>
-            <Button 
-              onClick={() => setIsRegisterOpen(true)}
-              className="bg-white text-black hover:bg-white/90 font-semibold py-6 px-8 rounded-full"
-            >
-              Sign up
-            </Button>
-            <Button 
-              onClick={() => navigate("/")}
-              variant="ghost" 
-              className="text-white hover:text-white hover:bg-white/10 mt-4 sm:mt-0"
-            >
-              Back to Home
-            </Button>
-          </div>
-        </div>
-
-        {/* Login Sheet */}
-        <LoginSheet 
-          open={isLoginOpen} 
-          onOpenChange={setIsLoginOpen}
-          onSuccess={handleLoginSuccess}
-          onSwitchToRegister={() => {
-            setIsLoginOpen(false);
-            setTimeout(() => setIsRegisterOpen(true), 100);
-          }}
-        />
-
-        {/* Registration Sheet */}
-        <RegistrationSheet 
-          open={isRegisterOpen} 
-          onOpenChange={setIsRegisterOpen}
-          onSuccess={handleRegisterSuccess}
-          onSwitchToLogin={() => {
-            setIsRegisterOpen(false);
-            setTimeout(() => setIsLoginOpen(true), 100);
-          }}
-        />
-      </div>
-    );
-  }
 
   const sidebarItems = [
     { icon: Home, label: "Home" },
@@ -181,19 +106,10 @@ export default function DashboardPage() {
       
       {/* Main content */}
       <div className="flex-1 p-8 overflow-y-auto">
-        <header className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-2xl font-semibold mb-1">
-              Welcome to Scripe, {firstName} <span className="text-yellow-500">👋</span>
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <NotificationBell />
-            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-              {user?.firstName?.charAt(0) || 'U'}
-            </div>
-          </div>
+        <header className="mb-12">
+          <h1 className="text-2xl font-semibold mb-1">
+            Welcome to Scripe, {firstName} <span className="text-yellow-500">👋</span>
+          </h1>
         </header>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
