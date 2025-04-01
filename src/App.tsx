@@ -9,6 +9,7 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
+import InvitationCheckRoute from "@/components/InvitationCheckRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -19,65 +20,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const queryClient = new QueryClient();
-
-// Protected Invitation Check Route
-function InvitationCheckRoute() {
-  const { user, isAuthenticated, loading } = useAuth();
-  const location = useLocation();
-  const [isLoadingInvitations, setIsLoadingInvitations] = useState(false);
-  const [hasInvitations, setHasInvitations] = useState(false);
-  const [invitationsChecked, setInvitationsChecked] = useState(false);
-  
-  // Check if user has skipped invitations
-  const hasSkippedInvitations = localStorage.getItem('skippedInvitations') === 'true';
-  
-  // Check for invitations when a user logs in
-  useEffect(() => {
-    const checkForInvitations = async () => {
-      // Only check if authenticated and not already checked
-      if (isAuthenticated && !invitationsChecked && !hasSkippedInvitations) {
-        try {
-          setIsLoadingInvitations(true);
-          const token = localStorage.getItem('token');
-          if (!token) return;
-          
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          // Check if user has any pending invitations
-          const invitations = response.data.data || [];
-          setHasInvitations(invitations.length > 0);
-        } catch (err) {
-          console.error("Failed to check invitations:", err);
-        } finally {
-          setIsLoadingInvitations(false);
-          setInvitationsChecked(true);
-        }
-      }
-    };
-    
-    checkForInvitations();
-  }, [isAuthenticated, invitationsChecked, hasSkippedInvitations]);
-  
-  // Loading spinner
-  if (loading || isLoadingInvitations) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
-  
-  // If user has pending invitations, show them the invitations page
-  if (isAuthenticated && hasInvitations && !hasSkippedInvitations) {
-    return <PendingInvitationsPage />;
-  }
-  
-  // Otherwise, proceed with normal flow
-  return <ProtectedOnboardingRoute />;
-}
 
 // Protected Onboarding Route Component
 function ProtectedOnboardingRoute() {
@@ -118,8 +60,14 @@ const App = () => (
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
                   <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
-                  <Route path="/onboarding/*" element={<InvitationCheckRoute />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
+                  
+                  {/* Check for invitations first, then redirect to onboarding or dashboard */}
+                  <Route element={<InvitationCheckRoute />}>
+                    <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                  </Route>
+                  
+                  <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
                   <Route path="/" element={<Navigate to="/onboarding/welcome" replace />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

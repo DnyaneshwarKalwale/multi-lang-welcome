@@ -21,6 +21,36 @@ export default function TeamInvitePage() {
   const [emailError, setEmailError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<string[]>([]);
+  const [teamId, setTeamId] = useState<string | null>(null);
+
+  // Fetch user's teams on component mount to see if team already exists
+  useEffect(() => {
+    const fetchUserTeams = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        const response = await axios.get(
+          `${baseApiUrl}/teams`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Find a team with the current workspace name
+        const existingTeam = response.data.data.find(
+          (team: any) => team.name === workspaceName
+        );
+
+        if (existingTeam) {
+          setTeamId(existingTeam._id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch teams:", error);
+      }
+    };
+
+    fetchUserTeams();
+  }, [workspaceName]);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -78,22 +108,49 @@ export default function TeamInvitePage() {
       }
 
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const response = await axios.post(
-        `${baseApiUrl}/teams/invitations`, 
-        {
-          teamName: workspaceName,
-          members: teamMembers
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      
+      // First, create the team if it doesn't exist
+      let currentTeamId = teamId;
+      if (!currentTeamId) {
+        const createTeamResponse = await axios.post(
+          `${baseApiUrl}/teams`,
+          {
+            name: workspaceName,
+            description: `Team workspace for ${workspaceName}`
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        currentTeamId = createTeamResponse.data.data._id;
+        setTeamId(currentTeamId);
+      }
+      
+      // Then, send invitations to team members
+      const formattedInvitations = teamMembers.map(member => ({
+        email: member.email,
+        role: member.role === "admin" ? "admin" : "editor"
+      }));
+      
+      const inviteResponse = await axios.post(
+        `${baseApiUrl}/teams/${currentTeamId}/invitations`,
+        { invitations: formattedInvitations },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Store which emails are now pending invites
-      const invitedEmails = response.data.data.invitedEmails || [];
+      // Get results of invitations
+      const results = inviteResponse.data.data.invitationResults;
+      const successfulInvites = results.filter((result: any) => result.success);
+      
+      // Store successful invites
+      const invitedEmails = successfulInvites.map((result: any) => result.email);
       setPendingInvites(invitedEmails);
 
-      toast.success(`Invitations sent to ${invitedEmails.length} team members`);
+      if (successfulInvites.length > 0) {
+        toast.success(`Invitations sent to ${successfulInvites.length} team members`);
+      } else {
+        toast.info("No new invitations were sent");
+      }
+      
       nextStep();
     } catch (error) {
       console.error("Failed to send invitations:", error);
