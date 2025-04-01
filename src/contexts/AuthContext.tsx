@@ -229,8 +229,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Extract first and last name
       const nameParts = userData.name.split(' ');
-      const firstName = nameParts[0] || 'Google';
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      let firstName = nameParts[0] || 'Google';
+      let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      
+      // If using a generic name like "Google User", generate more realistic default names
+      if (firstName === "Google" && lastName === "User") {
+        const firstNames = ["Chris", "Sam", "Pat", "Robin", "Quinn", "Jordan", "Taylor", "Alex"];
+        const lastNames = ["Wilson", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson"];
+        
+        firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        
+        // Update the email to match the generated name
+        if (userData.email.includes("@gmail.com")) {
+          userData.email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
+        }
+      }
       
       // Create a mock response like we'd get from the API
       const mockResponse = {
@@ -248,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       };
       
+      // Store credentials and update state
       localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
       setUser(mockResponse.user as any);
@@ -255,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Continue onboarding or go to dashboard
       continueOnboarding(mockResponse.user as any);
       
+      return;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Google authentication failed');
       console.error('Google auth error:', err);
@@ -271,10 +287,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Starting Twitter auth with data:", userData);
       
-      // Extract first and last name
+      // Extract first and last name from the name parameter
       const nameParts = userData.name.split(' ');
-      const firstName = nameParts[0] || 'Twitter';
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      let firstName = nameParts[0] || 'Twitter';
+      let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      
+      // If using a generic name like "Twitter User", generate more realistic default names
+      if (firstName === "Twitter" && lastName === "User") {
+        const firstNames = ["Alex", "Jordan", "Taylor", "Casey", "Morgan", "Riley", "Jamie", "Avery"];
+        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia"];
+        
+        firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+      }
       
       // For development, create a mock response
       const mockResponse = {
@@ -283,7 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.twitterId,
           firstName: firstName,
           lastName: lastName,
-          email: userData.email || `twitter_${userData.twitterId}@example.com`,
+          email: userData.email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@twitter.com`,
           isEmailVerified: true, // Twitter users don't need verification
           profilePicture: userData.profileImage || null,
           authMethod: 'twitter',

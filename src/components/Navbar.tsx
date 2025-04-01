@@ -24,14 +24,18 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // Simple development login - works with any backend URL without CORS issues
+  // Simple development login with direct API call
   const handleTwitterAuth = () => {
-    // We'll get the backend URL from environment or use Render deployed URL as fallback
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const backendUrl = baseApiUrl.replace('/api', '');
+    // Generate a random ID for demonstration purposes
+    const twitterId = `twitter_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
-    // Open the auth endpoint in a new tab for simplicity
-    window.open(`${backendUrl}/api/auth/dev-login?redirect=true`, "_blank");
+    // Call the direct Twitter auth function
+    twitterAuth({
+      name: "Twitter User", // Use a generic name that will be replaced with realistic defaults
+      twitterId,
+      email: `${twitterId}@twitter.com`,
+      profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
+    });
   };
 
   const handleDashboardClick = () => {

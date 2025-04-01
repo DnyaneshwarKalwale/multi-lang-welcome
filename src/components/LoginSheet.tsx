@@ -30,7 +30,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
     
     // Call the direct Google auth function
     googleAuth({
-      name: "John Doe",
+      name: "Google User",
       googleId,
       email: `${googleId}@gmail.com`,
       profileImage: "https://lh3.googleusercontent.com/a/default-user=s400-c"
@@ -47,7 +47,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
     
     // Call the direct Twitter auth function
     twitterAuth({
-      name: "Jane Smith",
+      name: "Twitter User",
       twitterId,
       email: `${twitterId}@twitter.com`,
       profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"

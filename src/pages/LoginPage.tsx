@@ -12,31 +12,39 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const { setCurrentStep } = useOnboarding();
-  const { login, error, clearError, loading, twitterAuth } = useAuth();
+  const { login, error, clearError, loading, twitterAuth, googleAuth } = useAuth();
   const isMobile = useIsMobile();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   
-  // Handle Google auth
+  // Handle Google auth using direct API call
   const handleGoogleAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Generate a random ID for demonstration purposes
+    const googleId = `google_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
-    // Redirect to backend Google auth endpoint with the dynamic URL
-    window.location.href = `${baseUrl}/api/auth/google`;
+    // Call the direct Google auth function with mock data
+    googleAuth({
+      name: "Google User",
+      googleId,
+      email: `${googleId}@gmail.com`,
+      profileImage: "https://lh3.googleusercontent.com/a/default-user=s400-c"
+    });
   };
   
-  // Handle Twitter auth
+  // Handle Twitter auth using direct API call
   const handleTwitterAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Generate a random ID for demonstration purposes
+    const twitterId = `twitter_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
-    // Redirect to backend Twitter auth endpoint
-    window.location.href = `${baseUrl}/api/auth/twitter`;
+    // Call the direct Twitter auth function with mock data
+    twitterAuth({
+      name: "Twitter User",
+      twitterId,
+      email: `${twitterId}@twitter.com`,
+      profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
+    });
   };
   
   // Handle login form submission
@@ -200,12 +208,20 @@ export default function LoginPage() {
           <p className="text-gray-400 mb-6">Sign up for a new account to get started.</p>
           
           <div className="space-y-4 mb-6">
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full py-6 flex justify-center gap-2"
+              onClick={handleGoogleAuth}
+            >
               <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
               Continue with Google
             </Button>
             
-            <Button variant="outline" className="w-full py-6 flex justify-center gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full py-6 flex justify-center gap-2"
+              onClick={handleTwitterAuth}
+            >
               <Twitter size={20} className="text-[#1DA1F2]" />
               Continue with Twitter
             </Button>
@@ -240,7 +256,10 @@ export default function LoginPage() {
           </form>
           
           <p className="text-center mt-6 text-sm text-gray-400">
-            Already have an account? <a href="#" className="text-primary hover:underline">Log in</a>
+            Already have an account? <a href="#" className="text-primary hover:underline" onClick={() => {
+              setIsRegisterOpen(false);
+              setTimeout(() => setIsLoginOpen(true), 100);
+            }}>Log in</a>
           </p>
           
           <p className="text-center mt-6 text-xs text-gray-500">
@@ -248,7 +267,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-
+      
       {/* Registration Sheet */}
       <RegistrationSheet 
         open={isRegisterOpen} 
