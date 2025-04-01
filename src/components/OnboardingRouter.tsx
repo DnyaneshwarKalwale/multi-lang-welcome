@@ -14,6 +14,8 @@ import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PlanSelectionPage from "@/pages/PlanSelectionPage";
 import StyleSelectionPage from "@/pages/StyleSelectionPage";
+import ExtensionPage from "@/pages/ExtensionPage";
+import ContentGenerationPage from "@/pages/ContentGenerationPage";
 import { LoadingScreen } from "./LoadingScreen";
 
 export const OnboardingRouter = () => {
@@ -38,7 +40,9 @@ export const OnboardingRouter = () => {
         'theme-selection', 
         'language-selection', 
         'post-format', 
-        'post-frequency', 
+        'post-frequency',
+        'extension',
+        'content-generation',
         'registration', 
         'dashboard'
       ];
@@ -66,6 +70,8 @@ export const OnboardingRouter = () => {
       <Route path="team-workspace" element={<TeamWorkspacePage />} />
       <Route path="post-format" element={<PostFormatPage />} />
       <Route path="post-frequency" element={<PostFrequencyPage />} />
+      <Route path="extension" element={<ExtensionPage />} />
+      <Route path="content-generation" element={<ContentGenerationPage />} />
       <Route path="registration" element={<RegistrationPage />} />
       <Route path="plan-selection" element={<PlanSelectionPage />} />
       <Route path="style-selection" element={<StyleSelectionPage />} />
