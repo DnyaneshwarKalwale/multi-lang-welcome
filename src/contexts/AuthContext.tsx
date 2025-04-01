@@ -243,8 +243,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isEmailVerified: true, // Google users are always verified
           profilePicture: userData.profileImage || null,
           authMethod: 'google',
-          onboardingCompleted: false,
-          lastOnboardingStep: 'welcome'
+          onboardingCompleted: true, // Mark onboarding as completed for social logins
+          lastOnboardingStep: 'dashboard'
         }
       };
       
@@ -252,8 +252,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
       setUser(mockResponse.user as any);
       
-      // Continue onboarding or go to dashboard
-      continueOnboarding(mockResponse.user as any);
+      // Go directly to dashboard
+      navigate('/dashboard', { replace: true });
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back to Scripe!",
+      });
       
     } catch (err: any) {
       setError(err.response?.data?.error || 'Google authentication failed');
@@ -287,8 +292,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isEmailVerified: true, // Twitter users don't need verification
           profilePicture: userData.profileImage || null,
           authMethod: 'twitter',
-          onboardingCompleted: false,
-          lastOnboardingStep: 'welcome'
+          onboardingCompleted: true, // Mark onboarding as completed for social logins
+          lastOnboardingStep: 'dashboard'
         }
       };
       
@@ -296,8 +301,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
       setUser(mockResponse.user as any);
       
-      // Continue onboarding or go to dashboard
-      continueOnboarding(mockResponse.user as any);
+      // Go directly to dashboard
+      navigate('/dashboard', { replace: true });
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back to Scripe!",
+      });
       
       return;
     } catch (err: any) {
