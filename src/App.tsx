@@ -27,7 +27,6 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <Routes>
-                  <Route path="/" element={<Index />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
                   <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />

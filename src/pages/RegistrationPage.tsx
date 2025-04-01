@@ -1,12 +1,18 @@
-
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
 
 export default function RegistrationPage() {
+  const navigate = useNavigate();
   const { firstName, setFirstName, lastName, setLastName, nextStep } = useOnboarding();
+
+  const handleContinue = () => {
+    nextStep();
+    navigate("/onboarding/extension-install");
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
@@ -43,7 +49,7 @@ export default function RegistrationPage() {
         
         <div className="flex justify-center mb-12">
           <ContinueButton 
-            onClick={nextStep}
+            onClick={handleContinue}
             disabled={!firstName.trim() || !lastName.trim()} 
           />
         </div>
