@@ -174,25 +174,35 @@ export const onboardingApi = {
     const response = await api.put('/onboarding/language', { language });
     return response.data;
   },
-};
-
-// Workspace invitation services
-export const workspaceApi = {
-  // Send invitations to multiple email addresses
-  sendInvites: async (emails: string[], role: 'admin' | 'member' = 'member') => {
-    const response = await api.post('/workspace/invite', { emails, role });
+  
+  // Invite team members to workspace
+  inviteTeamMembers: async (invitationData: {
+    workspaceId: string;
+    workspaceName: string;
+    invitedBy: string;
+    inviterName: string;
+    inviterEmail: string;
+    members: Array<{ email: string; role: string }>;
+  }) => {
+    const response = await api.post('/workspace/invite', invitationData);
     return response.data;
   },
   
-  // Get all pending invitations for the current user
-  getMyInvites: async () => {
-    const response = await api.get('/workspace/invites');
+  // Get workspace invitations for current user
+  getWorkspaceInvitations: async () => {
+    const response = await api.get('/workspace/invitations');
     return response.data;
   },
   
-  // Accept or reject an invitation
-  respondToInvite: async (inviteId: string, action: 'accept' | 'reject') => {
-    const response = await api.put(`/workspace/invites/${inviteId}`, { action });
+  // Accept workspace invitation
+  acceptInvitation: async (invitationId: string) => {
+    const response = await api.post(`/workspace/invitations/${invitationId}/accept`);
+    return response.data;
+  },
+  
+  // Decline workspace invitation
+  declineInvitation: async (invitationId: string) => {
+    const response = await api.post(`/workspace/invitations/${invitationId}/decline`);
     return response.data;
   }
 };

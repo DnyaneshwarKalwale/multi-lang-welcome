@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { ScripeLogotype, ScripeIcon } from "@/components/ScripeIcon";
+import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
-import { 
-  Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, 
-  BarChart, BookOpen, MessageSquare, Image, Plus, Loader2,
-  ChevronRight, Users, Settings
-} from "lucide-react";
+import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { NotificationBell } from "@/components/NotificationBell";
-import { useToast } from "@/components/ui/use-toast";
-import { workspaceApi } from '@/services/api';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 
 //dashboard page
@@ -22,305 +15,208 @@ export default function DashboardPage() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteEmails, setInviteEmails] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
 
   const sidebarItems = [
-    { icon: Home, label: "Home", active: true },
+    { icon: Home, label: "Home" },
     { icon: Upload, label: "Uploads" },
     { icon: FileText, label: "Posts" },
     { icon: Lightbulb, label: "Inspiration" },
     { icon: Calendar, label: "Calendar" },
     { icon: BarChart, label: "Analytics" },
-    { icon: Users, label: "Team" },
-    { icon: Settings, label: "Settings" }
   ];
 
   const personalBrandItems = [
-    { icon: BookOpen, label: "Knowledge Base", color: "from-purple-500 to-blue-500" },
-    { icon: MessageSquare, label: "Tone of Voice", color: "from-pink-500 to-purple-500" },
-    { icon: Image, label: "AI Photos", color: "from-blue-500 to-teal-500" },
+    { icon: BookOpen, label: "Knowledge Base" },
+    { icon: MessageSquare, label: "Tone of Voice" },
+    { icon: Image, label: "AI Photos" },
   ];
 
   const cards = [
     {
       title: "Install the Chrome Extension",
-      description: "Quickly save ideas and content from anywhere on the web",
+      description: "Scripe learns from your past LinkedIn profile content",
       buttonText: "Add to Chrome",
       icon: "🔌",
-      color: "from-purple-500 to-blue-400"
     },
     {
-      title: "Define Your Content Strategy",
-      description: "Outline your target audience and content goals",
+      title: "Define Your LinkedIn Value Prop",
+      description: "Outline your target audience and skills",
       buttonText: "Create now",
       icon: "📊",
-      color: "from-pink-500 to-orange-400"
     },
     {
-      title: "Generate your first post",
-      description: "Let AI help you craft the perfect social media content",
+      title: "Create content strategy",
+      description: "Used to personalize your posts and create better analytics",
       buttonText: "Create now",
       icon: "✨",
-      color: "from-blue-500 to-teal-400"
     },
   ];
 
-  // Handle sending invitations
-  const handleSendInvites = async () => {
-    if (!inviteEmails.trim()) {
-      toast({
-        title: "Email required",
-        description: "Please enter at least one email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Parse comma-separated emails
-    const emails = inviteEmails
-      .split(',')
-      .map(email => email.trim())
-      .filter(email => email.length > 0);
-
-    if (emails.length === 0) {
-      toast({
-        title: "Email required",
-        description: "Please enter at least one valid email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await workspaceApi.sendInvites(emails, inviteRole);
-      
-      toast({
-        title: "Invitations sent",
-        description: `${emails.length} invitation${emails.length === 1 ? '' : 's'} sent successfully`,
-        variant: "default"
-      });
-      
-      // Reset form and close dialog
-      setInviteEmails("");
-      setInviteRole("member");
-      setInviteDialogOpen(false);
-    } catch (error) {
-      console.error("Error sending invitations:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send invitations. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <div className="flex h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-black text-white flex">
       {/* Sidebar */}
-      <div className="hidden md:flex flex-col w-64 bg-gray-900 border-r border-gray-800">
-        <div className="p-6">
-          <ScripeLogotype className="text-white" />
+      <div className="w-60 bg-gray-900 p-4 flex flex-col h-screen">
+        <div className="p-2 mb-6">
+          <ScripeLogotype />
         </div>
         
-        <div className="px-3 py-2">
-          {sidebarItems.map((item, index) => (
-            <button 
-              key={index}
-              className={`w-full flex items-center gap-3 px-4 py-3 mb-1 rounded-lg text-left ${
-                index === 0 
-                  ? "bg-gradient-to-r from-purple-600/80 to-purple-600/50 text-white" 
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              }`}
+        <Button variant="default" className="bg-primary hover:bg-primary/90 gap-2 mb-6">
+          <Plus size={16} />
+          Create posts
+        </Button>
+        
+        <div className="space-y-1 mb-8">
+          {sidebarItems.map((item) => (
+            <Button 
+              key={item.label} 
+              variant="ghost" 
+              className="w-full justify-start gap-3 text-gray-400 hover:text-white"
             >
-              <item.icon size={20} />
-              <span>{item.label}</span>
-              {index === 0 && <ChevronRight size={16} className="ml-auto" />}
-            </button>
+              <item.icon size={18} />
+              {item.label}
+            </Button>
           ))}
         </div>
         
-        <div className="mt-auto p-4 border-t border-gray-800">
-          <div className="flex items-center gap-3 px-2 py-1">
+        <div className="border-t border-gray-800 pt-4 mb-2">
+          <p className="text-sm text-gray-500 px-3 mb-2">Personal Brand</p>
+        </div>
+        
+        <div className="space-y-1 mb-auto">
+          {personalBrandItems.map((item) => (
             <Button 
+              key={item.label} 
               variant="ghost" 
-              size="icon" 
-              onClick={toggleTheme}
-              className="text-gray-400 hover:text-white hover:bg-gray-800"
+              className="w-full justify-start gap-3 text-gray-400 hover:text-white"
             >
-              {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+              <item.icon size={18} />
+              {item.label}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="border-t border-gray-800 pt-4">
+          <div className="flex items-center justify-between px-3">
+            <p className="text-sm text-gray-500">Free trial - 15 credits left</p>
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </Button>
           </div>
         </div>
       </div>
       
-      {/* Mobile bottom nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 z-50">
-        <div className="flex justify-around px-2 py-3">
-          {sidebarItems.slice(0, 5).map((item, index) => (
-            <button 
-              key={index}
-              className={`flex flex-col items-center p-1 ${
-                index === 0 ? "text-purple-500" : "text-gray-400"
-              }`}
-            >
-              <item.icon size={20} />
-              <span className="text-xs mt-1">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 border-b border-gray-800 flex items-center justify-between px-6">
-          <div className="flex items-center">
-            <div className="md:hidden">
-              <ScripeIcon size={28} className="text-white" />
-            </div>
+      <div className="flex-1 p-8 overflow-y-auto">
+        <header className="flex justify-between items-center mb-12">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">
+              Welcome to Scripe, {firstName} <span className="text-yellow-500">👋</span>
+            </h1>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-4">
             <NotificationBell />
-            
-            {workspaceType === "team" && (
-              <Button 
-                className="text-sm" 
-                variant="outline"
-                onClick={() => setInviteDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Invite
-              </Button>
-            )}
-            
-            <Avatar className="h-9 w-9 border border-gray-700">
-              <AvatarImage src={user?.profilePicture || ""} />
-              <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
-                {firstName?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+              {user?.firstName?.charAt(0) || 'U'}
+            </div>
           </div>
         </header>
         
-        {/* Main content area */}
-        <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-              <div>
-                <h1 className="text-3xl font-bold">Welcome, {firstName || "User"}</h1>
-                <p className="text-gray-400 mt-1">Let's create some amazing content today</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {cards.map((card, index) => (
+            <div key={index} className="bg-gray-900 rounded-xl p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="text-3xl">{card.icon}</div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => {
+                    if (index === 0) {
+                      setInviteDialogOpen(true);
+                    }
+                  }}
+                >
+                  ...
+                </Button>
               </div>
-              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 mt-4 md:mt-0">
-                <Plus className="h-4 w-4 mr-1" />
-                New Post
+              
+              <h3 className="text-lg font-medium mb-2">{card.title}</h3>
+              <p className="text-gray-400 text-sm mb-6">{card.description}</p>
+              
+              <Button 
+                variant={index === 0 ? "default" : "secondary"} 
+                className={index === 0 ? "bg-primary hover:bg-primary/90 w-full" : "w-full"}
+                onClick={() => {
+                  if (index === 0) {
+                    setInviteDialogOpen(true);
+                  }
+                }}
+              >
+                {card.buttonText}
               </Button>
             </div>
-            
-            <div className="mb-12">
-              <h2 className="text-xl font-bold mb-6 flex items-center">
-                <span className="mr-2">Start creating</span>
-                <div className="h-px bg-gradient-to-r from-purple-600/50 to-transparent flex-1 ml-2"></div>
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cards.map((card, index) => (
-                  <div 
-                    key={index}
-                    className="bg-gray-900 rounded-2xl p-6 border border-gray-800 hover:border-purple-600/40 transition-all relative overflow-hidden group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br opacity-10 group-hover:opacity-15 transition-opacity" style={{backgroundImage: `linear-gradient(to bottom right, ${card.color.split(' ')[1]}, ${card.color.split(' ')[3]})`}}></div>
-                    <div className="text-4xl mb-4">{card.icon}</div>
-                    <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
-                    <p className="text-gray-400 text-sm mb-4">{card.description}</p>
-                    <Button className={`w-full bg-gradient-to-r ${card.color} hover:saturate-150`}>
-                      {card.buttonText}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h2 className="text-xl font-bold mb-6 flex items-center">
-                <span className="mr-2">Build your personal brand</span>
-                <div className="h-px bg-gradient-to-r from-purple-600/50 to-transparent flex-1 ml-2"></div>
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {personalBrandItems.map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center space-x-4 hover:border-purple-600/40 transition-all cursor-pointer group relative overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br opacity-10 group-hover:opacity-15 transition-opacity" style={{backgroundImage: `linear-gradient(to bottom right, ${item.color.split(' ')[1]}, ${item.color.split(' ')[3]})`}}></div>
-                    <div className={`p-3 bg-gradient-to-br ${item.color} rounded-lg`}>
-                      <item.icon className="text-white" size={20} />
-                    </div>
-                    <div className="font-medium">{item.label}</div>
-                    <ChevronRight size={16} className="ml-auto text-gray-500 group-hover:text-white transition-colors" />
-                  </div>
-                ))}
-              </div>
+          ))}
+        </div>
+        
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Recent posts</h2>
+            <div className="flex space-x-2">
+              <Button variant="ghost" size="icon" className="text-gray-400">
+                &lt;
+              </Button>
+              <Button variant="ghost" size="icon" className="text-gray-400">
+                &gt;
+              </Button>
             </div>
           </div>
-        </main>
+          
+          <div className="bg-gray-900 rounded-xl p-8 flex items-center justify-center">
+            <div className="text-center">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-12 w-12 rounded-full mb-4 bg-gray-800 border-gray-700"
+              >
+                <Plus />
+              </Button>
+              <p className="text-gray-400">New post</p>
+            </div>
+          </div>
+        </div>
       </div>
       
-      {/* Team invite dialog */}
+      {/* Invite Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent className="bg-gray-900 text-white border-gray-800">
           <DialogHeader>
-            <DialogTitle>Invite team members</DialogTitle>
+            <DialogTitle>Invite members</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Type or paste email addresses below, separated by commas.
+              Type or paste in emails below, separated by commas.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
+          <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Email addresses</label>
+              <label className="text-sm font-medium">Email addresses</label>
               <textarea 
-                placeholder="colleague@example.com, teammate@example.com" 
-                className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white resize-none focus:border-purple-600 focus:ring-purple-600"
+                placeholder="Type or paste emails" 
+                className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white"
                 rows={3}
-                value={inviteEmails}
-                onChange={(e) => setInviteEmails(e.target.value)}
               />
-              <p className="text-xs text-gray-500 mt-1">Team members will receive an email invitation to join your workspace.</p>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Role</label>
-              <select 
-                className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white focus:border-purple-600 focus:ring-purple-600"
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as "admin" | "member")}
-              >
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
+              <label className="text-sm font-medium">Role</label>
+              <select className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white">
+                <option>Personal Brand</option>
+                <option>Admin</option>
+                <option>Editor</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">Admins can invite others and manage workspace settings.</p>
             </div>
-            <Button 
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 mt-4"
-              onClick={handleSendInvites}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sending invites...
-                </>
-              ) : (
-                "Send invitations"
-              )}
+            <Button className="w-full bg-primary hover:bg-primary/90">
+              Send invite
             </Button>
           </div>
         </DialogContent>

@@ -30,15 +30,14 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
     
     // Call the direct Google auth function
     googleAuth({
-      name: "Google User",
+      name: "John Doe",
       googleId,
       email: `${googleId}@gmail.com`,
       profileImage: "https://lh3.googleusercontent.com/a/default-user=s400-c"
     });
     
-    // Close the login sheet but don't call onSuccess
-    // as the auth function now handles navigation
     onOpenChange(false);
+    if (onSuccess) onSuccess();
   };
   
   // Handle Twitter auth
@@ -48,15 +47,14 @@ export function LoginSheet({ open, onOpenChange, onSuccess, onSwitchToRegister }
     
     // Call the direct Twitter auth function
     twitterAuth({
-      name: "Twitter User",
+      name: "Jane Smith",
       twitterId,
       email: `${twitterId}@twitter.com`,
       profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
     });
     
-    // Close the login sheet but don't call onSuccess
-    // as the auth function now handles navigation
     onOpenChange(false);
+    if (onSuccess) onSuccess();
   };
   
   const handleSubmit = async (e: React.FormEvent) => {

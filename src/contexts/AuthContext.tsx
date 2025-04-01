@@ -173,26 +173,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Handle onboarding continuation
   const continueOnboarding = (userData: User) => {
-    if (!userData) {
-      console.error("Invalid user data in continueOnboarding");
-      navigate('/');
-      return;
-    }
-
-    console.log("Continuing onboarding for user:", userData);
-    
     if (userData.onboardingCompleted) {
       // If onboarding is complete, go to dashboard with replace:true to prevent back navigation
-      console.log("Onboarding completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     } else {
       // If user has a saved onboarding step, navigate to it
       if (userData.lastOnboardingStep) {
-        console.log(`Continuing from saved step: ${userData.lastOnboardingStep}`);
         navigate(`/onboarding/${userData.lastOnboardingStep}`, { replace: true });
       } else {
         // Otherwise, start from the beginning
-        console.log("Starting onboarding from welcome page");
         navigate('/onboarding/welcome', { replace: true });
       }
     }
@@ -240,22 +229,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Extract first and last name
       const nameParts = userData.name.split(' ');
-      let firstName = nameParts[0] || 'Google';
-      let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
-      
-      // If using a generic name like "Google User", generate more realistic default names
-      if (firstName === "Google" && lastName === "User") {
-        const firstNames = ["Chris", "Sam", "Pat", "Robin", "Quinn", "Jordan", "Taylor", "Alex"];
-        const lastNames = ["Wilson", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson"];
-        
-        firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-        lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-        
-        // Update the email to match the generated name
-        if (userData.email.includes("@gmail.com")) {
-          userData.email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`;
-        }
-      }
+      const firstName = nameParts[0] || 'Google';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
       
       // Create a mock response like we'd get from the API
       const mockResponse = {
@@ -268,23 +243,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isEmailVerified: true, // Google users are always verified
           profilePicture: userData.profileImage || null,
           authMethod: 'google',
-          onboardingCompleted: false, // Ensure onboarding is not marked as completed
-          lastOnboardingStep: 'welcome' // Start at welcome step
+          onboardingCompleted: false,
+          lastOnboardingStep: 'welcome'
         }
       };
       
-      // Store credentials and update state - but do this BEFORE navigation
       localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
-      
-      // Update state immediately, not in a timeout
       setUser(mockResponse.user as any);
       
-      // Navigate directly to onboarding welcome page - with replace:true to prevent back navigation loops
-      console.log("Google auth complete, navigating to onboarding welcome");
-      navigate('/onboarding/welcome', { replace: true });
+      // Continue onboarding or go to dashboard
+      continueOnboarding(mockResponse.user as any);
       
-      return;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Google authentication failed');
       console.error('Google auth error:', err);
@@ -301,19 +271,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Starting Twitter auth with data:", userData);
       
-      // Extract first and last name from the name parameter
+      // Extract first and last name
       const nameParts = userData.name.split(' ');
-      let firstName = nameParts[0] || 'Twitter';
-      let lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
-      
-      // If using a generic name like "Twitter User", generate more realistic default names
-      if (firstName === "Twitter" && lastName === "User") {
-        const firstNames = ["Alex", "Jordan", "Taylor", "Casey", "Morgan", "Riley", "Jamie", "Avery"];
-        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia"];
-        
-        firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-        lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      }
+      const firstName = nameParts[0] || 'Twitter';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
       
       // For development, create a mock response
       const mockResponse = {
@@ -322,25 +283,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.twitterId,
           firstName: firstName,
           lastName: lastName,
-          email: userData.email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@twitter.com`,
+          email: userData.email || `twitter_${userData.twitterId}@example.com`,
           isEmailVerified: true, // Twitter users don't need verification
           profilePicture: userData.profileImage || null,
           authMethod: 'twitter',
-          onboardingCompleted: false, // Ensure onboarding is not marked as completed
-          lastOnboardingStep: 'welcome' // Start at welcome step
+          onboardingCompleted: false,
+          lastOnboardingStep: 'welcome'
         }
       };
       
-      // Store auth token and user data - do this BEFORE navigation
       localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
-      
-      // Update user state immediately, not in a timeout
       setUser(mockResponse.user as any);
       
-      // Navigate directly to onboarding welcome page - with replace:true to prevent back navigation loops
-      console.log("Twitter auth complete, navigating to onboarding welcome");
-      navigate('/onboarding/welcome', { replace: true });
+      // Continue onboarding or go to dashboard
+      continueOnboarding(mockResponse.user as any);
       
       return;
     } catch (err: any) {

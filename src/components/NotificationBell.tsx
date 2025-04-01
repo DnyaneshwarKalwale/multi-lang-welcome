@@ -1,202 +1,110 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from '@/components/ui/popover';
-import { Bell, Check, X, Users, Loader2 } from 'lucide-react';
-import { workspaceApi } from '@/services/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
-
-interface WorkspaceInvite {
-  _id: string;
-  workspaceName: string;
-  sender: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  role: 'admin' | 'member';
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: string;
-}
+import { useInvitations } from '@/contexts/InvitationContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { format } from 'date-fns';
 
 export function NotificationBell() {
-  const [invites, setInvites] = useState<WorkspaceInvite[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [processing, setProcessing] = useState<string | null>(null);
-  const { user, refreshUser } = useAuth();
-  const { toast } = useToast();
+  const { invitations, loading, hasUnreadInvitations, markAllRead, acceptInvitation, declineInvitation } = useInvitations();
   const [open, setOpen] = useState(false);
   
-  // Get all invites for the current user
-  const fetchInvites = async () => {
-    // Don't fetch if user is not authenticated
-    if (!user?.email) {
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const response = await workspaceApi.getMyInvites();
-      if (response.success && response.data) {
-        setInvites(response.data);
-      }
-    } catch (err) {
-      console.error('Error fetching workspace invites:', err);
-      // Only show error if it's not a 404 (which is expected when no invites exist)
-      if (err instanceof Error && !err.message.includes('404')) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load workspace invitations. Please try again later.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setLoading(false);
+  // Filter to only show pending invitations
+  const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      markAllRead();
     }
   };
-  
-  // Fetch invitations when the component mounts or when popover opens
-  useEffect(() => {
-    if (open && user?.email) {
-      fetchInvites();
-    }
-  }, [open, user]);
-  
-  // Initial fetch
-  useEffect(() => {
-    if (user?.email) {
-      fetchInvites();
-    }
-  }, [user]);
-  
-  const handleInviteResponse = async (inviteId: string, action: 'accept' | 'reject') => {
-    if (!user?.email) {
-      toast({
-        title: 'Authentication required',
-        description: 'Please log in to respond to invitations.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
-    setProcessing(inviteId);
-    try {
-      await workspaceApi.respondToInvite(inviteId, action);
-      
-      // Update the local state to remove the processed invite
-      setInvites(invites.filter(invite => invite._id !== inviteId));
-      
-      toast({
-        title: action === 'accept' ? 'Invitation accepted' : 'Invitation declined',
-        description: action === 'accept' 
-          ? 'You have successfully joined the workspace.' 
-          : 'You have declined the workspace invitation.',
-        variant: action === 'accept' ? 'default' : 'destructive',
-      });
-      
-      // If accepting, refresh the user to get updated workspace info
-      if (action === 'accept') {
-        await refreshUser();
-      }
-      
-    } catch (err) {
-      console.error(`Error ${action}ing invitation:`, err);
-      toast({
-        title: 'Error',
-        description: `Failed to ${action} the invitation. Please try again.`,
-        variant: 'destructive',
-      });
-    } finally {
-      setProcessing(null);
-    }
+  const handleAccept = async (invitationId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    await acceptInvitation(invitationId);
   };
-  
-  // Don't render anything if user is not authenticated
-  if (!user?.email) return null;
-  
+
+  const handleDecline = async (invitationId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    await declineInvitation(invitationId);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative text-gray-400 hover:text-white hover:bg-gray-800"
-        >
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
           <Bell size={20} />
-          {invites.length > 0 && (
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+          {hasUnreadInvitations && (
+            <span className="absolute top-1 right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
           )}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent 
-        align="end" 
-        className="w-80 bg-gray-900 text-white border-gray-800 p-0"
-      >
-        <div className="p-3 border-b border-gray-800">
-          <h3 className="font-medium">Notifications</h3>
-        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-80" align="end">
+        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
         {loading ? (
-          <div className="flex items-center justify-center p-4">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          <div className="flex justify-center items-center py-4">
+            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary"></div>
           </div>
-        ) : invites.length === 0 ? (
-          <div className="p-4 text-center text-gray-400 text-sm">
-            No notifications
+        ) : pendingInvitations.length === 0 ? (
+          <div className="text-center py-4 text-sm text-gray-500">
+            No new notifications
           </div>
         ) : (
-          <div className="max-h-96 overflow-y-auto divide-y divide-gray-800">
-            {invites.map((invite) => (
-              <div key={invite._id} className="p-3 hover:bg-gray-800/50">
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-purple-600/20 rounded-lg">
-                    <Users className="text-purple-500" size={16} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium">Workspace Invitation</h4>
-                    <p className="text-xs text-gray-400">
-                      You've been invited to join <span className="text-white">{invite.workspaceName}</span> by {invite.sender.firstName}
-                    </p>
-                    <div className="flex gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs rounded"
-                        onClick={() => handleInviteResponse(invite._id, 'accept')}
-                        disabled={!!processing}
-                      >
-                        {processing === invite._id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Check className="h-3 w-3 mr-1" />
-                        )}
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-gray-700 text-gray-400 h-7 text-xs rounded"
-                        onClick={() => handleInviteResponse(invite._id, 'reject')}
-                        disabled={!!processing}
-                      >
-                        {processing === invite._id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <X className="h-3 w-3 mr-1" />
-                        )}
-                        Decline
-                      </Button>
+          <DropdownMenuGroup>
+            {pendingInvitations.map((invitation) => (
+              <DropdownMenuItem key={invitation.id} className="py-2 px-3">
+                <div className="flex flex-col w-full">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium text-sm">{invitation.workspaceName}</h4>
+                      <p className="text-muted-foreground text-xs">
+                        Invited by {invitation.inviterName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {format(new Date(invitation.createdAt), 'MMM d, yyyy')}
+                      </p>
                     </div>
+                    <span className="bg-primary/20 text-primary text-xs px-2 py-0.5 rounded">
+                      {invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2 mt-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 px-2 text-xs"
+                      onClick={(e) => handleDecline(invitation.id, e)}
+                    >
+                      Decline
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="h-7 px-2 text-xs"
+                      onClick={(e) => handleAccept(invitation.id, e)}
+                    >
+                      Accept
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </DropdownMenuItem>
             ))}
-          </div>
+          </DropdownMenuGroup>
         )}
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 } 

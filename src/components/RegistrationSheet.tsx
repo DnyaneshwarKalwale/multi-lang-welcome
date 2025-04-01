@@ -32,7 +32,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLog
     
     // Call the direct Google auth function
     googleAuth({
-      name: "Google User",
+      name: "John Doe",
       googleId,
       email: `${googleId}@gmail.com`,
       profileImage: "https://lh3.googleusercontent.com/a/default-user=s400-c"
@@ -49,7 +49,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLog
     
     // Call the direct Twitter auth function
     twitterAuth({
-      name: "Twitter User",
+      name: "Jane Smith",
       twitterId,
       email: `${twitterId}@twitter.com`,
       profileImage: "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png"
