@@ -10,7 +10,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import LoginPage from "./pages/LoginPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -46,7 +45,10 @@ function AppRoutes() {
         isAuthenticated ? <Navigate to="/onboarding/welcome" replace /> : <Index />
       } />
       <Route path="/login" element={
-        isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+        isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/?login=true" replace />
+      } />
+      <Route path="/register" element={
+        isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/?register=true" replace />
       } />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
