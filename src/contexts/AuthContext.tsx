@@ -24,7 +24,6 @@ interface AuthContextType {
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
-  googleAuth: (userData: { name: string; googleId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   refreshUser: () => Promise<User | null>;
@@ -173,10 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Handle onboarding continuation
   const continueOnboarding = (userData: User) => {
-    if (userData.onboardingCompleted) {
-      // If onboarding is complete, go to dashboard with replace:true to prevent back navigation
-      navigate('/dashboard', { replace: true });
-    } else {
+    if (!userData.onboardingCompleted) {
       // If user has a saved onboarding step, navigate to it
       if (userData.lastOnboardingStep) {
         navigate(`/onboarding/${userData.lastOnboardingStep}`, { replace: true });
@@ -184,6 +180,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Otherwise, start from the beginning
         navigate('/onboarding/welcome', { replace: true });
       }
+    } else {
+      // If onboarding is complete, go to dashboard
+      navigate('/dashboard', { replace: true });
     }
   };
 
@@ -219,55 +218,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Google auth direct method
-  const googleAuth = async (userData: { name: string; googleId: string; email: string; profileImage?: string }) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log("Starting Google auth with data:", userData);
-      
-      // Extract first and last name
-      const nameParts = userData.name.split(' ');
-      const firstName = nameParts[0] || 'Google';
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
-      
-      // Create a mock response like we'd get from the API
-      const mockResponse = {
-        token: `mock_google_token_${Date.now()}`,
-        user: {
-          id: userData.googleId,
-          firstName: firstName,
-          lastName: lastName,
-          email: userData.email,
-          isEmailVerified: true, // Google users are always verified
-          profilePicture: userData.profileImage || null,
-          authMethod: 'google',
-          onboardingCompleted: true, // Mark onboarding as completed for social logins
-          lastOnboardingStep: 'dashboard'
-        }
-      };
-      
-      localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
-      setUser(mockResponse.user as any);
-      
-      // Go directly to dashboard
-      navigate('/dashboard', { replace: true });
-      
-      toast({
-        title: "Login successful",
-        description: "Welcome back to Scripe!",
-      });
-      
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Google authentication failed');
-      console.error('Google auth error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Twitter auth (for development without OAuth)
   const twitterAuth = async (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => {
     try {
@@ -276,40 +226,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Starting Twitter auth with data:", userData);
       
-      // Extract first and last name
+      // Split name for first/last name
       const nameParts = userData.name.split(' ');
-      const firstName = nameParts[0] || 'Twitter';
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+      const firstName = nameParts[0] || 'User';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
       
-      // For development, create a mock response
-      const mockResponse = {
-        token: `mock_twitter_token_${Date.now()}`,
-        user: {
-          id: userData.twitterId,
-          firstName: firstName,
-          lastName: lastName,
-          email: userData.email || `twitter_${userData.twitterId}@example.com`,
-          isEmailVerified: true, // Twitter users don't need verification
-          profilePicture: userData.profileImage || null,
-          authMethod: 'twitter',
-          onboardingCompleted: true, // Mark onboarding as completed for social logins
-          lastOnboardingStep: 'dashboard'
+      // Store social profile data temporarily in localStorage to populate registration form
+      localStorage.setItem('social_profile', JSON.stringify({
+        firstName,
+        lastName,
+        email: userData.email || '',
+        profileImage: userData.profileImage || '',
+        authMethod: 'twitter'
+      }));
+      
+      // Try the direct API approach first
+      try {
+        const response = await authApi.twitterAuth(userData);
+        
+        localStorage.setItem(AUTH_TOKEN_KEY, response.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user));
+        setUser(response.user);
+        
+        // Continue onboarding or go to dashboard
+        continueOnboarding(response.user);
+        
+        return;
+      } catch (apiErr: any) {
+        console.log("API approach failed, trying browser redirect:", apiErr);
+        
+        // If CORS error, try browser redirect approach instead
+        if (apiErr.message && apiErr.message.includes('Network Error')) {
+          // Use environment variable or fallback to Render URL
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          const baseUrl = baseApiUrl.replace('/api', '');
+          
+          // Build URL parameters properly
+          const params = new URLSearchParams();
+          params.append('name', userData.name);
+          params.append('twitterId', userData.twitterId);
+          
+          if (userData.email) {
+            params.append('email', userData.email);
+          }
+          
+          if (userData.profileImage) {
+            params.append('profileImage', userData.profileImage);
+          }
+          
+          // Redirect browser to the auth endpoint
+          window.location.href = `${baseUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
+          return;
         }
-      };
-      
-      localStorage.setItem(AUTH_TOKEN_KEY, mockResponse.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockResponse.user));
-      setUser(mockResponse.user as any);
-      
-      // Go directly to dashboard
-      navigate('/dashboard', { replace: true });
-      
-      toast({
-        title: "Login successful",
-        description: "Welcome back to Scripe!",
-      });
-      
-      return;
+        
+        // If not a CORS error, rethrow
+        throw apiErr;
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Twitter authentication failed');
       console.error('Twitter auth error:', err);
@@ -341,7 +313,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         login,
         twitterAuth,
-        googleAuth,
         logout,
         clearError,
         refreshUser,

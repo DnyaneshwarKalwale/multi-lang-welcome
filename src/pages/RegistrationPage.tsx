@@ -2,26 +2,28 @@ import React, { useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 
 export default function RegistrationPage() {
-  const { firstName, setFirstName, lastName, setLastName, nextStep } = useOnboarding();
-  const { user } = useAuth();
-  
-  // Populate name fields from authenticated user if available
+  const { firstName, setFirstName, lastName, setLastName, nextStep, setEmail } = useOnboarding();
+
   useEffect(() => {
-    if (user) {
-      // If the names are empty, populate them from the user context
-      if (!firstName && user.firstName) {
-        setFirstName(user.firstName);
-      }
-      
-      if (!lastName && user.lastName) {
-        setLastName(user.lastName);
+    // Check if we have social profile data from OAuth
+    const socialProfileStr = localStorage.getItem('social_profile');
+    if (socialProfileStr) {
+      try {
+        const socialProfile = JSON.parse(socialProfileStr);
+        // Populate form with available social data
+        if (socialProfile.firstName) setFirstName(socialProfile.firstName);
+        if (socialProfile.lastName) setLastName(socialProfile.lastName);
+        if (socialProfile.email) setEmail(socialProfile.email);
+        // Clear after using
+        localStorage.removeItem('social_profile');
+      } catch (e) {
+        console.error('Error parsing social profile data:', e);
       }
     }
-  }, [user, firstName, lastName, setFirstName, setLastName]);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
