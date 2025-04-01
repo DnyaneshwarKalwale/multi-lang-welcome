@@ -28,7 +28,6 @@ interface AuthContextType {
   clearError: () => void;
   refreshUser: () => Promise<User | null>;
   checkEmailExists: (email: string) => Promise<boolean>;
-  updateUser: (userData: Partial<User>) => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -290,35 +289,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
   };
 
-  // Update user data
-  const updateUser = async (userData: Partial<User>): Promise<User | null> => {
-    if (!user) {
-      console.error('Cannot update user: No active user session');
-      return null;
-    }
-    
-    try {
-      setLoading(true);
-      
-      // Make API call to update user data
-      const updatedUser = await authApi.updateUser(userData);
-      
-      // Update local storage
-      const mergedUser = { ...user, ...updatedUser };
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mergedUser));
-      
-      // Update state
-      setUser(mergedUser);
-      
-      return mergedUser;
-    } catch (error) {
-      console.error('Failed to update user data:', error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -333,7 +303,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearError,
         refreshUser,
         checkEmailExists,
-        updateUser,
       }}
     >
       {children}

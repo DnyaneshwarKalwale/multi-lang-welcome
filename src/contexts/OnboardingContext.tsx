@@ -15,10 +15,6 @@ type OnboardingStep =
   | "language-selection" 
   | "post-format" 
   | "post-frequency" 
-  | "extension-download"
-  | "profile-input"
-  | "completed"
-  | "content-generation"
   | "registration" 
   | "dashboard"
   | "initial";
@@ -61,7 +57,6 @@ interface OnboardingContextType {
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
   saveOnboardingProgress: () => void;
-  setOnboardingCompleted: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -76,10 +71,6 @@ const allSteps: OnboardingStep[] = [
   "language-selection",
   "post-format",
   "post-frequency",
-  "extension-download",
-  "profile-input",
-  "completed",
-  "content-generation",
   "registration",
   "dashboard"
 ];
@@ -271,45 +262,19 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [workspaceType, currentStep]);
 
-  // If user profile has a last onboarding step or has completed onboarding, handle accordingly
+  // If user profile has a last onboarding step, go there
   useEffect(() => {
-    if (user && currentStep === 'initial') {
-      // If onboarding is completed, navigate directly to dashboard
-      if (user.onboardingCompleted) {
-        console.log('Onboarding already completed, redirecting to dashboard');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
+    if (user && user.lastOnboardingStep && currentStep === 'initial') {
+      const lastStep = user.lastOnboardingStep as OnboardingStep;
       
-      // Otherwise, resume from last step if available
-      if (user.lastOnboardingStep) {
-        const lastStep = user.lastOnboardingStep as OnboardingStep;
-        
-        // Verify this is a valid step
-        if (allSteps.includes(lastStep)) {
-          console.log('Resuming onboarding from:', lastStep);
-          setCurrentStep(lastStep);
-          navigate(`/onboarding/${lastStep}`, { replace: true });
-        }
+      // Verify this is a valid step
+      if (allSteps.includes(lastStep)) {
+        console.log('Resuming onboarding from:', lastStep);
+        setCurrentStep(lastStep);
+        navigate(`/onboarding/${lastStep}`, { replace: true });
       }
     }
   }, [user, currentStep, navigate]);
-
-  const setOnboardingCompleted = () => {
-    try {
-      // First update localStorage
-      const stateToSave = {
-        ...getInitialState(),
-        currentStep: "dashboard" as OnboardingStep
-      };
-      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(stateToSave));
-      
-      // Then update state
-      setCurrentStep("dashboard");
-    } catch (error) {
-      console.error('Error marking onboarding as completed:', error);
-    }
-  };
 
   const value = {
     currentStep,
@@ -337,8 +302,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     nextStep,
     prevStep,
     getStepProgress,
-    saveOnboardingProgress,
-    setOnboardingCompleted
+    saveOnboardingProgress
   };
 
   return (
