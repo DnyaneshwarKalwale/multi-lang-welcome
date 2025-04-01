@@ -21,16 +21,22 @@ export default function LoginPage() {
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Use the actual backend URL
-    const backendUrl = 'https://backend-scripe.onrender.com';
-    window.location.href = `${backendUrl}/api/auth/google`;
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Redirect to backend Google auth endpoint with the dynamic URL
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // Use the actual backend URL
-    const backendUrl = 'https://backend-scripe.onrender.com';
-    window.location.href = `${backendUrl}/api/auth/twitter`;
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Redirect to backend Twitter auth endpoint
+    window.location.href = `${baseUrl}/api/auth/twitter`;
   };
   
   // Handle login form submission
