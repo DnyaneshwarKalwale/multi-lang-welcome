@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function ContentGenerationPage() {
-  const { prevStep, getStepProgress, firstName, saveOnboardingProgress } = useOnboarding();
+  const { prevStep, getStepProgress, firstName, saveOnboardingProgress, setOnboardingCompleted } = useOnboarding();
   const { current, total } = getStepProgress();
   const [skipDialogOpen, setSkipDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -43,16 +43,16 @@ export default function ContentGenerationPage() {
 
   const completeOnboarding = async () => {
     try {
-      // Mark onboarding as completed
+      // Mark onboarding as completed using updateUser
       if (updateUser) {
         await updateUser({ 
           onboardingCompleted: true,
           lastOnboardingStep: 'dashboard'
         });
+        
+        // Update local onboarding context
+        setOnboardingCompleted();
       }
-      
-      // Also update the onboarding context
-      await saveOnboardingProgress();
       
       // Navigate to dashboard
       navigate('/dashboard', { replace: true });

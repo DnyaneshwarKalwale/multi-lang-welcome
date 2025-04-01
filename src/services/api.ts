@@ -151,12 +151,6 @@ export const authApi = {
 
 // Onboarding services
 export const onboardingApi = {
-  // Complete onboarding 
-  completeOnboarding: async () => {
-    const response = await api.post('/onboarding/complete');
-    return response.data;
-  },
-  
   // Save onboarding data
   saveOnboarding: async (onboardingData: any) => {
     const response = await api.post('/onboarding', onboardingData);

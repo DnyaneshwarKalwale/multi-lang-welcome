@@ -61,6 +61,7 @@ interface OnboardingContextType {
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
   saveOnboardingProgress: () => void;
+  setOnboardingCompleted: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -294,6 +295,22 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [user, currentStep, navigate]);
 
+  const setOnboardingCompleted = () => {
+    try {
+      // First update localStorage
+      const stateToSave = {
+        ...getInitialState(),
+        currentStep: "dashboard" as OnboardingStep
+      };
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(stateToSave));
+      
+      // Then update state
+      setCurrentStep("dashboard");
+    } catch (error) {
+      console.error('Error marking onboarding as completed:', error);
+    }
+  };
+
   const value = {
     currentStep,
     setCurrentStep,
@@ -320,7 +337,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     nextStep,
     prevStep,
     getStepProgress,
-    saveOnboardingProgress
+    saveOnboardingProgress,
+    setOnboardingCompleted
   };
 
   return (
