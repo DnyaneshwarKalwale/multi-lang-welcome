@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 //dashboard page
 
@@ -183,9 +182,11 @@ export default function DashboardPage() {
         <DialogContent className="bg-gray-900 text-white border-gray-800">
           <DialogHeader>
             <DialogTitle>Invite members</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Type or paste in emails below, separated by commas.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-gray-400">Type or paste in emails below, separated by commas.</p>
             <div>
               <label className="text-sm font-medium">Email addresses</label>
               <textarea 
