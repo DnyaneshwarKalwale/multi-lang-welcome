@@ -60,7 +60,7 @@ export default function OnboardingCompletedPage() {
             <span>You completed your onboarding!</span>
           </h1>
           <p className="text-lg text-gray-400 mb-10 max-w-2xl mx-auto">
-            Before we jump into your new favorite content workspace, let's generate some content.
+            Before we jump into your new favorite content workspace, let's move to the final step to generate some content.
           </p>
         </div>
         
@@ -69,7 +69,7 @@ export default function OnboardingCompletedPage() {
             onClick={handleComplete}
             className="bg-purple-600 hover:bg-purple-700 flex items-center px-8 py-6 text-lg"
           >
-            Let's Create Some Content
+            Proceed to Final Step
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
         </div>

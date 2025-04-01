@@ -6,11 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User } from "lucide-react";
+import { onboardingApi } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfileInputPage() {
-  const { firstName, setFirstName, lastName, setLastName, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { firstName, setFirstName, lastName, setLastName, nextStep, prevStep, getStepProgress, saveOnboardingProgress } = useOnboarding();
   const { current, total } = getStepProgress();
   const [errors, setErrors] = useState({ firstName: "", lastName: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { updateUser } = useAuth();
 
   const validateForm = () => {
     const newErrors = { firstName: "", lastName: "" };
@@ -30,9 +34,31 @@ export default function ProfileInputPage() {
     return isValid;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateForm()) {
-      nextStep();
+      try {
+        setIsSubmitting(true);
+        
+        // Save profile information to backend
+        await onboardingApi.saveProfileInfo({ 
+          firstName, 
+          lastName 
+        });
+        
+        // Also update the user profile if possible
+        if (updateUser) {
+          await updateUser({ firstName, lastName });
+        }
+        
+        // Proceed to next step
+        nextStep();
+      } catch (error) {
+        console.error('Error saving profile information:', error);
+        // Continue anyway to ensure the user isn't blocked
+        nextStep();
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -89,7 +115,8 @@ export default function ProfileInputPage() {
           </Button>
           <ContinueButton 
             onClick={handleNext}
-            disabled={!firstName || !lastName} 
+            disabled={!firstName || !lastName || isSubmitting} 
+            loading={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           />
         </div>

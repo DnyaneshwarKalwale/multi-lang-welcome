@@ -174,6 +174,21 @@ export const onboardingApi = {
     const response = await api.put('/onboarding/language', { language });
     return response.data;
   },
+
+  // Save user profile information
+  saveProfileInfo: async (data: { firstName: string; lastName: string }) => {
+    const response = await api.post('/onboarding', {
+      ...data,
+      lastOnboardingStep: 'profile-input'
+    });
+    return response.data;
+  },
+
+  // Complete onboarding and go to dashboard
+  completeOnboarding: async () => {
+    const response = await api.post('/onboarding/complete');
+    return response.data;
+  }
 };
 
 export default api; 

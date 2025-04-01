@@ -6,6 +6,7 @@ import { FileText, Upload, Youtube, ArrowRight, Sparkles, ArrowLeft } from "luci
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { onboardingApi } from "@/services/api";
 
 export default function ContentGenerationPage() {
   const { prevStep, getStepProgress, firstName, saveOnboardingProgress, setOnboardingCompleted } = useOnboarding();
@@ -43,21 +44,28 @@ export default function ContentGenerationPage() {
 
   const completeOnboarding = async () => {
     try {
-      // Mark onboarding as completed using updateUser
+      // Use the dedicated API endpoint to complete onboarding
+      await onboardingApi.completeOnboarding();
+      
+      // Update local context state
+      setOnboardingCompleted();
+      
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      
+      // Fallback to updateUser if the API call fails
       if (updateUser) {
         await updateUser({ 
           onboardingCompleted: true,
           lastOnboardingStep: 'dashboard'
         });
         
-        // Update local onboarding context
+        // Update local context
         setOnboardingCompleted();
       }
       
-      // Navigate to dashboard
-      navigate('/dashboard', { replace: true });
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
       // Still navigate to dashboard even if there's an error
       navigate('/dashboard', { replace: true });
     }
@@ -82,8 +90,9 @@ export default function ContentGenerationPage() {
             Choose one of these options to create your first piece of content. Our AI will help you make it amazing.
           </p>
           <p className="text-gray-500 text-sm mt-2">
-            You can go back to modify your preferences, but once you continue to the dashboard, 
-            you'll complete the onboarding process.
+            This is the final step of your onboarding. You can go back to modify your preferences, 
+            but once you select "Skip for now" or create content, you'll complete the onboarding process 
+            and be directed to the dashboard.
           </p>
         </div>
         
@@ -113,6 +122,7 @@ export default function ContentGenerationPage() {
         </div>
         
         <div className="flex justify-between items-center mb-12">
+          {/* Allow user to go back to previous onboarding steps until they complete the process */}
           <Button 
             onClick={prevStep}
             variant="outline"
@@ -127,7 +137,7 @@ export default function ContentGenerationPage() {
             variant="ghost"
             className="text-gray-400 hover:text-white"
           >
-            I'll do this later
+            Skip for now
           </Button>
         </div>
         
@@ -138,9 +148,9 @@ export default function ContentGenerationPage() {
       <Dialog open={skipDialogOpen} onOpenChange={setSkipDialogOpen}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Skip content creation?</DialogTitle>
+            <DialogTitle>Go to dashboard?</DialogTitle>
             <DialogDescription className="text-gray-400">
-              You can always create content later from your dashboard. This will complete your onboarding process.
+              This will complete your onboarding process and take you to the dashboard. You won't be able to return to the onboarding process later.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex sm:justify-between sm:space-x-4">
@@ -155,7 +165,7 @@ export default function ContentGenerationPage() {
               onClick={handleSkip}
               className="bg-purple-600 hover:bg-purple-700 flex items-center"
             >
-              Skip for now
+              Go to dashboard
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </DialogFooter>
