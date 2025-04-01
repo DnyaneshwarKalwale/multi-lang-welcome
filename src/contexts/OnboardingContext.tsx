@@ -16,7 +16,9 @@ type OnboardingStep =
   | "post-format" 
   | "post-frequency" 
   | "extension-download"
+  | "profile-input"
   | "completed"
+  | "content-generation"
   | "registration" 
   | "dashboard"
   | "initial";
@@ -74,7 +76,9 @@ const allSteps: OnboardingStep[] = [
   "post-format",
   "post-frequency",
   "extension-download",
+  "profile-input",
   "completed",
+  "content-generation",
   "registration",
   "dashboard"
 ];
