@@ -5,6 +5,10 @@ import axios from 'axios';
 // Fall back to deployed Render backend URL if environment variable is not available
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
 
+// Key constants for storage - must match those in AuthContext
+export const AUTH_TOKEN_KEY = 'token';
+export const AUTH_USER_KEY = 'auth_user';
+
 console.log("Using API URL:", API_URL);
 
 const api = axios.create({
@@ -18,7 +22,7 @@ const api = axios.create({
 // Add request interceptor to include auth token in requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +38,8 @@ api.interceptors.response.use(
     // If we get a 401 Unauthorized error, clear the token and redirect to login
     if (error.response && error.response.status === 401) {
       console.log('Unauthorized response, clearing token');
-      localStorage.removeItem('token');
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(AUTH_USER_KEY);
       
       // Only redirect to login if we're not already on the login page to avoid loops
       if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/verify-email')) {
@@ -60,11 +65,16 @@ export const authApi = {
 
   // Login with email and password
   login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', {
-      email,
-      password,
-    });
-    return response.data;
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Login API error:', error);
+      throw error;
+    }
   },
 
   // Twitter direct authentication (for development)
@@ -73,10 +83,51 @@ export const authApi = {
     return response.data;
   },
 
-  // Get current user
+  // Check if email exists
+  checkEmailExists: async (email: string) => {
+    try {
+      const response = await api.post('/auth/check-email', { email });
+      return response.data;
+    } catch (error) {
+      // If the server returns 404, the email doesn't exist
+      if (error.response?.status === 404) {
+        return { exists: false };
+      }
+      throw error;
+    }
+  },
+
+  // Get current user with retry for cross-domain logins
   getCurrentUser: async () => {
-    const response = await api.get('/auth/me');
-    return response.data;
+    try {
+      const response = await api.get('/auth/me');
+      return response.data;
+    } catch (error) {
+      // If we get a 401 error, check if token exists but failed
+      if (error.response?.status === 401 && localStorage.getItem(AUTH_TOKEN_KEY)) {
+        console.log('Token exists but failed to authenticate - might be cross-domain login issue');
+        // Get token and try one more time with explicit header
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (token) {
+          try {
+            const retryResponse = await axios.get(`${API_URL}/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            return retryResponse.data;
+          } catch (retryError) {
+            console.error('Retry failed:', retryError);
+            // Clear storage if retry fails
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            localStorage.removeItem(AUTH_USER_KEY);
+            throw retryError;
+          }
+        }
+      }
+      throw error;
+    }
   },
 
   // Verify email
@@ -123,6 +174,27 @@ export const onboardingApi = {
     const response = await api.put('/onboarding/language', { language });
     return response.data;
   },
+};
+
+// Workspace invitation services
+export const workspaceApi = {
+  // Send invitations to multiple email addresses
+  sendInvites: async (emails: string[], role: 'admin' | 'member' = 'member') => {
+    const response = await api.post('/workspace/invite', { emails, role });
+    return response.data;
+  },
+  
+  // Get all pending invitations for the current user
+  getMyInvites: async () => {
+    const response = await api.get('/workspace/invites');
+    return response.data;
+  },
+  
+  // Accept or reject an invitation
+  respondToInvite: async (inviteId: string, action: 'accept' | 'reject') => {
+    const response = await api.put(`/workspace/invites/${inviteId}`, { action });
+    return response.data;
+  }
 };
 
 export default api; 

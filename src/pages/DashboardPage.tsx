@@ -3,8 +3,11 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus } from "lucide-react";
+import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { NotificationBell } from "@/components/NotificationBell";
+import { useToast } from "@/components/ui/use-toast";
+import { workspaceApi } from '@/services/api';
 
 //dashboard page
 
@@ -12,6 +15,10 @@ export default function DashboardPage() {
   const { firstName, workspaceName, workspaceType } = useOnboarding();
   const { theme, toggleTheme } = useTheme();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteEmails, setInviteEmails] = useState("");
+  const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
 
@@ -51,133 +58,160 @@ export default function DashboardPage() {
     },
   ];
 
+  // Handle sending invitations
+  const handleSendInvites = async () => {
+    if (!inviteEmails.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter at least one email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Parse comma-separated emails
+    const emails = inviteEmails
+      .split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
+
+    if (emails.length === 0) {
+      toast({
+        title: "Email required",
+        description: "Please enter at least one valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await workspaceApi.sendInvites(emails, inviteRole);
+      
+      toast({
+        title: "Invitations sent",
+        description: `${emails.length} invitation${emails.length === 1 ? '' : 's'} sent successfully`,
+        variant: "default"
+      });
+      
+      // Reset form and close dialog
+      setInviteEmails("");
+      setInviteRole("member");
+      setInviteDialogOpen(false);
+    } catch (error) {
+      console.error("Error sending invitations:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send invitations. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="flex h-screen bg-black text-white">
       {/* Sidebar */}
-      <div className="w-60 bg-gray-900 p-4 flex flex-col h-screen">
-        <div className="p-2 mb-6">
-          <ScripeLogotype />
+      <div className="hidden md:flex flex-col w-20 bg-gray-900 border-r border-gray-800 items-center pt-6">
+        <div className="mb-8">
+          <ScripeLogotype className="w-8 h-8" />
         </div>
         
-        <Button variant="default" className="bg-primary hover:bg-primary/90 gap-2 mb-6">
-          <Plus size={16} />
-          Create posts
-        </Button>
-        
-        <div className="space-y-1 mb-8">
-          {sidebarItems.map((item) => (
-            <Button 
-              key={item.label} 
-              variant="ghost" 
-              className="w-full justify-start gap-3 text-gray-400 hover:text-white"
+        <div className="flex flex-col items-center space-y-6">
+          {sidebarItems.map((item, index) => (
+            <button 
+              key={index}
+              className={`p-3 rounded-xl ${
+                index === 0 ? "bg-purple-600" : "hover:bg-gray-800"
+              }`}
             >
-              <item.icon size={18} />
-              {item.label}
-            </Button>
+              <item.icon size={20} />
+            </button>
           ))}
         </div>
         
-        <div className="border-t border-gray-800 pt-4 mb-2">
-          <p className="text-sm text-gray-500 px-3 mb-2">Personal Brand</p>
-        </div>
-        
-        <div className="space-y-1 mb-auto">
-          {personalBrandItems.map((item) => (
-            <Button 
-              key={item.label} 
-              variant="ghost" 
-              className="w-full justify-start gap-3 text-gray-400 hover:text-white"
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="border-t border-gray-800 pt-4">
-          <div className="flex items-center justify-between px-3">
-            <p className="text-sm text-gray-500">Free trial - 15 credits left</p>
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </Button>
-          </div>
+        <div className="mt-auto mb-6">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleTheme}
+            className="text-gray-400 hover:text-white hover:bg-gray-800"
+          >
+            {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+          </Button>
         </div>
       </div>
       
       {/* Main content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <header className="mb-12">
-          <h1 className="text-2xl font-semibold mb-1">
-            Welcome to Scripe, {firstName} <span className="text-yellow-500">👋</span>
-          </h1>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="h-16 border-b border-gray-800 flex items-center justify-between px-6">
+          <h1 className="text-xl font-semibold">{dashboardName}</h1>
+          
+          <div className="flex items-center space-x-2">
+            <NotificationBell />
+            
+            {workspaceType === "team" && (
+              <Button 
+                className="text-xs" 
+                variant="outline"
+                onClick={() => setInviteDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Invite
+              </Button>
+            )}
+            
+            <button className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+              {firstName?.charAt(0) || "U"}
+            </button>
+          </div>
         </header>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {cards.map((card, index) => (
-            <div key={index} className="bg-gray-900 rounded-xl p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="text-3xl">{card.icon}</div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-gray-400 hover:text-white"
-                  onClick={() => {
-                    if (index === 0) {
-                      setInviteDialogOpen(true);
-                    }
-                  }}
-                >
-                  ...
-                </Button>
+        {/* Main content area */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-6">Start creating</h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {cards.map((card, index) => (
+                  <div 
+                    key={index}
+                    className="bg-gray-900 rounded-2xl p-6 border border-gray-800 hover:border-purple-600/40 transition-all"
+                  >
+                    <div className="text-3xl mb-4">{card.icon}</div>
+                    <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+                    <p className="text-gray-400 text-sm mb-4">{card.description}</p>
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700">{card.buttonText}</Button>
+                  </div>
+                ))}
               </div>
-              
-              <h3 className="text-lg font-medium mb-2">{card.title}</h3>
-              <p className="text-gray-400 text-sm mb-6">{card.description}</p>
-              
-              <Button 
-                variant={index === 0 ? "default" : "secondary"} 
-                className={index === 0 ? "bg-primary hover:bg-primary/90 w-full" : "w-full"}
-                onClick={() => {
-                  if (index === 0) {
-                    setInviteDialogOpen(true);
-                  }
-                }}
-              >
-                {card.buttonText}
-              </Button>
             </div>
-          ))}
-        </div>
-        
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Recent posts</h2>
-            <div className="flex space-x-2">
-              <Button variant="ghost" size="icon" className="text-gray-400">
-                &lt;
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-400">
-                &gt;
-              </Button>
+            
+            <div>
+              <h2 className="text-2xl font-bold mb-6">Build your personal brand</h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {personalBrandItems.map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center space-x-4 hover:border-purple-600/40 transition-all cursor-pointer"
+                  >
+                    <div className="p-3 bg-gray-800 rounded-lg">
+                      <item.icon className="text-purple-500" size={20} />
+                    </div>
+                    <div className="font-medium">{item.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          
-          <div className="bg-gray-900 rounded-xl p-8 flex items-center justify-center">
-            <div className="text-center">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-12 w-12 rounded-full mb-4 bg-gray-800 border-gray-700"
-              >
-                <Plus />
-              </Button>
-              <p className="text-gray-400">New post</p>
-            </div>
-          </div>
-        </div>
+        </main>
       </div>
       
-      {/* Invite Dialog */}
+      {/* Team invite dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent className="bg-gray-900 text-white border-gray-800">
           <DialogHeader>
@@ -190,21 +224,37 @@ export default function DashboardPage() {
             <div>
               <label className="text-sm font-medium">Email addresses</label>
               <textarea 
-                placeholder="Type or paste emails" 
+                placeholder="colleague@example.com, teammate@example.com" 
                 className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white"
                 rows={3}
+                value={inviteEmails}
+                onChange={(e) => setInviteEmails(e.target.value)}
               />
             </div>
             <div>
               <label className="text-sm font-medium">Role</label>
-              <select className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white">
-                <option>Personal Brand</option>
-                <option>Admin</option>
-                <option>Editor</option>
+              <select 
+                className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as "admin" | "member")}
+              >
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
-            <Button className="w-full bg-primary hover:bg-primary/90">
-              Send invite
+            <Button 
+              className="w-full bg-primary hover:bg-primary/90"
+              onClick={handleSendInvites}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send invite"
+              )}
             </Button>
           </div>
         </DialogContent>

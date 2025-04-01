@@ -6,37 +6,97 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Users, X, UserPlus, Mail, 
-  UserCircle2, UserCog, UserCircle 
+  UserCircle2, UserCog, UserCircle,
+  Loader2
 } from "lucide-react";
+import { workspaceApi } from "@/services/api";
+import { toast } from "@/components/ui/use-toast";
 
 export default function TeamInvitePage() {
   const { workspaceName, teamMembers, setTeamMembers, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
 
-  const addTeamMember = () => {
+  const parseEmails = (emailInput: string): string[] => {
+    if (!emailInput) return [];
+    
+    // Split by comma and clean each email
+    return emailInput
+      .split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
+  };
+
+  const validateEmails = (emails: string[]): { valid: string[], invalid: string[] } => {
+    const valid: string[] = [];
+    const invalid: string[] = [];
+    
+    emails.forEach(email => {
+      if (validateEmail(email)) {
+        valid.push(email);
+      } else {
+        invalid.push(email);
+      }
+    });
+    
+    return { valid, invalid };
+  };
+
+  const addTeamMember = async () => {
     if (!newMemberEmail.trim()) {
-      setEmailError("Please enter an email address");
+      setEmailError("Please enter at least one email address");
       return;
     }
 
-    if (!validateEmail(newMemberEmail)) {
-      setEmailError("Please enter a valid email address");
+    const emails = parseEmails(newMemberEmail);
+    const { valid, invalid } = validateEmails(emails);
+    
+    if (invalid.length > 0) {
+      setEmailError(`Invalid email format: ${invalid.join(', ')}`);
       return;
     }
 
-    if (teamMembers.some(member => member.email === newMemberEmail)) {
-      setEmailError("This email has already been added");
+    // Check for duplicates in the current list
+    const duplicates = valid.filter(email => 
+      teamMembers.some(member => member.email.toLowerCase() === email.toLowerCase())
+    );
+    
+    if (duplicates.length > 0) {
+      setEmailError(`These emails are already added: ${duplicates.join(', ')}`);
       return;
     }
 
-    setTeamMembers([...teamMembers, { email: newMemberEmail, role: "member" }]);
+    // Add emails to the team members list in the context
+    const newMembers = valid.map(email => ({ email, role: "member" as const }));
+    setTeamMembers([...teamMembers, ...newMembers]);
+    
+    // Also send invitations to the backend
+    setIsLoading(true);
+    try {
+      await workspaceApi.sendInvites(valid, "member");
+      toast({
+        title: "Invitations sent",
+        description: `Successfully sent ${valid.length} invitation${valid.length === 1 ? '' : 's'}`,
+        variant: "default"
+      });
+    } catch (error) {
+      console.error("Error sending invitations:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send invitations. Team members were added locally only.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+    
     setNewMemberEmail("");
     setEmailError("");
   };
@@ -69,29 +129,40 @@ export default function TeamInvitePage() {
             Invite team members
           </label>
           
-          <div className="flex mb-2">
-            <Input 
-              value={newMemberEmail}
-              onChange={(e) => {
-                setNewMemberEmail(e.target.value);
-                if (emailError) setEmailError("");
-              }}
-              placeholder="colleague@example.com"
-              className="bg-gray-800 border-gray-700 rounded-r-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addTeamMember();
-                }
-              }}
-            />
-            <Button 
-              onClick={addTeamMember}
-              className="rounded-l-none bg-purple-600 hover:bg-purple-700"
-            >
-              <UserPlus className="mr-2" size={18} />
-              Add
-            </Button>
+          <div className="mb-2">
+            <p className="text-sm text-gray-400 mb-2">
+              Enter email addresses, separated by commas
+            </p>
+            <div className="flex">
+              <Input 
+                value={newMemberEmail}
+                onChange={(e) => {
+                  setNewMemberEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                placeholder="colleague@example.com, teammate@example.com"
+                className="bg-gray-800 border-gray-700 rounded-r-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTeamMember();
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <Button 
+                onClick={addTeamMember}
+                className="rounded-l-none bg-purple-600 hover:bg-purple-700"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="mr-2" size={18} />
+                )}
+                Add
+              </Button>
+            </div>
           </div>
           
           {emailError && (
