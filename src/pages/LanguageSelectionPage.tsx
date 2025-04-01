@@ -36,7 +36,7 @@ export default function LanguageSelectionPage() {
 
   const handleContinue = () => {
     nextStep();
-    navigate("/onboarding/team-selection");
+    navigate("/onboarding/theme-selection");
   };
 
   const handlePrev = () => {
@@ -207,13 +207,7 @@ export default function LanguageSelectionPage() {
           <ContinueButton 
             onClick={handleContinue}
             disabled={!language}
-            className={`group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 ${
-              !language ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <span>Continue</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
+          />
         </motion.div>
         
         <motion.div

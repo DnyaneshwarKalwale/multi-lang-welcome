@@ -5,9 +5,16 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ChevronRight, Twitter } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function WelcomePage() {
   const { nextStep } = useOnboarding();
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    nextStep();
+    navigate("/onboarding/language-selection");
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
@@ -87,7 +94,7 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.5 }}
         >
           <ContinueButton 
-            onClick={nextStep} 
+            onClick={handleGetStarted} 
             className="group mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-4 rounded-full text-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
           >
             <span>Get started</span>

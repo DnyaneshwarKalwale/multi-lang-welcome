@@ -75,11 +75,11 @@ export function OnboardingRouter() {
       
       <Routes>
         <Route path="welcome" element={<WelcomePage />} />
+        <Route path="language-selection" element={<LanguageSelectionPage />} />
+        <Route path="theme-selection" element={<ThemeSelectionPage />} />
         <Route path="team-selection" element={<TeamSelectionPage />} />
         <Route path="team-workspace" element={<TeamWorkspacePage />} />
         <Route path="team-invite" element={<TeamInvitePage />} />
-        <Route path="theme-selection" element={<ThemeSelectionPage />} />
-        <Route path="language-selection" element={<LanguageSelectionPage />} />
         <Route path="post-format" element={<PostFormatPage />} />
         <Route path="post-frequency" element={<PostFrequencyPage />} />
         <Route path="registration" element={<RegistrationPage />} />
@@ -96,11 +96,11 @@ export function OnboardingRouter() {
 function getProgressPercentage(currentStep: string, workspaceType: string | null): number {
   const allSteps = [
     "welcome",
+    "language-selection",
+    "theme-selection",
     "team-selection",
     "team-workspace",
     "team-invite",
-    "theme-selection",
-    "language-selection",
     "post-format",
     "post-frequency",
     "registration",

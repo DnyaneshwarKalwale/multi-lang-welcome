@@ -5,7 +5,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, ChevronRight, Palette, Check } from "lucide-react";
+import { ArrowLeft, ChevronRight, Palette, Check, Moon, Sun } from "lucide-react";
 
 export default function ThemeSelectionPage() {
   const navigate = useNavigate();
@@ -14,36 +14,20 @@ export default function ThemeSelectionPage() {
 
   const themes = [
     {
-      id: "minimal",
-      name: "Minimal",
-      description: "A clean, distraction-free experience with focused content presentation",
-      preview: "/images/theme-minimal.png",
+      id: "dark",
+      name: "Dark Mode",
+      description: "A sleek dark interface that's easy on the eyes and perfect for nighttime use",
+      icon: <Moon className="w-8 h-8 text-indigo-400" />,
       fallbackBg: "bg-gradient-to-br from-gray-800 to-gray-900",
       textColor: "text-white"
     },
     {
-      id: "modern",
-      name: "Modern",
-      description: "Bold typography and layouts optimized for engagement",
-      preview: "/images/theme-modern.png",
-      fallbackBg: "bg-gradient-to-br from-indigo-800 to-purple-900",
-      textColor: "text-white"
-    },
-    {
-      id: "vibrant",
-      name: "Vibrant",
-      description: "Eye-catching colors and dynamic elements that stand out",
-      preview: "/images/theme-vibrant.png",
-      fallbackBg: "bg-gradient-to-br from-blue-600 to-purple-600",
-      textColor: "text-white"
-    },
-    {
-      id: "professional",
-      name: "Professional",
-      description: "Sophisticated design elements for business-focused content",
-      preview: "/images/theme-professional.png",
-      fallbackBg: "bg-gradient-to-br from-slate-700 to-slate-900",
-      textColor: "text-white"
+      id: "light",
+      name: "Light Mode",
+      description: "A clean, bright interface with excellent readability in daylight",
+      icon: <Sun className="w-8 h-8 text-amber-400" />,
+      fallbackBg: "bg-gradient-to-br from-gray-100 to-white",
+      textColor: "text-gray-900"
     }
   ];
 
@@ -161,11 +145,11 @@ export default function ThemeSelectionPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          Select a visual style for your Twitter content that matches your brand and personality
+          Select your preferred visual style for the Scripe platform
         </motion.p>
 
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12"
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto mb-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -175,7 +159,7 @@ export default function ThemeSelectionPage() {
               key={themeOption.id}
               className={`relative overflow-hidden bg-gray-900/50 backdrop-blur-sm border-2 ${
                 theme === themeOption.id ? "border-indigo-500" : "border-gray-800"
-              } rounded-xl cursor-pointer hover:border-indigo-500/60 transition-all duration-300`}
+              } rounded-xl cursor-pointer hover:border-indigo-500/60 transition-all duration-300 py-8 px-6`}
               onClick={() => setTheme(themeOption.id)}
               variants={itemVariants}
               whileHover={{ 
@@ -205,67 +189,27 @@ export default function ThemeSelectionPage() {
                 </motion.div>
               )}
               
-              <div className="aspect-[16/9] w-full overflow-hidden">
-                <div className={`w-full h-full flex items-center justify-center ${themeOption.fallbackBg}`}>
-                  <motion.img 
-                    src={themeOption.preview} 
-                    alt={themeOption.name}
-                    className="w-full h-full object-cover"
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.5 }}
-                    onError={(e) => {
-                      // Hide the image if it fails to load
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                  
-                  {/* Twitter UI mockup if image fails to load */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <motion.div 
-                      className="w-3/4 h-3/4 bg-gray-800/90 rounded-lg flex flex-col p-4 overflow-hidden"
-                      initial={{ opacity: 0.7 }}
-                      whileHover={{ opacity: 1 }}
-                    >
-                      <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-900/50"></div>
-                        <div className="ml-2">
-                          <div className="h-3 w-24 bg-gray-700 rounded"></div>
-                          <div className="h-2 w-16 bg-gray-700/70 rounded mt-1"></div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-2 w-full bg-gray-700 rounded"></div>
-                        <div className="h-2 w-5/6 bg-gray-700 rounded"></div>
-                        <div className="h-2 w-4/6 bg-gray-700 rounded"></div>
-                      </div>
-                      <div className="mt-4 flex justify-between">
-                        <div className="h-2 w-8 bg-indigo-700/50 rounded"></div>
-                        <div className="h-2 w-8 bg-indigo-700/50 rounded"></div>
-                        <div className="h-2 w-8 bg-indigo-700/50 rounded"></div>
-                      </div>
-                    </motion.div>
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className={`w-20 h-20 ${themeOption.id === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-full mb-6 flex items-center justify-center shadow-lg ${themeOption.id === 'light' ? 'shadow-white/20' : 'shadow-indigo-500/20'}`}>
+                  {themeOption.icon}
+                </div>
+                
+                <h3 className={`text-xl font-medium mb-3 ${themeOption.textColor}`}>{themeOption.name}</h3>
+                <p className="text-gray-400 text-sm max-w-[250px] mx-auto">{themeOption.description}</p>
+              </div>
+
+              {/* Preview */}
+              <div className="mt-6 w-full h-24 overflow-hidden rounded-lg border border-gray-700">
+                <div className={`w-full h-full ${themeOption.id === 'dark' ? 'bg-gray-900' : 'bg-white'} p-3 flex flex-col`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${themeOption.id === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+                    <div className={`h-2 w-24 rounded-full ${themeOption.id === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
                   </div>
+                  <div className={`h-2 w-full rounded-full ${themeOption.id === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} mb-1.5`}></div>
+                  <div className={`h-2 w-4/5 rounded-full ${themeOption.id === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
                 </div>
               </div>
               
-              <div className="p-5 text-left">
-                <h3 className={`text-lg font-medium mb-1 ${themeOption.textColor}`}>{themeOption.name}</h3>
-                <p className="text-gray-400 text-sm">{themeOption.description}</p>
-              </div>
-              
-              {/* Theme color indicators */}
-              <div className="absolute bottom-3 right-3 flex space-x-1">
-                {['bg-indigo-500', 'bg-purple-500', 'bg-blue-500'].map((color, i) => (
-                  <motion.div 
-                    key={i} 
-                    className={`w-2 h-2 rounded-full ${color}`}
-                    initial={{ scale: 0.8, opacity: 0.5 }}
-                    animate={{ scale: theme === themeOption.id ? 1 : 0.8, opacity: theme === themeOption.id ? 1 : 0.5 }}
-                    transition={{ delay: i * 0.1 }}
-                  />
-                ))}
-              </div>
             </motion.div>
           ))}
         </motion.div>
@@ -279,13 +223,7 @@ export default function ThemeSelectionPage() {
           <ContinueButton 
             onClick={handleContinue}
             disabled={!theme}
-            className={`group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 ${
-              !theme ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <span>Continue</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
+          />
         </motion.div>
         
         <motion.div

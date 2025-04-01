@@ -22,7 +22,7 @@ export default function TeamSelectionPage() {
       nextStep();
       
       if (selectedOption === "personal") {
-        navigate("/onboarding/theme-selection");
+        navigate("/onboarding/post-format");
       } else {
         navigate("/onboarding/team-workspace");
       }

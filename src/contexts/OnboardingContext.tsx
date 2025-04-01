@@ -21,7 +21,7 @@ type OnboardingStep =
   | "dashboard";
 
 type WorkspaceType = "team" | "personal" | null;
-type ThemeType = "light" | "dark";
+type ThemeType = "dark" | "light" | null;
 type LanguageType = "english" | "german" | null;
 type PostFormat = "standard" | "formatted" | "chunky" | "short" | "emojis" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
@@ -263,6 +263,25 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [workspaceType, currentStep]);
+
+  // Add effect to apply the theme whenever it changes
+  useEffect(() => {
+    if (theme) {
+      // Save to localStorage
+      localStorage.setItem("theme", theme);
+      
+      // Apply the theme to document
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+        document.documentElement.style.setProperty("color-scheme", "dark");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+        document.documentElement.style.setProperty("color-scheme", "light");
+      }
+    }
+  }, [theme]);
 
   const value = {
     currentStep,
