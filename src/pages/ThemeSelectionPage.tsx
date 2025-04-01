@@ -1,134 +1,209 @@
-import React, { useEffect } from "react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
-import { SunIcon, MoonIcon } from "lucide-react";
+import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { ArrowLeft, ChevronRight, Palette } from "lucide-react";
 
 export default function ThemeSelectionPage() {
-  const { theme, setTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
-  const { setTheme: setGlobalTheme } = useTheme();
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { nextStep, prevStep, theme, setTheme, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
 
-  // Apply theme change immediately and globally
-  const handleThemeChange = (newTheme: "light" | "dark") => {
-    setTheme(newTheme);
-    setGlobalTheme(newTheme);
-    
-    // Apply directly to document to ensure immediate change
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+  const themes = [
+    {
+      id: "minimal",
+      name: "Minimal",
+      description: "A clean, distraction-free experience with focused content presentation",
+      preview: "/images/theme-minimal.png",
+      fallbackBg: "bg-gradient-to-br from-gray-800 to-gray-900",
+      textColor: "text-white"
+    },
+    {
+      id: "modern",
+      name: "Modern",
+      description: "Bold typography and layouts optimized for engagement",
+      preview: "/images/theme-modern.png",
+      fallbackBg: "bg-gradient-to-br from-indigo-800 to-purple-900",
+      textColor: "text-white"
+    },
+    {
+      id: "vibrant",
+      name: "Vibrant",
+      description: "Eye-catching colors and dynamic elements that stand out",
+      preview: "/images/theme-vibrant.png",
+      fallbackBg: "bg-gradient-to-br from-blue-600 to-purple-600",
+      textColor: "text-white"
+    },
+    {
+      id: "professional",
+      name: "Professional",
+      description: "Sophisticated design elements for business-focused content",
+      preview: "/images/theme-professional.png",
+      fallbackBg: "bg-gradient-to-br from-slate-700 to-slate-900",
+      textColor: "text-white"
+    }
+  ];
+
+  const handleContinue = () => {
+    nextStep();
+    navigate("/onboarding/post-format");
+  };
+
+  const handlePrev = () => {
+    prevStep();
+    navigate("/onboarding/team-selection");
+  };
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
     }
   };
 
-  // Ensure theme is applied when component loads
-  useEffect(() => {
-    if (theme) {
-      handleThemeChange(theme);
-    }
-  }, []);
-
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center px-4 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="max-w-3xl w-full text-center">
-        <h1 className="text-4xl font-bold mb-4">{t('chooseStyle')}</h1>
-        <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-10`}>
-          {t('styleDescription')}
-        </p>
-        
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 border ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} rounded-xl overflow-hidden mb-12`}>
-          <div 
-            className={`${theme === "light" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center`}
-            onClick={() => handleThemeChange("light")}
-          >
-            <div className="mb-6 w-full rounded-lg overflow-hidden shadow-lg relative">
-              <div className="bg-white p-4 rounded-lg w-full aspect-video flex flex-col">
-                <div className="bg-gray-100 h-6 w-full mb-4 rounded flex items-center px-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-300 mr-2"></div>
-                  <div className="w-3 h-3 rounded-full bg-gray-300 mr-2"></div>
-                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                </div>
-                <div className="flex flex-1">
-                  <div className="w-1/4 bg-gray-100 rounded mr-2"></div>
-                  <div className="flex-1 flex flex-col">
-                    <div className="h-6 bg-gray-100 rounded mb-2"></div>
-                    <div className="h-full bg-gray-100 rounded"></div>
-                  </div>
-                </div>
-                <div className="absolute top-2 right-2 bg-purple-100 text-purple-600 p-1 rounded-full">
-                  <SunIcon size={16} />
-                </div>
-              </div>
-              <div className={`absolute inset-0 ${theme === "light" ? "bg-transparent" : "bg-black/30"}`}></div>
-            </div>
-            <div className="flex items-center">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "light" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
-                {theme === "light" && (
-                  <div className="w-full h-full rounded-full bg-white scale-50"></div>
-                )}
-              </div>
-              <span className={`text-lg ${theme === "light" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('light')}</span>
-            </div>
-          </div>
-          
-          <div 
-            className={`${theme === "dark" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center`}
-            onClick={() => handleThemeChange("dark")}
-          >
-            <div className="mb-6 w-full rounded-lg overflow-hidden shadow-lg relative">
-              <div className="bg-gray-800 p-4 rounded-lg w-full aspect-video flex flex-col">
-                <div className="bg-gray-700 h-6 w-full mb-4 rounded flex items-center px-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-600 mr-2"></div>
-                  <div className="w-3 h-3 rounded-full bg-gray-600 mr-2"></div>
-                  <div className="w-3 h-3 rounded-full bg-gray-600"></div>
-                </div>
-                <div className="flex flex-1">
-                  <div className="w-1/4 bg-gray-700 rounded mr-2"></div>
-                  <div className="flex-1 flex flex-col">
-                    <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-full bg-gray-700 rounded"></div>
-                  </div>
-                </div>
-                <div className="absolute top-2 right-2 bg-purple-900/50 text-purple-400 p-1 rounded-full">
-                  <MoonIcon size={16} />
-                </div>
-              </div>
-              <div className={`absolute inset-0 ${theme === "dark" ? "bg-transparent" : "bg-black/30"}`}></div>
-            </div>
-            <div className="flex items-center">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "dark" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
-                {theme === "dark" && (
-                  <div className="w-full h-full rounded-full bg-white scale-50"></div>
-                )}
-              </div>
-              <span className={`text-lg ${theme === "dark" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('dark')}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex justify-between mb-12">
-          <Button 
-            variant="outline" 
-            onClick={prevStep}
-            className={`${theme === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-600'}`}
-          >
-            {t('back')}
-          </Button>
-          <ContinueButton 
-            onClick={nextStep}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            {t('continue')}
-          </ContinueButton>
-        </div>
-        
-        <ProgressDots total={total} current={current} />
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
       </div>
+      
+      {/* Back button */}
+      <motion.button
+        className="absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors"
+        onClick={handlePrev}
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <ArrowLeft size={16} className="mr-2" />
+        Back
+      </motion.button>
+      
+      <motion.div 
+        className="max-w-4xl w-full text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div 
+          className="mb-8 flex justify-center"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <ScripeIconRounded className="w-20 h-20" />
+        </motion.div>
+        
+        <motion.div
+          className="flex items-center justify-center gap-2 mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Palette className="w-7 h-7 text-indigo-400" />
+          <h1 className="text-4xl font-bold">Choose your theme</h1>
+        </motion.div>
+        
+        <motion.p 
+          className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          Select a visual style for your Twitter content that matches your brand and personality
+        </motion.p>
+
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {themes.map((themeOption) => (
+            <motion.div
+              key={themeOption.id}
+              className={`relative overflow-hidden bg-gray-900/50 backdrop-blur-sm border-2 ${
+                theme === themeOption.id ? "border-indigo-500" : "border-gray-800"
+              } rounded-xl cursor-pointer hover:border-indigo-500/60 transition-all duration-300 hover-lift`}
+              onClick={() => setTheme(themeOption.id)}
+              variants={itemVariants}
+            >
+              <div className="aspect-[16/9] w-full overflow-hidden">
+                <div className={`w-full h-full flex items-center justify-center ${themeOption.fallbackBg}`}>
+                  <img 
+                    src={themeOption.preview} 
+                    alt={themeOption.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Hide the image if it fails to load
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  
+                  {/* Twitter UI mockup if image fails to load */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className={`${theme === themeOption.id ? 'opacity-100' : 'opacity-0'} absolute top-2 right-2 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center transition-opacity duration-200 z-10`}>
+                      <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12L10 17L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 text-left">
+                <h3 className={`text-lg font-medium mb-1 ${themeOption.textColor}`}>{themeOption.name}</h3>
+                <p className="text-gray-400 text-sm">{themeOption.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        <motion.div 
+          className="flex justify-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <ContinueButton 
+            onClick={handleContinue}
+            disabled={!theme}
+            className={`group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 ${
+              !theme ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <span>Continue</span>
+            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+          </ContinueButton>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          <ProgressDots total={total} current={current} />
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, 
   BarChart, BookOpen, Twitter, Image, Plus, Bell, 
-  ChevronRight, Grid, Settings, LogOut, User
+  ChevronRight, Grid, Settings, LogOut, User, Sparkles
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeamInvitationNotification from "@/components/TeamInvitationNotification";
@@ -137,105 +137,130 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-black text-white flex">
       {/* Sidebar */}
       <motion.div 
-        className="w-64 bg-gray-900/50 border-r border-gray-800 p-5 flex flex-col h-screen overflow-y-auto overflow-x-hidden"
+        className="w-64 bg-gray-900/50 border-r border-gray-800 flex flex-col h-screen overflow-y-auto overflow-x-hidden backdrop-blur-sm"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="mb-8">
-          <ScripeLogotype className="h-8" />
-        </div>
-        
-        <Button 
-          variant="gradient" 
-          className="gap-2 mb-8 hover-glow"
-          rounded="lg"
-        >
-          <Plus size={16} />
-          Create new post
-        </Button>
-        
-        <div className="space-y-1 mb-8">
-          {sidebarItems.map((item) => (
-            <Button 
-              key={item.label} 
-              variant={item.active ? "ghost" : "transparent"}
-              className={`w-full justify-start gap-3 text-sm ${
-                item.active 
-                  ? "bg-gray-800/70 text-white font-medium" 
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="border-t border-gray-800 pt-4 mb-2">
-          <p className="text-sm text-gray-500 px-3 mb-2">Personal Brand</p>
-        </div>
-        
-        <div className="space-y-1 mb-auto">
-          {personalBrandItems.map((item) => (
-            <Button 
-              key={item.label} 
-              variant="transparent" 
-              className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-white"
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="border-t border-gray-800 pt-4">
-          <div className="relative">
-            <button 
-              className="flex items-center w-full p-2 rounded-lg hover:bg-gray-800 transition-colors"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            >
-              <img 
-                src={user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff"} 
-                alt={userFullName}
-                className="w-8 h-8 rounded-full mr-3 object-cover" 
-              />
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium truncate">{userFullName}</p>
-                <p className="text-xs text-gray-500 truncate">Free plan</p>
-              </div>
-            </button>
-            
-            {showUserMenu && (
-              <div className="absolute bottom-full mb-2 left-0 w-full bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-20 py-1">
-                <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
-                  <User size={16} />
-                  Profile
-                </Button>
-                <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
-                  <Settings size={16} />
-                  Settings
-                </Button>
-                <div className="border-t border-gray-700 my-1"></div>
-                <Button 
-                  variant="transparent" 
-                  className="w-full justify-start text-sm gap-2 px-3 text-red-400 hover:text-red-300"
-                  onClick={handleLogout}
-                >
-                  <LogOut size={16} />
-                  Log out
-                </Button>
-              </div>
-            )}
+        {/* Top section with logo */}
+        <div className="p-5 border-b border-gray-800/50">
+          <div className="mb-6">
+            <ScripeLogotype className="h-8" />
           </div>
           
-          <div className="flex items-center justify-between mt-4 px-2">
-            <div className="flex items-center">
-              <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-              <p className="text-xs text-gray-500">15 credits left</p>
+          <Button 
+            variant="gradient" 
+            className="w-full gap-2 rounded-lg shadow-lg shadow-indigo-900/20 hover:shadow-indigo-600/40 transition-shadow duration-300 font-medium py-5 relative overflow-hidden"
+          >
+            <Plus size={16} className="relative z-10" />
+            <span className="relative z-10">Create new post</span>
+            <motion.div 
+              className="absolute inset-0 bg-white/10" 
+              initial={{ scale: 0, opacity: 0 }}
+              whileHover={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            />
+          </Button>
+        </div>
+        
+        {/* Main menu */}
+        <div className="p-3 flex-1">
+          <div className="space-y-1 mb-8">
+            {sidebarItems.map((item) => (
+              <Button 
+                key={item.label} 
+                variant={item.active ? "ghost" : "transparent"}
+                className={`w-full justify-start gap-3 text-sm rounded-lg transition-all duration-200 ${
+                  item.active 
+                    ? "bg-gradient-to-r from-indigo-900/50 to-indigo-800/30 text-white font-medium border-l-2 border-indigo-500" 
+                    : "text-gray-400 hover:text-white hover:bg-gray-800/30"
+                }`}
+              >
+                <item.icon size={18} className={item.active ? "text-indigo-400" : "text-gray-500"} />
+                {item.label}
+                {item.active && (
+                  <motion.div 
+                    layoutId="activeTab"
+                    className="absolute inset-0 rounded-lg bg-indigo-500/10 -z-10"
+                    transition={{ type: "spring", duration: 0.5 }}
+                  />
+                )}
+              </Button>
+            ))}
+          </div>
+          
+          <div className="border-t border-gray-800/50 pt-5 mb-5">
+            <p className="text-xs uppercase tracking-wider text-gray-500 px-3 mb-3 font-medium">Personal Brand</p>
+          </div>
+          
+          <div className="space-y-1 mb-auto">
+            {personalBrandItems.map((item) => (
+              <Button 
+                key={item.label} 
+                variant="transparent" 
+                className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-white hover:bg-gray-800/30 rounded-lg"
+              >
+                <item.icon size={18} className="text-gray-500" />
+                {item.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        {/* User section */}
+        <div className="border-t border-gray-800/50 p-3">
+          <div className="flex items-center p-2 rounded-lg bg-gray-800/30 mb-4">
+            <div 
+              className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 mr-3 flex items-center justify-center overflow-hidden border-2 border-indigo-500/30"
+              style={{ 
+                backgroundImage: `url(${user?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInitials)}&background=6366F1&color=fff`})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            >
+              {!user?.profilePicture && (
+                <span className="text-xs font-medium">{userInitials}</span>
+              )}
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleTheme}>
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{userFullName}</p>
+              <p className="text-xs text-gray-400 truncate">@{firstName.toLowerCase()}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowUserMenu(!showUserMenu)}>
+              <Settings size={16} className="text-gray-400" />
+            </Button>
+          </div>
+          
+          {showUserMenu && (
+            <motion.div 
+              className="bg-gray-800 rounded-lg p-1 mb-4 overflow-hidden shadow-xl"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button variant="ghost" className="w-full justify-start text-sm text-gray-300 hover:bg-gray-700 rounded-md py-2">
+                <User size={14} className="mr-2" />
+                Profile
+              </Button>
+              <Button variant="ghost" className="w-full justify-start text-sm text-gray-300 hover:bg-gray-700 rounded-md py-2">
+                <Settings size={14} className="mr-2" />
+                Settings
+              </Button>
+              <Button variant="ghost" className="w-full justify-start text-sm text-red-400 hover:bg-red-900/30 hover:text-red-300 rounded-md py-2" onClick={handleLogout}>
+                <LogOut size={14} className="mr-2" />
+                Logout
+              </Button>
+            </motion.div>
+          )}
+          
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center">
+              <Sparkles size={14} className="text-yellow-500 mr-1.5" />
+              <p className="text-xs text-gray-300">15 credits left</p>
+            </div>
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 flex items-center justify-center hover:bg-gray-800" onClick={toggleTheme}>
+              {theme === "dark" ? <Sun size={16} className="text-yellow-500" /> : <Moon size={16} className="text-indigo-400" />}
             </Button>
           </div>
         </div>
@@ -268,70 +293,54 @@ export default function DashboardPage() {
         </motion.div>
         
         {/* Dashboard content */}
-        <div className="p-6">
-          {/* Quick stats */}
+        <div className="p-5 space-y-8">
+          {/* First row - Quick action cards */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
+            transition={{ staggerChildren: 0.1 }}
           >
-            <DashboardAnalyticsCard 
-              title="Profile Views"
-              data={analyticsData.views.data}
-              labels={analyticsData.views.labels}
-              increase={analyticsData.views.increase}
-              timeframe={analyticsData.views.timeframe}
-            />
-            
-            <DashboardAnalyticsCard 
-              title="Engagement Rate"
-              data={analyticsData.engagement.data}
-              labels={analyticsData.engagement.labels}
-              increase={analyticsData.engagement.increase}
-              timeframe={analyticsData.engagement.timeframe}
-            />
-            
-            <DashboardProfileCard
-              user={profileData.user}
-              stats={profileData.stats}
-            />
-            
-            <motion.div
-              className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-5 text-white hover-lift"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+            {cards.map((card, index) => (
+              <motion.div 
+                key={index}
+                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 hover:border-indigo-500/30 transition-colors rounded-xl p-6 flex flex-col hover-lift"
+                variants={fadeInUp}
+              >
+                <div className="bg-indigo-900/20 w-12 h-12 flex items-center justify-center rounded-full text-2xl mb-4">
+                  {card.icon}
+                </div>
+                <h3 className="text-lg font-medium mb-2">{card.title}</h3>
+                <p className="text-gray-400 text-sm mb-4 flex-1">{card.description}</p>
+                <Button 
+                  variant="outline" 
+                  className="justify-center w-full border-indigo-500/30 text-indigo-300 hover:bg-indigo-900/20 hover:text-indigo-200"
+                >
+                  {card.buttonText}
+                </Button>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Second row - Recent posts and analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Recent posts - Wider column */}
+            <motion.div 
+              className="lg:col-span-2 space-y-6"
+              variants={fadeInUp}
+              initial="initial"
+              animate="animate"
             >
-              <h3 className="font-medium mb-2">Upgrade to Pro</h3>
-              <p className="text-sm text-indigo-100 mb-4">Get unlimited posts, analytics, and AI features</p>
               <div className="flex justify-between items-center">
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">50% OFF</span>
-                <Button variant="transparent" size="sm" className="bg-white/20 hover:bg-white/30 text-white">
-                  Upgrade <ChevronRight size={16} />
+                <h2 className="text-xl font-bold">Recent posts</h2>
+                <Button variant="link" className="text-indigo-400 hover:text-indigo-300 p-0">
+                  View all <ChevronRight size={16} />
                 </Button>
               </div>
-            </motion.div>
-          </motion.div>
-          
-          {/* Recent content */}
-          <motion.div 
-            className="mb-8"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Recent Content</h2>
-              <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300">
-                View all
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              
               {recentPosts.map((post, index) => (
-                <DashboardPostCard
+                <DashboardPostCard 
                   key={index}
                   title={post.title}
                   content={post.content}
@@ -345,50 +354,50 @@ export default function DashboardPage() {
                   onPublish={() => console.log("Publish", post.title)}
                 />
               ))}
-            </div>
-          </motion.div>
-          
-          {/* Get started section */}
-          <motion.div 
-            className="mb-8"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Get Started</h2>
-            </div>
+            </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {cards.map((card, index) => (
-                <div 
-                  key={index} 
-                  className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover-lift"
-                >
-                  <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
-                    <span className="text-2xl">{card.icon}</span>
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">{card.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4">{card.description}</p>
-                  <Button variant="ghost" className="text-indigo-400 hover:text-indigo-300 px-0 hover:bg-transparent">
-                    {card.buttonText}
-                    <ChevronRight size={16} className="ml-1" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+            {/* Analytics sidebar - Narrower column */}
+            <motion.div 
+              className="space-y-6"
+              variants={fadeInUp}
+              initial="initial"
+              animate="animate"
+            >
+              <h2 className="text-xl font-bold">Analytics</h2>
+              
+              <DashboardAnalyticsCard 
+                title="Profile views" 
+                data={analyticsData.views.data}
+                labels={analyticsData.views.labels}
+                increase={analyticsData.views.increase}
+                timeframe={analyticsData.views.timeframe}
+              />
+              
+              <DashboardAnalyticsCard 
+                title="Engagement rate" 
+                data={analyticsData.engagement.data}
+                labels={analyticsData.engagement.labels}
+                increase={analyticsData.engagement.increase}
+                timeframe={analyticsData.engagement.timeframe}
+              />
+              
+              <DashboardProfileCard 
+                user={profileData.user}
+                stats={profileData.stats}
+              />
+            </motion.div>
+          </div>
         </div>
       </div>
       
-      {/* Invite Dialog */}
+      {/* Dialog for team invitations */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white">
+        <DialogContent className="sm:max-w-[425px] bg-gray-900 text-white border-gray-800">
           <DialogHeader>
             <DialogTitle>Team Invitation</DialogTitle>
           </DialogHeader>
           <TeamInvitationNotification />
+          <Button className="mt-4" onClick={() => setInviteDialogOpen(false)}>Close</Button>
         </DialogContent>
       </Dialog>
     </div>

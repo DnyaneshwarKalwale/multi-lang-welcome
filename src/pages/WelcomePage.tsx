@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Twitter } from "lucide-react";
 
 export default function WelcomePage() {
   const { nextStep } = useOnboarding();
@@ -47,7 +47,7 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.4 }}
         >
           <p className="text-xl text-gray-300 mb-2">
-            Scripe is the content workspace to share valuable posts everyday.
+            Scripe is the content workspace to share valuable Twitter posts everyday.
           </p>
           <p className="text-xl text-gray-300 mb-8">
             Receive tailored, algorithm-optimized Twitter posts in &lt;5 minutes.
@@ -84,28 +84,28 @@ export default function WelcomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.7 }}
         >
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300 hover-lift">
             <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
-              <span className="text-2xl">🚀</span>
+              <Twitter className="w-6 h-6 text-indigo-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2">AI-Powered Content</h3>
+            <h3 className="text-lg font-medium mb-2">AI-Powered Twitter Content</h3>
             <p className="text-gray-400 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
           </div>
           
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300 hover-lift">
             <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <span className="text-2xl">📊</span>
             </div>
-            <h3 className="text-lg font-medium mb-2">Engagement Analytics</h3>
-            <p className="text-gray-400 text-sm">Track performance metrics and optimize your content strategy with detailed insights.</p>
+            <h3 className="text-lg font-medium mb-2">Twitter Analytics</h3>
+            <p className="text-gray-400 text-sm">Track performance metrics and optimize your Twitter strategy with detailed engagement insights.</p>
           </div>
           
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300 hover-lift">
             <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <span className="text-2xl">⏱️</span>
             </div>
             <h3 className="text-lg font-medium mb-2">Save Time</h3>
-            <p className="text-gray-400 text-sm">Create weeks of content in minutes and schedule posts for optimal engagement times.</p>
+            <p className="text-gray-400 text-sm">Create weeks of Twitter content in minutes and schedule posts for optimal engagement times.</p>
           </div>
         </motion.div>
       </motion.div>
