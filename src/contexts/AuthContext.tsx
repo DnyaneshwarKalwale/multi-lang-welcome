@@ -24,6 +24,7 @@ interface AuthContextType {
   twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,26 +35,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Helper function to refresh user data
+  const refreshUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    
+    try {
+      const { user } = await authApi.getCurrentUser();
+      setUser(user);
+      return user;
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+      localStorage.removeItem('token');
+      setUser(null);
+    }
+  };
+
   // Check if user is already logged in on initial load
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const token = localStorage.getItem('token');
-      
-      if (token) {
-        try {
-          const { user } = await authApi.getCurrentUser();
-          setUser(user);
-        } catch (error) {
-          console.error("Failed to get user data:", error);
-          localStorage.removeItem('token');
-        }
-      }
-      
+      setLoading(true);
+      await refreshUser();
       setLoading(false);
     };
     
     checkAuthStatus();
   }, []);
+
+  // Check localStorage for token updates
+  useEffect(() => {
+    const handleStorageChange = async () => {
+      const token = localStorage.getItem('token');
+      
+      // If we have a token but no user, refresh
+      if (token && !user) {
+        setLoading(true);
+        await refreshUser();
+        setLoading(false);
+      }
+      
+      // If we don't have a token but have a user, log out
+      if (!token && user) {
+        setUser(null);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [user]);
 
   // Register new user
   const register = async (firstName: string, lastName: string, email: string, password: string) => {
@@ -76,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Login user
+  // Login user with improved error handling and proper redirection
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -84,18 +116,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.login(email, password);
       
+      // Save auth token
       localStorage.setItem('token', response.token);
+      
+      // Update user state
       setUser(response.user);
       
-      // Redirect based on onboarding status
-      if (!response.user.onboardingCompleted) {
-        navigate('/onboarding/welcome');
-      } else {
-        navigate('/dashboard');
-      }
+      // Make sure the redirect happens properly
+      console.log('Login successful, redirecting user based on onboarding status:', 
+        response.user.onboardingCompleted ? 'dashboard' : 'onboarding');
+      
+      // Redirect based on onboarding status with a slight delay to allow state to update
+      setTimeout(() => {
+        if (!response.user.onboardingCompleted) {
+          navigate('/onboarding/welcome');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 100);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
       console.error('Login error:', err);
+      setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -185,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         twitterAuth,
         logout,
         clearError,
+        refreshUser,
       }}
     >
       {children}

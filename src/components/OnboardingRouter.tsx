@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,23 +13,34 @@ import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PlanSelectionPage from "@/pages/PlanSelectionPage";
 import StyleSelectionPage from "@/pages/StyleSelectionPage";
+import { LoadingScreen } from "./LoadingScreen";
 
 export const OnboardingRouter = () => {
   const { workspaceType, currentStep } = useOnboarding();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
+  
+  // On mount, refresh user data to ensure we have latest onboarding status
+  useEffect(() => {
+    refreshUser();
+  }, []);
   
   // Redirect logic for team vs personal workspace
-  React.useEffect(() => {
+  useEffect(() => {
     if (location.pathname === '/onboarding/team-workspace' && workspaceType !== 'team') {
       navigate('/onboarding/welcome');
     }
   }, [workspaceType, location.pathname, navigate]);
   
-  // If the user has completed onboarding, redirect them to the dashboard
+  // Show loading screen if auth is loading
+  if (loading) {
+    return <LoadingScreen />;
+  }
+  
+  // If the user has completed onboarding, redirect them to the main dashboard
   if (user?.onboardingCompleted) {
-    return <Navigate to="/onboarding/dashboard" />;
+    return <Navigate to="/dashboard" />;
   }
   
   return (
@@ -45,11 +56,7 @@ export const OnboardingRouter = () => {
       <Route path="style-selection" element={<StyleSelectionPage />} />
       <Route 
         path="dashboard" 
-        element={
-          <ProtectedRoute requireVerified={true}>
-            <DashboardPage />
-          </ProtectedRoute>
-        } 
+        element={<Navigate to="/dashboard" />}
       />
       <Route 
         path="*" 

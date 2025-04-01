@@ -11,13 +11,14 @@ export default function VerifyEmailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { token } = useParams();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [loading, setLoading] = useState(true);
   const [verificationResult, setVerificationResult] = useState<'pending' | 'success' | 'error'>('pending');
   const [error, setError] = useState<string | null>(null);
   const [email] = useState<string | null>(location.state?.email || user?.email || null);
   const [resendDisabled, setResendDisabled] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [redirectPath, setRedirectPath] = useState('/onboarding/welcome');
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -31,9 +32,16 @@ export default function VerifyEmailPage() {
           // Store the token
           localStorage.setItem('token', response.token);
           
-          // After 2 seconds, redirect to onboarding
+          // Determine where to redirect based on onboarding status
+          if (response.user && response.user.onboardingCompleted) {
+            setRedirectPath('/dashboard');
+          } else {
+            setRedirectPath('/onboarding/welcome');
+          }
+          
+          // After 2 seconds, redirect to the appropriate page
           setTimeout(() => {
-            navigate('/onboarding/welcome');
+            navigate(redirectPath);
           }, 2000);
         } catch (err: any) {
           setVerificationResult('error');
@@ -48,7 +56,7 @@ export default function VerifyEmailPage() {
     };
 
     verifyToken();
-  }, [token, navigate]);
+  }, [token, navigate, redirectPath]);
 
   useEffect(() => {
     // Countdown timer for resend button
@@ -78,6 +86,31 @@ export default function VerifyEmailPage() {
       setError(err.response?.data?.error || 'Failed to resend verification email.');
     }
   };
+
+  // Update the success button to use the dynamic redirect path
+  const renderSuccessContent = () => (
+    <div className="flex flex-col items-center justify-center">
+      <div className="bg-green-900/20 rounded-full p-4 mb-4">
+        <CheckCircle2 className="h-12 w-12 text-green-500" />
+      </div>
+      <h2 className="text-2xl font-bold mb-2">Email verified successfully!</h2>
+      <p className="text-gray-400 mb-4">
+        Your email has been verified. You'll be redirected in a moment.
+      </p>
+      <Alert variant="default" className="bg-gray-800 border-gray-700 mb-6">
+        <AlertTitle>Redirecting you...</AlertTitle>
+        <AlertDescription>
+          You'll be redirected automatically in a few seconds.
+        </AlertDescription>
+      </Alert>
+      <Button 
+        onClick={() => navigate(redirectPath)}
+        className="bg-primary hover:bg-primary/90 px-8 py-2"
+      >
+        {redirectPath.includes('dashboard') ? 'Go to Dashboard' : 'Continue to onboarding'}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center p-6 md:p-8">
@@ -128,25 +161,7 @@ export default function VerifyEmailPage() {
             </div>
           ) : verificationResult === 'success' ? (
             // Success state
-            <div className="flex flex-col items-center justify-center">
-              <div className="bg-green-900/20 rounded-full p-4 mb-4">
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">Email verified successfully!</h2>
-              <p className="text-gray-400 mb-4">Your email has been verified. You'll be redirected to continue the onboarding process.</p>
-              <Alert variant="default" className="bg-gray-800 border-gray-700 mb-6">
-                <AlertTitle>Redirecting you...</AlertTitle>
-                <AlertDescription>
-                  You'll be redirected automatically in a few seconds.
-                </AlertDescription>
-              </Alert>
-              <Button 
-                onClick={() => navigate('/onboarding/welcome')}
-                className="bg-primary hover:bg-primary/90 px-8 py-2"
-              >
-                Continue to onboarding
-              </Button>
-            </div>
+            renderSuccessContent()
           ) : (
             // Error state
             <div className="flex flex-col items-center justify-center">

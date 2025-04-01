@@ -27,6 +27,24 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Add response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // If we get a 401 Unauthorized error, clear the token and redirect to login
+    if (error.response && error.response.status === 401) {
+      console.log('Unauthorized response, clearing token');
+      localStorage.removeItem('token');
+      
+      // Only redirect to login if we're not already on the login page to avoid loops
+      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/verify-email')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth services
 export const authApi = {
   // Register with email and password
@@ -76,6 +94,12 @@ export const authApi = {
 
 // Onboarding services
 export const onboardingApi = {
+  // Complete onboarding 
+  completeOnboarding: async () => {
+    const response = await api.post('/onboarding/complete');
+    return response.data;
+  },
+  
   // Save onboarding data
   saveOnboarding: async (onboardingData: any) => {
     const response = await api.post('/onboarding', onboardingData);

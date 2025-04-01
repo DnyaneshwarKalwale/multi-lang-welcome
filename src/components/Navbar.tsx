@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Menu, Twitter } from "lucide-react";
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -18,7 +20,9 @@ interface NavbarProps {
 
 export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   const isMobile = useIsMobile();
-  const { twitterAuth } = useAuth();
+  const { twitterAuth, isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Simple development login - works with any backend URL without CORS issues
   const handleTwitterAuth = () => {
@@ -29,6 +33,78 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
     // Open the auth endpoint in a new tab for simplicity
     window.open(`${backendUrl}/api/auth/dev-login?redirect=true`, "_blank");
   };
+
+  const handleDashboardClick = () => {
+    navigate("/dashboard");
+  };
+  
+  // Determines what to show in the right side of navbar based on auth state
+  const renderAuthButtons = () => {
+    if (isAuthenticated) {
+      return (
+        <>
+          <Button
+            variant="ghost"
+            className="text-white hover:text-white hover:bg-white/10"
+            onClick={handleDashboardClick}
+          >
+            Dashboard
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-white hover:text-white hover:bg-white/10"
+            onClick={logout}
+          >
+            Logout
+          </Button>
+        </>
+      );
+    }
+    
+    return (
+      <>
+        <Button 
+          variant="ghost" 
+          className="text-white hover:text-white hover:bg-white/10"
+          onClick={onLoginClick}
+        >
+          Log in
+        </Button>
+        <Button 
+          variant="outline" 
+          className="text-white hover:text-white hover:bg-white/10 gap-2"
+          onClick={handleTwitterAuth}
+        >
+          <Twitter size={18} className="text-[#1DA1F2]" />
+          Dev Login
+        </Button>
+        <Button 
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={onRegisterClick}
+        >
+          Start for free
+        </Button>
+      </>
+    );
+  };
+
+  // Mobile menu items
+  const mobileMenuItems = [
+    { label: "Features", onClick: () => {} },
+    { label: "Resources", onClick: () => {} },
+    { label: "About us", onClick: () => {} },
+    { label: "Pricing", onClick: () => {} },
+    { label: "Affiliates", onClick: () => {} },
+    ...(isAuthenticated 
+      ? [
+          { label: "Dashboard", onClick: handleDashboardClick },
+          { label: "Logout", onClick: logout }
+        ] 
+      : [
+          { label: "Login", onClick: onLoginClick },
+          { label: "Start for free", onClick: onRegisterClick }
+        ])
+  ];
   
   return (
     <nav className="w-full py-4 px-6 md:px-12 lg:px-16 flex items-center justify-between bg-transparent">
@@ -46,37 +122,36 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
         )}
       </div>
       
-      <div className="flex items-center gap-2 md:gap-4">
+      <div>
         {isMobile ? (
-          <Button variant="ghost" size="icon">
-            <Menu className="h-6 w-6" />
-          </Button>
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-gray-900 border-gray-800 px-0">
+              <div className="flex flex-col gap-1 mt-8">
+                {mobileMenuItems.map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className="w-full justify-start text-lg py-6 rounded-none hover:bg-gray-800"
+                    onClick={() => {
+                      item.onClick();
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
         ) : (
-          <>
-            <Button 
-              variant="ghost" 
-              className="text-white hover:text-white hover:bg-white/10"
-              onClick={onLoginClick}
-            >
-              Log in
-            </Button>
-
-            <Button 
-              variant="outline" 
-              className="text-white hover:text-white hover:bg-white/10 gap-2"
-              onClick={handleTwitterAuth}
-            >
-              <Twitter size={18} className="text-[#1DA1F2]" />
-              Dev Login
-            </Button>
-            
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={onRegisterClick}
-            >
-              Start for free
-            </Button>
-          </>
+          <div className="flex items-center gap-3">
+            {renderAuthButtons()}
+          </div>
         )}
       </div>
     </nav>
