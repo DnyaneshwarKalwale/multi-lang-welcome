@@ -6,7 +6,6 @@ import { LoginSheet } from '@/components/LoginSheet';
 import { RegistrationSheet } from '@/components/RegistrationSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowRight } from 'lucide-react';
-import dashboard from '@/assets/images/dashboard.png';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -94,7 +93,7 @@ export default function Index() {
           <div className="w-full max-w-4xl relative">
             <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 absolute inset-0 rounded-xl blur-xl"></div>
             <img 
-              src={dashboard} 
+              src="/images/dashboard-preview.svg" 
               alt="Dashboard Preview" 
               className="w-full h-auto rounded-xl border border-gray-800 relative shadow-2xl" 
             />
