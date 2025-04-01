@@ -1,1 +1,6 @@
-/* /index.html 200 
+# Explicitly redirect login routes
+/login              /?login=true   301
+/register           /?register=true 301
+
+# Handle React Router SPA routing
+/*                  /index.html     200 

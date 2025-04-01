@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { LoginSheet } from '@/components/LoginSheet';
@@ -11,24 +11,39 @@ import dashboard from '@/assets/images/dashboard.png';
 export default function Index() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  
+  // Redirect authenticated users
+  if (isAuthenticated) {
+    if (user?.onboardingCompleted) {
+      return <Navigate to="/dashboard" replace />;
+    } else {
+      return <Navigate to="/onboarding/welcome" replace />;
+    }
+  }
   
   // Check URL parameters on mount and when location changes
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('login') === 'true') {
       setIsLoginOpen(true);
-      // Clean up URL
-      navigate('/', { replace: true });
+      setIsRegisterOpen(false);
+      // Clean up URL to avoid reopening on refresh
+      if (window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     } else if (params.get('register') === 'true') {
       setIsRegisterOpen(true);
-      // Clean up URL
-      navigate('/', { replace: true });
+      setIsLoginOpen(false);
+      // Clean up URL to avoid reopening on refresh
+      if (window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
-  }, [location, navigate]);
+  }, [location]);
   
   // Handle successful login/registration
   const handleAuthSuccess = () => {

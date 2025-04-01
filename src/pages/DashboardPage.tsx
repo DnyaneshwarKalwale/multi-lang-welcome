@@ -6,7 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, 
   BarChart, BookOpen, MessageSquare, Image, Plus, Loader2,
-  ChevronRight
+  ChevronRight, Users, Settings
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { NotificationBell } from "@/components/NotificationBell";
