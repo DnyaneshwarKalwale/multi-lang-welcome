@@ -10,6 +10,8 @@ import LanguageSelectionPage from "@/pages/LanguageSelectionPage";
 import PostFormatPage from "@/pages/PostFormatPage";
 import PostFrequencyPage from "@/pages/PostFrequencyPage";
 import RegistrationPage from "@/pages/RegistrationPage";
+import ExtensionInstallPage from "@/pages/ExtensionInstallPage";
+import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
 
 export function OnboardingRouter() {
@@ -39,6 +41,8 @@ export function OnboardingRouter() {
       <Route path="post-format" element={<PostFormatPage />} />
       <Route path="post-frequency" element={<PostFrequencyPage />} />
       <Route path="registration" element={<RegistrationPage />} />
+      <Route path="extension-install" element={<ExtensionInstallPage />} />
+      <Route path="completion" element={<CompletionPage />} />
       <Route path="dashboard" element={<DashboardPage />} />
       <Route path="" element={<Navigate to="welcome" replace />} />
     </Routes>
