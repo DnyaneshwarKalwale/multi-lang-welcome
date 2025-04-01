@@ -1,11 +1,11 @@
-
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus } from "lucide-react";
+import { Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, BarChart, BookOpen, MessageSquare, Image, Plus, Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import TeamInvitationNotification from "@/components/TeamInvitationNotification";
 
 //dashboard page
 
@@ -107,10 +107,17 @@ export default function DashboardPage() {
       
       {/* Main content */}
       <div className="flex-1 p-8 overflow-y-auto">
-        <header className="mb-12">
-          <h1 className="text-2xl font-semibold mb-1">
+        <header className="flex justify-between items-center mb-12">
+          <h1 className="text-2xl font-semibold">
             Welcome to Scripe, {firstName} <span className="text-yellow-500">👋</span>
           </h1>
+          
+          <div className="flex items-center space-x-4">
+            <TeamInvitationNotification />
+            <Button variant="ghost" className="text-gray-400 hover:text-white rounded-full h-10 w-10 p-0">
+              {firstName.substring(0, 1).toUpperCase()}
+            </Button>
+          </div>
         </header>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">

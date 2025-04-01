@@ -2,18 +2,25 @@ import React, { useState, useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Users, X, UserPlus, Mail, 
-  UserCircle2, UserCog, UserCircle 
+  UserCircle2, UserCog, UserCircle,
+  Loader2
 } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 
 export default function TeamInvitePage() {
   const { workspaceName, teamMembers, setTeamMembers, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { user } = useAuth();
   const { current, total } = getStepProgress();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<string[]>([]);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,6 +60,47 @@ export default function TeamInvitePage() {
           : member
       )
     );
+  };
+
+  const sendInvitations = async () => {
+    if (teamMembers.length === 0) {
+      nextStep();
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error("Authentication error. Please login again.");
+        return;
+      }
+
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const response = await axios.post(
+        `${baseApiUrl}/teams/invitations`, 
+        {
+          teamName: workspaceName,
+          members: teamMembers
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      // Store which emails are now pending invites
+      const invitedEmails = response.data.data.invitedEmails || [];
+      setPendingInvites(invitedEmails);
+
+      toast.success(`Invitations sent to ${invitedEmails.length} team members`);
+      nextStep();
+    } catch (error) {
+      console.error("Failed to send invitations:", error);
+      toast.error("Failed to send invitations. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -157,14 +205,23 @@ export default function TeamInvitePage() {
             variant="outline" 
             onClick={prevStep}
             className="border-gray-700 text-gray-400"
+            disabled={isSubmitting}
           >
             Back
           </Button>
           <ContinueButton 
-            onClick={nextStep}
+            onClick={sendInvitations}
             className="bg-purple-600 hover:bg-purple-700"
+            disabled={isSubmitting}
           >
-            Continue
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending invites...
+              </>
+            ) : (
+              'Continue'
+            )}
           </ContinueButton>
         </div>
         

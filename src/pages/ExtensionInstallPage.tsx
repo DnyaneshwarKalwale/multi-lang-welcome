@@ -6,11 +6,11 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 export default function ExtensionInstallPage() {
   const navigate = useNavigate();
   const { nextStep } = useOnboarding();
-  const [showPopup, setShowPopup] = useState(true);
+  const [showPopup, setShowPopup] = useState(false);
 
   const handleSkip = () => {
-    nextStep();
-    navigate("/onboarding/completion");
+    // Show popup when user tries to skip
+    setShowPopup(true);
   };
 
   const handleInstall = () => {
@@ -22,11 +22,14 @@ export default function ExtensionInstallPage() {
 
   const handleWantExtension = () => {
     setShowPopup(false);
+    // Keep user on the same page so they can install the extension
   };
 
   const handleTryWithout = () => {
     setShowPopup(false);
-    // Maybe set a flag in user preferences indicating they skipped extension
+    // Continue without the extension
+    nextStep();
+    navigate("/onboarding/completion");
   };
 
   return (
@@ -84,24 +87,24 @@ export default function ExtensionInstallPage() {
           We use industry-leading encryption to keep your data secure
         </p>
 
-        <div className="bg-gray-900 rounded-lg p-8 flex flex-col items-center">
+        <div className="flex flex-col items-center mt-8">
           <Button
             onClick={handleInstall}
-            className="w-full py-6 mb-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full"
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full"
           >
             Add to Chrome
           </Button>
           
           <button
             onClick={handleSkip}
-            className="text-sm text-gray-500 hover:text-gray-400"
+            className="mt-4 text-sm text-gray-500 hover:text-gray-400"
           >
             I'll do this later
           </button>
         </div>
       </div>
 
-      {/* Popup Modal */}
+      {/* Popup Modal - Only shown when user clicks skip */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
@@ -134,7 +137,7 @@ export default function ExtensionInstallPage() {
                 </div>
               </div>
               <button 
-                onClick={handleTryWithout} 
+                onClick={handleWantExtension} 
                 className="text-gray-500 hover:text-gray-400 ml-4"
               >
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
