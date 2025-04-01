@@ -9,6 +9,7 @@ import ThemeSelectionPage from "@/pages/ThemeSelectionPage";
 import LanguageSelectionPage from "@/pages/LanguageSelectionPage";
 import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
 import PostFrequencyPage from "@/pages/PostFrequencyPage";
+import PostFormatPage from "@/pages/PostFormatPage";
 import RegistrationPage from "@/pages/RegistrationPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PlanSelectionPage from "@/pages/PlanSelectionPage";
@@ -32,6 +33,12 @@ export const OnboardingRouter = () => {
       navigate('/onboarding/welcome');
     }
   }, [workspaceType, location.pathname, navigate]);
+
+  // Log current location for debugging
+  useEffect(() => {
+    console.log("Current route:", location.pathname);
+    console.log("Current step in context:", currentStep);
+  }, [location.pathname, currentStep]);
   
   // Show loading screen if auth is loading
   if (loading) {
@@ -50,6 +57,7 @@ export const OnboardingRouter = () => {
       <Route path="theme-selection" element={<ThemeSelectionPage />} />
       <Route path="language-selection" element={<LanguageSelectionPage />} />
       <Route path="team-workspace" element={<TeamWorkspacePage />} />
+      <Route path="post-format" element={<PostFormatPage />} />
       <Route path="post-frequency" element={<PostFrequencyPage />} />
       <Route path="registration" element={<RegistrationPage />} />
       <Route path="plan-selection" element={<PlanSelectionPage />} />
