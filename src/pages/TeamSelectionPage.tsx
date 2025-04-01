@@ -21,7 +21,6 @@ export default function TeamSelectionPage() {
       setWorkspaceType(selectedOption);
       nextStep();
       
-      // Navigate to the appropriate next step based on selection
       if (selectedOption === "personal") {
         navigate("/onboarding/theme-selection");
       } else {
@@ -32,6 +31,7 @@ export default function TeamSelectionPage() {
 
   const handlePrev = () => {
     prevStep();
+    navigate("/onboarding/language-selection");
   };
 
   // Animation variants

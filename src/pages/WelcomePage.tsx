@@ -13,12 +13,38 @@ export default function WelcomePage() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px] animate-pulse-slow animation-delay-2000"></div>
+      </div>
+      
+      {/* Floating particles */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden">
+        {Array.from({ length: 15 }).map((_, index) => (
+          <motion.div
+            key={index}
+            className="absolute w-1 h-1 rounded-full bg-indigo-500"
+            initial={{ 
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+              opacity: 0.3,
+              scale: Math.random() * 2 + 0.5
+            }}
+            animate={{ 
+              y: [null, Math.random() * window.innerHeight],
+              opacity: [0.3, 0.8, 0.3],
+              scale: [null, Math.random() + 0.5]
+            }}
+            transition={{ 
+              duration: Math.random() * 10 + 10, 
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+        ))}
       </div>
       
       <motion.div 
-        className="max-w-3xl w-full text-center relative"
+        className="max-w-3xl w-full text-center relative z-10"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
@@ -84,29 +110,50 @@ export default function WelcomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.7 }}
         >
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300 hover-lift">
+          <motion.div 
+            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
+              transition: { duration: 0.2 }
+            }}
+          >
             <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <Twitter className="w-6 h-6 text-indigo-400" />
             </div>
             <h3 className="text-lg font-medium mb-2">AI-Powered Twitter Content</h3>
             <p className="text-gray-400 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
-          </div>
+          </motion.div>
           
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300 hover-lift">
+          <motion.div 
+            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
+              transition: { duration: 0.2 }
+            }}
+          >
             <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <span className="text-2xl">📊</span>
             </div>
             <h3 className="text-lg font-medium mb-2">Twitter Analytics</h3>
             <p className="text-gray-400 text-sm">Track performance metrics and optimize your Twitter strategy with detailed engagement insights.</p>
-          </div>
+          </motion.div>
           
-          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300 hover-lift">
+          <motion.div 
+            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
+              transition: { duration: 0.2 }
+            }}
+          >
             <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <span className="text-2xl">⏱️</span>
             </div>
             <h3 className="text-lg font-medium mb-2">Save Time</h3>
             <p className="text-gray-400 text-sm">Create weeks of Twitter content in minutes and schedule posts for optimal engagement times.</p>
-          </div>
+          </motion.div>
         </motion.div>
       </motion.div>
     </div>

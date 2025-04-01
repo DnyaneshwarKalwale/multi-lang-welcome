@@ -6,7 +6,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, ChevronRight, Globe } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, Check } from "lucide-react";
 
 export default function LanguageSelectionPage() {
   const navigate = useNavigate();
@@ -69,8 +69,34 @@ export default function LanguageSelectionPage() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px] animate-pulse-slow animation-delay-2000"></div>
+      </div>
+      
+      {/* Floating particles */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden">
+        {Array.from({ length: 10 }).map((_, index) => (
+          <motion.div
+            key={index}
+            className="absolute w-1 h-1 rounded-full bg-indigo-500"
+            initial={{ 
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+              opacity: 0.3,
+              scale: Math.random() * 2 + 0.5
+            }}
+            animate={{ 
+              y: [null, Math.random() * window.innerHeight],
+              opacity: [0.3, 0.8, 0.3],
+              scale: [null, Math.random() + 0.5]
+            }}
+            transition={{ 
+              duration: Math.random() * 10 + 10, 
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+        ))}
       </div>
       
       {/* Back button */}
@@ -86,7 +112,7 @@ export default function LanguageSelectionPage() {
       </motion.button>
       
       <motion.div 
-        className="max-w-4xl w-full text-center"
+        className="max-w-4xl w-full text-center relative z-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -106,8 +132,14 @@ export default function LanguageSelectionPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Globe className="w-7 h-7 text-indigo-400" />
-          <h1 className="text-4xl font-bold">Choose your language</h1>
+          <motion.div 
+            className="p-2 rounded-full bg-gradient-to-br from-indigo-600/30 to-indigo-900/30 border border-indigo-500/40"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Globe className="w-6 h-6 text-indigo-400" />
+          </motion.div>
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Choose your language</h1>
         </motion.div>
         
         <motion.p 
@@ -128,23 +160,39 @@ export default function LanguageSelectionPage() {
           {languages.map((lang) => (
             <motion.div
               key={lang.value}
-              className={`bg-gray-900/50 backdrop-blur-sm border-2 ${
-                language === lang.value ? "border-indigo-500" : "border-gray-800"
-              } rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/60 transition-all duration-300 hover-lift`}
+              className={`relative bg-gray-900/50 backdrop-blur-sm border-2 overflow-hidden
+                ${language === lang.value ? "border-indigo-500" : "border-gray-800"}
+                rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/60 transition-all duration-300`}
               onClick={() => handleLanguageSelect(lang.value)}
               variants={itemVariants}
+              whileHover={{ 
+                y: -5, 
+                boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ scale: 0.98 }}
             >
+              {language === lang.value && (
+                <motion.div 
+                  className="absolute inset-0 bg-indigo-600/10" 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
               <span className="text-3xl mb-2">{lang.flag}</span>
               <span className={`font-medium ${language === lang.value ? "text-white" : "text-gray-300"}`}>
                 {lang.name}
               </span>
               {language === lang.value && (
                 <motion.div 
-                  className="mt-2 w-2 h-2 rounded-full bg-indigo-500"
+                  className="absolute top-2 right-2 bg-indigo-600/40 w-5 h-5 flex items-center justify-center rounded-full"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
+                  transition={{ type: "spring", damping: 10, stiffness: 200 }}
+                >
+                  <Check size={12} className="text-white" />
+                </motion.div>
               )}
             </motion.div>
           ))}
@@ -178,7 +226,7 @@ export default function LanguageSelectionPage() {
         
         {/* Language info */}
         <motion.div
-          className="mt-12 text-center max-w-2xl mx-auto p-4 border border-indigo-800/30 rounded-lg bg-indigo-900/10"
+          className="mt-8 text-center max-w-2xl mx-auto p-5 border border-indigo-800/30 rounded-lg bg-indigo-900/10 backdrop-blur-sm shadow-lg shadow-indigo-900/10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}

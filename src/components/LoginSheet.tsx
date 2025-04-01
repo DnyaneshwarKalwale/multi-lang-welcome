@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Twitter, AlertCircle } from "lucide-react";
+import { X, Twitter, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -164,24 +164,36 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
+                  className="relative w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 overflow-hidden rounded-lg" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
-                  <span>Continue with Google</span>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5 relative z-10" />
+                  <span className="relative z-10">Continue with Google</span>
+                  <motion.div 
+                    className="absolute inset-0 bg-white/5" 
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileHover={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
                 </Button>
               </motion.div>
               
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
+                  className="relative w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 overflow-hidden rounded-lg" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
-                  <Twitter size={18} className="text-[#1DA1F2]" />
-                  <span>Continue with Twitter</span>
+                  <Twitter size={18} className="text-[#1DA1F2] relative z-10" />
+                  <span className="relative z-10">Continue with Twitter</span>
+                  <motion.div 
+                    className="absolute inset-0 bg-white/5" 
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileHover={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
                 </Button>
               </motion.div>
             </div>
@@ -209,7 +221,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all rounded-lg"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -227,7 +239,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="password" 
                     type="password" 
                     placeholder="Enter your password" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all rounded-lg"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -239,47 +251,50 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 <Button 
                   type="submit" 
                   variant="gradient"
-                  className="w-full text-white font-medium h-12 transition-all duration-200"
+                  className="w-full text-white font-medium h-12 transition-all duration-300 rounded-lg relative overflow-hidden"
+                  rounded="lg"
                   disabled={loading}
                 >
+                  <motion.div 
+                    className="absolute inset-0 bg-white/10" 
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileHover={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
                   {loading ? (
                     <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Logging in...
+                      <Loader2 className="animate-spin h-5 w-5 text-white mr-2" />
+                      <span>Logging in...</span>
                     </div>
-                  ) : 'Log in'}
+                  ) : (
+                    <span className="relative z-10">Log in</span>
+                  )}
                 </Button>
               </motion.div>
-            </motion.form>
-            
-            <motion.p 
-              className="text-center mt-8 text-sm text-gray-500"
-              variants={itemVariants}
-            >
-              Don't have an account?{' '}
-              <a 
-                href="#" 
-                className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium" 
-                onClick={handleSignUp}
+              
+              <motion.div 
+                className="text-center text-sm text-gray-400 pt-2"
+                variants={itemVariants}
               >
-                Sign up for free
-              </a>
-            </motion.p>
+                Don't have an account?{" "}
+                <button
+                  onClick={handleSignUp}
+                  className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors underline-offset-2 hover:underline"
+                >
+                  Sign up
+                </button>
+              </motion.div>
+            </motion.form>
           </motion.div>
         </SheetContent>
       </Sheet>
       
-      {/* Add the registration sheet */}
-      {openRegistrationSheet && (
-        <RegistrationSheet 
-          open={openRegistrationSheet}
-          onOpenChange={setOpenRegistrationSheet}
-          onSuccess={onSuccess}
-        />
-      )}
+      {/* Render the registration sheet */}
+      <RegistrationSheet 
+        open={openRegistrationSheet} 
+        onOpenChange={setOpenRegistrationSheet} 
+        onSuccess={onSuccess}
+      />
     </>
   );
 }
