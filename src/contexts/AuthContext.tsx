@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { authApi, AUTH_TOKEN_KEY, AUTH_USER_KEY } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useToast } from "@/components/ui/use-toast";
 
 interface User {
   id: string;
@@ -13,7 +12,6 @@ interface User {
   onboardingCompleted: boolean;
   profilePicture?: string;
   authMethod: 'email' | 'google' | 'twitter';
-  lastOnboardingStep?: string;
 }
 
 interface AuthContextType {
@@ -27,7 +25,6 @@ interface AuthContextType {
   logout: () => void;
   clearError: () => void;
   refreshUser: () => Promise<User | null>;
-  checkEmailExists: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Set up axios interceptor for authentication
   useEffect(() => {
@@ -96,17 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Check if email exists
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    try {
-      const response = await authApi.checkEmailExists(email);
-      return response.exists;
-    } catch (error) {
-      console.error("Error checking if email exists:", error);
-      return false;
-    }
-  };
-
   // Check if user is already logged in on initial load
   useEffect(() => {
     // Ignore repeated auth checks
@@ -133,18 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      // Check if email already exists
-      const emailExists = await checkEmailExists(email);
-      if (emailExists) {
-        toast({
-          title: "Account already exists",
-          description: "An account with this email already exists. Please log in instead.",
-          variant: "destructive"
-        });
-        setError("An account with this email already exists. Please log in instead.");
-        return;
-      }
-      
       const response = await authApi.register(firstName, lastName, email, password);
       
       // For email registration, don't set token yet since email verification is required
@@ -153,36 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return response;
     } catch (err: any) {
-      // Check if this is a duplicate email error from the server
-      if (err.response?.data?.error?.includes('already exists')) {
-        toast({
-          title: "Account already exists",
-          description: "An account with this email already exists. Please log in instead.",
-          variant: "destructive"
-        });
-        setError("An account with this email already exists. Please log in instead.");
-      } else {
-        setError(err.response?.data?.error || 'Registration failed');
-      }
+      setError(err.response?.data?.error || 'Registration failed');
       console.error('Registration error:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Handle onboarding continuation
-  const continueOnboarding = (userData: User) => {
-    if (!userData.onboardingCompleted) {
-      // If user has a saved onboarding step, navigate to it
-      if (userData.lastOnboardingStep) {
-        navigate(`/onboarding/${userData.lastOnboardingStep}`, { replace: true });
-      } else {
-        // Otherwise, start from the beginning
-        navigate('/onboarding/welcome', { replace: true });
-      }
-    } else {
-      // If onboarding is complete, go to dashboard
-      navigate('/dashboard', { replace: true });
     }
   };
 
@@ -207,9 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       
-      // Continue onboarding or go to dashboard
-      continueOnboarding(response.user);
-      
+      // Redirect based on onboarding status
+      if (!response.user.onboardingCompleted) {
+        navigate('/onboarding/welcome', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
@@ -234,9 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user));
         setUser(response.user);
         
-        // Continue onboarding or go to dashboard
-        continueOnboarding(response.user);
-        
+        // Redirect based on onboarding status
+        if (!response.user.onboardingCompleted) {
+          navigate('/onboarding/welcome', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
         return;
       } catch (apiErr: any) {
         console.log("API approach failed, trying browser redirect:", apiErr);
@@ -302,7 +255,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         clearError,
         refreshUser,
-        checkEmailExists,
       }}
     >
       {children}

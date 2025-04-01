@@ -83,20 +83,6 @@ export const authApi = {
     return response.data;
   },
 
-  // Check if email exists
-  checkEmailExists: async (email: string) => {
-    try {
-      const response = await api.post('/auth/check-email', { email });
-      return response.data;
-    } catch (error) {
-      // If the server returns 404, the email doesn't exist
-      if (error.response?.status === 404) {
-        return { exists: false };
-      }
-      throw error;
-    }
-  },
-
   // Get current user with retry for cross-domain logins
   getCurrentUser: async () => {
     try {

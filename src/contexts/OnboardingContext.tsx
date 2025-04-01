@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { onboardingApi } from "@/services/api";
-import { useAuth } from "@/contexts/AuthContext";
 
 // Define types for our context
 type OnboardingStep = 
@@ -56,7 +54,6 @@ interface OnboardingContextType {
   nextStep: () => void;
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
-  saveOnboardingProgress: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -108,7 +105,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { setTheme: setGlobalTheme } = useTheme();
   const { setLanguage: setGlobalLanguage } = useLanguage();
-  const { user, isAuthenticated } = useAuth();
   
   // Initialize state from localStorage if available
   const initialState = getInitialState();
@@ -124,40 +120,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [firstName, setFirstName] = useState(initialState.firstName);
   const [lastName, setLastName] = useState(initialState.lastName);
   const [email, setEmail] = useState(initialState.email);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Function to save onboarding progress to server
-  const saveOnboardingProgress = async () => {
-    if (!isAuthenticated || isSaving) return;
-    
-    try {
-      setIsSaving(true);
-      
-      // Only save if we're past the welcome step
-      if (currentStep !== 'welcome' && currentStep !== 'initial') {
-        console.log('Saving onboarding progress:', currentStep);
-        
-        // Prepare data to save
-        const onboardingData = {
-          lastOnboardingStep: currentStep,
-          workspaceType,
-          workspaceName,
-          teamMembers,
-          theme,
-          language,
-          postFormat,
-          postFrequency
-        };
-        
-        // Save to server
-        await onboardingApi.saveOnboarding(onboardingData);
-      }
-    } catch (error) {
-      console.error('Error saving onboarding progress:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -176,18 +138,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         email
       };
       localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(stateToSave));
-      
-      // Also save progress to server if user is authenticated
-      if (isAuthenticated && currentStep !== 'initial' && currentStep !== 'welcome') {
-        saveOnboardingProgress();
-      }
     } catch (error) {
       console.error('Error saving to localStorage:', error);
     }
   }, [
     currentStep, workspaceType, workspaceName, teamMembers,
     theme, language, postFormat, postFrequency,
-    firstName, lastName, email, isAuthenticated
+    firstName, lastName, email
   ]);
 
   // Get applicable steps based on workspace type
@@ -218,9 +175,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const nextStep = steps[currentIndex + 1];
       setCurrentStep(nextStep);
       navigate(`/onboarding/${nextStep}`, { replace: true });
-      
-      // Save progress after step change
-      saveOnboardingProgress();
     }
   };
 
@@ -262,20 +216,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [workspaceType, currentStep]);
 
-  // If user profile has a last onboarding step, go there
-  useEffect(() => {
-    if (user && user.lastOnboardingStep && currentStep === 'initial') {
-      const lastStep = user.lastOnboardingStep as OnboardingStep;
-      
-      // Verify this is a valid step
-      if (allSteps.includes(lastStep)) {
-        console.log('Resuming onboarding from:', lastStep);
-        setCurrentStep(lastStep);
-        navigate(`/onboarding/${lastStep}`, { replace: true });
-      }
-    }
-  }, [user, currentStep, navigate]);
-
   const value = {
     currentStep,
     setCurrentStep,
@@ -301,8 +241,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setEmail,
     nextStep,
     prevStep,
-    getStepProgress,
-    saveOnboardingProgress
+    getStepProgress
   };
 
   return (
