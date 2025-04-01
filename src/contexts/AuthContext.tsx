@@ -24,6 +24,7 @@ interface AuthContextType {
   twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  fetchUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +34,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Fetch current user data
+  const fetchUser = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      return;
+    }
+    
+    try {
+      const { user } = await authApi.getCurrentUser();
+      setUser(user);
+    } catch (error) {
+      console.error("Failed to get user data:", error);
+    }
+  };
 
   // Check if user is already logged in on initial load
   useEffect(() => {
@@ -185,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         twitterAuth,
         logout,
         clearError,
+        fetchUser
       }}
     >
       {children}

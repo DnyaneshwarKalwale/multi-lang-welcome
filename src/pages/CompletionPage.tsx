@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
@@ -6,14 +6,15 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function CompletionPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [youtubeLink, setYoutubeLink] = React.useState("");
-  const [isMarkingComplete, setIsMarkingComplete] = React.useState(false);
+  const { user, fetchUser } = useAuth();
+  const [youtubeLink, setYoutubeLink] = useState("");
+  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const [markedComplete, setMarkedComplete] = useState(false);
 
   // Mark onboarding as completed when the component mounts
   useEffect(() => {
     const markOnboardingComplete = async () => {
-      if (user && !user.onboardingCompleted && !isMarkingComplete) {
+      if (user && !user.onboardingCompleted && !isMarkingComplete && !markedComplete) {
         try {
           setIsMarkingComplete(true);
           
@@ -35,6 +36,15 @@ export default function CompletionPage() {
           );
           
           console.log("Onboarding marked as completed");
+          
+          // Save to local state that we've marked it complete
+          setMarkedComplete(true);
+          
+          // Update the user object with the new onboarding status
+          await fetchUser();
+          
+          // Also store in localStorage that we've completed onboarding
+          localStorage.setItem('onboardingCompleted', 'true');
         } catch (error) {
           console.error("Failed to mark onboarding as completed:", error);
         } finally {
@@ -44,7 +54,7 @@ export default function CompletionPage() {
     };
 
     markOnboardingComplete();
-  }, [user, isMarkingComplete]);
+  }, [user, isMarkingComplete, markedComplete, fetchUser]);
 
   const handleGenerateContent = async () => {
     // Handle content generation logic
@@ -60,17 +70,20 @@ export default function CompletionPage() {
         console.error("Failed to generate content:", error);
       }
     }
-    navigate("/dashboard");
+    // Force navigation to dashboard, not back to onboarding
+    window.location.href = "/dashboard";
   };
 
   const handleUploadFile = () => {
     // Handle file upload logic
     console.log("File upload clicked");
-    navigate("/dashboard");
+    // Force navigation to dashboard, not back to onboarding
+    window.location.href = "/dashboard";
   };
 
   const handleSkip = () => {
-    navigate("/dashboard");
+    // Force navigation to dashboard, not back to onboarding
+    window.location.href = "/dashboard";
   };
 
   return (
