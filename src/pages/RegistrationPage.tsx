@@ -1,12 +1,27 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 
 export default function RegistrationPage() {
   const { firstName, setFirstName, lastName, setLastName, nextStep } = useOnboarding();
+  const { user } = useAuth();
+  
+  // Populate name fields from authenticated user if available
+  useEffect(() => {
+    if (user) {
+      // If the names are empty, populate them from the user context
+      if (!firstName && user.firstName) {
+        setFirstName(user.firstName);
+      }
+      
+      if (!lastName && user.lastName) {
+        setLastName(user.lastName);
+      }
+    }
+  }, [user, firstName, lastName, setFirstName, setLastName]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
