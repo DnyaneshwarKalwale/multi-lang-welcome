@@ -33,7 +33,11 @@ export function NotificationBell() {
   
   // Get all invites for the current user
   const fetchInvites = async () => {
-    if (!user?.email) return;
+    // Don't fetch if user is not authenticated
+    if (!user?.email) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
@@ -43,6 +47,14 @@ export function NotificationBell() {
       }
     } catch (err) {
       console.error('Error fetching workspace invites:', err);
+      // Only show error if it's not a 404 (which is expected when no invites exist)
+      if (err instanceof Error && !err.message.includes('404')) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load workspace invitations. Please try again later.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -50,17 +62,28 @@ export function NotificationBell() {
   
   // Fetch invitations when the component mounts or when popover opens
   useEffect(() => {
-    if (open) {
+    if (open && user?.email) {
       fetchInvites();
     }
   }, [open, user]);
   
   // Initial fetch
   useEffect(() => {
-    fetchInvites();
+    if (user?.email) {
+      fetchInvites();
+    }
   }, [user]);
   
   const handleInviteResponse = async (inviteId: string, action: 'accept' | 'reject') => {
+    if (!user?.email) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to respond to invitations.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setProcessing(inviteId);
     try {
       await workspaceApi.respondToInvite(inviteId, action);
@@ -92,6 +115,9 @@ export function NotificationBell() {
       setProcessing(null);
     }
   };
+  
+  // Don't render anything if user is not authenticated
+  if (!user?.email) return null;
   
   return (
     <Popover open={open} onOpenChange={setOpen}>

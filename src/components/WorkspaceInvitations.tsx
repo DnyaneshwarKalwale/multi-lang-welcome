@@ -40,10 +40,15 @@ export function WorkspaceInvitations() {
   // Fetch invitations when the component mounts
   useEffect(() => {
     async function fetchInvites() {
-      if (!user?.email) return;
+      // Don't fetch if user is not authenticated
+      if (!user?.email) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
+        setError(null);
         const response = await workspaceApi.getMyInvites();
         if (response.success && response.data) {
           setInvites(response.data);
@@ -54,7 +59,15 @@ export function WorkspaceInvitations() {
         }
       } catch (err) {
         console.error('Error fetching workspace invites:', err);
-        setError('Failed to load workspace invitations');
+        // Only show error if it's not a 404 (which is expected when no invites exist)
+        if (err instanceof Error && !err.message.includes('404')) {
+          setError('Failed to load workspace invitations');
+          toast({
+            title: 'Error',
+            description: 'Failed to load workspace invitations. Please try again later.',
+            variant: 'destructive',
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -64,6 +77,15 @@ export function WorkspaceInvitations() {
   }, [user]);
 
   const handleInviteResponse = async (inviteId: string, action: 'accept' | 'reject') => {
+    if (!user?.email) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to respond to invitations.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setProcessing(inviteId);
     try {
       await workspaceApi.respondToInvite(inviteId, action);
@@ -117,7 +139,10 @@ export function WorkspaceInvitations() {
     navigate('/onboarding/team-selection');
   };
 
-  if (loading || !user) return null;
+  // Don't render anything if user is not authenticated
+  if (!user?.email) return null;
+  
+  // Don't render if there's an error or no invites
   if (error || invites.length === 0) return null;
 
   return (
@@ -131,7 +156,11 @@ export function WorkspaceInvitations() {
         </DialogHeader>
         
         <div className="space-y-4 my-4 max-h-[300px] overflow-y-auto">
-          {invites.map((invite) => (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+            </div>
+          ) : invites.map((invite) => (
             <div key={invite._id} className="p-4 bg-gray-800 rounded-lg">
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-purple-600/20 rounded-lg">
