@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Create axios instance with base URL using relative paths
-// This ensures we stay on the same domain regardless of deployment
-const API_URL = '/api';
+// Create axios instance with base URL using the actual backend URL
+// This ensures proper communication with the backend server
+const API_URL = 'https://backend-scripe.onrender.com/api';
 
 // Key constants for storage - must match those in AuthContext
 export const AUTH_TOKEN_KEY = 'token';

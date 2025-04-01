@@ -21,14 +21,16 @@ export default function LoginPage() {
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Use relative path for auth endpoints
-    window.location.href = '/api/auth/google';
+    // Use the actual backend URL
+    const backendUrl = 'https://backend-scripe.onrender.com';
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // Use relative path for auth endpoints
-    window.location.href = '/api/auth/twitter';
+    // Use the actual backend URL
+    const backendUrl = 'https://backend-scripe.onrender.com';
+    window.location.href = `${backendUrl}/api/auth/twitter`;
   };
   
   // Handle login form submission

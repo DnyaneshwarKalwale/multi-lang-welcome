@@ -244,7 +244,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // If CORS error, try browser redirect approach instead
         if (apiErr.message && apiErr.message.includes('Network Error')) {
-          // Use relative path to stay on the same domain
+          // Use the actual backend URL
+          const backendUrl = 'https://backend-scripe.onrender.com';
           const params = new URLSearchParams({
             name: userData.name,
             twitterId: userData.twitterId,
@@ -252,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ...(userData.profileImage && { profileImage: userData.profileImage })
           });
           
-          window.location.href = `/api/auth/mock-twitter-auth?${params.toString()}`;
+          window.location.href = `${backendUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
           return;
         }
         
