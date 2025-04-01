@@ -8,6 +8,21 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      // Proxy API requests to the backend
+      '/api': {
+        target: 'https://backend-scripe.onrender.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path
+      },
+      // Also proxy auth-specific routes
+      '/auth': {
+        target: 'https://backend-scripe.onrender.com',
+        changeOrigin: true,
+        secure: true
+      }
+    }
   },
   plugins: [
     react(),

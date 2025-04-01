@@ -244,34 +244,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // If CORS error, try browser redirect approach instead
         if (apiErr.message && apiErr.message.includes('Network Error')) {
-          // Use environment variable or fallback to Render URL
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          const baseUrl = baseApiUrl.replace('/api', '');
+          // Use relative path to stay on the same domain
+          const params = new URLSearchParams({
+            name: userData.name,
+            twitterId: userData.twitterId,
+            ...(userData.email && { email: userData.email }),
+            ...(userData.profileImage && { profileImage: userData.profileImage })
+          });
           
-          // Build URL parameters properly
-          const params = new URLSearchParams();
-          params.append('name', userData.name);
-          params.append('twitterId', userData.twitterId);
-          
-          if (userData.email) {
-            params.append('email', userData.email);
-          }
-          
-          if (userData.profileImage) {
-            params.append('profileImage', userData.profileImage);
-          }
-          
-          // Redirect browser to the auth endpoint
-          window.location.href = `${baseUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
+          window.location.href = `/api/auth/mock-twitter-auth?${params.toString()}`;
           return;
         }
         
-        // If not a CORS error, rethrow
         throw apiErr;
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Twitter authentication failed');
       console.error('Twitter auth error:', err);
+      setError(err.response?.data?.message || 'Failed to authenticate with Twitter');
     } finally {
       setLoading(false);
     }
