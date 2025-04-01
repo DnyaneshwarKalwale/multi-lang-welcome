@@ -270,16 +270,26 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [workspaceType, currentStep]);
 
-  // If user profile has a last onboarding step, go there
+  // If user profile has a last onboarding step or has completed onboarding, handle accordingly
   useEffect(() => {
-    if (user && user.lastOnboardingStep && currentStep === 'initial') {
-      const lastStep = user.lastOnboardingStep as OnboardingStep;
+    if (user && currentStep === 'initial') {
+      // If onboarding is completed, navigate directly to dashboard
+      if (user.onboardingCompleted) {
+        console.log('Onboarding already completed, redirecting to dashboard');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
       
-      // Verify this is a valid step
-      if (allSteps.includes(lastStep)) {
-        console.log('Resuming onboarding from:', lastStep);
-        setCurrentStep(lastStep);
-        navigate(`/onboarding/${lastStep}`, { replace: true });
+      // Otherwise, resume from last step if available
+      if (user.lastOnboardingStep) {
+        const lastStep = user.lastOnboardingStep as OnboardingStep;
+        
+        // Verify this is a valid step
+        if (allSteps.includes(lastStep)) {
+          console.log('Resuming onboarding from:', lastStep);
+          setCurrentStep(lastStep);
+          navigate(`/onboarding/${lastStep}`, { replace: true });
+        }
       }
     }
   }, [user, currentStep, navigate]);

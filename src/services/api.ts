@@ -141,6 +141,12 @@ export const authApi = {
     const response = await api.post('/auth/resend-verification', { email });
     return response.data;
   },
+
+  // Update user data
+  updateUser: async (userData: any) => {
+    const response = await api.put('/auth/update-user', userData);
+    return response.data.user;
+  },
 };
 
 // Onboarding services

@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload, Youtube, ArrowRight, Sparkles } from "lucide-react";
+import { FileText, Upload, Youtube, ArrowRight, Sparkles, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ContentGenerationPage() {
-  const { nextStep, prevStep, getStepProgress, firstName } = useOnboarding();
+  const { prevStep, getStepProgress, firstName, saveOnboardingProgress } = useOnboarding();
   const { current, total } = getStepProgress();
   const [skipDialogOpen, setSkipDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, updateUser } = useAuth();
 
   const contentOptions = [
     {
@@ -40,15 +41,35 @@ export default function ContentGenerationPage() {
     }
   ];
 
+  const completeOnboarding = async () => {
+    try {
+      // Mark onboarding as completed
+      if (updateUser) {
+        await updateUser({ 
+          onboardingCompleted: true,
+          lastOnboardingStep: 'dashboard'
+        });
+      }
+      
+      // Also update the onboarding context
+      await saveOnboardingProgress();
+      
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      // Still navigate to dashboard even if there's an error
+      navigate('/dashboard', { replace: true });
+    }
+  };
+
   const handleSkip = () => {
     setSkipDialogOpen(false);
-    navigate('/dashboard', { replace: true });
+    completeOnboarding();
   };
 
   const handleOptionClick = (option: string) => {
-    // In a real app, this would take you to the content generation page
-    // For now, just go to dashboard
-    navigate('/dashboard', { replace: true });
+    completeOnboarding();
   };
 
   return (
@@ -59,6 +80,10 @@ export default function ContentGenerationPage() {
           <p className="text-xl font-medium mb-2">Let's generate your first content</p>
           <p className="text-gray-400 max-w-xl mx-auto">
             Choose one of these options to create your first piece of content. Our AI will help you make it amazing.
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            You can go back to modify your preferences, but once you continue to the dashboard, 
+            you'll complete the onboarding process.
           </p>
         </div>
         
@@ -87,7 +112,16 @@ export default function ContentGenerationPage() {
           ))}
         </div>
         
-        <div className="flex flex-col items-center mb-12">
+        <div className="flex justify-between items-center mb-12">
+          <Button 
+            onClick={prevStep}
+            variant="outline"
+            className="text-gray-400 hover:text-white border-gray-700 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Go Back
+          </Button>
+          
           <Button 
             onClick={() => setSkipDialogOpen(true)}
             variant="ghost"
@@ -106,7 +140,7 @@ export default function ContentGenerationPage() {
           <DialogHeader>
             <DialogTitle>Skip content creation?</DialogTitle>
             <DialogDescription className="text-gray-400">
-              You can always create content later from your dashboard. Are you sure you want to skip for now?
+              You can always create content later from your dashboard. This will complete your onboarding process.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex sm:justify-between sm:space-x-4">
