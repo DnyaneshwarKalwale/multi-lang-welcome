@@ -20,16 +20,6 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   const isMobile = useIsMobile();
   const { twitterAuth } = useAuth();
   
-  // Simple development login - works with any backend URL without CORS issues
-  const handleTwitterAuth = () => {
-    // We'll get the backend URL from environment or use Render deployed URL as fallback
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const backendUrl = baseApiUrl.replace('/api', '');
-    
-    // Open the auth endpoint in a new tab for simplicity
-    window.open(`${backendUrl}/api/auth/dev-login?redirect=true`, "_blank");
-  };
-  
   return (
     <nav className="w-full py-4 px-6 md:px-12 lg:px-16 flex items-center justify-between bg-transparent">
       <div className="flex items-center gap-12">
@@ -59,15 +49,6 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               onClick={onLoginClick}
             >
               Log in
-            </Button>
-
-            <Button 
-              variant="outline" 
-              className="text-white hover:text-white hover:bg-white/10 gap-2"
-              onClick={handleTwitterAuth}
-            >
-              <Twitter size={18} className="text-[#1DA1F2]" />
-              Dev Login
             </Button>
             
             <Button 

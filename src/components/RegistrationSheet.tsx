@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoginSheet } from "./LoginSheet";
 
 interface RegistrationSheetProps {
   open: boolean;
@@ -23,6 +24,9 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // Add state for login sheet navigation
+  const [openLoginSheet, setOpenLoginSheet] = useState(false);
   
   // Handle Google auth
   const handleGoogleAuth = () => {
@@ -61,130 +65,151 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     onOpenChange(false);
   }
   
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Close registration sheet
+    onOpenChange(false);
+    // Open login sheet with a small delay to allow for the transition
+    setTimeout(() => {
+      setOpenLoginSheet(true);
+    }, 300);
+  };
+  
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gray-900 border-gray-800 p-0 w-full sm:max-w-md">
-        <div className="bg-gray-900 p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Create your account</h2>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleClose}
-              className="text-gray-400 hover:text-white"
-            >
-              <X size={20} />
-            </Button>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gray-900 border-gray-800 p-0 w-full sm:max-w-md">
+          <div className="bg-gray-900 p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Create your account</h2>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleClose}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-4 bg-red-900/30 border-red-900">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-4 mb-6">
+              <Button 
+                variant="outline" 
+                className="w-full py-6 flex justify-center gap-2" 
+                onClick={handleGoogleAuth}
+                disabled={loading}
+              >
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
+                Continue with Google
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full py-6 flex justify-center gap-2" 
+                onClick={handleTwitterAuth}
+                disabled={loading}
+              >
+                <Twitter size={20} className="text-[#1DA1F2]" />
+                Continue with Twitter
+              </Button>
+            </div>
+            
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-700"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">OR CONTINUE WITH</span>
+              </div>
+            </div>
+            
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
+                <Input 
+                  id="firstName" 
+                  placeholder="Enter your first name" 
+                  className="bg-gray-700 border-gray-600"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
+                <Input 
+                  id="lastName" 
+                  placeholder="Enter your last name" 
+                  className="bg-gray-700 border-gray-600"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="Enter your email" 
+                  className="bg-gray-700 border-gray-600"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="Choose a password (min. 8 characters)" 
+                  className="bg-gray-700 border-gray-600"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={8}
+                  required
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-primary hover:bg-primary/90"
+                disabled={loading}
+              >
+                {loading ? 'Signing up...' : 'Sign up'}
+              </Button>
+            </form>
+            
+            <p className="text-center mt-6 text-sm text-gray-400">
+              Already have an account? <a href="#" className="text-primary hover:underline" onClick={handleLogin}>Log in</a>
+            </p>
+            
+            <p className="text-center mt-6 text-xs text-gray-500">
+              By continuing, you agree to the <a href="#" className="underline">terms of service</a> and <a href="#" className="underline">privacy policy</a>.
+            </p>
           </div>
-          
-          {error && (
-            <Alert variant="destructive" className="mb-4 bg-red-900/30 border-red-900">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="space-y-4 mb-6">
-            <Button 
-              variant="outline" 
-              className="w-full py-6 flex justify-center gap-2" 
-              onClick={handleGoogleAuth}
-              disabled={loading}
-            >
-              <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
-              Continue with Google
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full py-6 flex justify-center gap-2" 
-              onClick={handleTwitterAuth}
-              disabled={loading}
-            >
-              <Twitter size={20} className="text-[#1DA1F2]" />
-              Continue with Twitter
-            </Button>
-          </div>
-          
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">OR CONTINUE WITH</span>
-            </div>
-          </div>
-          
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
-              <Input 
-                id="firstName" 
-                placeholder="Enter your first name" 
-                className="bg-gray-700 border-gray-600"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
-              <Input 
-                id="lastName" 
-                placeholder="Enter your last name" 
-                className="bg-gray-700 border-gray-600"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="Enter your email" 
-                className="bg-gray-700 border-gray-600"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="Choose a password (min. 8 characters)" 
-                className="bg-gray-700 border-gray-600"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={8}
-                required
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-primary hover:bg-primary/90"
-              disabled={loading}
-            >
-              {loading ? 'Signing up...' : 'Sign up'}
-            </Button>
-          </form>
-          
-          <p className="text-center mt-6 text-sm text-gray-400">
-            Already have an account? <a href="#" className="text-primary hover:underline" onClick={(e) => { e.preventDefault(); onOpenChange(false); }}>Log in</a>
-          </p>
-          
-          <p className="text-center mt-6 text-xs text-gray-500">
-            By continuing, you agree to the <a href="#" className="underline">terms of service</a> and <a href="#" className="underline">privacy policy</a>.
-          </p>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+      
+      {/* Add the login sheet */}
+      {openLoginSheet && (
+        <LoginSheet 
+          open={openLoginSheet}
+          onOpenChange={setOpenLoginSheet}
+          onSuccess={onSuccess}
+        />
+      )}
+    </>
   );
 }
