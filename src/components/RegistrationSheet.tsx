@@ -12,9 +12,10 @@ interface RegistrationSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-export function RegistrationSheet({ open, onOpenChange, onSuccess }: RegistrationSheetProps) {
+export function RegistrationSheet({ open, onOpenChange, onSuccess, onSwitchToLogin }: RegistrationSheetProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { register, error, clearError, loading, twitterAuth } = useAuth();
@@ -59,7 +60,15 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   const handleClose = () => {
     clearError();
     onOpenChange(false);
-  }
+  };
+  
+  const handleSwitchToLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onOpenChange(false);
+    if (onSwitchToLogin) {
+      setTimeout(() => onSwitchToLogin(), 100);
+    }
+  };
   
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -177,7 +186,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
           </form>
           
           <p className="text-center mt-6 text-sm text-gray-400">
-            Already have an account? <a href="#" className="text-primary hover:underline" onClick={(e) => { e.preventDefault(); onOpenChange(false); }}>Log in</a>
+            Already have an account? <a href="#" className="text-primary hover:underline" onClick={handleSwitchToLogin}>Log in</a>
           </p>
           
           <p className="text-center mt-6 text-xs text-gray-500">

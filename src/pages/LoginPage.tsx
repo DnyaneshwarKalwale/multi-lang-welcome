@@ -161,7 +161,11 @@ export default function LoginPage() {
                   </form>
                   
                   <p className="text-center mt-6 text-sm text-gray-400">
-                    Don't have an account? <a href="#" className="text-primary hover:underline" onClick={(e) => { e.preventDefault(); setIsLoginOpen(false); setIsRegisterOpen(true); }}>Sign up</a>
+                    Don't have an account? <a href="#" className="text-primary hover:underline" onClick={(e) => { 
+                      e.preventDefault(); 
+                      setIsLoginOpen(false); 
+                      setTimeout(() => setIsRegisterOpen(true), 100); 
+                    }}>Sign up</a>
                   </p>
                 </div>
               </SheetContent>
@@ -246,7 +250,11 @@ export default function LoginPage() {
       </div>
 
       {/* Registration Sheet */}
-      <RegistrationSheet open={isRegisterOpen} onOpenChange={setIsRegisterOpen} />
+      <RegistrationSheet 
+        open={isRegisterOpen} 
+        onOpenChange={setIsRegisterOpen}
+        onSwitchToLogin={() => setIsLoginOpen(true)}
+      />
     </div>
   );
 }

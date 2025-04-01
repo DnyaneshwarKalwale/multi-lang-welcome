@@ -17,15 +17,24 @@ import DashboardPage from "./pages/DashboardPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 // This component wraps our routes and handles auth redirects
 function AppRoutes() {
   const { isAuthenticated, loading, user } = useAuth();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize the app state
+  useEffect(() => {
+    if (!loading) {
+      setIsInitialized(true);
+    }
+  }, [loading]);
 
   // Show loading screen while checking auth state
-  if (loading) {
+  if (loading || !isInitialized) {
     return <LoadingScreen />;
   }
 
@@ -33,11 +42,11 @@ function AppRoutes() {
     <Routes>
       {/* Public routes accessible to all */}
       <Route path="/" element={
-        isAuthenticated && user?.onboardingCompleted ? <Navigate to="/dashboard" /> : 
-        isAuthenticated ? <Navigate to="/onboarding/welcome" /> : <Index />
+        isAuthenticated && user?.onboardingCompleted ? <Navigate to="/dashboard" replace /> : 
+        isAuthenticated ? <Navigate to="/onboarding/welcome" replace /> : <Index />
       } />
       <Route path="/login" element={
-        isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />
+        isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
       } />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
@@ -47,7 +56,7 @@ function AppRoutes() {
       <Route 
         path="/onboarding/*" 
         element={
-          <ProtectedRoute requireVerified={true}>
+          <ProtectedRoute requireVerified={false}>
             <OnboardingRouter />
           </ProtectedRoute>
         } 

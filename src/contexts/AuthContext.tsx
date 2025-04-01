@@ -24,68 +24,77 @@ interface AuthContextType {
   twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
 }
+
+// Create a key for storing auth state
+const AUTH_TOKEN_KEY = 'token';
+const AUTH_USER_KEY = 'auth_user';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  // Try to initialize user from localStorage if available
+  const getStoredUser = (): User | null => {
+    try {
+      const storedUser = localStorage.getItem(AUTH_USER_KEY);
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      console.error("Failed to parse stored user:", error);
+      return null;
+    }
+  };
+
+  const [user, setUser] = useState<User | null>(getStoredUser());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
 
   // Helper function to refresh user data
-  const refreshUser = async () => {
-    const token = localStorage.getItem('token');
+  const refreshUser = async (): Promise<User | null> => {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (!token) {
       setUser(null);
-      return;
+      return null;
     }
     
     try {
       const { user } = await authApi.getCurrentUser();
+      
+      // Update localStorage with the latest user data
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+      
       setUser(user);
       return user;
     } catch (error) {
       console.error("Failed to refresh user data:", error);
-      localStorage.removeItem('token');
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(AUTH_USER_KEY);
       setUser(null);
+      return null;
     }
   };
 
   // Check if user is already logged in on initial load
   useEffect(() => {
+    // Ignore repeated auth checks
+    if (authChecked) return;
+    
     const checkAuthStatus = async () => {
       setLoading(true);
-      await refreshUser();
-      setLoading(false);
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error("Error during auth check:", error);
+      } finally {
+        setLoading(false);
+        setAuthChecked(true);
+      }
     };
     
     checkAuthStatus();
-  }, []);
-
-  // Check localStorage for token updates
-  useEffect(() => {
-    const handleStorageChange = async () => {
-      const token = localStorage.getItem('token');
-      
-      // If we have a token but no user, refresh
-      if (token && !user) {
-        setLoading(true);
-        await refreshUser();
-        setLoading(false);
-      }
-      
-      // If we don't have a token but have a user, log out
-      if (!token && user) {
-        setUser(null);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [user]);
+  }, [authChecked]);
 
   // Register new user
   const register = async (firstName: string, lastName: string, email: string, password: string) => {
@@ -97,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // For email registration, don't set token yet since email verification is required
       // We just redirect to verification page and show instructions
-      navigate('/verify-email', { state: { email } });
+      navigate('/verify-email', { state: { email }, replace: true });
       
       return response;
     } catch (err: any) {
@@ -116,24 +125,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.login(email, password);
       
-      // Save auth token
-      localStorage.setItem('token', response.token);
+      // Save auth token and user data
+      localStorage.setItem(AUTH_TOKEN_KEY, response.token);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user));
       
       // Update user state
       setUser(response.user);
       
-      // Make sure the redirect happens properly
-      console.log('Login successful, redirecting user based on onboarding status:', 
-        response.user.onboardingCompleted ? 'dashboard' : 'onboarding');
-      
-      // Redirect based on onboarding status with a slight delay to allow state to update
-      setTimeout(() => {
-        if (!response.user.onboardingCompleted) {
-          navigate('/onboarding/welcome');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 100);
+      // Redirect based on onboarding status
+      if (!response.user.onboardingCompleted) {
+        navigate('/onboarding/welcome', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
@@ -154,14 +158,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await authApi.twitterAuth(userData);
         
-        localStorage.setItem('token', response.token);
+        localStorage.setItem(AUTH_TOKEN_KEY, response.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user));
         setUser(response.user);
         
         // Redirect based on onboarding status
         if (!response.user.onboardingCompleted) {
-          navigate('/onboarding/welcome');
+          navigate('/onboarding/welcome', { replace: true });
         } else {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
         return;
       } catch (apiErr: any) {
@@ -204,9 +209,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Logout user
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
     setUser(null);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   // Clear error

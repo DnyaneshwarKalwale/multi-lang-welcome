@@ -17,37 +17,44 @@ import StyleSelectionPage from "@/pages/StyleSelectionPage";
 import { LoadingScreen } from "./LoadingScreen";
 
 export const OnboardingRouter = () => {
-  const { workspaceType, currentStep } = useOnboarding();
+  const { currentStep, setCurrentStep } = useOnboarding();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, loading, refreshUser } = useAuth();
   
-  // On mount, refresh user data to ensure we have latest onboarding status
-  useEffect(() => {
-    refreshUser();
-  }, []);
+  // Extract the current path without the '/onboarding/' prefix
+  const currentPath = location.pathname.replace('/onboarding/', '');
   
-  // Redirect logic for team vs personal workspace
+  // Handle direct access to pages during refresh or direct URL access
   useEffect(() => {
-    if (location.pathname === '/onboarding/team-workspace' && workspaceType !== 'team') {
-      navigate('/onboarding/welcome');
+    // Only run this if currentStep is 'initial' (app just loaded) or on page reload
+    if (currentStep === 'initial' && !loading) {
+      // These are valid onboarding steps
+      const validSteps = [
+        'welcome', 
+        'team-selection', 
+        'team-workspace',
+        'team-invite',
+        'theme-selection', 
+        'language-selection', 
+        'post-format', 
+        'post-frequency', 
+        'registration', 
+        'dashboard'
+      ];
+      
+      // If the current path is a valid step, set it as the current step
+      if (validSteps.includes(currentPath)) {
+        setCurrentStep(currentPath as any);
+      } else if (currentPath === '' || currentPath === 'onboarding') {
+        // Default to welcome page if no specific page is requested
+        navigate('/onboarding/welcome', { replace: true });
+      }
     }
-  }, [workspaceType, location.pathname, navigate]);
-
-  // Log current location for debugging
-  useEffect(() => {
-    console.log("Current route:", location.pathname);
-    console.log("Current step in context:", currentStep);
-  }, [location.pathname, currentStep]);
+  }, [currentPath, currentStep, loading, navigate, setCurrentStep]);
   
-  // Show loading screen if auth is loading
   if (loading) {
     return <LoadingScreen />;
-  }
-  
-  // If the user has completed onboarding, redirect them to the main dashboard
-  if (user?.onboardingCompleted) {
-    return <Navigate to="/dashboard" />;
   }
   
   return (
@@ -64,12 +71,12 @@ export const OnboardingRouter = () => {
       <Route path="style-selection" element={<StyleSelectionPage />} />
       <Route 
         path="dashboard" 
-        element={<Navigate to="/dashboard" />}
+        element={<Navigate to="/dashboard" replace />}
       />
       <Route 
         path="*" 
         element={
-          <Navigate to={currentStep === 'initial' ? '/onboarding/welcome' : `/onboarding/${currentStep}`} />
+          <Navigate to={currentStep === 'initial' ? '/onboarding/welcome' : `/onboarding/${currentStep}`} replace />
         } 
       />
     </Routes>

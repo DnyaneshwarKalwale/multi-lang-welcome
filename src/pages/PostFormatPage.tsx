@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -13,6 +13,13 @@ export default function PostFormatPage() {
   const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
   const [postLength, setPostLength] = React.useState(50);
+  const [isLoaded, setIsLoaded] = React.useState(false);
+
+  // Debug logging for troubleshooting
+  useEffect(() => {
+    console.log("PostFormatPage rendered with postFormat:", postFormat);
+    setIsLoaded(true);
+  }, [postFormat]);
 
   const formatOptions = [
     {
@@ -47,6 +54,23 @@ export default function PostFormatPage() {
     }
   ];
 
+  // Handle selecting a post format
+  const handleSelectFormat = (formatId: string) => {
+    console.log("Setting post format to:", formatId);
+    setPostFormat(formatId as any);
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4">Loading post format options...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
       <div className="max-w-3xl w-full">
@@ -57,7 +81,7 @@ export default function PostFormatPage() {
         </p>
         
         <div className="mb-10">
-          <div className="grid grid-cols-5 gap-2 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-2 mb-8">
             {formatOptions.map((format) => (
               <div 
                 key={format.id}
@@ -66,7 +90,7 @@ export default function PostFormatPage() {
                   transition-all hover:bg-gray-800
                   ${postFormat === format.id ? 'ring-2 ring-purple-600' : 'opacity-80'}
                 `}
-                onClick={() => setPostFormat(format.id as any)}
+                onClick={() => handleSelectFormat(format.id)}
               >
                 <div className="w-full aspect-square rounded-lg bg-gray-800 mb-3 relative flex items-center justify-center">
                   {format.icon}
@@ -77,6 +101,7 @@ export default function PostFormatPage() {
                   )}
                 </div>
                 <span className="text-sm font-medium">{format.title}</span>
+                <p className="text-xs text-gray-400 mt-1 text-center">{format.description}</p>
               </div>
             ))}
           </div>
