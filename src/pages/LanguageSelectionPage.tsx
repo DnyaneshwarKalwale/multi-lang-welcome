@@ -1,24 +1,30 @@
-import React from "react";
-import { ContinueButton } from "@/components/ContinueButton";
+import React, { useEffect } from "react";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { Globe, CheckCircle, Twitter } from "lucide-react";
+import { Twitter, CheckCircle, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function LanguageSelectionPage() {
-  const { language, setLanguage, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { language: onboardingLanguage, setLanguage: setOnboardingLanguage, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { setLanguage: setAppLanguage } = useLanguage();
   const { current, total } = getStepProgress();
 
-  // Array of available languages
+  // Array of available languages - only English and German as specified in LanguageContext
   const languageOptions = [
-    { code: "english", name: "English", description: "Most widely used" },
-    { code: "spanish", name: "Español", description: "Segunda lengua más hablada" },
-    { code: "french", name: "Français", description: "Excellente option européenne" },
-    { code: "german", name: "Deutsch", description: "Zentral-europäische Option" }
+    { code: "english", name: "English", description: "Most widely used", flag: "🇺🇸" },
+    { code: "german", name: "Deutsch", description: "German language option", flag: "🇩🇪" }
   ];
+
+  // When onboarding language changes, also update the app language
+  useEffect(() => {
+    if (onboardingLanguage) {
+      setAppLanguage(onboardingLanguage);
+    }
+  }, [onboardingLanguage, setAppLanguage]);
 
   // Animation variants
   const fadeIn = {
@@ -31,17 +37,17 @@ export default function LanguageSelectionPage() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.2,
         delayChildren: 0.3
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
+    hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
-      x: 0,
+      y: 0,
       transition: { 
         type: "spring", 
         stiffness: 300, 
@@ -68,7 +74,7 @@ export default function LanguageSelectionPage() {
       />
       
       <motion.div 
-        className="max-w-2xl w-full"
+        className="max-w-md w-full"
         variants={fadeIn}
         initial="initial"
         animate="animate"
@@ -94,26 +100,26 @@ export default function LanguageSelectionPage() {
           </div>
         </motion.div>
 
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <motion.h1 
-            className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
+            className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
             variants={fadeIn}
             transition={{ delay: 0.2 }}
           >
-            Choose Your Preferred Language
+            Select Your Language
           </motion.h1>
           
           <motion.p 
-            className="text-lg text-gray-600 dark:text-gray-300"
+            className="text-base text-gray-600 dark:text-gray-300"
             variants={fadeIn}
             transition={{ delay: 0.3 }}
           >
-            Select the language you'd like to use for content creation
+            Choose the language you'll use throughout the app
           </motion.p>
         </div>
         
         <motion.div 
-          className="space-y-4 max-w-xl mx-auto mb-12"
+          className="space-y-4 mx-auto mb-10"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -121,25 +127,29 @@ export default function LanguageSelectionPage() {
           {languageOptions.map((lang) => (
             <motion.div key={lang.code} variants={itemVariants}>
               <Button
-                variant="outline"
-                onClick={() => setLanguage(lang.code as any)}
+                variant={onboardingLanguage === lang.code ? "twitter" : "outline"}
+                onClick={() => setOnboardingLanguage(lang.code as any)}
                 className={`
-                  relative w-full flex items-center p-5 text-left rounded-xl transition-all duration-300
-                  ${language === lang.code 
-                    ? 'bg-gradient-to-r from-blue-500/10 to-blue-500/10 border-blue-500 dark:border-blue-400 shadow-md' 
+                  relative w-full flex items-center p-5 text-left justify-between rounded-xl transition-all duration-300
+                  ${onboardingLanguage === lang.code 
+                    ? 'bg-blue-500 text-white' 
                     : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/10 border-gray-200 dark:border-gray-800/60'}
                 `}
               >
-                <span className="text-xl mr-4">{lang.code === "english" ? "🇺🇸" : lang.code === "spanish" ? "🇪🇸" : lang.code === "french" ? "🇫🇷" : "🇩🇪"}</span>
-                <div className="flex-1">
-                  <h3 className={`font-medium text-lg ${language === lang.code ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}>
-                    {lang.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{lang.description}</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{lang.flag}</span>
+                  <div>
+                    <h3 className={`font-semibold text-lg`}>
+                      {lang.name}
+                    </h3>
+                    <p className={`text-sm ${onboardingLanguage === lang.code ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {lang.description}
+                    </p>
+                  </div>
                 </div>
                 
-                {language === lang.code && (
-                  <CheckCircle className="text-blue-500 dark:text-blue-400 w-6 h-6 ml-2" />
+                {onboardingLanguage === lang.code && (
+                  <CheckCircle className="w-5 h-5" />
                 )}
               </Button>
             </motion.div>
@@ -154,9 +164,9 @@ export default function LanguageSelectionPage() {
           <Button 
             variant="twitter"
             rounded="full"
-            className="py-6 px-8 gap-2 w-full sm:w-auto font-medium max-w-xs"
+            className="py-5 px-8 gap-2 w-full font-semibold"
             onClick={nextStep}
-            disabled={!language}
+            disabled={!onboardingLanguage}
           >
             Continue
           </Button>
@@ -165,9 +175,10 @@ export default function LanguageSelectionPage() {
         <motion.div
           variants={fadeIn}
           transition={{ delay: 0.7 }}
-          className="flex justify-center"
+          className="flex flex-col items-center gap-2"
         >
           <ProgressDots total={total} current={current} color="novus" />
+          <span className="text-sm text-gray-500 dark:text-gray-400">Step {current + 1} of {total}</span>
         </motion.div>
       </motion.div>
     </div>
