@@ -5,12 +5,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { Loader2, CheckCircle2, XCircle, Sparkles, Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { nextStep } = useOnboarding();
   const { t } = useLanguage();
+  const { login } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState("");
 
@@ -24,7 +26,8 @@ export default function OAuthCallbackPage() {
     const handleOAuthCallback = async () => {
       try {
         const params = new URLSearchParams(location.search);
-        const code = params.get('code');
+        const token = params.get('token');
+        const onboarding = params.get('onboarding') === 'true';
         const error = params.get('error');
 
         if (error) {
@@ -33,28 +36,34 @@ export default function OAuthCallbackPage() {
           return;
         }
 
-        if (!code) {
+        if (!token) {
           setStatus('error');
           setError(t('noCodeProvided'));
           return;
         }
 
-        // Add your OAuth token exchange logic here
-        // For example:
-        // const response = await exchangeCodeForToken(code);
-        // if (response.success) {
-        //   setStatus('success');
-        //   setTimeout(() => nextStep(), 2000);
-        // } else {
-        //   setStatus('error');
-        //   setError(response.error);
-        // }
+        // Store the token in localStorage
+        localStorage.setItem('token', token);
+        
+        // Set onboarding status
+        if (onboarding) {
+          localStorage.setItem('onboardingStep', 'welcome');
+          localStorage.setItem('onboardingCompleted', 'false');
+        } else {
+          localStorage.setItem('onboardingCompleted', 'true');
+        }
 
-        // For demo purposes, we'll simulate a successful OAuth flow
+        // Set success status
+        setStatus('success');
+
+        // Navigate after a short delay
         setTimeout(() => {
-          setStatus('success');
-          setTimeout(() => nextStep(), 2000);
-        }, 1500);
+          if (onboarding) {
+            navigate('/onboarding/welcome');
+          } else {
+            navigate('/dashboard');
+          }
+        }, 2000);
 
       } catch (err) {
         setStatus('error');
@@ -63,7 +72,7 @@ export default function OAuthCallbackPage() {
     };
 
     handleOAuthCallback();
-  }, [location, nextStep, t]);
+  }, [location, navigate, t]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 py-6 sm:py-10 gradient-dark text-white relative overflow-hidden">
