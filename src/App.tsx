@@ -1,17 +1,16 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, useState } from "react";
-import { AuthContext } from "@/contexts/AuthContext";
-import { LanguageContext } from "@/contexts/LanguageContext";
-import { ThemeContext } from "@/contexts/ThemeContext";
-import { OnboardingContext } from "@/contexts/OnboardingContext";
-import { api } from "@/services/api";
+import { AuthContext, AuthProvider } from "@/contexts/AuthContext";
+import { LanguageContext, LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeContext, ThemeProvider } from "@/contexts/ThemeContext";
+import { OnboardingContext, OnboardingProvider } from "@/contexts/OnboardingContext";
+import { authApi, api } from "@/services/api";
 import { toast } from "sonner";
-import OnboardingRouter from "@/components/OnboardingRouter";
-import CustomNavbar from "@/components/CustomNavbar"; // Use custom navbar
+import { OnboardingRouter } from "@/components/OnboardingRouter";
+import CustomNavbar from "@/components/CustomNavbar";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
-import CustomIndex from "./pages/CustomIndex"; // Use custom index
+import CustomIndex from "./pages/CustomIndex";
 import RegistrationPage from "./pages/RegistrationPage";
 import LanguageSelectionPage from "./pages/LanguageSelectionPage";
 import PostFormatPage from "./pages/PostFormatPage";
@@ -29,7 +28,7 @@ import TeamWorkspacePage from "./pages/TeamWorkspacePage";
 import NotFound from "./pages/NotFound";
 
 function App() {
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState<"light" | "dark">(localStorage.getItem("theme") as "light" | "dark" || "light");
   const [language, setLanguage] = useState("english");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -131,28 +130,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ThemeContext.Provider value={{ theme, setTheme }}>
-        <LanguageContext.Provider value={{ language, setLanguage }}>
-          <AuthContext.Provider
-            value={{
-              isAuthenticated,
-              user,
-              login,
-              logout,
-              loading,
-              setLoading,
-              pendingInvitationCount,
-              setPendingInvitationCount,
-            }}
-          >
-            <OnboardingContext.Provider
-              value={{
-                onboardingCompleted,
-                onboardingStep,
-                updateOnboardingStep,
-                completeOnboarding,
-              }}
-            >
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <OnboardingProvider>
               <CustomNavbar />
               <Toaster position="top-center" />
               <Routes>
@@ -208,10 +189,10 @@ function App() {
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </OnboardingContext.Provider>
-          </AuthContext.Provider>
-        </LanguageContext.Provider>
-      </ThemeContext.Provider>
+            </OnboardingProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

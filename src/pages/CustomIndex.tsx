@@ -2,7 +2,7 @@
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import CustomWelcomePage from './CustomWelcomePage';
-import LoginSheet from '@/components/LoginSheet';
+import { LoginSheet } from '@/components/LoginSheet';
 import { useLocation, Navigate } from 'react-router-dom';
 
 export default function CustomIndex() {
