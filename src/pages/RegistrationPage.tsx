@@ -9,11 +9,12 @@ import { ArrowLeft, ArrowRight, User, UserPlus, Twitter, AtSign } from "lucide-r
 import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
   const { firstName, setFirstName, lastName, setLastName, nextStep, prevStep, getStepProgress } = useOnboarding();
-
+  const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
   const handleContinue = () => {
@@ -111,7 +112,7 @@ export default function RegistrationPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          Create your Sekcion account
+          {t('createAccount')}
         </motion.h1>
         
         <motion.p 
@@ -119,7 +120,7 @@ export default function RegistrationPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          Let's get to know you better to personalize your experience
+          {t('personalizeExperience')}
         </motion.p>
         
         <motion.div 
@@ -131,13 +132,13 @@ export default function RegistrationPage() {
           <motion.div variants={itemVariants} className="mb-6">
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
               <User className="w-4 h-4 mr-2 text-blue-500" />
-              First Name
+              {t('firstName')}
             </label>
             <Input 
               id="firstName" 
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Enter your first name"
+              placeholder={t('firstName')}
               className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
                        focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 
                        transition-all text-gray-900 dark:text-white rounded-lg"
@@ -147,13 +148,13 @@ export default function RegistrationPage() {
           <motion.div variants={itemVariants} className="mb-6">
             <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
               <UserPlus className="w-4 h-4 mr-2 text-blue-500" />
-              Last Name
+              {t('lastName')}
             </label>
             <Input 
               id="lastName" 
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Enter your last name"
+              placeholder={t('lastName')}
               className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
                        focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 
                        transition-all text-gray-900 dark:text-white rounded-lg"
@@ -163,13 +164,13 @@ export default function RegistrationPage() {
           <motion.div variants={itemVariants} className="mb-2">
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
               <AtSign className="w-4 h-4 mr-2 text-blue-500" />
-              Username Preview
+              {t('usernamePreview')}
             </label>
             <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 h-12 pl-4 
                            text-gray-500 dark:text-gray-400 rounded-lg flex items-center">
               @{firstName.toLowerCase() + lastName.toLowerCase()}
             </div>
-            <p className="text-xs text-gray-500 text-left mt-1">This is how your profile will appear</p>
+            <p className="text-xs text-gray-500 text-left mt-1">{t('profileAppear')}</p>
           </motion.div>
         </motion.div>
         
@@ -185,7 +186,7 @@ export default function RegistrationPage() {
             disabled={!firstName.trim() || !lastName.trim()}
             onClick={handleContinue}
           >
-            Continue
+            {t('continue')}
           </Button>
           
           <Button
@@ -194,16 +195,19 @@ export default function RegistrationPage() {
             className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 px-6 py-2 text-sm"
             onClick={handleSkipToDashboard}
           >
-            Skip to dashboard
+            {t('skipToDashboard')}
           </Button>
         </motion.div>
         
         <motion.div
+          className="flex flex-col items-center"
           variants={fadeIn}
           transition={{ delay: 0.6 }}
-          className="mt-4"
         >
           <ProgressDots total={total} current={current} color="cyan" />
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            {current + 1} / {total}
+          </p>
         </motion.div>
       </motion.div>
     </div>

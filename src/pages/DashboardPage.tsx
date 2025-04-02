@@ -29,11 +29,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   // Get user from AuthContext instead of mock data
   const { user, logout } = useAuth();
@@ -154,7 +156,7 @@ const DashboardPage: React.FC = () => {
                 className="hidden md:flex items-center gap-2 text-sm"
               >
                 <Twitter className="h-4 w-4 text-blue-500" />
-                <span>Connect Twitter</span>
+                <span>{t('connectTwitter')}</span>
               </Button>
               
               <DropdownMenu>
@@ -176,15 +178,15 @@ const DashboardPage: React.FC = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t('profile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t('settings')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
                     <Twitter className="mr-2 h-4 w-4 text-blue-500" />
-                    <span>Connect Twitter</span>
+                    <span>{t('connectTwitter')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
@@ -192,7 +194,7 @@ const DashboardPage: React.FC = () => {
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                    <span>{t('logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -206,19 +208,19 @@ const DashboardPage: React.FC = () => {
           <TabsList className="grid grid-cols-4 mb-8">
             <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-teal-50 dark:data-[state=active]:bg-teal-900/20">
               <PlusCircle className="h-4 w-4 mr-2" />
-              Create
+              {t('create')}
             </TabsTrigger>
             <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-violet-50 dark:data-[state=active]:bg-violet-900/20">
               <Calendar className="h-4 w-4 mr-2" />
-              Schedule
+              {t('schedule')}
             </TabsTrigger>
             <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-900/20">
               <BarChart3 className="h-4 w-4 mr-2" />
-              Analytics
+              {t('analytics')}
             </TabsTrigger>
             <TabsTrigger value="tweets" onClick={() => setActiveTab("tweets")} className="data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-800">
               <Twitter className="h-4 w-4 mr-2" />
-              My Tweets
+              {t('myTweets')}
             </TabsTrigger>
           </TabsList>
 
@@ -229,30 +231,30 @@ const DashboardPage: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Zap className="h-5 w-5 mr-2 text-amber-500" />
-                      Create New Tweet
+                      {t('createNewTweet')}
                     </CardTitle>
                     <CardDescription>
-                      Record, write, or upload content to generate tweets
+                      {t('recordVoice')}, {t('writeText')}, {t('uploadMedia')} 
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-3 mb-4">
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Mic className="h-4 w-4 text-red-500" />
-                        Record Voice
+                        {t('recordVoice')}
                       </Button>
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Upload className="h-4 w-4 text-blue-500" />
-                        Upload Media
+                        {t('uploadMedia')}
                       </Button>
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Edit3 className="h-4 w-4 text-purple-500" />
-                        Write Text
+                        {t('writeText')}
                       </Button>
                     </div>
 
                     <Textarea 
-                      placeholder="What's happening?" 
+                      placeholder={t('whatsHappening')}
                       className="min-h-[150px] text-base resize-none"
                     />
 
@@ -262,12 +264,12 @@ const DashboardPage: React.FC = () => {
                           <Twitter className="h-3 w-3" />
                           Twitter
                         </Badge>
-                        <span>280 characters</span>
+                        <span>280 {t('characters')}</span>
                       </div>
                       <div className="flex gap-3">
                         <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
                           <Calendar className="h-3 w-3" />
-                          Schedule
+                          {t('schedule')}
                         </Button>
                         <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
                           <Maximize2 className="h-3 w-3" />
@@ -279,9 +281,9 @@ const DashboardPage: React.FC = () => {
                   <CardFooter className="flex justify-between border-t pt-4">
                     <Button variant="ghost" size="sm" className="gap-2">
                       <Sparkles className="h-4 w-4 text-amber-500" />
-                      Generate with AI
+                      {t('generateWithAI')}
                     </Button>
-                    <Button size="sm" className="px-4">Post Tweet</Button>
+                    <Button size="sm" className="px-4">{t('postTweet')}</Button>
                   </CardFooter>
                 </Card>
 
@@ -289,10 +291,10 @@ const DashboardPage: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Eye className="h-5 w-5 mr-2 text-blue-500" />
-                      Preview
+                      {t('preview')}
                     </CardTitle>
                     <CardDescription>
-                      See how your tweet will appear
+                      {t('previewDescription')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -336,10 +338,10 @@ const DashboardPage: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Clock className="h-5 w-5 mr-2 text-violet-500" />
-                      Upcoming Tweets
+                      {t('upcomingTweets')}
                     </CardTitle>
                     <CardDescription>
-                      Scheduled for publication
+                      {t('scheduledPublication')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -364,7 +366,7 @@ const DashboardPage: React.FC = () => {
                     </ScrollArea>
                   </CardContent>
                   <CardFooter className="border-t pt-4">
-                    <Button variant="ghost" size="sm" className="w-full">View Calendar</Button>
+                    <Button variant="ghost" size="sm" className="w-full">{t('viewCalendar')}</Button>
                   </CardFooter>
                 </Card>
 
@@ -372,10 +374,10 @@ const DashboardPage: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
-                      AI Suggestions
+                      {t('aiSuggestions')}
                     </CardTitle>
                     <CardDescription>
-                      Trending topics to write about
+                      {t('trendingTopics')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2.5">
@@ -393,9 +395,9 @@ const DashboardPage: React.FC = () => {
           <TabsContent value="schedule">
             <Card>
               <CardHeader>
-                <CardTitle>Content Calendar</CardTitle>
+                <CardTitle>{t('contentCalendar')}</CardTitle>
                 <CardDescription>
-                  Manage and schedule your upcoming tweets
+                  {t('manageSchedule')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -410,9 +412,9 @@ const DashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Impressions</CardTitle>
+                  <CardTitle className="text-lg">{t('impressions')}</CardTitle>
                   <CardDescription>
-                    Total views of your tweets
+                    {t('totalViews')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -450,9 +452,9 @@ const DashboardPage: React.FC = () => {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Engagement Rate</CardTitle>
+                  <CardTitle className="text-lg">{t('engagementRate')}</CardTitle>
                   <CardDescription>
-                    Interactions with your content
+                    {t('interactions')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -490,9 +492,9 @@ const DashboardPage: React.FC = () => {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Followers Growth</CardTitle>
+                  <CardTitle className="text-lg">{t('followersGrowth')}</CardTitle>
                   <CardDescription>
-                    New followers over time
+                    {t('newFollowers')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
