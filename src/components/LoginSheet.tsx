@@ -34,7 +34,10 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Redirect to backend Google auth endpoint with the dynamic URL
+    // Store the current URL to return to after authentication
+    localStorage.setItem('returnTo', window.location.pathname);
+    
+    // Redirect to backend Google auth endpoint
     window.location.href = `${baseUrl}/auth/google`;
   };
   
@@ -43,6 +46,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     // Get the backend URL from environment variable or fallback to Render deployed URL
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store the current URL to return to after authentication
+    localStorage.setItem('returnTo', window.location.pathname);
     
     // Redirect to backend Twitter auth endpoint
     window.location.href = `${baseUrl}/auth/twitter`;
@@ -62,13 +68,17 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
           // After login, get the saved onboarding step from localStorage
           const savedStep = localStorage.getItem('onboardingStep');
           const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+          const returnTo = localStorage.getItem('returnTo');
+          
+          // Clear the return URL
+          localStorage.removeItem('returnTo');
           
           // If we have a saved step and onboarding is not completed, redirect to that step
           if (savedStep && !onboardingCompleted) {
             navigate(`/${savedStep}`);
           } else if (onboardingCompleted) {
-            // If onboarding is completed, navigate to dashboard
-            navigate('/dashboard');
+            // If onboarding is completed, navigate to dashboard or return URL
+            navigate(returnTo || '/dashboard');
           } else {
             // If no saved step, start at the beginning of onboarding
             navigate("/language-selection");

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,13 @@ import { Menu, X, Home, Settings, Users, FileText, LogOut } from 'lucide-react';
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import { LoginSheet } from '@/components/LoginSheet';
+import { RegistrationSheet } from '@/components/RegistrationSheet';
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [loginSheetOpen, setLoginSheetOpen] = useState(false);
+  const [registrationSheetOpen, setRegistrationSheetOpen] = useState(false);
   const location = useLocation();
   const { logout, isAuthenticated } = useContext(AuthContext);
 
@@ -23,6 +26,16 @@ const MobileMenu = () => {
     { path: '/language-selection', icon: <FileText className="h-5 w-5" />, label: 'Content' },
     { path: '/settings', icon: <Settings className="h-5 w-5" />, label: 'Settings' }
   ];
+
+  const handleSignIn = () => {
+    closeMenu();
+    setLoginSheetOpen(true);
+  };
+
+  const handleSignUp = () => {
+    closeMenu();
+    setRegistrationSheetOpen(true);
+  };
 
   return (
     <>
@@ -92,18 +105,26 @@ const MobileMenu = () => {
                 </Button>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  <Link to="/registration" onClick={closeMenu}>
-                    <Button variant="outline" className="w-full">Sign Up</Button>
-                  </Link>
-                  <Link to="/" onClick={closeMenu}>
-                    <Button className="w-full">Login</Button>
-                  </Link>
+                  <Button variant="outline" className="w-full" onClick={handleSignIn}>Sign In</Button>
+                  <Button className="w-full" onClick={handleSignUp}>Sign Up</Button>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Login Sheet */}
+      <LoginSheet 
+        open={loginSheetOpen} 
+        onOpenChange={setLoginSheetOpen}
+      />
+
+      {/* Registration Sheet */}
+      <RegistrationSheet 
+        open={registrationSheetOpen} 
+        onOpenChange={setRegistrationSheetOpen}
+      />
     </>
   );
 };

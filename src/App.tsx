@@ -137,15 +137,17 @@ function App() {
                 <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
                 <Route path="/verify" element={<VerifyEmailPage />} />
 
-                {/* Public onboarding routes */}
-                <Route path="/language-selection" element={<LanguageSelectionPage />} />
-                <Route path="/post-format" element={<PostFormatPage />} />
-                <Route path="/post-frequency" element={<PostFrequencyPage />} />
-                <Route path="/theme" element={<ThemeSelectionPage />} />
-                <Route path="/team" element={<TeamSelectionPage />} />
-                <Route path="/team-invite" element={<TeamInvitePage />} />
-                <Route path="/extension-install" element={<ExtensionInstallPage />} />
-                <Route path="/completion" element={<CompletionPage />} />
+                {/* Onboarding routes */}
+                <Route element={<OnboardingRouter />}>
+                  <Route path="/language-selection" element={<LanguageSelectionPage />} />
+                  <Route path="/post-format" element={<PostFormatPage />} />
+                  <Route path="/post-frequency" element={<PostFrequencyPage />} />
+                  <Route path="/theme" element={<ThemeSelectionPage />} />
+                  <Route path="/team" element={<TeamSelectionPage />} />
+                  <Route path="/team-invite" element={<TeamInvitePage />} />
+                  <Route path="/extension-install" element={<ExtensionInstallPage />} />
+                  <Route path="/completion" element={<CompletionPage />} />
+                </Route>
 
                 {/* Protected routes */}
                 <Route element={<InvitationCheckRoute />}>
