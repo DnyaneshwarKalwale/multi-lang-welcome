@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIcon } from "lucide-react";
+import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIcon, Globe, FileEdit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,8 @@ export default function CompletionPage() {
   const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const [maxRetries] = useState(3);
+  const [contentGenerated, setContentGenerated] = useState(false);
+  const [accountsConnected, setAccountsConnected] = useState(false);
   
   // Animation variants for staggered animations
   const containerVariants = {
@@ -131,7 +133,8 @@ export default function CompletionPage() {
     // Simulate content generation (would connect to real API in production)
     setTimeout(() => {
       setIsGeneratingContent(false);
-      navigate("/dashboard");
+      setContentGenerated(true);
+      // Remove automatic redirect to dashboard
     }, 2000);
   };
   
@@ -141,7 +144,8 @@ export default function CompletionPage() {
     // Simulate file upload (would connect to real API in production)
     setTimeout(() => {
       setIsUploadingFiles(false);
-      navigate("/dashboard");
+      setAccountsConnected(true);
+      // Remove automatic redirect to dashboard
     }, 2000);
   };
 
@@ -149,12 +153,12 @@ export default function CompletionPage() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-teal-200 dark:bg-teal-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-primary-200 dark:bg-primary-900 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
       </div>
       
       {/* Background pattern */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
+      <div className="absolute inset-0 bg-dots-pattern opacity-10 -z-10"></div>
       
       <motion.div 
         className="max-w-3xl w-full text-center space-y-8"
@@ -163,15 +167,15 @@ export default function CompletionPage() {
         animate="visible"
       >
         <motion.div className="flex flex-col items-center" variants={itemVariants}>
-          <div className="p-3 mb-6 rounded-full bg-gradient-to-r from-teal-400/20 to-cyan-500/20 border border-teal-400/30 shadow-lg">
+          <div className="p-4 mb-6 rounded-full bg-gradient-to-r from-primary-400/20 to-violet-500/20 border border-primary-400/30 shadow-lg">
             <CheckCircle className="w-16 h-16 text-gradient" strokeWidth={1.5} />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gradient flex items-center justify-center gap-2">
-            Onboarding Complete!
+            Setup Complete!
             <span role="img" aria-label="celebration">🎉</span>
           </h1>
           <p className="text-gray-600 dark:text-gray-300 text-xl mt-4 max-w-xl mx-auto">
-            Your setup is finished. Now let's make your content strategy easier with Novus.
+            Your profile is ready! Let's make your content creation experience exceptional with Prism.
           </p>
         </motion.div>
         
@@ -179,69 +183,80 @@ export default function CompletionPage() {
           className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 rounded-xl p-8 max-w-2xl mx-auto shadow-xl"
           variants={itemVariants}
         >
-          <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-gray-100">What would you like to do next?</h2>
+          <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-gray-100">Choose your next step</h2>
           
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-cyan-50/80 to-teal-50/80 dark:from-cyan-900/20 dark:to-teal-900/20 p-6 rounded-xl border border-cyan-100 dark:border-cyan-900/30 transition-all duration-300 hover:shadow-md group">
-              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                <Twitter className="w-7 h-7 text-white" />
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-primary-50/80 to-violet-50/80 dark:from-primary-900/20 dark:to-violet-900/20 p-6 rounded-xl border border-primary-100 dark:border-primary-900/30 transition-all duration-300 hover:shadow-md group">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                <FileEdit className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Generate your first content</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Create first content</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Let our AI create personalized social media content based on your preferences
+                  Our AI will craft personalized content based on your preferences and style
                 </p>
-                <Button 
-                  variant="novus"
-                  animation="lift"
-                  rounded="full" 
-                  className="w-full md:w-auto"
-                  onClick={handleGenerateContent}
-                  disabled={isGeneratingContent}
-                >
-                  {isGeneratingContent ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      Generate content
-                      <ChevronRight className="ml-1 w-4 h-4" />
-                    </>
-                  )}
-                </Button>
+                {contentGenerated ? (
+                  <div className="flex items-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-4 py-2 rounded-lg">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    <span>Content successfully generated! You can view it in your dashboard.</span>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="default"
+                    className="bg-primary-500 hover:bg-primary-600 text-white w-full md:w-auto group"
+                    onClick={handleGenerateContent}
+                    disabled={isGeneratingContent}
+                  >
+                    {isGeneratingContent ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        Generate content
+                        <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 p-6 rounded-xl border border-teal-100 dark:border-teal-900/30 transition-all duration-300 hover:shadow-md group">
-              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-teal-400 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                <CloudIcon className="w-7 h-7 text-white" />
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-violet-50/80 to-primary-50/80 dark:from-violet-900/20 dark:to-primary-900/20 p-6 rounded-xl border border-violet-100 dark:border-violet-900/30 transition-all duration-300 hover:shadow-md group">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                <Globe className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect your accounts</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect social accounts</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Link your social media accounts to publish content directly
+                  Link your social platforms to publish content with a single click
                 </p>
-                <Button 
-                  variant="outline"
-                  rounded="full" 
-                  className="w-full md:w-auto border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400"
-                  onClick={handleUploadFiles}
-                  disabled={isUploadingFiles}
-                >
-                  {isUploadingFiles ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      Connect accounts
-                      <ChevronRight className="ml-1 w-4 h-4" />
-                    </>
-                  )}
-                </Button>
+                {accountsConnected ? (
+                  <div className="flex items-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-4 py-2 rounded-lg">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    <span>Accounts successfully connected! You can manage them in your dashboard.</span>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline"
+                    className="w-full md:w-auto border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 group"
+                    onClick={handleUploadFiles}
+                    disabled={isUploadingFiles}
+                  >
+                    {isUploadingFiles ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        Connect accounts
+                        <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -251,18 +266,19 @@ export default function CompletionPage() {
             variants={itemVariants}
           >
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You can also set these up later from your dashboard
+              You can also configure these options later from your dashboard
             </p>
           </motion.div>
         </motion.div>
       
         <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
-          <ContinueButton 
+          <Button 
             onClick={handleGoToDashboard}
-            variant="cyan"
+            className="bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white px-8 py-6 rounded-full text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Go to Dashboard
-          </ContinueButton>
+            <ChevronRight className="ml-2 w-5 h-5" />
+          </Button>
         </motion.div>
         
         {error && (

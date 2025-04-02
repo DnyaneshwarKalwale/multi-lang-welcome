@@ -9,20 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        default: "bg-primary-500 hover:bg-primary-600 text-white shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
+        destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
+        secondary: "bg-secondary-500 text-white hover:bg-secondary-600 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        gradient: "bg-gradient-to-r from-cyan-500 to-violet-600 text-white hover:from-cyan-600 hover:to-violet-700 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
+        link: "underline-offset-4 hover:underline text-primary-500",
+        gradient: "bg-gradient-to-r from-primary-500 to-violet-600 text-white hover:from-primary-600 hover:to-violet-700 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
         twitter: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
-        cyan: "bg-gradient-to-br from-teal-400 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-600 border-none shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30",
-        novus: "bg-gradient-to-br from-teal-400 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-600 border-none shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30",
-        "transparent": "bg-transparent hover:bg-gray-100/20 dark:hover:bg-gray-800/30 text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400",
+        cyan: "bg-gradient-to-br from-primary-400 to-violet-500 text-white hover:from-primary-500 hover:to-violet-600 border-none shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30",
+        novus: "bg-gradient-to-br from-primary-400 to-violet-500 text-white hover:from-primary-500 hover:to-violet-600 border-none shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30",
+        "transparent": "bg-transparent hover:bg-gray-100/20 dark:hover:bg-gray-800/30 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400",
         "glass": "bg-white/20 dark:bg-gray-900/20 backdrop-blur-sm border border-white/10 dark:border-gray-800/30 text-gray-900 dark:text-white hover:bg-white/30 dark:hover:bg-gray-800/30",
         "minimal": "bg-transparent text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400",
       },

@@ -6,7 +6,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, 
   BarChart, BookOpen, Twitter, Image, Plus, Bell, 
-  ChevronRight, Grid, Settings, LogOut, User
+  ChevronRight, Grid, Settings, LogOut, User, LayoutDashboard,
+  PenTool, Share2, Users, GanttChart, MessagesSquare, Sparkles
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeamInvitationNotification from "@/components/TeamInvitationNotification";
@@ -34,48 +35,48 @@ export default function DashboardPage() {
   };
 
   const sidebarItems = [
-    { icon: Home, label: "Home", active: true },
-    { icon: Upload, label: "Uploads" },
-    { icon: FileText, label: "Posts" },
-    { icon: Lightbulb, label: "Inspiration" },
-    { icon: Calendar, label: "Calendar" },
-    { icon: BarChart, label: "Analytics" },
+    { icon: LayoutDashboard, label: "Dashboard", active: true },
+    { icon: PenTool, label: "Content" },
+    { icon: Calendar, label: "Schedule" },
+    { icon: GanttChart, label: "Analytics" },
+    { icon: MessagesSquare, label: "Comments" },
+    { icon: Sparkles, label: "AI Tools" },
   ];
 
-  const personalBrandItems = [
-    { icon: BookOpen, label: "Knowledge Base" },
-    { icon: Twitter, label: "Twitter Profile" },
-    { icon: Image, label: "AI Photos" },
+  const accountItems = [
+    { icon: Users, label: "Team Members" },
+    { icon: Twitter, label: "Accounts" },
+    { icon: Share2, label: "Share" },
   ];
 
   const cards = [
     {
-      title: "Install the Chrome Extension",
-      description: "Scripe learns from your past Twitter profile content",
-      buttonText: "Add to Chrome",
+      title: "Install Browser Extension",
+      description: "Capture inspiration from anywhere on the web",
+      buttonText: "Add to Browser",
       icon: "🔌",
     },
     {
-      title: "Define Your Twitter Value Prop",
-      description: "Outline your target audience and skills",
-      buttonText: "Create now",
-      icon: "📊",
-    },
-    {
-      title: "Create content strategy",
-      description: "Used to personalize your posts and create better analytics",
+      title: "Define Content Strategy",
+      description: "Set your goals and target audience",
       buttonText: "Create now",
       icon: "✨",
+    },
+    {
+      title: "Invite Team Members",
+      description: "Collaborate with others on your content",
+      buttonText: "Send invites",
+      icon: "👥",
     },
   ];
 
   const recentPosts = [
     {
-      title: "Leveraging Twitter Analytics for Business Growth",
-      content: "Twitter analytics can provide valuable insights into your audience engagement patterns. Here's how you can use this data to optimize your content strategy and drive more meaningful engagement...",
+      title: "Leveraging Analytics for Business Growth",
+      content: "Analytics can provide valuable insights into your audience engagement patterns. Here's how you can use this data to optimize your content strategy and drive more meaningful engagement...",
       author: {
         name: userFullName,
-        avatar: user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff",
+        avatar: user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=7C3AED&color=fff",
       },
       status: "published",
       date: "2 days ago",
@@ -88,11 +89,11 @@ export default function DashboardPage() {
       imageSrc: "https://images.unsplash.com/photo-1611605698335-8b1569810432?q=80&w=2274&auto=format&fit=crop"
     },
     {
-      title: "The Future of Social Media Marketing",
-      content: "As we look toward the future of social media marketing, several emerging trends are poised to reshape how brands connect with their audiences...",
+      title: "The Future of Content Creation",
+      content: "As we look toward the future of content creation, several emerging trends are poised to reshape how brands connect with their audiences...",
       author: {
         name: userFullName,
-        avatar: user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff",
+        avatar: user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=7C3AED&color=fff",
       },
       status: "draft",
       date: "Just now",
@@ -117,7 +118,7 @@ export default function DashboardPage() {
   const profileData = {
     user: {
       name: userFullName,
-      avatar: user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff",
+      avatar: user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=7C3AED&color=fff",
       role: "Content Creator"
     },
     stats: {
@@ -148,12 +149,11 @@ export default function DashboardPage() {
         
         <Button 
           variant="gradient" 
-          className="gap-2 mb-8 hover-glow shine"
-          rounded="lg"
-          animation="pulse"
+          className="gap-2 mb-8 hover-glow"
+          size="lg"
         >
           <Plus size={16} />
-          Create new post
+          Create content
         </Button>
         
         <div className="space-y-1 mb-8">
@@ -167,22 +167,22 @@ export default function DashboardPage() {
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
-              <item.icon size={18} className={item.active ? "text-teal-600 dark:text-teal-400" : ""} />
+              <item.icon size={18} className={item.active ? "text-primary-600 dark:text-primary-400" : ""} />
               {item.label}
             </Button>
           ))}
         </div>
         
         <div className="border-t border-border pt-4 mb-2">
-          <p className="text-sm text-gray-500 dark:text-gray-500 px-3 mb-2">Personal Brand</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 px-3 mb-2">Account</p>
         </div>
         
         <div className="space-y-1 mb-auto flex-grow">
-          {personalBrandItems.map((item) => (
+          {accountItems.map((item) => (
             <Button 
               key={item.label} 
               variant="transparent" 
-              className="w-full justify-start gap-3 text-sm text-gray-600 dark:text-gray-400 hover:text-foreground transition-all duration-200"
+              className="w-full justify-start gap-3 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
             >
               <item.icon size={18} />
               {item.label}
@@ -197,7 +197,7 @@ export default function DashboardPage() {
               onClick={() => setShowUserMenu(!showUserMenu)}
             >
               <img 
-                src={user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff"} 
+                src={user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=7C3AED&color=fff"} 
                 alt={userFullName}
                 className="w-8 h-8 rounded-full mr-3 object-cover" 
               />
@@ -233,10 +233,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mt-4 px-2">
             <div className="flex items-center">
               <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-              <p className="text-xs text-gray-500 dark:text-gray-500">15 credits left</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Pro plan</p>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full text-gray-600 dark:text-gray-400 hover:text-foreground" onClick={toggleTheme}>
-              {theme === "dark" ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} className="text-teal-500" />}
+              {theme === "dark" ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} className="text-primary-500" />}
             </Button>
           </div>
         </div>
@@ -256,7 +256,7 @@ export default function DashboardPage() {
               <h1 className="text-xl font-bold text-gradient">
                 {dashboardName}
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Welcome back! Here's what's happening with your content</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Welcome to your content hub</p>
             </div>
             <div className="flex items-center space-x-2">
                 <Button 
@@ -309,14 +309,14 @@ export default function DashboardPage() {
             />
             
             <motion.div
-              className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-5 text-white hover-lift shine"
+              className="bg-gradient-to-br from-primary-600 to-violet-600 rounded-xl p-5 text-white hover-lift"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.5)" }}
+              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.5)" }}
             >
               <h3 className="font-medium mb-2">Upgrade to Pro</h3>
-              <p className="text-sm text-indigo-100 mb-4">Get unlimited posts, analytics, and AI features</p>
+              <p className="text-sm text-purple-100 mb-4">Unlimited posts, analytics, and AI tools</p>
               <div className="flex justify-between items-center">
                 <span className="text-xs bg-white/20 px-2 py-1 rounded-full">50% OFF</span>
                 <Button variant="transparent" size="sm" className="bg-white/20 hover:bg-white/30 text-white group">
@@ -336,7 +336,7 @@ export default function DashboardPage() {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gradient-blue">Recent Content</h2>
-              <Button variant="ghost" size="sm" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-all duration-200">
+              <Button variant="ghost" size="sm" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-all duration-200">
                 View all
               </Button>
             </div>
@@ -388,12 +388,12 @@ export default function DashboardPage() {
                   transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
                   whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
                 >
-                  <div className="w-12 h-12 rounded-full bg-teal-100 dark:bg-indigo-600/20 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center mb-4">
                     <span className="text-2xl">{card.icon}</span>
                   </div>
                   <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">{card.title}</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{card.description}</p>
-                  <Button variant="ghost" className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 px-0 hover:bg-transparent group">
+                  <Button variant="ghost" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 px-0 hover:bg-transparent group">
                     {card.buttonText}
                     <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>

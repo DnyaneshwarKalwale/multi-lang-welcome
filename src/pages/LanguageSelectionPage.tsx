@@ -3,30 +3,27 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { Check, Globe } from "lucide-react";
+import { Globe, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 
 export default function LanguageSelectionPage() {
   const { language, setLanguage, nextStep, prevStep, getStepProgress } = useOnboarding();
-  const { t } = useLanguage();
   const { current, total } = getStepProgress();
+
+  // Array of available languages
+  const languageOptions = [
+    { code: "english", name: "English", description: "Most widely used" },
+    { code: "spanish", name: "Español", description: "Segunda lengua más hablada" },
+    { code: "french", name: "Français", description: "Excellente option européenne" },
+    { code: "german", name: "Deutsch", description: "Zentral-europäische Option" }
+  ];
 
   // Animation variants
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
   };
 
   const containerVariants = {
@@ -40,16 +37,29 @@ export default function LanguageSelectionPage() {
     }
   };
 
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 24 
+      } 
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-teal-200 dark:bg-teal-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-primary-200 dark:bg-primary-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
       </div>
       
       {/* Background pattern */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
+      <div className="absolute inset-0 bg-dots-pattern opacity-10 -z-10"></div>
       
       {/* Back button */}
       <BackButton 
@@ -58,13 +68,13 @@ export default function LanguageSelectionPage() {
       />
       
       <motion.div 
-        className="max-w-3xl w-full text-center"
+        className="max-w-2xl w-full"
         variants={fadeIn}
         initial="initial"
         animate="animate"
       >
         <motion.div 
-          className="mb-8 flex justify-center"
+          className="mb-10 flex justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -72,119 +82,87 @@ export default function LanguageSelectionPage() {
           <div className="relative">
             <ScripeIconRounded className="w-20 h-20" />
             <motion.div 
-              className="absolute -bottom-1 -right-1 text-teal-500 dark:text-teal-400"
-              animate={{ rotate: [0, 15, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -bottom-2 -right-2 text-primary-500 dark:text-primary-400"
+              animate={{ 
+                rotate: [0, 10, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
               <Globe size={24} />
             </motion.div>
           </div>
         </motion.div>
-        
-        <motion.h1 
-          className="text-4xl font-bold mb-4 text-center text-gradient"
-          variants={fadeIn}
-          transition={{ delay: 0.2 }}
-        >
-          {t('chooseLanguage')}
-        </motion.h1>
-        
-        <motion.p 
-          className="text-xl text-gray-600 dark:text-gray-300 mb-10 text-center"
-          variants={fadeIn}
-          transition={{ delay: 0.3 }}
-        >
-          {t('languageDescription')}
-        </motion.p>
+
+        <div className="text-center mb-10">
+          <motion.h1 
+            className="text-4xl font-bold mb-4 text-gradient"
+            variants={fadeIn}
+            transition={{ delay: 0.2 }}
+          >
+            Choose Your Preferred Language
+          </motion.h1>
+          
+          <motion.p 
+            className="text-lg text-gray-600 dark:text-gray-300"
+            variants={fadeIn}
+            transition={{ delay: 0.3 }}
+          >
+            Select the language you'd like to use for content creation
+          </motion.p>
+        </div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
+          className="space-y-4 max-w-xl mx-auto mb-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.div 
-            variants={itemVariants}
-            className={`bg-white/90 dark:bg-gray-900/50 backdrop-blur-sm border ${language === "english" ? "border-teal-400 ring-2 ring-teal-400/30" : "border-gray-200 dark:border-gray-800"} rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all`}
-            onClick={() => setLanguage("english")}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <div className="flex items-start">
-              <div className="w-12 h-12 flex-shrink-0 rounded-lg mr-4 overflow-hidden shadow-md">
-                <div className="w-full h-full flex flex-col">
-                  <div className="flex-1 bg-blue-700"></div>
-                  <div className="flex-1 flex">
-                    <div className="w-1/3 bg-red-600"></div>
-                    <div className="w-1/3 bg-white"></div>
-                    <div className="w-1/3 bg-red-600"></div>
-                  </div>
-                  <div className="flex-1 bg-blue-700"></div>
+          {languageOptions.map((lang) => (
+            <motion.div key={lang.code} variants={itemVariants}>
+              <Button
+                variant="outline"
+                onClick={() => setLanguage(lang.code as any)}
+                className={`
+                  relative w-full flex items-center p-5 text-left rounded-xl transition-all duration-300
+                  ${language === lang.code 
+                    ? 'bg-gradient-to-r from-primary-500/10 to-violet-500/10 border-primary-500 dark:border-primary-400 shadow-md' 
+                    : 'hover:bg-primary-50/50 dark:hover:bg-primary-900/10 border-gray-200 dark:border-gray-800/60'}
+                `}
+              >
+                <span className="text-xl mr-4">{lang.code === "english" ? "🇺🇸" : lang.code === "spanish" ? "🇪🇸" : lang.code === "french" ? "🇫🇷" : "🇩🇪"}</span>
+                <div className="flex-1">
+                  <h3 className={`font-medium text-lg ${language === lang.code ? 'text-primary-600 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                    {lang.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{lang.description}</p>
                 </div>
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">{t('english')}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {t('englishDescription')}
-                </p>
-              </div>
-              {language === "english" && (
-                <div className="ml-auto">
-                  <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            variants={itemVariants}
-            className={`bg-white/90 dark:bg-gray-900/50 backdrop-blur-sm border ${language === "german" ? "border-cyan-400 ring-2 ring-cyan-400/30" : "border-gray-200 dark:border-gray-800"} rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all`}
-            onClick={() => setLanguage("german")}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <div className="flex items-start">
-              <div className="w-12 h-12 flex-shrink-0 rounded-lg mr-4 overflow-hidden shadow-md">
-                <div className="w-full h-full flex flex-col">
-                  <div className="flex-1 bg-black"></div>
-                  <div className="flex-1 bg-red-600"></div>
-                  <div className="flex-1 bg-yellow-400"></div>
-                </div>
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">{t('german')}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {t('germanDescription')}
-                </p>
-              </div>
-              {language === "german" && (
-                <div className="ml-auto">
-                  <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
+                
+                {language === lang.code && (
+                  <CheckCircle className="text-primary-500 dark:text-primary-400 w-6 h-6 ml-2" />
+                )}
+              </Button>
+            </motion.div>
+          ))}
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-12"
+          className="flex justify-center gap-4 mb-12"
           variants={fadeIn}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 }}
         >
           <ContinueButton 
             onClick={nextStep}
             disabled={!language}
-            variant="cyan"
+            variant="novus"
           >
-            {t('continue')}
+            Continue
           </ContinueButton>
         </motion.div>
         
         <motion.div
           variants={fadeIn}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.7 }}
           className="flex justify-center"
         >
           <ProgressDots total={total} current={current} color="novus" />
