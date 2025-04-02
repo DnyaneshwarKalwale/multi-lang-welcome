@@ -3,12 +3,16 @@ import { useContext } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { AuthContext } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { ArrowRight, Twitter, Check } from "lucide-react";
 
-const CustomWelcomePage = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+interface CustomWelcomePageProps {
+  onLogin: () => void;
+}
+
+const CustomWelcomePage = ({ onLogin }: CustomWelcomePageProps) => {
+  const { isAuthenticated } = useAuth();
 
   const features = [
     "Algorithm-optimized content generation",
@@ -60,11 +64,9 @@ const CustomWelcomePage = () => {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/" className="w-full">
-                  <Button variant="outline" size="lg" className="w-full">
-                    Sign In
-                  </Button>
-                </Link>
+                <Button variant="outline" size="lg" className="w-full" onClick={onLogin}>
+                  Sign In
+                </Button>
               </>
             )}
           </motion.div>

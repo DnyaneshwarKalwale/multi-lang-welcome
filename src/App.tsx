@@ -1,11 +1,10 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, useState } from "react";
-import { AuthContext, AuthProvider } from "@/contexts/AuthContext";
-import { LanguageContext, LanguageProvider } from "@/contexts/LanguageContext";
-import { ThemeContext, ThemeProvider } from "@/contexts/ThemeContext";
-import { OnboardingContext, OnboardingProvider } from "@/contexts/OnboardingContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { authApi, api } from "@/services/api";
 import { toast } from "sonner";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
@@ -44,13 +43,11 @@ function App() {
     localStorage.getItem("onboardingStep") || "language"
   );
 
-  // Theme effect
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Auth effect
   useEffect(() => {
     const initAuth = async () => {
       if (token) {
@@ -72,7 +69,6 @@ function App() {
     initAuth();
   }, [token]);
 
-  // Check pending invitations
   useEffect(() => {
     const fetchPendingInvitations = async () => {
       if (isAuthenticated) {
@@ -88,7 +84,6 @@ function App() {
     fetchPendingInvitations();
   }, [isAuthenticated]);
 
-  // Auth functions
   const login = (token, user) => {
     localStorage.setItem("token", token);
     setToken(token);
@@ -106,7 +101,6 @@ function App() {
     toast.success("You have been logged out.");
   };
 
-  // Onboarding functions
   const updateOnboardingStep = (step) => {
     localStorage.setItem("onboardingStep", step);
     setOnboardingStep(step);
@@ -117,7 +111,6 @@ function App() {
     setOnboardingCompleted(true);
   };
 
-  // Loading is true during initial auth setup
   if (isSettingUpAuth) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-brand-purple/10 to-brand-pink/10 dark:from-brand-purple/30 dark:to-brand-pink/30">
@@ -143,7 +136,6 @@ function App() {
                 <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
                 <Route path="/verify" element={<VerifyEmailPage />} />
 
-                {/* Protected routes */}
                 <Route element={<InvitationCheckRoute />}>
                   <Route
                     path="/pending-invitations"
@@ -158,7 +150,6 @@ function App() {
                     element={<TeamWorkspacePage />}
                   />
 
-                  {/* Onboarding routes */}
                   <Route
                     path="/language-selection"
                     element={<LanguageSelectionPage />}
