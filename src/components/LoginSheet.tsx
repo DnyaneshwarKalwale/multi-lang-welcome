@@ -55,29 +55,29 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     
     if (email && password) {
       try {
-        await login(email, password);
+        // Await user data from login function
+        const userData = await login(email, password);
         
-        // Check if the login was successful before proceeding
-        if (!error) {
-          // After login, get the saved onboarding step from localStorage
-          const savedStep = localStorage.getItem('onboardingStep');
-          const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
-          
-          // If we have a saved step and onboarding is not completed, redirect to that step
-          if (savedStep && !onboardingCompleted) {
-            navigate(`/onboarding/${savedStep}`);
-          } else if (onboardingCompleted) {
-            // If onboarding is completed, navigate to dashboard
-            navigate('/dashboard');
-          } else {
-            // If no saved step, start at the beginning of onboarding or use success callback
-            if (onSuccess) onSuccess();
-            else navigate("/onboarding/welcome");
-          }
-          
-          // Close the login sheet
-          onOpenChange(false);
+        // If we got here, login was successful
+        // Get the saved onboarding step from localStorage
+        const savedStep = localStorage.getItem('onboardingStep');
+        const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+        
+        // If we have a saved step and onboarding is not completed, redirect to that step
+        if (savedStep && !onboardingCompleted) {
+          navigate(`/onboarding/${savedStep}`);
+        } else if (onboardingCompleted) {
+          // If onboarding is completed, navigate to dashboard
+          navigate('/dashboard');
+        } else {
+          // If no saved step, start at the beginning of onboarding or use success callback
+          if (onSuccess) onSuccess();
+          else navigate("/onboarding/welcome");
         }
+        
+        // Close the login sheet
+        onOpenChange(false);
+        
       } catch (err) {
         // Login error is already handled by the auth context
         console.error("Login error:", err);
