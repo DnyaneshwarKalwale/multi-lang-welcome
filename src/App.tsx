@@ -83,14 +83,18 @@ function ProtectedDashboardRoute() {
     return <Navigate to="/" replace />;
   }
   
-  // First check localStorage for onboarding status
-  // This gives priority to localStorage which is updated at completion time
-  // and only falls back to the user object if localStorage isn't set
-  const onboardingCompleted = 
-    localStorage.getItem('onboardingCompleted') === 'true' || 
-    (user && user.onboardingCompleted);
+  // Always prioritize localStorage value since it's set immediately at completion time
+  // This prevents redirection back to onboarding extension-install page
+  const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
   
   if (!onboardingCompleted) {
+    // If we have a user object and it says onboarding is completed, update localStorage
+    if (user && user.onboardingCompleted) {
+      localStorage.setItem('onboardingCompleted', 'true');
+      return <DashboardPage />;
+    }
+    
+    // Otherwise redirect to onboarding
     const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
     return <Navigate to={`/onboarding/${savedStep}`} replace />;
   }

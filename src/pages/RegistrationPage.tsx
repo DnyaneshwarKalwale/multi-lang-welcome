@@ -16,8 +16,18 @@ export default function RegistrationPage() {
   const { current, total } = getStepProgress();
 
   const handleContinue = () => {
+    // Save data to localStorage to ensure persistence
+    localStorage.setItem('user_firstName', firstName);
+    localStorage.setItem('user_lastName', lastName);
+    
     nextStep();
     navigate("/onboarding/extension-install");
+  };
+  
+  const handleSkipToDashboard = () => {
+    // Mark onboarding as completed in localStorage
+    localStorage.setItem('onboardingCompleted', 'true');
+    navigate("/dashboard");
   };
 
   const handlePrev = () => {
@@ -97,7 +107,7 @@ export default function RegistrationPage() {
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <motion.div variants={itemVariants}>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-2 text-left">
+            <label htmlFor="firstName" className="block text-sm font-medium text-white mb-2 text-left">
               First Name
             </label>
             <Input 
@@ -105,12 +115,12 @@ export default function RegistrationPage() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Enter your first name"
-              className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+              className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
             />
           </motion.div>
           
           <motion.div variants={itemVariants}>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-400 mb-2 text-left">
+            <label htmlFor="lastName" className="block text-sm font-medium text-white mb-2 text-left">
               Last Name
             </label>
             <Input 
@@ -118,13 +128,13 @@ export default function RegistrationPage() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Enter your last name"
-              className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+              className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
             />
           </motion.div>
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-12"
+          className="flex flex-col md:flex-row justify-center items-center gap-4 mb-12"
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
@@ -138,6 +148,14 @@ export default function RegistrationPage() {
           >
             <span>Continue</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="px-8 py-3 rounded-full text-white border-gray-700 hover:bg-gray-800 hover:text-white transition-all duration-300"
+            onClick={handleSkipToDashboard}
+          >
+            Skip to dashboard
           </Button>
         </motion.div>
         

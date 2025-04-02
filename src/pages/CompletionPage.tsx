@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, ChevronRight, Loader2, Share2, Twitter } from "lucide-react";
+import { CheckCircle, ChevronRight, Loader2, Share2, Twitter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ export default function CompletionPage() {
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   
   // Animation variants for staggered animations
   const containerVariants = {
@@ -42,13 +43,13 @@ export default function CompletionPage() {
   
   // Mark onboarding as complete
   useEffect(() => {
+    // Always set this flag locally to ensure we can navigate to dashboard
+    localStorage.setItem('onboardingCompleted', 'true');
+    
     const markOnboardingComplete = async () => {
       if (user) {
         setIsMarkingComplete(true);
         try {
-          // Save completed state to localStorage first for immediate effect
-          localStorage.setItem('onboardingCompleted', 'true');
-          
           // Get API URL from env or fallback
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
           
@@ -67,26 +68,36 @@ export default function CompletionPage() {
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`
-              }
+              },
+              timeout: 10000 // Set a reasonable timeout
             }
           );
           
           // Fetch updated user data
           await fetchUser();
           setIsMarkingComplete(false);
+          // Clear any previous errors
+          setError("");
         } catch (err) {
           console.error("Error marking onboarding as complete:", err);
-          setError("Failed to update your profile. Please try again.");
+          setError("Failed to update your profile. Your settings will still be saved locally.");
           setIsMarkingComplete(false);
         }
       }
     };
     
     markOnboardingComplete();
-  }, [user, workspaceType, workspaceName, language, theme, postFormat, postFrequency, fetchUser]);
+  }, [user, workspaceType, workspaceName, language, theme, postFormat, postFrequency, fetchUser, retryCount]);
   
   const handleGoToDashboard = () => {
+    // Ensure the onboarding is marked as completed before going to dashboard
+    localStorage.setItem('onboardingCompleted', 'true');
     navigate("/dashboard");
+  };
+  
+  const handleRetry = () => {
+    setError("");
+    setRetryCount(prev => prev + 1);
   };
   
   const handleGenerateContent = () => {
@@ -196,42 +207,54 @@ export default function CompletionPage() {
             </div>
           </div>
           
-          <div className="mt-6 pt-6 border-t border-gray-800 text-center">
+          <motion.div 
+            className="mt-6 pt-6 border-t border-gray-800 text-center"
+            variants={itemVariants}
+          >
             <p className="text-gray-400 mb-4">
               You can also set these up later from your dashboard
             </p>
-          </div>
-        </motion.div>
-        
-        <motion.div variants={itemVariants} className="mt-4">
-          <ContinueButton 
-            onClick={handleGoToDashboard}
-            className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-12 py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 min-w-[250px] text-lg"
-          >
-            Go to dashboard
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
-        </motion.div>
-        
-        {isMarkingComplete && (
-          <motion.div 
-            className="text-sm text-gray-500 flex items-center justify-center"
-            variants={itemVariants}
-          >
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving your preferences...
           </motion.div>
-        )}
-        
-        {error && (
-          <motion.div 
-            className="bg-red-900/30 border border-red-900 text-red-200 p-3 rounded-lg"
-            variants={itemVariants}
-          >
-            {error}
-          </motion.div>
-        )}
+        </motion.div>
       </motion.div>
-    </div>
+      
+      <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
+        <Button 
+          onClick={handleGoToDashboard}
+          variant="gradient"
+          className="w-full py-4 px-8 rounded-full text-lg font-medium flex items-center justify-center gap-2 shadow-xl hover:shadow-indigo-500/25 transition-all duration-300 group"
+        >
+          <span>Go to dashboard</span>
+          <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+        </Button>
+      </motion.div>
+      
+      {isMarkingComplete && (
+        <motion.div 
+          className="text-sm text-gray-500 flex items-center justify-center mt-4"
+          variants={itemVariants}
+        >
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Saving your preferences...
+        </motion.div>
+      )}
+      
+      {error && (
+        <motion.div 
+          className="bg-red-900/30 border border-red-900 text-red-200 p-3 rounded-lg flex flex-col items-center mt-4 max-w-md mx-auto"
+          variants={itemVariants}
+        >
+          <p className="mb-2">{error}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRetry} 
+            className="mt-2 text-white border-red-700 hover:bg-red-900/50"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" /> Retry
+          </Button>
+        </motion.div>
+      )}
+    </motion.div>
   );
 } 

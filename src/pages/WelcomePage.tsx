@@ -5,7 +5,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function WelcomePage() {
@@ -64,25 +64,27 @@ export default function WelcomePage() {
         </motion.div>
         
         <motion.div 
-          className="flex flex-col md:flex-row justify-center items-center gap-4 mb-12"
+          className="flex flex-col items-center justify-center mb-12 max-w-md mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.5 }}
         >
-          <ContinueButton 
+          <Button 
             onClick={nextStep} 
-            className="group mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-4 rounded-full text-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
+            variant="gradient"
+            className="group w-full py-4 px-8 rounded-full text-lg font-medium mb-4 flex items-center justify-center gap-2 shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
           >
             <span>Get started</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
+          </Button>
           
           <Button
-            variant="outline"
-            className="mt-6 px-8 py-3 rounded-full text-gray-400 border-gray-700 hover:text-white hover:border-gray-600 transition-all duration-300"
+            variant="ghost"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 flex items-center gap-1 text-sm"
             onClick={handleSkipToDashboard}
           >
-            Skip to dashboard
+            <span>Skip to dashboard</span>
+            <ArrowRight size={16} className="ml-1" />
           </Button>
         </motion.div>
         

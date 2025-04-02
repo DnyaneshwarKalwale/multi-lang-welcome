@@ -71,7 +71,7 @@ export default function ExtensionInstallPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-6"
+          className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -128,38 +128,38 @@ export default function ExtensionInstallPage() {
               <Button 
                 variant="gradient" 
                 rounded="full"
-                className="group w-full md:w-auto"
+                className="group w-full md:w-auto py-3 px-6 shadow-lg flex items-center gap-2"
                 onClick={() => window.open("https://chrome.google.com/webstore/detail/scripe-twitter-extension/", "_blank")}
               >
                 <span>Add to Chrome</span>
-                <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
           </div>
         </motion.div>
 
         <motion.div 
-          className="flex flex-col md:flex-row justify-center gap-4 mb-12"
+          className="flex flex-col items-center mb-12 max-w-md mx-auto"
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-lg mx-auto">
-            <ContinueButton 
-              onClick={handleContinue}
-              className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 w-full md:w-auto"
-            >
-              <span>Continue without installing</span>
-              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-            </ContinueButton>
-            
-            <Button
-              variant="outline"
-              className="w-full md:w-auto px-8 py-3 rounded-full text-white border-gray-700 hover:bg-gray-800 hover:text-white transition-all duration-300"
-              onClick={handleSkipToDashboard}
-            >
-              Skip to dashboard
-            </Button>
-          </div>
+          <Button 
+            variant="gradient"
+            className="w-full py-4 px-8 rounded-full mb-4 flex items-center justify-center gap-2 group shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
+            onClick={handleContinue}
+          >
+            <span>Continue without installing</span>
+            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 flex items-center gap-1 text-sm"
+            onClick={handleSkipToDashboard}
+          >
+            <span>Skip to dashboard</span>
+            <ArrowRight size={16} className="ml-1" />
+          </Button>
         </motion.div>
         
         <motion.div

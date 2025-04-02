@@ -104,13 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', response.token);
       setUser(response.user);
       
-      // Store onboarding info in localStorage
-      if (response.user.onboardingCompleted) {
-        localStorage.setItem('onboardingCompleted', 'true');
-      } else {
-        // Make sure we don't have stale data
-        localStorage.setItem('onboardingCompleted', 'false');
-      }
+      // Always set the onboarding status in localStorage
+      // Prioritize completed status to prevent issues with dashboard redirection
+      localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
       
       // Don't navigate automatically - let the component handle navigation
       return response.user;
