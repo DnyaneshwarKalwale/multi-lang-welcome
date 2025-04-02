@@ -35,7 +35,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Redirect to backend Google auth endpoint with the dynamic URL
-    window.location.href = `${baseUrl}/api/auth/google`;
+    window.location.href = `${baseUrl}/auth/google`;
   };
   
   // Handle Twitter auth
@@ -45,7 +45,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Redirect to backend Twitter auth endpoint
-    window.location.href = `${baseUrl}/api/auth/twitter`;
+    window.location.href = `${baseUrl}/auth/twitter`;
     onOpenChange(false);
   };
   
@@ -65,14 +65,13 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
           
           // If we have a saved step and onboarding is not completed, redirect to that step
           if (savedStep && !onboardingCompleted) {
-            navigate(`/onboarding/${savedStep}`);
+            navigate(`/${savedStep}`);
           } else if (onboardingCompleted) {
             // If onboarding is completed, navigate to dashboard
             navigate('/dashboard');
           } else {
-            // If no saved step, start at the beginning of onboarding or use success callback
-            if (onSuccess) onSuccess();
-            else navigate("/onboarding/welcome");
+            // If no saved step, start at the beginning of onboarding
+            navigate("/language-selection");
           }
           
           // Close the login sheet

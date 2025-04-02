@@ -136,37 +136,21 @@ function App() {
                 <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
                 <Route path="/verify" element={<VerifyEmailPage />} />
 
-                <Route element={<InvitationCheckRoute />}>
-                  <Route
-                    path="/pending-invitations"
-                    element={<PendingInvitationsPage />}
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={<DashboardPage />}
-                  />
-                  <Route
-                    path="/team-workspace"
-                    element={<TeamWorkspacePage />}
-                  />
+                {/* Public onboarding routes */}
+                <Route path="/language-selection" element={<LanguageSelectionPage />} />
+                <Route path="/post-format" element={<PostFormatPage />} />
+                <Route path="/post-frequency" element={<PostFrequencyPage />} />
+                <Route path="/theme" element={<ThemeSelectionPage />} />
+                <Route path="/team" element={<TeamSelectionPage />} />
+                <Route path="/team-invite" element={<TeamInvitePage />} />
+                <Route path="/extension-install" element={<ExtensionInstallPage />} />
+                <Route path="/completion" element={<CompletionPage />} />
 
-                  <Route
-                    path="/language-selection"
-                    element={<LanguageSelectionPage />}
-                  />
-                  <Route path="/post-format" element={<PostFormatPage />} />
-                  <Route
-                    path="/post-frequency"
-                    element={<PostFrequencyPage />}
-                  />
-                  <Route path="/theme" element={<ThemeSelectionPage />} />
-                  <Route path="/team" element={<TeamSelectionPage />} />
-                  <Route path="/team-invite" element={<TeamInvitePage />} />
-                  <Route
-                    path="/extension-install"
-                    element={<ExtensionInstallPage />}
-                  />
-                  <Route path="/completion" element={<CompletionPage />} />
+                {/* Protected routes */}
+                <Route element={<InvitationCheckRoute />}>
+                  <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/team-workspace" element={<TeamWorkspacePage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
