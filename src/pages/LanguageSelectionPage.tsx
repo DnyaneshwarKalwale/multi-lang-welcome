@@ -1,33 +1,54 @@
 import React, { useEffect } from "react";
-import { BackButton } from "@/components/BackButton";
+import { useNavigate } from "react-router-dom";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { Twitter, CheckCircle, Globe, ChevronRight, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { PrismIconRounded } from "@/components/ScripeIcon";
+import { Twitter, Globe, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function LanguageSelectionPage() {
+  const navigate = useNavigate();
   const { language: onboardingLanguage, setLanguage: setOnboardingLanguage, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { setLanguage: setAppLanguage } = useLanguage();
   const { current, total } = getStepProgress();
 
-  // Array of available languages - only English and German as specified in LanguageContext
+  // Array of available languages with additional information and flag images
   const languageOptions = [
     { 
       code: "english", 
       name: "English", 
-      description: "Most widely used", 
+      nativeName: "English",
       flag: "🇺🇸",
-      nativeName: "English" 
+      region: "North America",
+      speakers: "1.35 billion"
     },
     { 
       code: "german", 
-      name: "Deutsch", 
-      description: "German language option", 
+      name: "German", 
+      nativeName: "Deutsch",
       flag: "🇩🇪",
-      nativeName: "Deutsch" 
+      region: "Europe",
+      speakers: "95 million"
+    },
+    { 
+      code: "spanish", 
+      name: "Spanish", 
+      nativeName: "Español",
+      flag: "🇪🇸",
+      region: "Europe, Latin America",
+      speakers: "580 million",
+      disabled: true
+    },
+    { 
+      code: "french", 
+      name: "French", 
+      nativeName: "Français",
+      flag: "🇫🇷",
+      region: "Europe, Africa",
+      speakers: "300 million",
+      disabled: true
     }
   ];
 
@@ -38,208 +59,183 @@ export default function LanguageSelectionPage() {
     }
   }, [onboardingLanguage, setAppLanguage]);
 
-  // Animation variants
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3
-      }
+  const handleContinue = () => {
+    if (onboardingLanguage) {
+      nextStep();
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 24 
-      } 
-    }
-  };
-
-  const pulseVariants = {
-    animate: {
-      scale: [1, 1.05, 1],
-      opacity: [0.9, 1, 0.9],
-      transition: { 
-        duration: 2, 
-        ease: "easeInOut", 
-        repeat: Infinity,
-        repeatType: "reverse" as const
-      }
-    }
+  const handleBack = () => {
+    prevStep();
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
-      <motion.div 
-        className="absolute inset-0 opacity-10 dark:opacity-20 -z-10"
-        variants={pulseVariants}
-        animate="animate"
-      >
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
-      </motion.div>
-      
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-dots-pattern opacity-10 -z-10"></div>
-      
-      {/* Back button */}
-      <BackButton 
-        onClick={prevStep} 
-        absolute 
-      />
-      
-      <motion.div 
-        className="max-w-md w-full"
-        variants={fadeIn}
-        initial="initial"
-        animate="animate"
-      >
-        <motion.div 
-          className="mb-10 flex justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <div className="relative">
-            <PrismIconRounded className="w-24 h-24" />
-            <motion.div 
-              className="absolute -bottom-2 -right-2 text-blue-500"
-              animate={{ 
-                rotate: [0, 10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <Globe size={26} className="drop-shadow-md" />
-            </motion.div>
-          </div>
-        </motion.div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100">
+      {/* Geometric shapes for visual interest */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-blue-50 dark:bg-blue-950/30 blur-3xl opacity-70"></div>
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-purple-50 dark:bg-purple-950/30 blur-3xl opacity-70"></div>
+        <div className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full bg-teal-50 dark:bg-teal-950/30 blur-3xl opacity-50 animate-pulse"></div>
+      </div>
 
-        <div className="text-center mb-8">
-          <motion.h1 
-            className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400"
-            variants={fadeIn}
-            transition={{ delay: 0.2 }}
+      {/* Back button */}
+      <motion.button
+        className="absolute top-8 left-8 p-3 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+        onClick={handleBack}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+      </motion.button>
+
+      <div className="container mx-auto max-w-4xl px-4 py-8 z-10 relative">
+        <motion.div 
+          className="flex flex-col items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Logo and header */}
+          <motion.div 
+            className="flex flex-col items-center mb-10"
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: "spring", damping: 12 }}
           >
-            {onboardingLanguage === "german" ? "Wähle deine Sprache" : "Select Your Language"}
-          </motion.h1>
-          
-          <motion.p 
-            className="text-base text-gray-600 dark:text-gray-300"
-            variants={fadeIn}
+            <div className="relative mb-4">
+              <SekcionIconRounded className="w-20 h-20 text-blue-500" />
+              <motion.div 
+                className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg"
+                animate={{ rotate: [0, 10, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              >
+                <Globe className="w-6 h-6 text-blue-500" />
+              </motion.div>
+            </div>
+            
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400">
+              {onboardingLanguage === "german" ? "Wähle deine Sprache" : "Choose Your Language"}
+            </h1>
+            
+            <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-2">
+              {onboardingLanguage === "german" 
+                ? "Wähle die Sprache, die du beim Erkunden der App verwenden möchtest"
+                : "Select the language you'll use while exploring the app"}
+            </p>
+          </motion.div>
+
+          {/* Language selection cards */}
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {onboardingLanguage === "german" 
-              ? "Wähle die Sprache, die du in der App verwenden möchtest" 
-              : "Choose the language you'll use throughout the app"}
-          </motion.p>
-        </div>
-        
-        <motion.div 
-          className="space-y-4 mx-auto mb-10"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {languageOptions.map((lang) => (
-            <motion.div 
-              key={lang.code} 
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                variant={onboardingLanguage === lang.code ? "default" : "outline"}
-                onClick={() => setOnboardingLanguage(lang.code as any)}
+            {languageOptions.map((lang, index) => (
+              <motion.div
+                key={lang.code}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index + 0.4 }}
+                whileHover={!lang.disabled ? { scale: 1.02, y: -5 } : {}}
+                whileTap={!lang.disabled ? { scale: 0.98 } : {}}
                 className={`
-                  relative w-full flex items-center p-5 text-left justify-between rounded-xl transition-all duration-300
+                  relative overflow-hidden rounded-xl shadow-lg 
+                  ${lang.disabled 
+                    ? 'opacity-60 cursor-not-allowed bg-gray-100 dark:bg-gray-800/50' 
+                    : 'cursor-pointer bg-white dark:bg-gray-800'}
                   ${onboardingLanguage === lang.code 
-                    ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white shadow-md hover:shadow-lg' 
-                    : 'hover:border-blue-300 dark:hover:border-blue-700 border-gray-200 dark:border-gray-800/60 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'}
+                    ? 'ring-2 ring-blue-500 dark:ring-blue-400' 
+                    : 'hover:shadow-xl'}
+                  transition-all duration-300
                 `}
+                onClick={() => !lang.disabled && setOnboardingLanguage(lang.code)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm">
-                    <span className="text-xl">{lang.flag}</span>
+                {/* Selected indicator */}
+                {onboardingLanguage === lang.code && (
+                  <div className="absolute top-3 right-3 bg-blue-500 text-white p-1 rounded-full">
+                    <Check className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className={`font-semibold text-lg`}>
-                      {lang.nativeName}
-                    </h3>
-                    <p className={`text-sm ${onboardingLanguage === lang.code ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                      {lang.description}
-                    </p>
+                )}
+                
+                {/* Language flag and info */}
+                <div className="p-6 flex items-start gap-4">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-3xl shadow-inner">
+                    {lang.flag}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-semibold">
+                        {lang.nativeName}
+                      </h3>
+                      {lang.code !== "english" && (
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          ({lang.name})
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <span>{lang.region}</span>
+                        <span>•</span>
+                        <span>{lang.speakers} speakers</span>
+                      </div>
+                    </div>
+                    
+                    {lang.disabled && (
+                      <div className="mt-2 text-xs text-blue-500 dark:text-blue-400 font-medium">
+                        Coming soon
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                {onboardingLanguage === lang.code ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                {/* Background decorative gradient */}
+                {onboardingLanguage === lang.code && (
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500"></div>
                 )}
-              </Button>
-            </motion.div>
-          ))}
-        </motion.div>
-        
-        <motion.div 
-          className="flex justify-center gap-4 mb-12"
-          variants={fadeIn}
-          transition={{ delay: 0.6 }}
-        >
-          <Button 
-            variant="default"
-            rounded="full"
-            className={`
-              py-5 px-8 gap-2 w-full font-semibold relative overflow-hidden
-              ${!onboardingLanguage ? 'opacity-70 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600'}
-            `}
-            onClick={nextStep}
-            disabled={!onboardingLanguage}
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Continue button */}
+          <motion.div
+            className="mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
           >
-            {onboardingLanguage === "german" ? "Fortfahren" : "Continue"}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 2,
-                ease: "linear",
-                repeatType: "loop"
-              }}
-            />
-            <ArrowRight size={18} />
-          </Button>
+            <Button
+              className="px-8 py-6 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white font-semibold flex items-center gap-2"
+              disabled={!onboardingLanguage}
+              onClick={handleContinue}
+            >
+              {onboardingLanguage === "german" ? "Fortfahren" : "Continue"}
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </motion.div>
+
+          {/* Progress indicators */}
+          <motion.div
+            className="flex flex-col items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            <ProgressDots total={total} current={current} color="novus" />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              {onboardingLanguage === "german" 
+                ? `Schritt ${current + 1} von ${total}` 
+                : `Step ${current + 1} of ${total}`}
+            </p>
+          </motion.div>
         </motion.div>
-        
-        <motion.div
-          variants={fadeIn}
-          transition={{ delay: 0.7 }}
-          className="flex flex-col items-center gap-2"
-        >
-          <ProgressDots total={total} current={current} color="novus" />
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {onboardingLanguage === "german" 
-              ? `Schritt ${current + 1} von ${total}` 
-              : `Step ${current + 1} of ${total}`}
-          </span>
-        </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }

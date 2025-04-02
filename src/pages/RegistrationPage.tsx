@@ -6,7 +6,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, User, UserPlus, Twitter, AtSign } from "lucide-react";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -101,7 +101,7 @@ export default function RegistrationPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <ScripeIconRounded className="w-20 h-20 text-blue-500" />
+            <SekcionIconRounded className="w-20 h-20 text-blue-500" />
             <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
@@ -111,7 +111,7 @@ export default function RegistrationPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          Create your TweetSphere account
+          Create your Sekcion account
         </motion.h1>
         
         <motion.p 
