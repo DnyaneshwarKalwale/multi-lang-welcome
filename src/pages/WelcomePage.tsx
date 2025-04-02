@@ -1,13 +1,22 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { ScripeIcon } from "@/components/ScripeIcon";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function WelcomePage() {
   const { nextStep } = useOnboarding();
+  const navigate = useNavigate();
+
+  const handleSkipToDashboard = () => {
+    // Mark onboarding as completed in localStorage
+    localStorage.setItem('onboardingCompleted', 'true');
+    navigate("/dashboard");
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
@@ -55,7 +64,7 @@ export default function WelcomePage() {
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-12"
+          className="flex flex-col md:flex-row justify-center items-center gap-4 mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.5 }}
@@ -67,6 +76,14 @@ export default function WelcomePage() {
             <span>Get started</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
           </ContinueButton>
+          
+          <Button
+            variant="outline"
+            className="mt-6 px-8 py-3 rounded-full text-gray-400 border-gray-700 hover:text-white hover:border-gray-600 transition-all duration-300"
+            onClick={handleSkipToDashboard}
+          >
+            Skip to dashboard
+          </Button>
         </motion.div>
         
         <motion.div

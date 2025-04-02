@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, Loader2, Share2, Twitter } from "lucide-react";
+import { CheckCircle, ChevronRight, Loader2, Share2, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,7 +85,7 @@ export default function CompletionPage() {
     markOnboardingComplete();
   }, [user, workspaceType, workspaceName, language, theme, postFormat, postFrequency, fetchUser]);
   
-  const handleSkip = () => {
+  const handleGoToDashboard = () => {
     navigate("/dashboard");
   };
   
@@ -195,14 +195,21 @@ export default function CompletionPage() {
               </div>
             </div>
           </div>
+          
+          <div className="mt-6 pt-6 border-t border-gray-800 text-center">
+            <p className="text-gray-400 mb-4">
+              You can also set these up later from your dashboard
+            </p>
+          </div>
         </motion.div>
         
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} className="mt-4">
           <ContinueButton 
-            onClick={handleSkip}
-            className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
+            onClick={handleGoToDashboard}
+            className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-12 py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 min-w-[250px] text-lg"
           >
             Go to dashboard
+            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
           </ContinueButton>
         </motion.div>
         
