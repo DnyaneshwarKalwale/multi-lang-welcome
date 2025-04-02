@@ -19,6 +19,7 @@ export default function CompletionPage() {
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
+  const [maxRetries] = useState(3);
   
   // Animation variants for staggered animations
   const containerVariants = {
@@ -47,47 +48,65 @@ export default function CompletionPage() {
     localStorage.setItem('onboardingCompleted', 'true');
     
     const markOnboardingComplete = async () => {
-      if (user) {
-        setIsMarkingComplete(true);
-        try {
-          // Get API URL from env or fallback
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          
-          // Update the user's onboarding progress on the server
-          await axios.post(
-            `${baseApiUrl}/users/update-onboarding`, 
-            {
-              onboardingCompleted: true,
-              workspaceType,
-              workspaceName,
-              language,
-              theme,
-              postFormat,
-              postFrequency
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-              },
-              timeout: 10000 // Set a reasonable timeout
-            }
-          );
-          
-          // Fetch updated user data
-          await fetchUser();
-          setIsMarkingComplete(false);
-          // Clear any previous errors
-          setError("");
-        } catch (err) {
-          console.error("Error marking onboarding as complete:", err);
-          setError("Failed to update your profile. Your settings will still be saved locally.");
-          setIsMarkingComplete(false);
+      if (!user) {
+        return;
+      }
+      
+      setIsMarkingComplete(true);
+      
+      try {
+        // Get API URL from env or fallback
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          throw new Error("No authentication token found");
         }
+        
+        // Prepare onboarding data
+        const onboardingData = {
+          onboardingCompleted: true,
+          workspaceType: workspaceType || 'personal',
+          workspaceName: workspaceName || `${firstName}'s Workspace`,
+          language: language || 'english',
+          theme: theme || 'dark',
+          postFormat: postFormat || 'casual',
+          postFrequency: postFrequency || 'daily'
+        };
+        
+        console.log("Updating onboarding status with data:", onboardingData);
+        
+        // Update the user's onboarding progress on the server
+        const response = await axios({
+          method: 'post',
+          url: `${baseApiUrl}/users/update-onboarding`,
+          data: onboardingData,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          timeout: 15000 // Extended timeout
+        });
+        
+        console.log("Update onboarding response:", response.data);
+        
+        // Fetch updated user data
+        await fetchUser();
+        setIsMarkingComplete(false);
+        setError("");
+      } catch (err: any) {
+        console.error("Error marking onboarding as complete:", err);
+        
+        // More detailed error message with retry info
+        const errorMsg = err.response?.data?.error || err.message || 'Failed to connect to the server';
+        setError(`${errorMsg}. ${retryCount < maxRetries ? 'You can retry the update.' : 'Your settings are saved locally.'}`);
+        
+        setIsMarkingComplete(false);
       }
     };
     
     markOnboardingComplete();
-  }, [user, workspaceType, workspaceName, language, theme, postFormat, postFrequency, fetchUser, retryCount]);
+  }, [user, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency, fetchUser, retryCount, maxRetries]);
   
   const handleGoToDashboard = () => {
     // Ensure the onboarding is marked as completed before going to dashboard
@@ -96,8 +115,14 @@ export default function CompletionPage() {
   };
   
   const handleRetry = () => {
-    setError("");
-    setRetryCount(prev => prev + 1);
+    if (retryCount < maxRetries) {
+      setError("");
+      setRetryCount(prev => prev + 1);
+    } else {
+      setError("Maximum retry attempts reached. Your settings are saved locally.");
+      // Still allow proceeding to dashboard
+      localStorage.setItem('onboardingCompleted', 'true');
+    }
   };
   
   const handleGenerateContent = () => {
@@ -243,14 +268,16 @@ export default function CompletionPage() {
             variants={itemVariants}
           >
             <p className="mb-2">{error}</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRetry} 
-              className="mt-2 text-white border-red-700 hover:bg-red-900/50"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" /> Retry
-            </Button>
+            {retryCount < maxRetries && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRetry} 
+                className="mt-2 text-white border-red-700 hover:bg-red-900/50"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" /> Retry ({retryCount}/{maxRetries})
+              </Button>
+            )}
           </motion.div>
         )}
       </motion.div>
