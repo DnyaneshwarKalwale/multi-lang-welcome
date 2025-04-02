@@ -249,7 +249,7 @@ export default function PostFormatPage() {
               >
                 <div className="w-full aspect-square rounded-md bg-gray-800/80 mb-2 sm:mb-3 relative flex items-center justify-center overflow-hidden">
                   {format.icon}
-                </div>
+                    </div>
                 <h3 className="text-sm sm:text-base font-semibold mb-1">{format.title}</h3>
                 <p className="text-xs sm:text-sm text-gray-400 mb-2 flex-grow">{format.description}</p>
                 <div className="text-[10px] sm:text-xs text-gray-500 bg-gray-800/50 rounded-md p-1.5">
@@ -260,7 +260,7 @@ export default function PostFormatPage() {
                     <span className="text-gray-400">Engagement</span>
                     <span className="text-blue-400">{format.stats.engagement}%</span>
                   </div>
-                </div>
+              </div>
               </motion.div>
             ))}
           </motion.div>
@@ -276,10 +276,10 @@ export default function PostFormatPage() {
               <span className="text-sm sm:text-base text-gray-400">Post Length</span>
               <span className="text-sm sm:text-base text-blue-400">{calculateCharacterCount()}</span>
             </div>
-            <Slider
+            <Slider 
               value={[postLength]}
               onValueChange={(value) => setPostLength(value[0])}
-              max={100}
+              max={100} 
               step={1}
               className="w-full"
             />
@@ -287,7 +287,7 @@ export default function PostFormatPage() {
           
           <ContinueButton 
             onClick={nextStep}
-            disabled={!postFormat}
+            disabled={!postFormat} 
             className="w-full sm:w-auto"
           />
         </motion.div>
@@ -296,7 +296,7 @@ export default function PostFormatPage() {
       <ProgressDots 
         current={current} 
         total={total} 
-        color="blue"
+        variant="twitter"
         className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2"
       />
     </div>

@@ -1,169 +1,140 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { useEffect, useState } from "react";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import { authApi, api } from "@/services/api";
-import { toast } from "sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
-import CustomNavbar from "@/components/CustomNavbar";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
-import CustomIndex from "./pages/CustomIndex";
-import RegistrationPage from "./pages/RegistrationPage";
-import LanguageSelectionPage from "./pages/LanguageSelectionPage";
-import PostFormatPage from "./pages/PostFormatPage";
-import PostFrequencyPage from "./pages/PostFrequencyPage";
-import ThemeSelectionPage from "./pages/ThemeSelectionPage";
-import TeamSelectionPage from "./pages/TeamSelectionPage";
-import TeamInvitePage from "./pages/TeamInvitePage";
-import ExtensionInstallPage from "./pages/ExtensionInstallPage";
-import CompletionPage from "./pages/CompletionPage";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
-import DashboardPage from "./pages/DashboardPage";
-import OAuthCallbackPage from "./pages/OAuthCallbackPage";
-import PendingInvitationsPage from "./pages/PendingInvitationsPage";
-import TeamWorkspacePage from "./pages/TeamWorkspacePage";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import DashboardPage from "./pages/DashboardPage";
+import PendingInvitationsPage from "./pages/PendingInvitationsPage";
+import { useEffect, useState } from "react";
 
-function App() {
-  const [theme, setTheme] = useState<"light" | "dark">(localStorage.getItem("theme") as "light" | "dark" || "light");
-  const [language, setLanguage] = useState("english");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [isSettingUpAuth, setIsSettingUpAuth] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
-  const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(
-    localStorage.getItem("onboardingCompleted") === "true"
-  );
-  const [onboardingStep, setOnboardingStep] = useState(
-    localStorage.getItem("onboardingStep") || "language"
-  );
+const queryClient = new QueryClient();
 
+// Protected Onboarding Route Component
+function ProtectedOnboardingRoute() {
+  const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+  
+  // Check for saved onboarding progress when component mounts
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const initAuth = async () => {
-      if (token) {
-        try {
-          api.defaults.headers.Authorization = `Bearer ${token}`;
-          const response = await api.get("/auth/me");
-          setUser(response.data);
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error("Error during authentication:", error);
-          localStorage.removeItem("token");
-          setToken(null);
-          setIsAuthenticated(false);
-        }
+    // Only run this if the user is authenticated and hasn't completed onboarding
+    if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
+      setIsLoadingProgress(true);
+      
+      // Get saved step from localStorage
+      const savedStep = localStorage.getItem('onboardingStep');
+      
+      if (savedStep) {
+        // Redirect to the saved step
+        navigate(`/onboarding/${savedStep}`, { replace: true });
+      } else {
+        // If no saved step, start from the beginning
+        navigate('/onboarding/welcome', { replace: true });
       }
-      setIsSettingUpAuth(false);
-    };
-
-    initAuth();
-  }, [token]);
-
-  useEffect(() => {
-    const fetchPendingInvitations = async () => {
-      if (isAuthenticated) {
-        try {
-          const response = await api.get("/invitations/pending");
-          setPendingInvitationCount(response.data.length);
-        } catch (error) {
-          console.error("Error fetching pending invitations:", error);
-        }
-      }
-    };
-
-    fetchPendingInvitations();
-  }, [isAuthenticated]);
-
-  const login = (token, user) => {
-    localStorage.setItem("token", token);
-    setToken(token);
-    setUser(user);
-    setIsAuthenticated(true);
-    api.defaults.headers.Authorization = `Bearer ${token}`;
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    delete api.defaults.headers.Authorization;
-    toast.success("You have been logged out.");
-  };
-
-  const updateOnboardingStep = (step) => {
-    localStorage.setItem("onboardingStep", step);
-    setOnboardingStep(step);
-  };
-
-  const completeOnboarding = () => {
-    localStorage.setItem("onboardingCompleted", "true");
-    setOnboardingCompleted(true);
-  };
-
-  if (isSettingUpAuth) {
+      
+      setIsLoadingProgress(false);
+    }
+  }, [isAuthenticated, user, navigate, location.pathname]);
+  
+  // If still loading user or onboarding progress, show loading spinner
+  if (loading || isLoadingProgress) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-brand-purple/10 to-brand-pink/10 dark:from-brand-purple/30 dark:to-brand-pink/30">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto border-4 border-t-brand-purple border-r-brand-purple border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading...</p>
-        </div>
+      <div className="flex h-screen w-full items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
+  
+  // If user is authenticated and has completed onboarding, redirect to dashboard
+  if (isAuthenticated && user?.onboardingCompleted) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Otherwise, show the onboarding flow
+  // The OnboardingRouter will handle loading saved progress internally
+  return <OnboardingRouter />;
+}
 
-  return (
+// Protected Dashboard Route Component
+function ProtectedDashboardRoute() {
+  const { user, isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // Always prioritize localStorage value since it's set immediately at completion time
+  // This prevents redirection back to onboarding extension-install page
+  const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+  
+  if (!onboardingCompleted) {
+    // If we have a user object and it says onboarding is completed, update localStorage
+    if (user && user.onboardingCompleted) {
+      localStorage.setItem('onboardingCompleted', 'true');
+      return <DashboardPage />;
+    }
+    
+    // Otherwise redirect to onboarding
+    const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
+    return <Navigate to={`/onboarding/${savedStep}`} replace />;
+  }
+  
+  return <DashboardPage />;
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
             <OnboardingProvider>
-              <CustomNavbar />
-              <Toaster />
-              <Routes>
-                <Route path="/" element={<CustomIndex />} />
-                <Route path="/registration" element={<RegistrationPage />} />
-                <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-                <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
-                <Route path="/verify" element={<VerifyEmailPage />} />
-
-                {/* Onboarding routes */}
-                <Route element={<OnboardingRouter />}>
-                  <Route path="/language-selection" element={<LanguageSelectionPage />} />
-                  <Route path="/post-format" element={<PostFormatPage />} />
-                  <Route path="/post-frequency" element={<PostFrequencyPage />} />
-                  <Route path="/theme" element={<ThemeSelectionPage />} />
-                  <Route path="/team" element={<TeamSelectionPage />} />
-                  <Route path="/team-invite" element={<TeamInvitePage />} />
-                  <Route path="/extension-install" element={<ExtensionInstallPage />} />
-                  <Route path="/completion" element={<CompletionPage />} />
-                </Route>
-
-                {/* Protected routes */}
-                <Route element={<InvitationCheckRoute />}>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
+                  <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+                  <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+                  
+                  {/* Check for invitations first, then redirect to onboarding or dashboard */}
+                  <Route element={<InvitationCheckRoute />}>
+                    <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+                    <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+                  </Route>
+                  
                   <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/team-workspace" element={<TeamWorkspacePage />} />
-                </Route>
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </TooltipProvider>
             </OnboardingProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>
-  );
-}
+  </QueryClientProvider>
+);
 
 export default App;

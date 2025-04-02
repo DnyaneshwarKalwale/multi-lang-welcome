@@ -34,11 +34,8 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Store the current URL to return to after authentication
-    localStorage.setItem('returnTo', window.location.pathname);
-    
-    // Redirect to backend Google auth endpoint
-    window.location.href = `${baseUrl}/auth/google`;
+    // Redirect to backend Google auth endpoint with the dynamic URL
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth
@@ -47,11 +44,8 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Store the current URL to return to after authentication
-    localStorage.setItem('returnTo', window.location.pathname);
-    
     // Redirect to backend Twitter auth endpoint
-    window.location.href = `${baseUrl}/auth/twitter`;
+    window.location.href = `${baseUrl}/api/auth/twitter`;
     onOpenChange(false);
   };
   
@@ -68,20 +62,17 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
           // After login, get the saved onboarding step from localStorage
           const savedStep = localStorage.getItem('onboardingStep');
           const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
-          const returnTo = localStorage.getItem('returnTo');
-          
-          // Clear the return URL
-          localStorage.removeItem('returnTo');
           
           // If we have a saved step and onboarding is not completed, redirect to that step
           if (savedStep && !onboardingCompleted) {
-            navigate(`/${savedStep}`);
+            navigate(`/onboarding/${savedStep}`);
           } else if (onboardingCompleted) {
-            // If onboarding is completed, navigate to dashboard or return URL
-            navigate(returnTo || '/dashboard');
+            // If onboarding is completed, navigate to dashboard
+            navigate('/dashboard');
           } else {
-            // If no saved step, start at the beginning of onboarding
-            navigate("/language-selection");
+            // If no saved step, start at the beginning of onboarding or use success callback
+            if (onSuccess) onSuccess();
+            else navigate("/onboarding/welcome");
           }
           
           // Close the login sheet

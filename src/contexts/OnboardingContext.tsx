@@ -1,172 +1,300 @@
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import axios from "axios";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+// Define types for our context
+type OnboardingStep = 
+  | "welcome" 
+  | "team-selection" 
+  | "team-workspace" 
+  | "team-invite"
+  | "theme-selection" 
+  | "language-selection" 
+  | "post-format" 
+  | "post-frequency" 
+  | "registration" 
+  | "extension-install"
+  | "completion"
+  | "dashboard";
+
+type WorkspaceType = "team" | "personal" | null;
+type ThemeType = "light" | "dark";
+type LanguageType = "english" | "german" | null;
+type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
+type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
+
+interface TeamMember {
+  email: string;
+  role: "admin" | "member";
+}
 
 interface OnboardingContextType {
-  onboardingCompleted: boolean;
-  onboardingStep: string;
-  firstName: string;
-  lastName: string;
-  language: string;
-  theme: string;
-  postFormat: string;
-  postFrequency: number;
-  workspaceType: string;
+  currentStep: OnboardingStep;
+  setCurrentStep: (step: OnboardingStep) => void;
+  workspaceType: WorkspaceType;
+  setWorkspaceType: (type: WorkspaceType) => void;
   workspaceName: string;
-  teamMembers: any[];
-  currentStep: string;
-  updateOnboardingStep: (step: string) => void;
-  completeOnboarding: () => void;
-  setFirstName: (firstName: string) => void;
-  setLastName: (lastName: string) => void;
-  setLanguage: (language: string) => void;
-  setTheme: (theme: string) => void;
-  setPostFormat: (format: string) => void;
-  setPostFrequency: (frequency: number) => void;
-  setWorkspaceType: (type: string) => void;
   setWorkspaceName: (name: string) => void;
-  setTeamMembers: (members: any[]) => void;
+  teamMembers: TeamMember[];
+  setTeamMembers: (members: TeamMember[]) => void;
+  theme: ThemeType;
+  setTheme: (theme: ThemeType) => void;
+  language: LanguageType;
+  setLanguage: (language: LanguageType) => void;
+  postFormat: PostFormat;
+  setPostFormat: (format: PostFormat) => void;
+  postFrequency: PostFrequency;
+  setPostFrequency: (frequency: PostFrequency) => void;
+  firstName: string;
+  setFirstName: (name: string) => void;
+  lastName: string;
+  setLastName: (name: string) => void;
+  email: string;
+  setEmail: (email: string) => void;
   nextStep: () => void;
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
-  saveProgress: () => void;
+  saveProgress: () => Promise<void>;
 }
 
-// Export the context as a named export
-export const OnboardingContext = createContext<OnboardingContextType>({
-  onboardingCompleted: false,
-  onboardingStep: 'language',
-  firstName: '',
-  lastName: '',
-  language: 'english',
-  theme: 'dark',
-  postFormat: 'casual',
-  postFrequency: 1,
-  workspaceType: 'personal',
-  workspaceName: '',
-  teamMembers: [],
-  currentStep: 'language',
-  updateOnboardingStep: () => {},
-  completeOnboarding: () => {},
-  setFirstName: () => {},
-  setLastName: () => {},
-  setLanguage: () => {},
-  setTheme: () => {},
-  setPostFormat: () => {},
-  setPostFrequency: () => {},
-  setWorkspaceType: () => {},
-  setWorkspaceName: () => {},
-  setTeamMembers: () => {},
-  nextStep: () => {},
-  prevStep: () => {},
-  getStepProgress: () => ({ current: 0, total: 1 }),
-  saveProgress: () => {},
-});
+const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+
+// Define all possible steps in order
+const allSteps: OnboardingStep[] = [
+  "welcome",
+  "team-selection",
+  "team-workspace",
+  "team-invite",
+  "theme-selection",
+  "language-selection",
+  "post-format",
+  "post-frequency",
+  "registration",
+  "extension-install",
+  "completion",
+  "dashboard"
+];
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const [onboardingCompleted, setOnboardingCompleted] = useState(
-    localStorage.getItem('onboardingCompleted') === 'true'
-  );
-  const [onboardingStep, setOnboardingStep] = useState(
-    localStorage.getItem('onboardingStep') || 'language'
-  );
-  const [firstName, setFirstName] = useState(localStorage.getItem('user_firstName') || '');
-  const [lastName, setLastName] = useState(localStorage.getItem('user_lastName') || '');
-  const [language, setLanguage] = useState(localStorage.getItem('user_language') || 'english');
-  const [theme, setTheme] = useState(localStorage.getItem('user_theme') || 'dark');
-  const [postFormat, setPostFormat] = useState(localStorage.getItem('user_postFormat') || 'casual');
-  const [postFrequency, setPostFrequency] = useState(Number(localStorage.getItem('user_postFrequency')) || 1);
-  const [workspaceType, setWorkspaceType] = useState(localStorage.getItem('user_workspaceType') || 'personal');
-  const [workspaceName, setWorkspaceName] = useState(localStorage.getItem('user_workspaceName') || '');
-  const [teamMembers, setTeamMembers] = useState<any[]>(JSON.parse(localStorage.getItem('user_teamMembers') || '[]'));
-  const [currentStep, setCurrentStep] = useState(onboardingStep);
+  const navigate = useNavigate();
+  const { setTheme: setGlobalTheme } = useTheme();
+  const { setLanguage: setGlobalLanguage } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
+  
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
+  const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [theme, setTheme] = useState<ThemeType>("light");
+  const [language, setLanguage] = useState<LanguageType>("english");
+  const [postFormat, setPostFormat] = useState<PostFormat>(null);
+  const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const updateOnboardingStep = (step: string) => {
-    localStorage.setItem('onboardingStep', step);
-    setOnboardingStep(step);
-    setCurrentStep(step);
-  };
+  // Load saved onboarding progress when user authenticates
+  useEffect(() => {
+    const loadOnboardingProgress = async () => {
+      if (isAuthenticated && user && !user.onboardingCompleted && !isInitialized) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          const response = await axios.get(`${baseApiUrl}/onboarding`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const data = response.data.data;
+          
+          // Only set the state if we have saved data
+          if (data) {
+            // Set the last step the user was on
+            if (data.currentStep) {
+              setCurrentStep(data.currentStep);
+              navigate(`/onboarding/${data.currentStep}`);
+            }
+            
+            if (data.workspaceType) setWorkspaceType(data.workspaceType);
+            if (data.workspaceName) setWorkspaceName(data.workspaceName);
+            if (data.teamMembers) setTeamMembers(data.teamMembers);
+            if (data.theme) setTheme(data.theme);
+            if (data.language) setLanguage(data.language);
+            if (data.postFormat) setPostFormat(data.postFormat);
+            if (data.postFrequency) setPostFrequency(data.postFrequency);
+            if (data.firstName) setFirstName(data.firstName);
+            if (data.lastName) setLastName(data.lastName);
+            if (data.email) setEmail(data.email);
+          }
+          
+          setIsInitialized(true);
+        } catch (error) {
+          console.error('Failed to load onboarding progress:', error);
+          setIsInitialized(true);
+        }
+      }
+    };
+    
+    loadOnboardingProgress();
+  }, [isAuthenticated, user, navigate, isInitialized]);
 
-  const completeOnboarding = () => {
-    localStorage.setItem('onboardingCompleted', 'true');
-    setOnboardingCompleted(true);
-  };
-
-  const nextStep = () => {
-    // Logic for determining next step based on current step
-    const steps = ['language', 'post-format', 'post-frequency', 'theme', 'team', 'team-invite', 'extension-install', 'completion'];
-    const currentIndex = steps.indexOf(onboardingStep);
-    if (currentIndex < steps.length - 1) {
-      const nextStep = steps[currentIndex + 1];
-      updateOnboardingStep(nextStep);
+  // Save onboarding progress to backend
+  const saveProgress = async () => {
+    if (isAuthenticated && user && !user.onboardingCompleted) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const onboardingData = {
+          currentStep,
+          workspaceType,
+          workspaceName,
+          teamMembers,
+          theme,
+          language,
+          postFormat,
+          postFrequency,
+          firstName,
+          lastName,
+          email
+        };
+        
+        // Save key data to localStorage as a fallback
+        localStorage.setItem('onboardingStep', currentStep);
+        if (workspaceType) localStorage.setItem('workspaceType', workspaceType);
+        if (theme) localStorage.setItem('theme', theme);
+        if (language) localStorage.setItem('language', language);
+        
+        try {
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (apiError) {
+          console.error('Failed to save onboarding progress to API:', apiError);
+          // We'll continue with the local storage backup we created above
+        }
+        
+      } catch (error) {
+        console.error('Failed to save onboarding progress:', error);
+      }
     }
   };
 
-  const prevStep = () => {
-    // Logic for determining previous step based on current step
-    const steps = ['language', 'post-format', 'post-frequency', 'theme', 'team', 'team-invite', 'extension-install', 'completion'];
-    const currentIndex = steps.indexOf(onboardingStep);
-    if (currentIndex > 0) {
-      const prevStep = steps[currentIndex - 1];
-      updateOnboardingStep(prevStep);
+  // Get applicable steps based on workspace type
+  const getApplicableSteps = (): OnboardingStep[] => {
+    if (workspaceType === "personal") {
+      // Skip team-workspace and team-invite steps for personal accounts
+      return allSteps.filter(step => 
+        step !== "team-workspace" && step !== "team-invite"
+      );
     }
+    return allSteps;
   };
 
   const getStepProgress = () => {
-    const steps = ['language', 'post-format', 'post-frequency', 'theme', 'team', 'team-invite', 'extension-install', 'completion'];
-    const currentIndex = steps.indexOf(onboardingStep);
+    const steps = getApplicableSteps();
+    const currentIndex = steps.indexOf(currentStep);
     return {
-      current: currentIndex >= 0 ? currentIndex : 0,
+      current: currentIndex,
       total: steps.length
     };
   };
 
-  const saveProgress = () => {
-    // Save all onboarding data to localStorage
-    localStorage.setItem('user_firstName', firstName);
-    localStorage.setItem('user_lastName', lastName);
-    localStorage.setItem('user_language', language);
-    localStorage.setItem('user_theme', theme);
-    localStorage.setItem('user_postFormat', postFormat);
-    localStorage.setItem('user_postFrequency', String(postFrequency));
-    localStorage.setItem('user_workspaceType', workspaceType);
-    localStorage.setItem('user_workspaceName', workspaceName);
-    localStorage.setItem('user_teamMembers', JSON.stringify(teamMembers));
+  const nextStep = () => {
+    const steps = getApplicableSteps();
+    const currentIndex = steps.indexOf(currentStep);
     
-    // API call to save progress could be added here
+    if (currentIndex < steps.length - 1) {
+      const nextStep = steps[currentIndex + 1];
+      setCurrentStep(nextStep);
+      saveProgress(); // Save progress when moving to next step
+      navigate(`/onboarding/${nextStep}`);
+    }
+  };
+
+  const prevStep = () => {
+    const steps = getApplicableSteps();
+    const currentIndex = steps.indexOf(currentStep);
+    
+    if (currentIndex > 0) {
+      const prevStep = steps[currentIndex - 1];
+      setCurrentStep(prevStep);
+      saveProgress(); // Save progress when moving to previous step
+      navigate(`/onboarding/${prevStep}`);
+    }
+  };
+
+  // Save progress when current step changes
+  useEffect(() => {
+    if (isInitialized) {
+      saveProgress();
+    }
+  }, [currentStep, isInitialized]);
+
+  // Update global theme when onboarding theme changes
+  useEffect(() => {
+    if (theme) {
+      setGlobalTheme(theme);
+    }
+  }, [theme, setGlobalTheme]);
+
+  // Update global language when onboarding language changes
+  useEffect(() => {
+    if (language) {
+      setGlobalLanguage(language as "english" | "german");
+    }
+  }, [language, setGlobalLanguage]);
+
+  // Update navigation if workspaceType changes
+  useEffect(() => {
+    if (currentStep === "team-selection" && workspaceType) {
+      // If user has selected workspace type, prepare for next step
+      const steps = getApplicableSteps();
+      const currentIndex = steps.indexOf(currentStep);
+      if (currentIndex >= 0) {
+        // Just update the navigation state but don't navigate automatically
+        setCurrentStep(currentStep);
+      }
+    }
+  }, [workspaceType, currentStep]);
+
+  const value = {
+    currentStep,
+    setCurrentStep,
+    workspaceType,
+    setWorkspaceType,
+    workspaceName,
+    setWorkspaceName,
+    teamMembers,
+    setTeamMembers,
+    theme,
+    setTheme,
+    language,
+    setLanguage,
+    postFormat,
+    setPostFormat,
+    postFrequency,
+    setPostFrequency,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    email,
+    setEmail,
+    nextStep,
+    prevStep,
+    getStepProgress,
+    saveProgress
   };
 
   return (
-    <OnboardingContext.Provider
-      value={{
-        onboardingCompleted,
-        onboardingStep,
-        firstName,
-        lastName,
-        language,
-        theme,
-        postFormat,
-        postFrequency,
-        workspaceType,
-        workspaceName,
-        teamMembers,
-        currentStep,
-        updateOnboardingStep,
-        completeOnboarding,
-        setFirstName,
-        setLastName,
-        setLanguage,
-        setTheme,
-        setPostFormat,
-        setPostFrequency,
-        setWorkspaceType,
-        setWorkspaceName,
-        setTeamMembers,
-        nextStep,
-        prevStep,
-        getStepProgress,
-        saveProgress
-      }}
-    >
+    <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
   );
@@ -175,7 +303,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 export function useOnboarding() {
   const context = useContext(OnboardingContext);
   if (context === undefined) {
-    throw new Error('useOnboarding must be used within an OnboardingProvider');
+    throw new Error("useOnboarding must be used within an OnboardingProvider");
   }
   return context;
 }
