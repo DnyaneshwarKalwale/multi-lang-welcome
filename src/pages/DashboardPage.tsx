@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
@@ -112,7 +112,19 @@ const DashboardPage: React.FC = () => {
   // Get user initials for avatar fallback
   const getUserInitials = () => {
     if (!user) return 'U';
-    return user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    return user.email?.[0]?.toUpperCase() || 'U';
+  };
+
+  // Get user's full name
+  const getUserFullName = () => {
+    if (!user) return 'User';
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user.email?.split('@')[0] || 'User';
   };
 
   // Handle logout
@@ -149,7 +161,7 @@ const DashboardPage: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.photoURL} alt={user?.name || 'User'} />
+                      <AvatarImage src={user?.profilePicture} alt={getUserFullName()} />
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -157,7 +169,7 @@ const DashboardPage: React.FC = () => {
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user?.name}</p>
+                      <p className="font-medium">{getUserFullName()}</p>
                       <p className="text-sm text-muted-foreground">{user?.email}</p>
                     </div>
                   </div>
@@ -287,13 +299,13 @@ const DashboardPage: React.FC = () => {
                     <div className="border dark:border-gray-800 rounded-xl p-4">
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar>
-                          <AvatarImage src={user?.photoURL} />
+                          <AvatarImage src={user?.profilePicture} />
                           <AvatarFallback>{getUserInitials()}</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm">{user?.name}</span>
-                            <span className="text-gray-500 text-sm">@{user?.name?.toLowerCase().replace(/\s/g, '')}</span>
+                            <span className="font-semibold text-sm">{getUserFullName()}</span>
+                            <span className="text-gray-500 text-sm">@{getUserFullName().toLowerCase().replace(/\s/g, '')}</span>
                           </div>
                           <p className="text-sm mt-1">
                             Just launched our AI Twitter Assistant! Generate tweets, schedule content, and analyze performance - all in one place. Try it today and see the difference. #TwitterAI #ContentCreation
@@ -526,14 +538,14 @@ const DashboardPage: React.FC = () => {
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-4">
                         <Avatar>
-                          <AvatarImage src={user?.photoURL} />
+                          <AvatarImage src={user?.profilePicture} />
                           <AvatarFallback>{getUserInitials()}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold">{user?.name}</span>
-                              <span className="text-gray-500 text-sm">@{user?.name?.toLowerCase().replace(/\s/g, '')}</span>
+                              <span className="font-semibold">{getUserFullName()}</span>
+                              <span className="text-gray-500 text-sm">@{getUserFullName().toLowerCase().replace(/\s/g, '')}</span>
                               <span className="text-gray-500 text-sm">·</span>
                               <span className="text-gray-500 text-sm">{tweet.date}</span>
                             </div>
