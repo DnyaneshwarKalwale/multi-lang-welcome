@@ -5,7 +5,7 @@ import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ArrowRight, User, UserPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, UserPlus, Twitter, AtSign } from "lucide-react";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -63,20 +63,30 @@ export default function RegistrationPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
+      {/* Twitter-inspired background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
+        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
       </div>
       
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
-      
       {/* Back button */}
-      <BackButton 
-        onClick={handlePrev} 
-        absolute 
-      />
+      <motion.div
+        className="absolute top-6 left-6 z-10"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          rounded="full"
+          className="flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-500 dark:hover:text-blue-400"
+          onClick={handlePrev}
+        >
+          <ArrowLeft size={18} />
+        </Button>
+      </motion.div>
       
       <motion.div 
         className="max-w-2xl w-full text-center"
@@ -90,34 +100,37 @@ export default function RegistrationPage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <ScripeIconRounded className="w-20 h-20" />
+          <div className="relative">
+            <ScripeIconRounded className="w-20 h-20 text-blue-500" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-7 h-7 shadow-md" />
+          </div>
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-6 text-gradient"
+          className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          Who would you like to create this account for?
+          Create your TweetSphere account
         </motion.h1>
         
         <motion.p 
-          className="text-xl text-gray-600 dark:text-gray-300 mb-12"
+          className="text-xl text-gray-600 dark:text-gray-300 mb-10"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          Let's personalize your experience with Novus
+          Let's get to know you better to personalize your experience
         </motion.p>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-12 max-w-xl mx-auto"
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700 max-w-md mx-auto mb-10"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.div variants={itemVariants} className="group">
+          <motion.div variants={itemVariants} className="mb-6">
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
-              <User className="w-4 h-4 mr-2 text-cyan-600 dark:text-cyan-400" />
+              <User className="w-4 h-4 mr-2 text-blue-500" />
               First Name
             </label>
             <Input 
@@ -125,15 +138,15 @@ export default function RegistrationPage() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Enter your first name"
-              className="bg-white/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
-                         focus:border-cyan-500 dark:focus:border-cyan-500 focus:ring-cyan-500 dark:focus:ring-cyan-500 
-                         transition-all text-gray-900 dark:text-white shadow-sm group-hover:shadow-md"
+              className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
+                       focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 
+                       transition-all text-gray-900 dark:text-white rounded-lg"
             />
           </motion.div>
           
-          <motion.div variants={itemVariants} className="group">
+          <motion.div variants={itemVariants} className="mb-6">
             <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
-              <UserPlus className="w-4 h-4 mr-2 text-violet-600 dark:text-violet-400" />
+              <UserPlus className="w-4 h-4 mr-2 text-blue-500" />
               Last Name
             </label>
             <Input 
@@ -141,31 +154,44 @@ export default function RegistrationPage() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Enter your last name"
-              className="bg-white/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
-                         focus:border-cyan-500 dark:focus:border-cyan-500 focus:ring-cyan-500 dark:focus:ring-cyan-500 
-                         transition-all text-gray-900 dark:text-white shadow-sm group-hover:shadow-md"
+              className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
+                       focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 
+                       transition-all text-gray-900 dark:text-white rounded-lg"
             />
+          </motion.div>
+          
+          <motion.div variants={itemVariants} className="mb-2">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
+              <AtSign className="w-4 h-4 mr-2 text-blue-500" />
+              Username Preview
+            </label>
+            <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 h-12 pl-4 
+                           text-gray-500 dark:text-gray-400 rounded-lg flex items-center">
+              @{firstName.toLowerCase() + lastName.toLowerCase()}
+            </div>
+            <p className="text-xs text-gray-500 text-left mt-1">This is how your profile will appear</p>
           </motion.div>
         </motion.div>
         
         <motion.div 
-          className="flex flex-col md:flex-row justify-center items-center gap-4 mb-12"
+          className="flex flex-col justify-center items-center gap-4 mb-8"
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <ContinueButton 
-            onClick={handleContinue} 
+          <Button
+            variant="twitter"
+            rounded="full"
+            className="w-64 py-3 text-white font-bold"
             disabled={!firstName.trim() || !lastName.trim()}
+            onClick={handleContinue}
           >
             Continue
-          </ContinueButton>
+          </Button>
           
           <Button
-            variant="outline"
+            variant="ghost"
             rounded="full"
-            className="px-8 py-3 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 
-                     hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400 
-                     transition-all duration-300"
+            className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 px-6 py-2 text-sm"
             onClick={handleSkipToDashboard}
           >
             Skip to dashboard
@@ -175,8 +201,9 @@ export default function RegistrationPage() {
         <motion.div
           variants={fadeIn}
           transition={{ delay: 0.6 }}
+          className="mt-4"
         >
-          <ProgressDots total={total} current={current} color="gradient" />
+          <ProgressDots total={total} current={current} color="cyan" />
         </motion.div>
       </motion.div>
     </div>

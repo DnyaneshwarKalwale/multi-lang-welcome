@@ -4,7 +4,7 @@ import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { Globe, CheckCircle } from "lucide-react";
+import { Globe, CheckCircle, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 
@@ -52,10 +52,10 @@ export default function LanguageSelectionPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
+      {/* Animated gradient background with Twitter blue */}
       <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-primary-200 dark:bg-primary-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
       </div>
       
       {/* Background pattern */}
@@ -82,21 +82,21 @@ export default function LanguageSelectionPage() {
           <div className="relative">
             <ScripeIconRounded className="w-20 h-20" />
             <motion.div 
-              className="absolute -bottom-2 -right-2 text-primary-500 dark:text-primary-400"
+              className="absolute -bottom-2 -right-2 text-blue-500"
               animate={{ 
                 rotate: [0, 10, 0],
                 scale: [1, 1.1, 1]
               }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Globe size={24} />
+              <Twitter size={24} />
             </motion.div>
           </div>
         </motion.div>
 
         <div className="text-center mb-10">
           <motion.h1 
-            className="text-4xl font-bold mb-4 text-gradient"
+            className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
             variants={fadeIn}
             transition={{ delay: 0.2 }}
           >
@@ -126,20 +126,20 @@ export default function LanguageSelectionPage() {
                 className={`
                   relative w-full flex items-center p-5 text-left rounded-xl transition-all duration-300
                   ${language === lang.code 
-                    ? 'bg-gradient-to-r from-primary-500/10 to-violet-500/10 border-primary-500 dark:border-primary-400 shadow-md' 
-                    : 'hover:bg-primary-50/50 dark:hover:bg-primary-900/10 border-gray-200 dark:border-gray-800/60'}
+                    ? 'bg-gradient-to-r from-blue-500/10 to-blue-500/10 border-blue-500 dark:border-blue-400 shadow-md' 
+                    : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/10 border-gray-200 dark:border-gray-800/60'}
                 `}
               >
                 <span className="text-xl mr-4">{lang.code === "english" ? "🇺🇸" : lang.code === "spanish" ? "🇪🇸" : lang.code === "french" ? "🇫🇷" : "🇩🇪"}</span>
                 <div className="flex-1">
-                  <h3 className={`font-medium text-lg ${language === lang.code ? 'text-primary-600 dark:text-primary-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                  <h3 className={`font-medium text-lg ${language === lang.code ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}>
                     {lang.name}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{lang.description}</p>
                 </div>
                 
                 {language === lang.code && (
-                  <CheckCircle className="text-primary-500 dark:text-primary-400 w-6 h-6 ml-2" />
+                  <CheckCircle className="text-blue-500 dark:text-blue-400 w-6 h-6 ml-2" />
                 )}
               </Button>
             </motion.div>
@@ -151,13 +151,15 @@ export default function LanguageSelectionPage() {
           variants={fadeIn}
           transition={{ delay: 0.6 }}
         >
-          <ContinueButton 
+          <Button 
+            variant="twitter"
+            rounded="full"
+            className="py-6 px-8 gap-2 w-full sm:w-auto font-medium max-w-xs"
             onClick={nextStep}
             disabled={!language}
-            variant="novus"
           >
             Continue
-          </ContinueButton>
+          </Button>
         </motion.div>
         
         <motion.div

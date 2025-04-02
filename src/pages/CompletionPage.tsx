@@ -151,10 +151,10 @@ export default function CompletionPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
+      {/* Animated gradient background with Twitter blue */}
       <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-primary-200 dark:bg-primary-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
       </div>
       
       {/* Background pattern */}
@@ -167,15 +167,15 @@ export default function CompletionPage() {
         animate="visible"
       >
         <motion.div className="flex flex-col items-center" variants={itemVariants}>
-          <div className="p-4 mb-6 rounded-full bg-gradient-to-r from-primary-400/20 to-violet-500/20 border border-primary-400/30 shadow-lg">
-            <CheckCircle className="w-16 h-16 text-gradient" strokeWidth={1.5} />
+          <div className="p-4 mb-6 rounded-full bg-gradient-to-r from-blue-400/20 to-blue-500/20 border border-blue-400/30 shadow-lg">
+            <CheckCircle className="w-16 h-16 text-blue-500" strokeWidth={1.5} />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gradient flex items-center justify-center gap-2">
+          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center gap-2">
             Setup Complete!
             <span role="img" aria-label="celebration">🎉</span>
           </h1>
           <p className="text-gray-600 dark:text-gray-300 text-xl mt-4 max-w-xl mx-auto">
-            Your profile is ready! Let's make your content creation experience exceptional with Prism.
+            Your profile is ready! Let's make your content creation experience exceptional with Scripe.
           </p>
         </motion.div>
         
@@ -186,8 +186,8 @@ export default function CompletionPage() {
           <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-gray-100">Choose your next step</h2>
           
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-primary-50/80 to-violet-50/80 dark:from-primary-900/20 dark:to-violet-900/20 p-6 rounded-xl border border-primary-100 dark:border-primary-900/30 transition-all duration-300 hover:shadow-md group">
-              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 dark:from-blue-900/20 dark:to-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-all duration-300 hover:shadow-md group">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
                 <FileEdit className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
@@ -196,14 +196,15 @@ export default function CompletionPage() {
                   Our AI will craft personalized content based on your preferences and style
                 </p>
                 {contentGenerated ? (
-                  <div className="flex items-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-4 py-2 rounded-lg">
+                  <div className="flex items-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
                     <CheckCircle className="w-4 h-4 mr-2" />
                     <span>Content successfully generated! You can view it in your dashboard.</span>
                   </div>
                 ) : (
                   <Button 
-                    variant="default"
-                    className="bg-primary-500 hover:bg-primary-600 text-white w-full md:w-auto group"
+                    variant="twitter"
+                    rounded="full"
+                    className="w-full md:w-auto group"
                     onClick={handleGenerateContent}
                     disabled={isGeneratingContent}
                   >
@@ -223,24 +224,25 @@ export default function CompletionPage() {
               </div>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-violet-50/80 to-primary-50/80 dark:from-violet-900/20 dark:to-primary-900/20 p-6 rounded-xl border border-violet-100 dark:border-violet-900/30 transition-all duration-300 hover:shadow-md group">
-              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                <Globe className="w-7 h-7 text-white" />
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 dark:from-blue-900/20 dark:to-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-all duration-300 hover:shadow-md group">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                <Twitter className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect social accounts</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect Twitter account</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Link your social platforms to publish content with a single click
+                  Link your Twitter to publish content with a single click
                 </p>
                 {accountsConnected ? (
-                  <div className="flex items-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-4 py-2 rounded-lg">
+                  <div className="flex items-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    <span>Accounts successfully connected! You can manage them in your dashboard.</span>
+                    <span>Twitter account successfully connected! You can manage it in your dashboard.</span>
                   </div>
                 ) : (
                   <Button 
                     variant="outline"
-                    className="w-full md:w-auto border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 group"
+                    rounded="full"
+                    className="w-full md:w-auto border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400 group"
                     onClick={handleUploadFiles}
                     disabled={isUploadingFiles}
                   >
@@ -251,8 +253,8 @@ export default function CompletionPage() {
                       </>
                     ) : (
                       <>
-                        Connect accounts
-                        <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        Connect Twitter
+                        <Twitter className="ml-2 w-4 h-4" />
                       </>
                     )}
                   </Button>
@@ -260,21 +262,14 @@ export default function CompletionPage() {
               </div>
             </div>
           </div>
-          
-          <motion.div 
-            className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center"
-            variants={itemVariants}
-          >
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You can also configure these options later from your dashboard
-            </p>
-          </motion.div>
         </motion.div>
       
         <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
           <Button 
             onClick={handleGoToDashboard}
-            className="bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white px-8 py-6 rounded-full text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+            variant="twitter"
+            rounded="full"
+            className="px-8 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Go to Dashboard
             <ChevronRight className="ml-2 w-5 h-5" />
@@ -291,6 +286,7 @@ export default function CompletionPage() {
               <Button 
                 variant="outline"
                 size="sm"
+                rounded="full"
                 className="mt-2 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/50"
                 onClick={handleRetry}
                 disabled={isMarkingComplete}

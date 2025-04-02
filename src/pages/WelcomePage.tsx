@@ -6,7 +6,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Clock, LineChart, Zap } from "lucide-react";
+import { ArrowRight, Check, Clock, LineChart, Zap, Twitter, MessageCircle, BarChart, Heart, Users } from "lucide-react";
 
 export default function WelcomePage() {
   const { nextStep } = useOnboarding();
@@ -41,14 +41,12 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
+      {/* Background pattern with Twitter-inspired blue gradient */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
+        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
       </div>
-      
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
       
       <motion.div 
         className="max-w-3xl w-full text-center relative"
@@ -62,16 +60,19 @@ export default function WelcomePage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <ScripeIcon size={100} className="animate-spin-slow" />
+          <div className="relative">
+            <ScripeIcon size={80} className="text-blue-500" />
+            <Twitter size={24} className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" />
+          </div>
         </motion.div>
         
         <motion.h1 
-          className="text-5xl font-bold mb-6 text-gradient"
+          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          Welcome to Novus
+          Welcome to TweetSphere
         </motion.h1>
         
         <motion.div
@@ -80,10 +81,10 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.4 }}
         >
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-            Novus is the modern content workspace for creating engaging posts.
+            Create engaging Twitter content in minutes, not hours.
           </p>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Receive tailored, algorithm-optimized social media content in minutes.
+            AI-powered tweets optimized for maximum engagement and reach.
           </p>
         </motion.div>
         
@@ -95,10 +96,9 @@ export default function WelcomePage() {
         >
           <Button 
             onClick={nextStep} 
-            variant="gradient"
-            animation="lift"
+            variant="twitter"
             rounded="full"
-            className="w-full py-4 px-8 text-lg font-medium mb-4 flex items-center justify-center gap-2 group"
+            className="w-full py-6 px-8 text-lg font-bold mb-4 flex items-center justify-center gap-2 group"
           >
             <span>Get started</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
@@ -106,7 +106,8 @@ export default function WelcomePage() {
           
           <Button
             variant="ghost"
-            className="text-gray-500 hover:text-cyan-600 dark:text-gray-400 dark:hover:text-cyan-400 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 rounded-full px-8 py-3 text-sm"
+            rounded="full"
+            className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 px-8 py-3 text-sm"
             onClick={handleSkipToDashboard}
           >
             Skip to dashboard
@@ -121,35 +122,63 @@ export default function WelcomePage() {
           <ProgressDots total={8} current={0} />
         </motion.div>
         
-        {/* Features highlight */}
+        {/* Tweet previews */}
         <motion.div 
-          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left"
+          className="mt-16 flex flex-col gap-4"
           variants={container}
           initial="hidden"
           animate="show"
         >
-          <motion.div variants={item} className="glass-card p-6 rounded-xl hover:-translate-y-1 transition-all duration-300">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-violet-600/20 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full">
+            <div className="flex items-start mb-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3">
+                <Users size={20} />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white">John Smith <span className="text-blue-500">✓</span></p>
+                <p className="text-gray-500 text-sm">@johnsmith</p>
+              </div>
             </div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">AI-Powered Content</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Generate high-quality social media posts based on your unique voice and audience preferences.</p>
+            <p className="text-gray-800 dark:text-gray-200 mb-3">
+              Just discovered this amazing tool for Twitter content creation! AI-powered tweets that sound exactly like me. Game changer for busy creators. #TwitterTips
+            </p>
+            <div className="flex justify-between text-gray-500 text-sm">
+              <span className="flex items-center gap-1"><MessageCircle size={14} /> 24</span>
+              <span className="flex items-center gap-1"><ArrowRight size={14} className="rotate-90" /> 142</span>
+              <span className="flex items-center gap-1"><Heart size={14} /> 358</span>
+              <span className="flex items-center gap-1"><BarChart size={14} /> 12.8K</span>
+            </div>
           </motion.div>
           
-          <motion.div variants={item} className="glass-card p-6 rounded-xl hover:-translate-y-1 transition-all duration-300">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-violet-600/20 flex items-center justify-center mb-4">
-              <LineChart className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full">
+            <div className="flex items-start mb-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3">
+                <Users size={20} />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white">Sarah Johnson <span className="text-blue-500">✓</span></p>
+                <p className="text-gray-500 text-sm">@sarahjohnson</p>
+              </div>
             </div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">Engagement Analytics</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Track performance metrics and optimize your content strategy with detailed insights.</p>
-          </motion.div>
-          
-          <motion.div variants={item} className="glass-card p-6 rounded-xl hover:-translate-y-1 transition-all duration-300">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-violet-600/20 flex items-center justify-center mb-4">
-              <Clock className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+            <p className="text-gray-800 dark:text-gray-200 mb-3">
+              5 reasons why TweetSphere has transformed my Twitter strategy:
+              <br/><br/>
+              1. Saves hours per week
+              <br/>
+              2. Engagement up 43%
+              <br/>
+              3. Audience growth doubled
+              <br/>
+              4. AI learns my voice perfectly
+              <br/>
+              5. Analytics that actually help
+            </p>
+            <div className="flex justify-between text-gray-500 text-sm">
+              <span className="flex items-center gap-1"><MessageCircle size={14} /> 36</span>
+              <span className="flex items-center gap-1"><ArrowRight size={14} className="rotate-90" /> 215</span>
+              <span className="flex items-center gap-1"><Heart size={14} /> 687</span>
+              <span className="flex items-center gap-1"><BarChart size={14} /> 24.3K</span>
             </div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">Save Time</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Create weeks of content in minutes and schedule posts for optimal engagement times.</p>
           </motion.div>
         </motion.div>
       </motion.div>

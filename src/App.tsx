@@ -18,6 +18,7 @@ import DashboardPage from "./pages/DashboardPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -145,38 +146,40 @@ function ProtectedDashboardRoute() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <OnboardingProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/verify-email" element={<VerifyEmailPage />} />
-                  <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-                  <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
-                  
-                  {/* Check for invitations first, then redirect to onboarding or dashboard */}
-                  <Route element={<InvitationCheckRoute />}>
-                    <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
-                    <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
-                  </Route>
-                  
-                  <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </TooltipProvider>
-            </OnboardingProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <OnboardingProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+                    <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+                    
+                    {/* Check for invitations first, then redirect to onboarding or dashboard */}
+                    <Route element={<InvitationCheckRoute />}>
+                      <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+                      <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+                    </Route>
+                    
+                    <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </TooltipProvider>
+              </OnboardingProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

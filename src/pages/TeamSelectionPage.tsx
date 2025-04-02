@@ -3,9 +3,10 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Users, User, UserPlus, UserCircle, Check } from "lucide-react";
+import { Users, User, UserPlus, UserCircle, Check, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { Button } from "@/components/ui/button";
 
 export default function TeamSelectionPage() {
   const { workspaceType, setWorkspaceType, nextStep, getStepProgress } = useOnboarding();
@@ -19,15 +20,13 @@ export default function TeamSelectionPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-teal-200 dark:bg-teal-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+      {/* Twitter-inspired background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
+        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
       </div>
-      
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
       
       <motion.div 
         className="max-w-3xl w-full text-center"
@@ -41,11 +40,14 @@ export default function TeamSelectionPage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <ScripeIconRounded className="w-20 h-20" />
+          <div className="relative">
+            <ScripeIconRounded className="w-20 h-20 text-blue-500" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-7 h-7 shadow-md" />
+          </div>
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-4 text-center text-gradient"
+          className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -53,7 +55,7 @@ export default function TeamSelectionPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-xl text-gray-600 dark:text-gray-300 mb-12 text-center"
+          className="text-xl text-gray-600 dark:text-gray-300 mb-10"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
@@ -61,75 +63,78 @@ export default function TeamSelectionPage() {
         </motion.p>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-2xl mx-auto"
           variants={fadeIn}
           transition={{ delay: 0.4 }}
         >
           <motion.div 
-            className={`bg-white/90 dark:bg-gray-900/50 backdrop-blur-sm border ${workspaceType === "team" ? "border-teal-400 ring-2 ring-teal-400/30" : "border-gray-200 dark:border-gray-800"} rounded-xl p-8 flex flex-col items-center cursor-pointer hover:shadow-lg transition-all`}
+            className={`bg-white dark:bg-gray-800 border ${workspaceType === "team" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 dark:border-gray-700"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
             onClick={() => setWorkspaceType("team")}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
+            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
-            <div className={`p-6 rounded-full mb-6 ${workspaceType === "team" ? "bg-gradient-to-r from-teal-400/20 to-cyan-500/20" : "bg-gray-100 dark:bg-gray-800"}`}>
-              <Users className={`w-16 h-16 ${workspaceType === "team" ? "text-teal-500 dark:text-teal-400" : "text-gray-500 dark:text-gray-400"}`} />
+            <div className={`p-5 rounded-full mb-6 ${workspaceType === "team" ? "bg-blue-100 dark:bg-blue-900/50" : "bg-gray-100 dark:bg-gray-700"}`}>
+              <Users className={`w-14 h-14 ${workspaceType === "team" ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`} />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">{t('forTeam')}</h3>
+            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">{t('forTeam')}</h3>
             <p className="text-gray-600 dark:text-gray-400 text-base mb-6">
               {t('teamDescription')}
             </p>
             {workspaceType === "team" && (
-              <div className="mt-4 flex items-center justify-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center">
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
                   <Check className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-medium text-teal-600 dark:text-teal-400">Selected</span>
+                <span className="font-medium text-blue-500">Selected</span>
               </div>
             )}
           </motion.div>
           
           <motion.div 
-            className={`bg-white/90 dark:bg-gray-900/50 backdrop-blur-sm border ${workspaceType === "personal" ? "border-cyan-400 ring-2 ring-cyan-400/30" : "border-gray-200 dark:border-gray-800"} rounded-xl p-8 flex flex-col items-center cursor-pointer hover:shadow-lg transition-all`}
+            className={`bg-white dark:bg-gray-800 border ${workspaceType === "personal" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 dark:border-gray-700"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
             onClick={() => setWorkspaceType("personal")}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
+            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
-            <div className={`p-6 rounded-full mb-6 ${workspaceType === "personal" ? "bg-gradient-to-r from-cyan-400/20 to-teal-500/20" : "bg-gray-100 dark:bg-gray-800"}`}>
-              <UserCircle className={`w-16 h-16 ${workspaceType === "personal" ? "text-cyan-500 dark:text-cyan-400" : "text-gray-500 dark:text-gray-400"}`} />
+            <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-blue-100 dark:bg-blue-900/50" : "bg-gray-100 dark:bg-gray-700"}`}>
+              <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`} />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">{t('forPersonal')}</h3>
+            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">{t('forPersonal')}</h3>
             <p className="text-gray-600 dark:text-gray-400 text-base mb-6">
               {t('personalDescription')}
             </p>
             {workspaceType === "personal" && (
-              <div className="mt-4 flex items-center justify-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
                   <Check className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-medium text-cyan-600 dark:text-cyan-400">Selected</span>
+                <span className="font-medium text-blue-500">Selected</span>
               </div>
             )}
           </motion.div>
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-12"
+          className="flex justify-center mb-8"
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <ContinueButton 
-            onClick={nextStep}
+          <Button
+            variant="twitter"
+            rounded="full"
+            className="w-64 py-3 text-white font-bold"
             disabled={!workspaceType}
-            variant="cyan"
+            onClick={nextStep}
           >
             {t('continue')}
-          </ContinueButton>
+          </Button>
         </motion.div>
         
         <motion.div
           variants={fadeIn}
           transition={{ delay: 0.6 }}
-          className="flex justify-center"
+          className="flex flex-col items-center mt-4"
         >
-          <ProgressDots total={total} current={current} color="novus" />
+          <ProgressDots total={total} current={current} color="cyan" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
         </motion.div>
       </motion.div>
     </div>

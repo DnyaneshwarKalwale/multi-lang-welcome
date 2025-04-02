@@ -4,7 +4,7 @@ import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, CheckCircle, Twitter, CalendarDays } from "lucide-react";
+import { Calendar, Clock, CheckCircle, Twitter, CalendarDays, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 
@@ -30,21 +30,31 @@ export default function PostFrequencyPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-teal-200 dark:bg-teal-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+      {/* Twitter-inspired background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
+        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
       </div>
       
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
-      
       {/* Back button */}
-      <BackButton 
-        onClick={prevStep} 
-        absolute 
-      />
+      <motion.div
+        className="absolute top-6 left-6 z-10"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          rounded="full"
+          className="flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-500 dark:hover:text-blue-400"
+          onClick={prevStep}
+        >
+          <ArrowLeft size={18} />
+        </Button>
+      </motion.div>
       
       <motion.div 
         className="max-w-3xl w-full text-center"
@@ -59,35 +69,17 @@ export default function PostFrequencyPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <ScripeIconRounded className="w-20 h-20" />
-            <motion.div 
-              className="absolute -bottom-2 -right-2 text-teal-500 dark:text-teal-400"
-              animate={{ 
-                rotate: [0, 10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <CalendarDays size={24} />
-            </motion.div>
+            <ScripeIconRounded className="w-20 h-20 text-blue-500" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         
-        <motion.div 
-          className="flex items-center justify-center gap-2 mb-4"
-          variants={fadeIn}
-          transition={{ delay: 0.15 }}
-        >
-          <Twitter size={20} className="text-cyan-600 dark:text-cyan-400" />
-          <span className="text-cyan-600 dark:text-cyan-400 font-medium">Publishing Schedule</span>
-        </motion.div>
-        
         <motion.h1 
-          className="text-4xl font-bold mb-4 text-center text-gradient"
+          className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          How often do you want to post per week?
+          How often do you want to tweet?
         </motion.h1>
         
         <motion.p 
@@ -95,7 +87,7 @@ export default function PostFrequencyPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          We recommend posting at least 1-2 times per week for optimal engagement.
+          We recommend tweeting at least 3-5 times per week for optimal engagement and reach.
         </motion.p>
         
         <motion.div 
@@ -111,13 +103,13 @@ export default function PostFrequencyPage() {
               variants={itemVariants}
             >
               <Button
-                variant="ghost"
+                variant={postFrequency === frequency ? "twitter" : "outline"}
                 onClick={() => setPostFrequency(frequency as any)}
                 className={`
-                  w-14 h-14 rounded-xl text-xl font-semibold p-0 border-2
+                  w-14 h-14 rounded-full text-xl font-bold p-0
                   ${postFrequency === frequency 
-                    ? 'bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border-teal-400 text-teal-600 dark:text-teal-400 shadow-md hover:shadow-lg' 
-                    : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-teal-400/50 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20'}
+                    ? 'shadow-md hover:shadow-lg' 
+                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-500 hover:text-blue-500'}
                 `}
               >
                 {frequency}
@@ -131,10 +123,10 @@ export default function PostFrequencyPage() {
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <div className="max-w-md mx-auto p-6 bg-white/90 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
+          <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md">
             <div className="flex items-center mb-6">
-              <Calendar className="text-teal-500 dark:text-teal-400 mr-3" size={28} />
-              <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100">Posting Schedule</h3>
+              <Calendar className="text-blue-500 mr-3" size={24} />
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Weekly Tweet Schedule</h3>
             </div>
             
             <div className="grid grid-cols-7 gap-2 mb-6">
@@ -142,28 +134,28 @@ export default function PostFrequencyPage() {
                 <div 
                   key={day + i} 
                   className={`
-                    h-12 flex items-center justify-center rounded-lg transition-all
+                    h-12 flex items-center justify-center rounded-md transition-all
                     ${i < (postFrequency || 0) 
-                      ? 'bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border border-teal-400/50 dark:border-teal-400/30' 
-                      : 'bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700'}
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
+                      : 'bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700'}
                   `}
                 >
-                  <span className={`text-sm font-medium ${i < (postFrequency || 0) ? 'text-teal-700 dark:text-teal-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                  <span className={`text-sm font-medium ${i < (postFrequency || 0) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {day}
                   </span>
                   {i < (postFrequency || 0) && (
-                    <CheckCircle className="ml-1 text-teal-500 dark:text-teal-400" size={12} />
+                    <CheckCircle className="ml-1 text-blue-500" size={12} />
                   )}
                 </div>
               ))}
             </div>
             
-            <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 pt-4">
+            <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
               <div className="flex items-center text-gray-600 dark:text-gray-400">
                 <Clock size={16} className="mr-2" />
                 <span className="text-sm">Optimal posting time</span>
               </div>
-              <span className="text-sm text-teal-700 dark:text-teal-400 bg-teal-100 dark:bg-teal-900/30 px-3 py-1 rounded-lg border border-teal-200 dark:border-teal-800/50">
+              <span className="text-sm text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-100 dark:border-blue-800/50 font-medium">
                 9:00 - 11:00 AM
               </span>
             </div>
@@ -171,37 +163,40 @@ export default function PostFrequencyPage() {
           
           {postFrequency && (
             <motion.div 
-              className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-gradient-to-r from-teal-400/20 to-cyan-500/20 border border-teal-400/50 dark:border-teal-400/30 rounded-lg text-teal-700 dark:text-teal-300 text-sm shadow-md"
+              className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-300 text-sm shadow-md"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               <strong className="mr-1">AI will suggest:</strong> 
-              {postFrequency === 1 ? 'One post per week' : `${postFrequency} posts per week`}
+              {postFrequency === 1 ? 'One tweet per day' : `${postFrequency} tweets per week`}
             </motion.div>
           )}
         </motion.div>
         
         <motion.div 
-          className="flex justify-center gap-4 mb-12"
+          className="flex justify-center mb-8"
           variants={fadeIn}
           transition={{ delay: 0.6 }}
         >
-          <ContinueButton 
-            onClick={nextStep}
+          <Button
+            variant="twitter"
+            rounded="full"
+            className="w-64 py-3 text-white font-bold"
             disabled={!postFrequency}
-            variant="cyan"
+            onClick={nextStep}
           >
             Continue
-          </ContinueButton>
+          </Button>
         </motion.div>
         
         <motion.div
           variants={fadeIn}
           transition={{ delay: 0.7 }}
-          className="flex justify-center"
+          className="flex flex-col items-center mt-4"
         >
-          <ProgressDots total={total} current={current} color="novus" />
+          <ProgressDots total={total} current={current} color="cyan" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
         </motion.div>
       </motion.div>
     </div>
