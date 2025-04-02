@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { 
   Mic, Upload, Calendar, BarChart3, Twitter, 
   Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
-  Maximize2, MessageSquare, ThumbsUp, Share2
+  Maximize2, MessageSquare, ThumbsUp, Share2,
+  LogOut, User, Settings, ChevronDown
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -19,15 +20,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/contexts/ThemeContext";
 import { SekcionIconRounded, SekcionLogotype } from "@/components/ScripeIcon";
-import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   // Sample tweets data
   const scheduledTweets = [
@@ -100,33 +105,88 @@ const DashboardPage: React.FC = () => {
     }
   ];
 
+  // Mock user data
+  const user = {
+    name: "David Porter",
+    email: "david@example.com",
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg"
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    // Implement logout logic here
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Navbar */}
+      {/* Custom Navbar */}
       <div className="sticky top-0 w-full z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm">
-        <Navbar 
-          onLoginClick={() => setIsLoginOpen(true)}
-          onRegisterClick={() => setIsRegisterOpen(true)}
-        />
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center">
+              <SekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
+            </div>
+            
+            {/* Actions */}
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hidden md:flex items-center gap-2 text-sm"
+              >
+                <Twitter className="h-4 w-4 text-blue-500" />
+                <span>Connect Twitter</span>
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>DP</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Twitter className="mr-2 h-4 w-4 text-blue-500" />
+                    <span>Connect Twitter</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-red-500 focus:text-red-500" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div className="container px-4 py-8 mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3">
-            <SekcionIconRounded className="h-12 w-12" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sekcion for Twitter</h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your Twitter content and analyze performance</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button size="sm" variant="gradient" className="gap-2">
-              <Twitter className="h-4 w-4" />
-              <span>Connect Twitter</span>
-            </Button>
-          </div>
-        </div>
-
         <Tabs defaultValue="create" className="mb-8">
           <TabsList className="grid grid-cols-4 mb-8">
             <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-teal-50 dark:data-[state=active]:bg-teal-900/20">
@@ -224,12 +284,12 @@ const DashboardPage: React.FC = () => {
                     <div className="border dark:border-gray-800 rounded-xl p-4">
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar>
-                          <AvatarImage src="https://github.com/shadcn.png" />
+                          <AvatarImage src={user.avatar} />
                           <AvatarFallback>DP</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm">David Porter</span>
+                            <span className="font-semibold text-sm">{user.name}</span>
                             <span className="text-gray-500 text-sm">@davidporter</span>
                           </div>
                           <p className="text-sm mt-1">
@@ -463,13 +523,13 @@ const DashboardPage: React.FC = () => {
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-4">
                         <Avatar>
-                          <AvatarImage src="https://github.com/shadcn.png" />
+                          <AvatarImage src={user.avatar} />
                           <AvatarFallback>DP</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold">David Porter</span>
+                              <span className="font-semibold">{user.name}</span>
                               <span className="text-gray-500 text-sm">@davidporter</span>
                               <span className="text-gray-500 text-sm">·</span>
                               <span className="text-gray-500 text-sm">{tweet.date}</span>
