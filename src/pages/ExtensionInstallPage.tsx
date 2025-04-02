@@ -151,7 +151,7 @@ export default function ExtensionInstallPage() {
           transition={{ delay: 0.6 }}
           className="flex flex-col items-center"
         >
-          <ProgressDots total={total} current={current} color="purple" />
+          <ProgressDots total={total} current={current} color="indigo" />
           <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
         </motion.div>
       </motion.div>
