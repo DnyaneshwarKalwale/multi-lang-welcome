@@ -38,8 +38,7 @@ export default function LanguageSelectionPage() {
       nativeName: "Español",
       flag: "🇪🇸",
       region: "Europe, Latin America",
-      speakers: "580 million",
-      disabled: true
+      speakers: "580 million"
     },
     { 
       code: "french", 
@@ -47,8 +46,7 @@ export default function LanguageSelectionPage() {
       nativeName: "Français",
       flag: "🇫🇷",
       region: "Europe, Africa",
-      speakers: "300 million",
-      disabled: true
+      speakers: "300 million"
     }
   ];
 
@@ -67,6 +65,62 @@ export default function LanguageSelectionPage() {
 
   const handleBack = () => {
     prevStep();
+  };
+
+  // Get continue button text based on selected language
+  const getContinueButtonText = () => {
+    switch (onboardingLanguage) {
+      case "german":
+        return "Fortfahren";
+      case "spanish":
+        return "Continuar";
+      case "french":
+        return "Continuer";
+      default:
+        return "Continue";
+    }
+  };
+
+  // Get page title based on selected language
+  const getPageTitle = () => {
+    switch (onboardingLanguage) {
+      case "german":
+        return "Wähle deine Sprache";
+      case "spanish":
+        return "Elige tu idioma";
+      case "french":
+        return "Choisissez votre langue";
+      default:
+        return "Choose Your Language";
+    }
+  };
+
+  // Get description based on selected language
+  const getPageDescription = () => {
+    switch (onboardingLanguage) {
+      case "german":
+        return "Wähle die Sprache, die du beim Erkunden der App verwenden möchtest";
+      case "spanish":
+        return "Selecciona el idioma que usarás mientras exploras la aplicación";
+      case "french":
+        return "Sélectionnez la langue que vous utiliserez en explorant l'application";
+      default:
+        return "Select the language you'll use while exploring the app";
+    }
+  };
+
+  // Get step text based on selected language
+  const getStepText = () => {
+    switch (onboardingLanguage) {
+      case "german":
+        return `Schritt ${current + 1} von ${total}`;
+      case "spanish":
+        return `Paso ${current + 1} de ${total}`;
+      case "french":
+        return `Étape ${current + 1} sur ${total}`;
+      default:
+        return `Step ${current + 1} of ${total}`;
+    }
   };
 
   return (
@@ -117,13 +171,11 @@ export default function LanguageSelectionPage() {
             </div>
             
             <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400">
-              {onboardingLanguage === "german" ? "Wähle deine Sprache" : "Choose Your Language"}
+              {getPageTitle()}
             </h1>
             
             <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-2">
-              {onboardingLanguage === "german" 
-                ? "Wähle die Sprache, die du beim Erkunden der App verwenden möchtest"
-                : "Select the language you'll use while exploring the app"}
+              {getPageDescription()}
             </p>
           </motion.div>
 
@@ -140,19 +192,17 @@ export default function LanguageSelectionPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index + 0.4 }}
-                whileHover={!lang.disabled ? { scale: 1.02, y: -5 } : {}}
-                whileTap={!lang.disabled ? { scale: 0.98 } : {}}
+                whileHover={{ scale: 1.02, y: -5 }}
+                whileTap={{ scale: 0.98 }}
                 className={`
                   relative overflow-hidden rounded-xl shadow-lg 
-                  ${lang.disabled 
-                    ? 'opacity-60 cursor-not-allowed bg-gray-100 dark:bg-gray-800/50' 
-                    : 'cursor-pointer bg-white dark:bg-gray-800'}
+                  cursor-pointer bg-white dark:bg-gray-800
                   ${onboardingLanguage === lang.code 
                     ? 'ring-2 ring-blue-500 dark:ring-blue-400' 
                     : 'hover:shadow-xl'}
                   transition-all duration-300
                 `}
-                onClick={() => !lang.disabled && setOnboardingLanguage(lang.code)}
+                onClick={() => setOnboardingLanguage(lang.code)}
               >
                 {/* Selected indicator */}
                 {onboardingLanguage === lang.code && (
@@ -186,12 +236,6 @@ export default function LanguageSelectionPage() {
                         <span>{lang.speakers} speakers</span>
                       </div>
                     </div>
-                    
-                    {lang.disabled && (
-                      <div className="mt-2 text-xs text-blue-500 dark:text-blue-400 font-medium">
-                        Coming soon
-                      </div>
-                    )}
                   </div>
                 </div>
                 
@@ -215,7 +259,7 @@ export default function LanguageSelectionPage() {
               disabled={!onboardingLanguage}
               onClick={handleContinue}
             >
-              {onboardingLanguage === "german" ? "Fortfahren" : "Continue"}
+              {getContinueButtonText()}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </motion.div>
@@ -229,9 +273,7 @@ export default function LanguageSelectionPage() {
           >
             <ProgressDots total={total} current={current} color="novus" />
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              {onboardingLanguage === "german" 
-                ? `Schritt ${current + 1} von ${total}` 
-                : `Step ${current + 1} of ${total}`}
+              {getStepText()}
             </p>
           </motion.div>
         </motion.div>
