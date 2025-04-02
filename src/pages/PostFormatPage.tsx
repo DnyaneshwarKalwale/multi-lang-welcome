@@ -76,17 +76,22 @@ export default function PostFormatPage() {
   const handleFormatSelect = (formatId: string) => {
     console.log("Setting format to:", formatId);
     setPostFormat(formatId as any);
+    // Log state after selection
+    setTimeout(() => console.log("Updated postFormat:", formatId), 0);
   };
 
   // Handle continue button - use nextStep from context
   const handleContinue = () => {
-    console.log("Continue button clicked");
+    console.log("Continue button clicked, current format:", postFormat);
     if (postFormat) {
       // Save to localStorage as a backup
       localStorage.setItem('selectedPostFormat', postFormat);
+      console.log("Calling nextStep with format:", postFormat);
       
       // Use the nextStep function from context
       nextStep();
+    } else {
+      console.log("Not calling nextStep because postFormat is empty");
     }
   };
 
@@ -358,17 +363,21 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.8 }}
         >
-          <Button 
-            onClick={handleContinue}
-            disabled={!postFormat}
-            variant="gradient"
-            animation="pulse"
-            rounded="full"
-            className="group px-8 py-3 flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
+          <a 
+            href="#" 
+            onClick={(e) => {
+              e.preventDefault();
+              if (postFormat) {
+                handleFormatSelect(postFormat);
+                handleContinue();
+                window.location.href = "/onboarding/post-frequency";
+              }
+            }}
+            className={`inline-flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-3 font-medium text-white transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 ${!postFormat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:from-indigo-700 hover:to-purple-700'}`}
           >
             <span>Continue</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </Button>
+            <ChevronRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+          </a>
         </motion.div>
         
         {/* Debug information */}
