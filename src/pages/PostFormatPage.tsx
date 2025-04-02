@@ -78,15 +78,15 @@ export default function PostFormatPage() {
     setPostFormat(formatId as any);
   };
 
-  // Handle continue button - DIRECT NAVIGATION APPROACH
+  // Handle continue button - use nextStep from context
   const handleContinue = () => {
     console.log("Continue button clicked");
     if (postFormat) {
       // Save to localStorage as a backup
       localStorage.setItem('selectedPostFormat', postFormat);
       
-      // DIRECT NAVIGATION - bypassing any context issues
-      navigate("/onboarding/post-frequency");
+      // Use the nextStep function from context
+      nextStep();
     }
   };
 
