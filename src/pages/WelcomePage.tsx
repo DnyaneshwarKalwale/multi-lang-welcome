@@ -1,6 +1,6 @@
 import React from "react";
 import { ScripeIcon } from "@/components/ScripeIcon";
-import { ContinueButton } from "@/components/ContinueButton";
+import { Button } from "@/components/ui/button";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,152 +19,73 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px] animate-pulse-slow animation-delay-2000"></div>
-      </div>
-      
-      {/* Floating particles */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden">
-        {Array.from({ length: 15 }).map((_, index) => (
-          <motion.div
-            key={index}
-            className="absolute w-1 h-1 rounded-full bg-indigo-500"
-            initial={{ 
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              opacity: 0.3,
-              scale: Math.random() * 2 + 0.5
-            }}
-            animate={{ 
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [0.3, 0.8, 0.3],
-              scale: [null, Math.random() + 0.5]
-            }}
-            transition={{ 
-              duration: Math.random() * 10 + 10, 
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
-          />
-        ))}
-      </div>
-      
-      <motion.div 
-        className="max-w-3xl w-full text-center relative z-10"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <motion.div 
-          className="mb-10 flex justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-        >
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gray-50 text-gray-900">
+      <div className="max-w-3xl w-full text-center">
+        <div className="mb-10 flex justify-center">
           <ScripeIcon size={100} />
-        </motion.div>
+        </div>
         
-        <motion.h1 
-          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-        >
+        <h1 className="text-5xl font-bold mb-6 text-gray-900">
           {t('welcomeTitle')}
-        </motion.h1>
+        </h1>
         
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-        >
-          <p className="text-xl text-gray-300 mb-2">
+        <div>
+          <p className="text-xl text-gray-600 mb-2">
             {t('welcomeSubtitle')}
           </p>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-gray-600 mb-8">
             {t('welcomeDescription')}
           </p>
-        </motion.div>
+        </div>
         
-        <motion.div 
-          className="flex justify-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5 }}
-        >
-          <ContinueButton 
-            onClick={handleGetStarted} 
-            className="group mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-4 rounded-full text-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
+        <div className="flex justify-center mb-12">
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.2 }}
           >
-            <span>{t('getStarted')}</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
-        </motion.div>
+            <Button
+              onClick={handleGetStarted}
+              variant="default"
+              className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 h-12 text-lg"
+            >
+              <span>{t('getStarted')}</span>
+              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+            </Button>
+          </motion.div>
+        </div>
         
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.6 }}
-        >
+        <div>
           <ProgressDots total={8} current={0} />
-        </motion.div>
+        </div>
         
         {/* Features highlight */}
-        <motion.div 
-          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.7 }}
-        >
-          <motion.div 
-            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300"
-            whileHover={{ 
-              y: -5, 
-              boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
-              transition: { duration: 0.2 }
-            }}
-          >
-            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
-              <Twitter className="w-6 h-6 text-indigo-400" />
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          <div className="bg-white shadow p-6 rounded-xl border border-gray-200">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+              <Twitter className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="text-lg font-medium mb-2">AI-Powered Twitter Content</h3>
-            <p className="text-gray-400 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
-          </motion.div>
+            <p className="text-gray-600 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
+          </div>
           
-          <motion.div 
-            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300"
-            whileHover={{ 
-              y: -5, 
-              boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
-              transition: { duration: 0.2 }
-            }}
-          >
-            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+          <div className="bg-white shadow p-6 rounded-xl border border-gray-200">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
               <span className="text-2xl">📊</span>
             </div>
             <h3 className="text-lg font-medium mb-2">Twitter Analytics</h3>
-            <p className="text-gray-400 text-sm">Track performance metrics and optimize your Twitter strategy with detailed engagement insights.</p>
-          </motion.div>
+            <p className="text-gray-600 text-sm">Track performance metrics and optimize your Twitter strategy with detailed engagement insights.</p>
+          </div>
           
-          <motion.div 
-            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300"
-            whileHover={{ 
-              y: -5, 
-              boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
-              transition: { duration: 0.2 }
-            }}
-          >
-            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+          <div className="bg-white shadow p-6 rounded-xl border border-gray-200">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
               <span className="text-2xl">⏱️</span>
             </div>
             <h3 className="text-lg font-medium mb-2">Save Time</h3>
-            <p className="text-gray-400 text-sm">Create weeks of Twitter content in minutes and schedule posts for optimal engagement times.</p>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+            <p className="text-gray-600 text-sm">Create weeks of Twitter content in minutes and schedule posts for optimal engagement times.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

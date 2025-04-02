@@ -4,9 +4,8 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, ChevronRight, Globe, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 
 export default function LanguageSelectionPage() {
   const navigate = useNavigate();
@@ -23,11 +22,6 @@ export default function LanguageSelectionPage() {
     "it": "english",
     "pt": "english",
     "ru": "english",
-    "zh": "english",
-    "ja": "english",
-    "ko": "english",
-    "ar": "english",
-    "hi": "english",
   };
 
   const languages = [
@@ -38,11 +32,6 @@ export default function LanguageSelectionPage() {
     { value: "it", name: "Italiano", flag: "🇮🇹" },
     { value: "pt", name: "Português", flag: "🇵🇹" },
     { value: "ru", name: "Русский", flag: "🇷🇺" },
-    { value: "zh", name: "中文", flag: "🇨🇳" },
-    { value: "ja", name: "日本語", flag: "🇯🇵" },
-    { value: "ko", name: "한국어", flag: "🇰🇷" },
-    { value: "ar", name: "العربية", flag: "🇸🇦" },
-    { value: "hi", name: "हिन्दी", flag: "🇮🇳" },
   ];
   
   const handleLanguageSelect = (langCode: string) => {
@@ -70,196 +59,65 @@ export default function LanguageSelectionPage() {
     navigate("/onboarding/theme-selection");
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.05,
-        delayChildren: 0.2
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px] animate-pulse-slow animation-delay-2000"></div>
-      </div>
-      
-      {/* Floating particles */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <motion.div
-            key={index}
-            className="absolute w-1 h-1 rounded-full bg-indigo-500"
-            initial={{ 
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              opacity: 0.3,
-              scale: Math.random() * 2 + 0.5
-            }}
-            animate={{ 
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [0.3, 0.8, 0.3],
-              scale: [null, Math.random() + 0.5]
-            }}
-            transition={{ 
-              duration: Math.random() * 10 + 10, 
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
-          />
-        ))}
-      </div>
-      
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gray-50">
       {/* Back button */}
-      <motion.button
-        className="absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors"
+      <button
+        className="absolute top-10 left-10 flex items-center text-gray-500 hover:text-gray-900 transition-colors"
         onClick={handlePrev}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
       >
         <ArrowLeft size={16} className="mr-2" />
         {t('back')}
-      </motion.button>
+      </button>
       
-      <motion.div 
-        className="max-w-4xl w-full text-center relative z-10"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div 
-          className="mb-8 flex justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <ScripeIconRounded className="w-20 h-20" />
-        </motion.div>
+      <div className="max-w-4xl w-full text-center">
+        <h1 className="text-3xl font-bold mb-6 text-gray-900">
+          {t('chooseLanguage')}
+        </h1>
         
-        <motion.div
-          className="flex items-center justify-center gap-2 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <motion.div 
-            className="p-2 rounded-full bg-gradient-to-br from-indigo-600/30 to-indigo-900/30 border border-indigo-500/40"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Globe className="w-6 h-6 text-indigo-400" />
-          </motion.div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">{t('chooseLanguage')}</h1>
-        </motion.div>
-        
-        <motion.p 
-          className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
+        <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
           {t('languageDescription')}
-        </motion.p>
+        </p>
 
-        <motion.div 
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-12">
           {languages.map((lang) => {
             // Get the mapped onboarding language for checking selection
             const onboardingLang = languageMap[lang.value] || "english";
             return (
-              <motion.div
+              <div
                 key={lang.value}
-                className={`relative bg-gray-900/50 backdrop-blur-sm border-2 overflow-hidden
-                  ${language === onboardingLang ? "border-indigo-500" : "border-gray-800"}
-                  rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/60 transition-all duration-300`}
+                className={`relative bg-white shadow-sm border-2 
+                  ${language === onboardingLang ? "border-indigo-500" : "border-gray-200"}
+                  rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 transition-all duration-300`}
                 onClick={() => handleLanguageSelect(lang.value)}
-                variants={itemVariants}
-                whileHover={{ 
-                  y: -5, 
-                  boxShadow: '0 10px 30px -10px rgba(99, 102, 241, 0.3)',
-                  transition: { duration: 0.2 }
-                }}
-                whileTap={{ scale: 0.98 }}
               >
-                {language === onboardingLang && (
-                  <motion.div 
-                    className="absolute inset-0 bg-indigo-600/10" 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                )}
                 <span className="text-3xl mb-2">{lang.flag}</span>
-                <span className={`font-medium ${language === onboardingLang ? "text-white" : "text-gray-300"}`}>
+                <span className={`font-medium ${language === onboardingLang ? "text-indigo-600" : "text-gray-800"}`}>
                   {lang.name}
                 </span>
                 {language === onboardingLang && (
-                  <motion.div 
-                    className="absolute top-2 right-2 bg-indigo-600/40 w-5 h-5 flex items-center justify-center rounded-full"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", damping: 10, stiffness: 200 }}
-                  >
-                    <Check size={12} className="text-white" />
-                  </motion.div>
+                  <div className="absolute top-2 right-2 bg-indigo-600 w-5 h-5 flex items-center justify-center rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 )}
-              </motion.div>
+              </div>
             );
           })}
-        </motion.div>
+        </div>
 
-        <motion.div 
-          className="flex justify-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
+        <div className="flex justify-center mb-12">
           <ContinueButton 
             onClick={handleContinue}
             disabled={!language}
           />
-        </motion.div>
+        </div>
         
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-        >
+        <div>
           <ProgressDots total={total} current={current} />
-        </motion.div>
-        
-        {/* Language info */}
-        <motion.div
-          className="mt-8 text-center max-w-2xl mx-auto p-5 border border-indigo-800/30 rounded-lg bg-indigo-900/10 backdrop-blur-sm shadow-lg shadow-indigo-900/10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <p className="text-indigo-300 text-sm">
-            {t('languageDescription')}
-          </p>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
