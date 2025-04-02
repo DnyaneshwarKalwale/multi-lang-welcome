@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
@@ -10,8 +11,8 @@ import { SunIcon, MoonIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ThemeSelectionPage() {
-  const { theme, setTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
-  const { setTheme: setGlobalTheme } = useTheme();
+  const { theme: onboardingTheme, setTheme: setOnboardingTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
@@ -23,8 +24,8 @@ export default function ThemeSelectionPage() {
 
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: "light" | "dark") => {
+    setOnboardingTheme(newTheme);
     setTheme(newTheme);
-    setGlobalTheme(newTheme);
     
     // Apply directly to document to ensure immediate change
     if (newTheme === "dark") {
@@ -36,8 +37,8 @@ export default function ThemeSelectionPage() {
 
   // Ensure theme is applied when component loads
   useEffect(() => {
-    if (theme) {
-      handleThemeChange(theme);
+    if (onboardingTheme) {
+      handleThemeChange(onboardingTheme);
     }
   }, []);
 
@@ -83,7 +84,7 @@ export default function ThemeSelectionPage() {
           transition={{ delay: 0.4 }}
         >
           <motion.div 
-            className={`${theme === "light" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all`}
+            className={`${onboardingTheme === "light" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all`}
             onClick={() => handleThemeChange("light")}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
@@ -105,20 +106,20 @@ export default function ThemeSelectionPage() {
                   <SunIcon size={16} />
                 </div>
               </div>
-              <div className={`absolute inset-0 ${theme === "light" ? "bg-transparent" : "bg-black/30"}`}></div>
+              <div className={`absolute inset-0 ${onboardingTheme === "light" ? "bg-transparent" : "bg-black/30"}`}></div>
             </div>
             <div className="flex items-center">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "light" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
-                {theme === "light" && (
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${onboardingTheme === "light" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
+                {onboardingTheme === "light" && (
                   <div className="w-full h-full rounded-full bg-white scale-50"></div>
                 )}
               </div>
-              <span className={`text-lg ${theme === "light" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('light')}</span>
+              <span className={`text-lg ${onboardingTheme === "light" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('light')}</span>
             </div>
           </motion.div>
           
           <motion.div 
-            className={`${theme === "dark" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all`}
+            className={`${onboardingTheme === "dark" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all`}
             onClick={() => handleThemeChange("dark")}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
@@ -140,15 +141,15 @@ export default function ThemeSelectionPage() {
                   <MoonIcon size={16} />
                 </div>
               </div>
-              <div className={`absolute inset-0 ${theme === "dark" ? "bg-transparent" : "bg-black/30"}`}></div>
+              <div className={`absolute inset-0 ${onboardingTheme === "dark" ? "bg-transparent" : "bg-black/30"}`}></div>
             </div>
             <div className="flex items-center">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "dark" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
-                {theme === "dark" && (
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${onboardingTheme === "dark" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
+                {onboardingTheme === "dark" && (
                   <div className="w-full h-full rounded-full bg-white scale-50"></div>
                 )}
               </div>
-              <span className={`text-lg ${theme === "dark" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('dark')}</span>
+              <span className={`text-lg ${onboardingTheme === "dark" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('dark')}</span>
             </div>
           </motion.div>
         </motion.div>
