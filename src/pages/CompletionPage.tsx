@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, ChevronRight, Loader2, Share2, Twitter, RefreshCw } from "lucide-react";
+import { CheckCircle, Loader2, Share2, Twitter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -222,10 +222,9 @@ export default function CompletionPage() {
         <Button 
           onClick={handleGoToDashboard}
           variant="gradient"
-          className="w-full py-4 px-8 rounded-full text-lg font-medium flex items-center justify-center gap-2 shadow-xl hover:shadow-indigo-500/25 transition-all duration-300 group"
+          className="w-full py-4 px-8 rounded-full text-lg font-medium flex items-center justify-center shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
         >
-          <span>Go to dashboard</span>
-          <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+          Go to dashboard
         </Button>
       </motion.div>
       

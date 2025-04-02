@@ -5,7 +5,6 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
-import { ChevronRight, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function WelcomePage() {
@@ -72,19 +71,17 @@ export default function WelcomePage() {
           <Button 
             onClick={nextStep} 
             variant="gradient"
-            className="group w-full py-4 px-8 rounded-full text-lg font-medium mb-4 flex items-center justify-center gap-2 shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
+            className="w-full py-4 px-8 rounded-full text-lg font-medium mb-4 flex items-center justify-center transition-all duration-300"
           >
-            <span>Get started</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+            Get started
           </Button>
           
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 flex items-center gap-1 text-sm"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 text-sm"
             onClick={handleSkipToDashboard}
           >
-            <span>Skip to dashboard</span>
-            <ArrowRight size={16} className="ml-1" />
+            Skip to dashboard
           </Button>
         </motion.div>
         

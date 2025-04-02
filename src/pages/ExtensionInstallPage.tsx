@@ -5,7 +5,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, ArrowRight, Check, ChevronRight } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ExtensionInstallPage() {
@@ -128,11 +128,10 @@ export default function ExtensionInstallPage() {
               <Button 
                 variant="gradient" 
                 rounded="full"
-                className="group w-full md:w-auto py-3 px-6 shadow-lg flex items-center gap-2"
+                className="w-full md:w-auto py-3 px-6 shadow-lg"
                 onClick={() => window.open("https://chrome.google.com/webstore/detail/scripe-twitter-extension/", "_blank")}
               >
-                <span>Add to Chrome</span>
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                Add to Chrome
               </Button>
             </div>
           </div>
@@ -145,20 +144,18 @@ export default function ExtensionInstallPage() {
         >
           <Button 
             variant="gradient"
-            className="w-full py-4 px-8 rounded-full mb-4 flex items-center justify-center gap-2 group shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
+            className="w-full py-4 px-8 rounded-full mb-4 flex items-center justify-center shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
             onClick={handleContinue}
           >
-            <span>Continue without installing</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+            Continue without installing
           </Button>
           
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 flex items-center gap-1 text-sm"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 text-sm"
             onClick={handleSkipToDashboard}
           >
-            <span>Skip to dashboard</span>
-            <ArrowRight size={16} className="ml-1" />
+            Skip to dashboard
           </Button>
         </motion.div>
         
