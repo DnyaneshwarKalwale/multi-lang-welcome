@@ -23,7 +23,7 @@ type OnboardingStep =
 type WorkspaceType = "team" | "personal" | null;
 type ThemeType = "light" | "dark";
 type LanguageType = "english" | "german" | null;
-type PostFormat = "standard" | "formatted" | "chunky" | "short" | "emojis" | "threaded" | "engagement" | "concise" | null;
+type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 
 interface TeamMember {
@@ -210,22 +210,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const steps = getApplicableSteps();
     const currentIndex = steps.indexOf(currentStep);
     
-    console.log("nextStep called:", { 
-      currentStep, 
-      currentIndex, 
-      steps,
-      postFormat,
-      workspaceType
-    });
-    
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
-      console.log("Navigating to next step:", nextStep);
       setCurrentStep(nextStep);
       saveProgress(); // Save progress when moving to next step
       navigate(`/onboarding/${nextStep}`);
-    } else {
-      console.log("Already at the last step, can't move forward");
     }
   };
 

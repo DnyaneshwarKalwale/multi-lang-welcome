@@ -19,6 +19,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         gradient: "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
+        twitter: "bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
         "transparent": "bg-transparent hover:bg-gray-800/30 text-gray-300 hover:text-white",
       },
       size: {
@@ -37,6 +38,7 @@ const buttonVariants = cva(
       animation: {
         none: "",
         pulse: "pulse-subtle",
+        "twitter-pulse": "pulse-twitter",
         scale: "hover:scale-105 active:scale-95 transition-transform duration-300",
         glow: "hover:shadow-glow transition-shadow duration-300",
       }

@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
@@ -20,8 +21,8 @@ export default function RegistrationPage() {
     localStorage.setItem('user_firstName', firstName);
     localStorage.setItem('user_lastName', lastName);
     
-    // Only use nextStep, don't directly navigate
     nextStep();
+    navigate("/onboarding/extension-install");
   };
   
   const handleSkipToDashboard = () => {
@@ -58,16 +59,10 @@ export default function RegistrationPage() {
       </div>
       
       {/* Back button */}
-      <motion.button
-        className="absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors"
-        onClick={handlePrev}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <ArrowLeft size={16} className="mr-2" />
-        Back
-      </motion.button>
+      <BackButton 
+        onClick={handlePrev} 
+        absolute 
+      />
       
       <motion.div 
         className="max-w-2xl w-full text-center"
@@ -138,17 +133,12 @@ export default function RegistrationPage() {
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <Button 
+          <ContinueButton 
             onClick={handleContinue} 
             disabled={!firstName.trim() || !lastName.trim()}
-            variant="gradient"
-            animation="pulse"
-            rounded="full"
-            className="group px-8 py-3 flex items-center gap-2 transition-all duration-300"
           >
-            <span>Continue</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </Button>
+            Continue
+          </ContinueButton>
           
           <Button
             variant="outline"

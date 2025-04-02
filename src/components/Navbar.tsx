@@ -40,7 +40,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
     { label: "Pricing", href: "#pricing" },
     { label: "Affiliates", href: "#affiliates" },
   ];
-
+  
   return (
     <div 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -76,8 +76,8 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full"></span>
               </motion.a>
             ))}
-          </div>
-          
+      </div>
+      
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <motion.div
@@ -85,13 +85,13 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.5 }}
             >
-              <Button 
+            <Button 
                 variant="transparent" 
                 className="text-gray-300 hover:text-white hover:bg-gray-800/30"
-                onClick={onLoginClick}
-              >
-                Log in
-              </Button>
+              onClick={onLoginClick}
+            >
+              Log in
+            </Button>
             </motion.div>
             
             <motion.div
@@ -108,10 +108,10 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               >
                 <span>Start for free</span>
                 <ChevronRight size={16} className="ml-1" />
-              </Button>
+            </Button>
             </motion.div>
           </div>
-          
+            
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <Button 

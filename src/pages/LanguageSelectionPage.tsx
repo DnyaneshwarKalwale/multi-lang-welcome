@@ -1,5 +1,6 @@
 import React from "react";
 import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -82,23 +83,20 @@ export default function LanguageSelectionPage() {
         </div>
         
         <div className="flex justify-between mb-12">
-          <Button 
-            variant="outline" 
+          <BackButton 
             onClick={prevStep}
-            className="border-gray-700 text-gray-400"
           >
             {t('back')}
-          </Button>
+          </BackButton>
           <ContinueButton 
             onClick={nextStep}
-            disabled={!language} 
-            className="bg-purple-600 hover:bg-purple-700"
+            disabled={!language}
           >
             {t('continue')}
           </ContinueButton>
         </div>
         
-        <ProgressDots total={total} current={current} />
+        <ProgressDots total={total} current={current} color="purple" />
       </div>
     </div>
   );
