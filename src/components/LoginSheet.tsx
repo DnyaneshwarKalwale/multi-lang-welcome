@@ -30,22 +30,22 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    // Get the backend URL from environment variable
+    const baseApiUrl = import.meta.env.VITE_API_URL;
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Redirect to backend Google auth endpoint with the dynamic URL
-    window.location.href = `${baseUrl}/api/auth/google`;
+    window.location.href = `${baseUrl}/api/auth/google?callback=${window.location.origin}/auth/social-callback`;
   };
   
   // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    // Get the backend URL from environment variable
+    const baseApiUrl = import.meta.env.VITE_API_URL;
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Redirect to backend Twitter auth endpoint
-    window.location.href = `${baseUrl}/api/auth/twitter`;
+    window.location.href = `${baseUrl}/api/auth/twitter?callback=${window.location.origin}/auth/social-callback`;
     onOpenChange(false);
   };
   

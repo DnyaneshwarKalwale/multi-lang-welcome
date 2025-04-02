@@ -30,12 +30,12 @@ export default function DashboardPage() {
   const { t } = useLanguage();
   const [selectedTab, setSelectedTab] = useState<'overview' | 'content' | 'analytics'>('overview');
 
-  const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
-  const userFullName = `${firstName} ${lastName}`;
-  const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+  const dashboardName = workspaceType === "team" ? workspaceName : `${user?.name || firstName}'s workspace`;
+  const userFullName = user?.name || `${firstName} ${lastName}`;
+  const userInitials = user?.name ? user.name.split(' ').map(n => n[0]).join('') : `${firstName?.[0] || ''}${lastName?.[0] || ''}`;
 
   const handleLogout = async () => {
-    await logout();
+    logout();
     navigate('/');
   };
 
