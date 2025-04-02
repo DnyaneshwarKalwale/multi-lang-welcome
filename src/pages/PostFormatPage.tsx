@@ -224,7 +224,7 @@ export default function PostFormatPage() {
                   transition-all hover:bg-gray-800/70 hover:shadow-lg
                   ${postFormat === format.id ? 'ring-2 ring-indigo-600 shadow-glow' : 'opacity-80'}
                 `}
-                onClick={() => setPostFormat(format.id as any)}
+                onClick={() => setPostFormat(format.id)}
                 onMouseEnter={() => setHoveredFormat(format.id)}
                 onMouseLeave={() => setHoveredFormat(null)}
                 variants={itemVariants}

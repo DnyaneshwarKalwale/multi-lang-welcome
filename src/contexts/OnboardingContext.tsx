@@ -23,7 +23,7 @@ type OnboardingStep =
 type WorkspaceType = "team" | "personal" | null;
 type ThemeType = "light" | "dark";
 type LanguageType = "english" | "german" | null;
-type PostFormat = "standard" | "formatted" | "chunky" | "short" | "emojis" | null;
+type PostFormat = "standard" | "formatted" | "chunky" | "short" | "emojis" | "threaded" | "engagement" | "concise" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 
 interface TeamMember {
