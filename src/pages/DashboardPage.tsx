@@ -13,7 +13,8 @@ import {
   BellRing, Menu, X,
   ArrowUpRight, Clock, TrendingUp,
   Terminal, Activity, Layers,
-  Search, Upload, Download, User
+  Search, Upload, Download, User,
+  Twitter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -183,6 +184,11 @@ export default function DashboardPage() {
       y: 0,
       transition: { type: "spring", stiffness: 300, damping: 24 }
     }
+  };
+
+  // Add navigate to Twitter dashboard function
+  const navigateToTwitterDashboard = () => {
+    navigate('/twitter-dashboard');
   };
 
   return (
@@ -392,6 +398,17 @@ export default function DashboardPage() {
                 ? "Here's what's happening with your projects today." 
                 : "Hier ist, was heute mit deinen Projekten passiert."}
             </p>
+            
+            {/* Add Twitter Dashboard Button */}
+            <div className="mt-4">
+              <Button 
+                onClick={navigateToTwitterDashboard}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Twitter className="mr-2 h-4 w-4" />
+                {language === "english" ? "Go to Twitter Dashboard" : "Zum Twitter-Dashboard"}
+              </Button>
+            </div>
           </motion.div>
           
           {/* Stats grid */}
