@@ -37,10 +37,18 @@ export function OnboardingRouter() {
     const currentPath = location.pathname;
     const currentOnboardingStep = currentPath.replace('/onboarding/', '');
     
-    // Only save if we're on a valid onboarding step
+    // Only save if we're on a valid onboarding step and not coming from a direct login
     if (currentOnboardingStep && currentOnboardingStep !== '') {
-      // Store the current step in localStorage
-      localStorage.setItem('onboardingStep', currentOnboardingStep);
+      // If we're on the welcome page from a direct login, don't override other saved steps
+      // This prevents the welcome page from overriding progress when navigating back
+      const directLogin = localStorage.getItem('directLogin') === 'true';
+      if (currentOnboardingStep === 'welcome' && directLogin) {
+        // Clear the direct login flag but don't update the saved step
+        localStorage.removeItem('directLogin');
+      } else {
+        // Otherwise store the current step in localStorage
+        localStorage.setItem('onboardingStep', currentOnboardingStep);
+      }
       
       // Only call saveProgress if user is authenticated
       if (user) {

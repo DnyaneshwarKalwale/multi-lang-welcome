@@ -57,30 +57,29 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
       try {
         const user = await login(email, password);
         
-        // Check if the login was successful before proceeding
-        if (!error) {
-          // Call onSuccess before checking any other navigation conditions
-          if (onSuccess) {
-            onSuccess();
-          } else {
-            // After login, get the saved onboarding step from localStorage
-            const savedStep = localStorage.getItem('onboardingStep');
-            const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
-            
-            // If we have a saved step and onboarding is not completed, redirect to that step
-            if (savedStep && !onboardingCompleted) {
-              navigate(`/onboarding/${savedStep}`);
-            } else if (onboardingCompleted) {
-              // If onboarding is completed, navigate to dashboard
-              navigate('/dashboard');
-            } else {
-              // If no saved step, start at the beginning of onboarding
-              navigate("/onboarding/welcome");
-            }
-          }
-          
-          // Close the login sheet
-          onOpenChange(false);
+        // Close the login sheet immediately after successful login
+        onOpenChange(false);
+        
+        // Call onSuccess directly if provided, which will handle navigation
+        if (onSuccess) {
+          onSuccess();
+          return;
+        }
+        
+        // Only get here if no onSuccess callback was provided
+        // After login, get the saved onboarding step from localStorage
+        const savedStep = localStorage.getItem('onboardingStep');
+        const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+        
+        // If we have a saved step and onboarding is not completed, redirect to that step
+        if (savedStep && !onboardingCompleted) {
+          navigate(`/onboarding/${savedStep}`);
+        } else if (onboardingCompleted) {
+          // If onboarding is completed, navigate to dashboard
+          navigate('/dashboard');
+        } else {
+          // If no saved step, start at the beginning of onboarding
+          navigate("/onboarding/welcome", { replace: true });
         }
       } catch (err) {
         // Login error is already handled by the auth context

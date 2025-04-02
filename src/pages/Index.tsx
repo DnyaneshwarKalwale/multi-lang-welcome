@@ -31,8 +31,15 @@ const Index = () => {
   };
 
   const handleLoginSuccess = () => {
+    // First close the login sheet if it's still open
     setIsLoginOpen(false);
+    
+    // Force immediate navigation to welcome page, replacing the current history entry
+    // This ensures the user can't go "back" to the index page
     navigate("/onboarding/welcome", { replace: true });
+    
+    // Set a flag to indicate this was a direct login success
+    localStorage.setItem('directLogin', 'true');
   };
 
   const handleRegisterSuccess = () => {

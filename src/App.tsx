@@ -35,8 +35,15 @@ function ProtectedOnboardingRoute() {
       
       // Get saved step from localStorage
       const savedStep = localStorage.getItem('onboardingStep');
+      const directLogin = localStorage.getItem('directLogin') === 'true';
       
-      if (savedStep && savedStep !== 'welcome') {
+      // If this was a direct login, clear the flag and always show welcome page
+      if (directLogin) {
+        localStorage.removeItem('directLogin');
+        navigate('/onboarding/welcome', { replace: true });
+      } 
+      // Otherwise use normal saved step logic
+      else if (savedStep && savedStep !== 'welcome') {
         // Redirect to the saved step only if it's not 'welcome'
         navigate(`/onboarding/${savedStep}`, { replace: true });
       } else {
