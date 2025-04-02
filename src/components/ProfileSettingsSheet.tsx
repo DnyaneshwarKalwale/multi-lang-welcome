@@ -58,6 +58,13 @@ export function ProfileSettingsSheet({ open, onOpenChange, onSuccess }: ProfileS
     setSuccess(null);
     setLoading(true);
     
+    // Basic validation
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First name and last name are required");
+      setLoading(false);
+      return;
+    }
+    
     try {
       // Prepare data for the update
       const updateData: {
@@ -65,18 +72,26 @@ export function ProfileSettingsSheet({ open, onOpenChange, onSuccess }: ProfileS
         lastName: string;
         profilePicture?: string;
       } = {
-        firstName,
-        lastName
+        firstName: firstName.trim(),
+        lastName: lastName.trim()
       };
       
       // If there's a new profile picture file, upload it first
       if (profilePictureFile) {
-        const uploadResult = await userApi.uploadProfilePicture(profilePictureFile);
-        updateData.profilePicture = uploadResult.fileUrl;
+        try {
+          const uploadResult = await userApi.uploadProfilePicture(profilePictureFile);
+          if (uploadResult && uploadResult.fileUrl) {
+            updateData.profilePicture = uploadResult.fileUrl;
+          }
+        } catch (uploadErr: any) {
+          console.error("Error uploading profile picture:", uploadErr);
+          // Continue with profile update even if image upload fails
+          setError("Failed to upload profile picture, but will continue updating profile");
+        }
       }
       
       // Make the API call to update the profile
-      await userApi.updateProfile(updateData);
+      const response = await userApi.updateProfile(updateData);
       
       // Update user data in context
       await fetchUser();
@@ -94,7 +109,26 @@ export function ProfileSettingsSheet({ open, onOpenChange, onSuccess }: ProfileS
       
     } catch (err: any) {
       console.error("Error updating profile:", err);
-      setError(err.response?.data?.error || "Failed to update your profile. Please try again.");
+      
+      let errorMessage = "Failed to update your profile. Please try again.";
+      
+      // Check for different error scenarios
+      if (err.response) {
+        // Server responded with an error status
+        if (err.response.status === 400) {
+          errorMessage = err.response.data?.error || "Invalid profile information. Please check your inputs.";
+        } else if (err.response.status === 401) {
+          errorMessage = "Your session has expired. Please log in again.";
+          // Optionally redirect to login
+        } else if (err.response.status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        }
+      } else if (err.request) {
+        // Request was made but no response received (network error)
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

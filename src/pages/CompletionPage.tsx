@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, Loader2, Share2, Twitter, Sparkles } from "lucide-react";
+import { CheckCircle, Loader2, Share2, Twitter, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,10 +62,11 @@ export default function CompletionPage() {
   // Mark onboarding as complete
   useEffect(() => {
     const markOnboardingComplete = async () => {
-      if (user) {
-        setIsMarkingComplete(true);
+      if (user && !user.onboardingCompleted) {
         try {
-          // Save completed state to localStorage first for immediate effect
+          setIsMarkingComplete(true);
+          
+          // Make sure localStorage is updated first
           localStorage.setItem('onboardingCompleted', 'true');
           
           // Get API URL from env or fallback
@@ -86,7 +87,9 @@ export default function CompletionPage() {
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`
-              }
+              },
+              // Add timeout to prevent hanging requests
+              timeout: 10000
             }
           );
           
@@ -95,8 +98,11 @@ export default function CompletionPage() {
           setIsMarkingComplete(false);
         } catch (err) {
           console.error("Error marking onboarding as complete:", err);
-          setError("Failed to update your profile. Please try again.");
+          // Show error but don't block navigation
+          setError("Failed to update your profile. You can try again from the dashboard.");
           setIsMarkingComplete(false);
+          // Even if there's an error, set onboarding as completed in localStorage
+          localStorage.setItem('onboardingCompleted', 'true');
         }
       }
     };
@@ -105,6 +111,8 @@ export default function CompletionPage() {
   }, [user, workspaceType, workspaceName, language, theme, postFormat, postFrequency, fetchUser]);
   
   const handleSkip = () => {
+    // Ensure onboarding is marked as completed in localStorage regardless of API success
+    localStorage.setItem('onboardingCompleted', 'true');
     navigate("/dashboard");
   };
   
@@ -298,12 +306,13 @@ export default function CompletionPage() {
         </motion.div>
         
         <motion.div variants={itemVariants}>
-          <ContinueButton 
+          <Button 
             onClick={handleSkip}
-            className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25"
+            className="w-full md:w-auto group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-lg shadow-indigo-500/25"
           >
             Go to dashboard
-          </ContinueButton>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+          </Button>
         </motion.div>
         
         {isMarkingComplete && (
