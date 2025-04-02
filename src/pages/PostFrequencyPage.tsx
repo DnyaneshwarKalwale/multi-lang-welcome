@@ -1,211 +1,102 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, ChevronRight, Calendar, Twitter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, CheckCircle } from "lucide-react";
 
 export default function PostFrequencyPage() {
-  const navigate = useNavigate();
-  const { nextStep, prevStep, postFrequency, setPostFrequency, getStepProgress } = useOnboarding();
+  const { postFrequency, setPostFrequency, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
 
-  const frequencies = [
-    {
-      id: "daily",
-      name: "Daily",
-      description: "One tweet per day to maintain consistent visibility",
-      details: "7 tweets per week"
-    },
-    {
-      id: "frequent",
-      name: "Frequent",
-      description: "Multiple tweets throughout the day for higher engagement",
-      details: "14+ tweets per week"
-    },
-    {
-      id: "moderate",
-      name: "Moderate",
-      description: "A few tweets per week to build engagement without overwhelm",
-      details: "3-5 tweets per week"
-    },
-    {
-      id: "occasional",
-      name: "Occasional",
-      description: "Well-timed tweets for quality over quantity",
-      details: "1-2 tweets per week"
-    }
-  ];
-
-  const handleContinue = () => {
-    nextStep();
-    navigate("/onboarding/extension-install");
-  };
-
-  const handlePrev = () => {
-    prevStep();
-    navigate("/onboarding/post-format");
-  };
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
-  };
+  const frequencyOptions = [1, 2, 3, 4, 5, 6, 7];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
-      </div>
-      
-      {/* Back button */}
-      <motion.button
-        className="absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors"
-        onClick={handlePrev}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <ArrowLeft size={16} className="mr-2" />
-        Back
-      </motion.button>
-      
-      <motion.div 
-        className="max-w-4xl w-full text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div 
-          className="mb-8 flex justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <ScripeIconRounded className="w-20 h-20" />
-        </motion.div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
+      <div className="max-w-3xl w-full text-center">
+        <h1 className="text-4xl font-bold mb-4">How often do you want to post per week?</h1>
+        <p className="text-lg text-gray-400 mb-10">
+          We recommend posting at least 1-2 times per week.
+        </p>
         
-        <motion.div
-          className="flex items-center justify-center gap-2 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Calendar className="w-7 h-7 text-indigo-400" />
-          <h1 className="text-4xl font-bold">Posting frequency</h1>
-        </motion.div>
-        
-        <motion.p 
-          className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          How often would you like to post on Twitter?
-        </motion.p>
-
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {frequencies.map((frequency) => (
-            <motion.div
-              key={frequency.id}
-              className={`bg-gray-900/50 backdrop-blur-sm border-2 ${
-                postFrequency === frequency.id ? "border-indigo-500" : "border-gray-800"
-              } rounded-xl p-6 cursor-pointer hover:border-indigo-500/60 transition-all duration-300 hover-lift`}
-              onClick={() => setPostFrequency(frequency.id)}
-              variants={itemVariants}
+        <div className="flex justify-center gap-2 mb-12">
+          {frequencyOptions.map((frequency) => (
+            <Button
+              key={frequency}
+              variant={postFrequency === frequency ? "default" : "outline"}
+              onClick={() => setPostFrequency(frequency as any)}
+              className={`
+                w-16 h-16 rounded-xl text-xl font-semibold p-0
+                ${postFrequency === frequency 
+                  ? 'bg-purple-600 hover:bg-purple-700 border-none text-white' 
+                  : 'border-gray-700 text-gray-400 hover:border-purple-500 hover:text-purple-500'}
+              `}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-indigo-400" />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-lg font-medium text-left">{frequency.name}</h3>
-                    <p className="text-xs text-indigo-400">{frequency.details}</p>
-                  </div>
-                </div>
-                <div className={`w-6 h-6 rounded-full border-2 ${
-                  postFrequency === frequency.id ? "border-indigo-500 bg-indigo-500" : "border-gray-600"
-                } flex items-center justify-center transition-all duration-200`}>
-                  {postFrequency === frequency.id && (
-                    <motion.div 
-                      className="w-2 h-2 bg-white rounded-full"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.2 }}
-                    />
+              {frequency}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="mb-24 relative">
+          <div className="max-w-md mx-auto p-6 bg-gray-900 rounded-xl border border-gray-800">
+            <div className="flex items-center mb-6">
+              <Calendar className="text-purple-500 mr-3" size={28} />
+              <h3 className="text-xl font-medium">Posting Schedule</h3>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1 mb-6">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                <div 
+                  key={day + i} 
+                  className={`
+                    h-12 flex items-center justify-center rounded 
+                    ${i < (postFrequency || 0) ? 'bg-purple-600/20 border border-purple-600/50' : 'bg-gray-800 border border-gray-700'}
+                  `}
+                >
+                  <span className="text-sm font-medium">{day}</span>
+                  {i < (postFrequency || 0) && (
+                    <CheckCircle className="ml-1 text-purple-500" size={12} />
                   )}
                 </div>
+              ))}
+            </div>
+            
+            <div className="flex items-center justify-between border-t border-gray-800 pt-4">
+              <div className="flex items-center text-gray-400">
+                <Clock size={16} className="mr-2" />
+                <span className="text-sm">Optimal posting time</span>
               </div>
-              <p className="text-gray-400 text-sm text-left">{frequency.description}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.div 
-          className="flex justify-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <ContinueButton 
-            onClick={handleContinue}
-            disabled={!postFrequency}
-            className={`group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 ${
-              !postFrequency ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+              <span className="text-sm text-white bg-purple-600/20 px-3 py-1 rounded border border-purple-600/50">
+                9:00 - 11:00 AM
+              </span>
+            </div>
+          </div>
+          
+          {postFrequency && (
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-purple-600/20 border border-purple-600 rounded-lg text-white text-sm">
+              <strong className="mr-1">AI will suggest:</strong> 
+              {postFrequency === 1 ? 'One post per week' : `${postFrequency} posts per week`}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-between mb-12">
+          <Button 
+            variant="outline" 
+            onClick={prevStep}
+            className="border-gray-700 text-gray-400"
           >
-            <span>Continue</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
-        </motion.div>
+            Back
+          </Button>
+          <ContinueButton 
+            onClick={nextStep}
+            disabled={!postFrequency} 
+            className="bg-purple-600 hover:bg-purple-700"
+          />
+        </div>
         
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-        >
-          <ProgressDots total={total} current={current} />
-        </motion.div>
-        
-        {/* Scheduling info */}
-        <motion.div
-          className="mt-12 flex items-center justify-center max-w-2xl mx-auto p-4 border border-indigo-800/30 rounded-lg bg-indigo-900/10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-indigo-400" />
-          <p className="text-indigo-300 text-sm">
-            Scripe will help you generate and schedule tweets based on your selected frequency. You can always adjust this later from your dashboard settings.
-          </p>
-        </motion.div>
-      </motion.div>
+        <ProgressDots total={total} current={current} />
+      </div>
     </div>
   );
 }

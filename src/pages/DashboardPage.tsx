@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
@@ -6,15 +6,14 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, 
   BarChart, BookOpen, Twitter, Image, Plus, Bell, 
-  ChevronRight, Grid, Settings, LogOut, User, Sparkles
+  ChevronRight, Grid, Settings, LogOut, User
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeamInvitationNotification from "@/components/TeamInvitationNotification";
 import { DashboardPostCard, DashboardAnalyticsCard, DashboardProfileCard } from "@/components/DashboardCard";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ProfileSettingsSheet } from "@/components/ProfileSettingsSheet";
+import { useNavigate } from "react-router-dom";
 
 // Dashboard page
 export default function DashboardPage() {
@@ -22,34 +21,8 @@ export default function DashboardPage() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [profileSettingsOpen, setProfileSettingsOpen] = useState(false);
-
-  // Prevent navigating back to onboarding once in the dashboard
-  useEffect(() => {
-    // Set onboarding as completed if not already set
-    if (localStorage.getItem('onboardingCompleted') !== 'true') {
-      localStorage.setItem('onboardingCompleted', 'true');
-    }
-    
-    // Handle browser back button to prevent going back to onboarding pages
-    window.history.pushState(null, '', window.location.href);
-    
-    const handlePopState = () => {
-      // If user tries to go back, push current state again to stay on dashboard
-      if (location.pathname === '/onboarding/dashboard' || location.pathname === '/dashboard') {
-        window.history.pushState(null, '', window.location.href);
-      }
-    };
-    
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [location.pathname]);
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
   const userFullName = `${firstName} ${lastName}`;
@@ -57,12 +30,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/', { replace: true });
-  };
-
-  const handleOpenProfileSettings = () => {
-    setShowUserMenu(false);
-    setProfileSettingsOpen(true);
+    navigate('/');
   };
 
   const sidebarItems = [
@@ -169,134 +137,106 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-black text-white flex">
       {/* Sidebar */}
       <motion.div 
-        className="w-64 bg-gray-900/50 border-r border-gray-800 flex flex-col h-screen overflow-y-auto overflow-x-hidden backdrop-blur-sm"
+        className="w-64 bg-gray-900/50 backdrop-blur-sm border-r border-gray-800 p-5 flex flex-col h-screen overflow-y-auto overflow-x-hidden"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Top section with logo */}
-        <div className="p-5 border-b border-gray-800/50">
-          <div className="mb-6">
-            <ScripeLogotype className="h-8" />
-          </div>
-          
-          <Button 
-            variant="gradient" 
-            className="w-full gap-2 rounded-lg shadow-lg shadow-indigo-900/20 hover:shadow-indigo-600/40 transition-shadow duration-300 font-medium py-5 relative overflow-hidden"
-          >
-            <Plus size={16} className="relative z-10" />
-            <span className="relative z-10">Create new post</span>
-            <motion.div 
-              className="absolute inset-0 bg-white/10" 
-              initial={{ scale: 0, opacity: 0 }}
-              whileHover={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            />
-          </Button>
+        <div className="mb-8">
+          <ScripeLogotype className="h-8" />
         </div>
         
-        {/* Main menu */}
-        <div className="p-3 flex-1">
-          <div className="space-y-1 mb-8">
-            {sidebarItems.map((item) => (
-              <Button 
-                key={item.label} 
-                variant={item.active ? "ghost" : "transparent"}
-                className={`w-full justify-start gap-3 text-sm rounded-lg transition-all duration-200 ${
-                  item.active 
-                    ? "bg-gradient-to-r from-indigo-900/50 to-indigo-800/30 text-white font-medium border-l-2 border-indigo-500" 
-                    : "text-gray-400 hover:text-white hover:bg-gray-800/30"
-                }`}
-              >
-                <item.icon size={18} className={item.active ? "text-indigo-400" : "text-gray-500"} />
-                {item.label}
-                {item.active && (
-                  <motion.div 
-                    layoutId="activeTab"
-                    className="absolute inset-0 rounded-lg bg-indigo-500/10 -z-10"
-                    transition={{ type: "spring", duration: 0.5 }}
-                  />
-                )}
-              </Button>
-            ))}
-          </div>
-          
-          <div className="border-t border-gray-800/50 pt-5 mb-5">
-            <p className="text-xs uppercase tracking-wider text-gray-500 px-3 mb-3 font-medium">Personal Brand</p>
-          </div>
-          
-          <div className="space-y-1 mb-auto">
-            {personalBrandItems.map((item) => (
-              <Button 
-                key={item.label} 
-                variant="transparent" 
-                className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-white hover:bg-gray-800/30 rounded-lg"
-              >
-                <item.icon size={18} className="text-gray-500" />
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <Button 
+          variant="gradient" 
+          className="gap-2 mb-8 hover-glow shine"
+          rounded="lg"
+          animation="pulse"
+        >
+          <Plus size={16} />
+          Create new post
+        </Button>
         
-        {/* User section */}
-        <div className="border-t border-gray-800/50 p-3">
-          <div className="flex items-center p-2 rounded-lg bg-gray-800/30 mb-4">
-            <div 
-              className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 mr-3 flex items-center justify-center overflow-hidden border-2 border-indigo-500/30"
-              style={{ 
-                backgroundImage: `url(${user?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userInitials)}&background=6366F1&color=fff`})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
+        <div className="space-y-1 mb-8">
+          {sidebarItems.map((item) => (
+            <Button 
+              key={item.label} 
+              variant={item.active ? "ghost" : "transparent"}
+              className={`w-full justify-start gap-3 text-sm transition-all duration-200 ${
+                item.active 
+                  ? "bg-gray-800/70 text-white font-medium" 
+                  : "text-gray-400 hover:text-white"
+              }`}
             >
-              {!user?.profilePicture && (
-                <span className="text-xs font-medium">{userInitials}</span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{userFullName}</p>
-              <p className="text-xs text-gray-400 truncate">@{firstName.toLowerCase()}</p>
-            </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowUserMenu(!showUserMenu)}>
-              <Settings size={16} className="text-gray-400" />
+              <item.icon size={18} />
+              {item.label}
             </Button>
+          ))}
+        </div>
+        
+        <div className="border-t border-gray-800 pt-4 mb-2">
+          <p className="text-sm text-gray-500 px-3 mb-2">Personal Brand</p>
+        </div>
+        
+        <div className="space-y-1 mb-auto">
+          {personalBrandItems.map((item) => (
+            <Button 
+              key={item.label} 
+              variant="transparent" 
+              className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-white transition-all duration-200"
+            >
+              <item.icon size={18} />
+              {item.label}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="border-t border-gray-800 pt-4">
+          <div className="relative">
+            <button 
+              className="flex items-center w-full p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              onClick={() => setShowUserMenu(!showUserMenu)}
+            >
+              <img 
+                src={user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff"} 
+                alt={userFullName}
+                className="w-8 h-8 rounded-full mr-3 object-cover" 
+              />
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium truncate">{userFullName}</p>
+                <p className="text-xs text-gray-500 truncate">Free plan</p>
+              </div>
+            </button>
+            
+            {showUserMenu && (
+              <div className="absolute bottom-full mb-2 left-0 w-full bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-20 py-1">
+                <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
+                  <User size={16} />
+                  Profile
+                </Button>
+                <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
+                  <Settings size={16} />
+                  Settings
+                </Button>
+                <div className="border-t border-gray-700 my-1"></div>
+                <Button 
+                  variant="transparent" 
+                  className="w-full justify-start text-sm gap-2 px-3 text-red-400 hover:text-red-300"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} />
+                  Log out
+                </Button>
+              </div>
+            )}
           </div>
           
-          {showUserMenu && (
-            <motion.div 
-              className="bg-gray-800 rounded-lg p-1 mb-4 overflow-hidden shadow-xl"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start text-sm text-gray-300 hover:bg-gray-700 rounded-md py-2"
-                onClick={handleOpenProfileSettings}
-              >
-                <User size={14} className="mr-2" />
-                Profile
-              </Button>
-              <Button variant="ghost" className="w-full justify-start text-sm text-gray-300 hover:bg-gray-700 rounded-md py-2">
-                <Settings size={14} className="mr-2" />
-                Settings
-              </Button>
-              <Button variant="ghost" className="w-full justify-start text-sm text-red-400 hover:bg-red-900/30 hover:text-red-300 rounded-md py-2" onClick={handleLogout}>
-                <LogOut size={14} className="mr-2" />
-                Logout
-              </Button>
-            </motion.div>
-          )}
-          
-          <div className="flex items-center justify-between px-2">
+          <div className="flex items-center justify-between mt-4 px-2">
             <div className="flex items-center">
-              <Sparkles size={14} className="text-yellow-500 mr-1.5" />
-              <p className="text-xs text-gray-300">15 credits left</p>
+              <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+              <p className="text-xs text-gray-500">15 credits left</p>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 flex items-center justify-center hover:bg-gray-800" onClick={toggleTheme}>
-              {theme === "dark" ? <Sun size={16} className="text-yellow-500" /> : <Moon size={16} className="text-indigo-400" />}
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleTheme}>
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </Button>
           </div>
         </div>
@@ -313,14 +253,24 @@ export default function DashboardPage() {
         >
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl font-bold">{dashboardName}</h1>
+              <h1 className="text-xl font-bold text-gradient">
+                {dashboardName}
+              </h1>
               <p className="text-sm text-gray-400">Welcome back! Here's what's happening with your content</p>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="transparent" size="sm" className="hidden md:flex items-center gap-1">
+              <Button 
+                variant="transparent" 
+                size="sm" 
+                className="hidden md:flex items-center gap-1 transition-all duration-200"
+              >
                 <Bell size={16} />
               </Button>
-              <Button variant="outline" size="sm" className="hidden md:flex items-center gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hidden md:flex items-center gap-1 transition-all duration-200"
+              >
                 <Grid size={16} className="mr-1" />
                 View all
               </Button>
@@ -329,122 +279,140 @@ export default function DashboardPage() {
         </motion.div>
         
         {/* Dashboard content */}
-        <div className="p-5 space-y-8">
-          {/* First row - Quick action cards */}
+        <div className="p-6">
+          {/* Quick stats */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
-            transition={{ staggerChildren: 0.1 }}
           >
-            {cards.map((card, index) => (
-              <motion.div 
-                key={index}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 hover:border-indigo-500/30 transition-colors rounded-xl p-6 flex flex-col hover-lift"
-                variants={fadeInUp}
-              >
-                <div className="bg-indigo-900/20 w-12 h-12 flex items-center justify-center rounded-full text-2xl mb-4">
-                  {card.icon}
-                </div>
-                <h3 className="text-lg font-medium mb-2">{card.title}</h3>
-                <p className="text-gray-400 text-sm mb-4 flex-1">{card.description}</p>
-                <Button 
-                  variant="outline" 
-                  className="justify-center w-full border-indigo-500/30 text-indigo-300 hover:bg-indigo-900/20 hover:text-indigo-200"
-                >
-                  {card.buttonText}
-                </Button>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Second row - Recent posts and analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent posts - Wider column */}
-            <motion.div 
-              className="lg:col-span-2 space-y-6"
-              variants={fadeInUp}
-              initial="initial"
-              animate="animate"
+            <DashboardAnalyticsCard 
+              title="Profile Views"
+              data={analyticsData.views.data}
+              labels={analyticsData.views.labels}
+              increase={analyticsData.views.increase}
+              timeframe={analyticsData.views.timeframe}
+            />
+            
+            <DashboardAnalyticsCard 
+              title="Engagement Rate"
+              data={analyticsData.engagement.data}
+              labels={analyticsData.engagement.labels}
+              increase={analyticsData.engagement.increase}
+              timeframe={analyticsData.engagement.timeframe}
+            />
+            
+            <DashboardProfileCard
+              user={profileData.user}
+              stats={profileData.stats}
+            />
+            
+            <motion.div
+              className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-5 text-white hover-lift shine"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.5)" }}
             >
+              <h3 className="font-medium mb-2">Upgrade to Pro</h3>
+              <p className="text-sm text-indigo-100 mb-4">Get unlimited posts, analytics, and AI features</p>
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Recent posts</h2>
-                <Button variant="link" className="text-indigo-400 hover:text-indigo-300 p-0">
-                  View all <ChevronRight size={16} />
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">50% OFF</span>
+                <Button variant="transparent" size="sm" className="bg-white/20 hover:bg-white/30 text-white group">
+                  Upgrade <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
-              
-              {recentPosts.map((post, index) => (
-                <DashboardPostCard 
-                  key={index}
-                  title={post.title}
-                  content={post.content}
-                  author={post.author}
-                  status={post.status as "draft" | "scheduled" | "published"}
-                  date={post.date}
-                  stats={post.stats}
-                  imageSrc={post.imageSrc}
-                  onEdit={() => console.log("Edit", post.title)}
-                  onDelete={() => console.log("Delete", post.title)}
-                  onPublish={() => console.log("Publish", post.title)}
-                />
-              ))}
             </motion.div>
+          </motion.div>
+          
+          {/* Recent content */}
+          <motion.div 
+            className="mb-8"
+            variants={fadeInUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gradient-blue">Recent Content</h2>
+              <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300 transition-all duration-200">
+                View all
+              </Button>
+            </div>
             
-            {/* Analytics sidebar - Narrower column */}
-            <motion.div 
-              className="space-y-6"
-              variants={fadeInUp}
-              initial="initial"
-              animate="animate"
-            >
-              <h2 className="text-xl font-bold">Analytics</h2>
-              
-              <DashboardAnalyticsCard 
-                title="Profile views" 
-                data={analyticsData.views.data}
-                labels={analyticsData.views.labels}
-                increase={analyticsData.views.increase}
-                timeframe={analyticsData.views.timeframe}
-              />
-              
-              <DashboardAnalyticsCard 
-                title="Engagement rate" 
-                data={analyticsData.engagement.data}
-                labels={analyticsData.engagement.labels}
-                increase={analyticsData.engagement.increase}
-                timeframe={analyticsData.engagement.timeframe}
-              />
-              
-              <DashboardProfileCard 
-                user={profileData.user}
-                stats={profileData.stats}
-              />
-            </motion.div>
-          </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {recentPosts.map((post, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
+                >
+                  <DashboardPostCard
+                    title={post.title}
+                    content={post.content}
+                    author={post.author}
+                    status={post.status as "draft" | "scheduled" | "published"}
+                    date={post.date}
+                    stats={post.stats}
+                    imageSrc={post.imageSrc}
+                    onEdit={() => console.log("Edit", post.title)}
+                    onDelete={() => console.log("Delete", post.title)}
+                    onPublish={() => console.log("Publish", post.title)}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+          
+          {/* Get started section */}
+          <motion.div 
+            className="mb-8"
+            variants={fadeInUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gradient">Get Started</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {cards.map((card, index) => (
+                <motion.div 
+                  key={index} 
+                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-5 hover-lift"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+                    <span className="text-2xl">{card.icon}</span>
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">{card.title}</h3>
+                  <p className="text-gray-400 text-sm mb-4">{card.description}</p>
+                  <Button variant="ghost" className="text-indigo-400 hover:text-indigo-300 px-0 hover:bg-transparent group">
+                    {card.buttonText}
+                    <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
       
-      {/* Dialog for team invitations */}
+      {/* Invite Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900 text-white border-gray-800">
+        <DialogContent className="bg-gray-900 border-gray-800 text-white">
           <DialogHeader>
             <DialogTitle>Team Invitation</DialogTitle>
           </DialogHeader>
           <TeamInvitationNotification />
-          <Button className="mt-4" onClick={() => setInviteDialogOpen(false)}>Close</Button>
         </DialogContent>
       </Dialog>
-
-      {/* Profile Settings Sheet */}
-      <ProfileSettingsSheet
-        open={profileSettingsOpen}
-        onOpenChange={setProfileSettingsOpen}
-        onSuccess={() => {
-          // Refresh any profile-dependent data if needed
-        }}
-      />
     </div>
   );
 }

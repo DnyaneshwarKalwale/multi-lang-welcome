@@ -1,101 +1,78 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { 
+  AlignLeft, AlignCenter, ListChecks, 
+  FileText, MessageSquareText, Check, 
+  ArrowLeft, ChevronRight
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, ChevronRight, LayoutTemplate, Twitter } from "lucide-react";
 
 export default function PostFormatPage() {
-  const navigate = useNavigate();
-  const { nextStep, prevStep, postFormat, setPostFormat, getStepProgress } = useOnboarding();
-  const { t } = useLanguage();
+  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
+  const [postLength, setPostLength] = React.useState(50);
 
-  const formats = [
+  const formatOptions = [
     {
-      id: "thread",
-      name: "Twitter Threads",
-      description: "Multi-part threads that dive deep into a topic with 5-10 tweets",
-      icon: (
-        <div className="flex flex-col space-y-1.5">
-          <div className="w-full h-2 bg-indigo-500/30 rounded-full"></div>
-          <div className="w-4/5 h-2 bg-indigo-500/30 rounded-full"></div>
-          <div className="w-full h-2 bg-indigo-500/30 rounded-full"></div>
-          <div className="w-3/5 h-2 bg-indigo-500/30 rounded-full"></div>
-        </div>
-      )
+      id: "standard",
+      title: "Standard",
+      icon: <AlignLeft size={32} className="text-purple-500" />,
+      description: "Clean formatting with paragraphs and bullets for Twitter"
     },
     {
-      id: "single",
-      name: "Single Tweets",
-      description: "Concise, high-impact standalone tweets optimized for engagement",
-      icon: (
-        <div className="flex flex-col">
-          <div className="w-full h-3 bg-indigo-500/30 rounded-full"></div>
-          <div className="w-4/5 h-3 bg-indigo-500/30 rounded-full mt-1"></div>
-        </div>
-      )
+      id: "formatted",
+      title: "Formatted",
+      icon: <FileText size={32} className="text-blue-500" />,
+      description: "Well-formatted text with visually distinct sections"
     },
     {
-      id: "mixed",
-      name: "Mixed Formats",
-      description: "Variety of formats including threads, standalone tweets, and polls",
-      icon: (
-        <div className="flex flex-col space-y-1.5">
-          <div className="w-full h-2 bg-indigo-500/30 rounded-full"></div>
-          <div className="flex space-x-1">
-            <div className="w-1/3 h-2 bg-indigo-500/30 rounded-full"></div>
-            <div className="w-1/3 h-2 bg-indigo-500/30 rounded-full"></div>
-            <div className="w-1/3 h-2 bg-indigo-500/30 rounded-full"></div>
-          </div>
-          <div className="w-4/5 h-2 bg-indigo-500/30 rounded-full"></div>
-        </div>
-      )
+      id: "chunky",
+      title: "Chunky",
+      icon: <AlignCenter size={32} className="text-green-500" />,
+      description: "Shorter paragraphs with one idea per paragraph"
     },
     {
-      id: "visual",
-      name: "Visual Tweets",
-      description: "Image and video-focused content with minimal text for visual impact",
-      icon: (
-        <div className="flex flex-col space-y-1.5">
-          <div className="w-full h-8 bg-indigo-500/30 rounded"></div>
-          <div className="w-3/5 h-2 bg-indigo-500/30 rounded-full"></div>
-        </div>
-      )
+      id: "short",
+      title: "Short",
+      icon: <MessageSquareText size={32} className="text-yellow-500" />,
+      description: "Concise Twitter posts with minimal text"
+    },
+    {
+      id: "emojis",
+      title: "Emojis",
+      icon: <span className="text-3xl">😀</span>,
+      description: "Twitter posts with emojis to increase engagement"
     }
   ];
 
-  const handleContinue = () => {
-    nextStep();
-    navigate("/onboarding/post-frequency");
-  };
-
-  const handlePrev = () => {
-    prevStep();
-    navigate("/onboarding/language-selection");
-  };
-
   // Animation variants
-  const containerVariants = {
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
+  const staggerContainer = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { 
         staggerChildren: 0.1,
-        delayChildren: 0.2
+        delayChildren: 0.3
       }
     }
   };
-  
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
+      transition: { duration: 0.5 }
     }
   };
 
@@ -104,26 +81,26 @@ export default function PostFormatPage() {
       {/* Animated gradient background */}
       <div className="absolute inset-0 opacity-20 -z-10">
         <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
       </div>
       
       {/* Back button */}
       <motion.button
         className="absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors"
-        onClick={handlePrev}
+        onClick={prevStep}
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
         <ArrowLeft size={16} className="mr-2" />
-        {t('back')}
+        Back
       </motion.button>
       
       <motion.div 
-        className="max-w-4xl w-full text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        className="max-w-3xl w-full"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
       >
         <motion.div 
           className="mb-8 flex justify-center"
@@ -134,102 +111,109 @@ export default function PostFormatPage() {
           <ScripeIconRounded className="w-20 h-20" />
         </motion.div>
         
-        <motion.div
-          className="flex items-center justify-center gap-2 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+        <motion.h1 
+          className="text-4xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
         >
-          <LayoutTemplate className="w-7 h-7 text-indigo-400" />
-          <h1 className="text-4xl font-bold">{t('formatTitle')}</h1>
-        </motion.div>
+          Pick your preferred Twitter posting style
+        </motion.h1>
         
         <motion.p 
-          className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-xl text-gray-300 mb-10 text-center"
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
         >
-          {t('formatDescription')}
+          Scripe is trained on millions of viral Twitter posts. When you create posts,
+          the best performing posts about the same topics will be used as a reference.
         </motion.p>
-
+        
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12"
-          variants={containerVariants}
+          className="mb-10"
+          variants={staggerContainer}
           initial="hidden"
           animate="visible"
         >
-          {formats.map((format) => (
-            <motion.div
-              key={format.id}
-              className={`bg-gray-900/50 backdrop-blur-sm border-2 ${
-                postFormat === format.id ? "border-indigo-500" : "border-gray-800"
-              } rounded-xl p-6 cursor-pointer hover:border-indigo-500/60 transition-all duration-300 hover-lift`}
-              onClick={() => setPostFormat(format.id)}
-              variants={itemVariants}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center p-3">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"
+            variants={fadeIn}
+            transition={{ delay: 0.4 }}
+          >
+            {formatOptions.map((format, index) => (
+              <motion.div 
+                key={format.id}
+                className={`
+                  bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-4 flex flex-col items-center cursor-pointer 
+                  transition-all hover:bg-gray-800/70 hover-lift
+                  ${postFormat === format.id ? 'ring-2 ring-indigo-600 shadow-glow' : 'opacity-80'}
+                `}
+                onClick={() => setPostFormat(format.id as any)}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+              >
+                <div className="w-full aspect-square rounded-lg bg-gray-800/80 mb-3 relative flex items-center justify-center">
                   {format.icon}
-                </div>
-                <div className={`w-6 h-6 rounded-full border-2 ${
-                  postFormat === format.id ? "border-indigo-500 bg-indigo-500" : "border-gray-600"
-                } flex items-center justify-center transition-all duration-200`}>
                   {postFormat === format.id && (
-                    <motion.div 
-                      className="w-2 h-2 bg-white rounded-full"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.2 }}
-                    />
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
                   )}
                 </div>
-              </div>
-              <div className="text-left">
-                <h3 className="text-lg font-medium mb-2">{format.name}</h3>
-                <p className="text-gray-400 text-sm">{format.description}</p>
-              </div>
-            </motion.div>
-          ))}
+                <span className="text-sm font-medium">{format.title}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+          
+          <motion.div 
+            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 mb-6"
+            variants={fadeIn}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-400">Post length</span>
+              <span className="text-sm text-gray-400">Super long</span>
+            </div>
+            <Slider 
+              defaultValue={[postLength]} 
+              max={100} 
+              step={1}
+              onValueChange={(values) => setPostLength(values[0])}
+              className="py-5"
+            />
+          </motion.div>
+          
+          <motion.p 
+            className="text-sm text-gray-400 text-center"
+            variants={fadeIn}
+            transition={{ delay: 0.7 }}
+          >
+            Scripe will learn your individual Twitter preferences over time.
+          </motion.p>
         </motion.div>
-
+        
         <motion.div 
           className="flex justify-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
+          variants={fadeIn}
+          transition={{ delay: 0.8 }}
         >
-          <ContinueButton 
-            onClick={handleContinue}
+          <Button 
+            onClick={nextStep}
             disabled={!postFormat}
-            className={`group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-indigo-500/25 ${
-              !postFormat ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            variant="gradient"
+            animation="pulse"
+            rounded="full"
+            className="group px-8 py-3 flex items-center gap-2 transition-all duration-300"
           >
-            <span>{t('continue')}</span>
+            <span>Continue</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-          </ContinueButton>
+          </Button>
         </motion.div>
         
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
+          variants={fadeIn}
+          transition={{ delay: 0.9 }}
         >
           <ProgressDots total={total} current={current} />
-        </motion.div>
-        
-        {/* Twitter connection info */}
-        <motion.div
-          className="mt-12 flex items-center justify-center max-w-2xl mx-auto p-4 border border-indigo-800/30 rounded-lg bg-indigo-900/10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-indigo-400" />
-          <p className="text-indigo-300 text-sm">
-            {t('formatDescription')}
-          </p>
         </motion.div>
       </motion.div>
     </div>

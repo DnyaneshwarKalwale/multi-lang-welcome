@@ -95,40 +95,4 @@ export const onboardingApi = {
   },
 };
 
-// User profile services
-export const userApi = {
-  // Update user profile
-  updateProfile: async (profileData: { firstName?: string; lastName?: string; profilePicture?: string }) => {
-    const response = await api.put('/users/profile', profileData);
-    return response.data;
-  },
-  
-  // Update user password
-  changePassword: async (currentPassword: string, newPassword: string) => {
-    const response = await api.put('/users/change-password', { currentPassword, newPassword });
-    return response.data;
-  },
-  
-  // Delete user account
-  deleteAccount: async () => {
-    const response = await api.delete('/users');
-    return response.data;
-  },
-  
-  // Upload profile picture
-  uploadProfilePicture: async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await axios.post(`${API_URL}/upload/profile-picture`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    return response.data;
-  }
-};
-
 export default api; 

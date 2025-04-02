@@ -16,39 +16,10 @@ import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
 
 export function OnboardingRouter() {
-  const { workspaceType, currentStep, setCurrentStep, saveProgress, getApplicableSteps } = useOnboarding();
+  const { workspaceType, currentStep, saveProgress } = useOnboarding();
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Handle browser back/forward button navigation
-  useEffect(() => {
-    const handleHistoryChange = () => {
-      const path = location.pathname;
-      if (path.startsWith('/onboarding/')) {
-        const step = path.replace('/onboarding/', '') as any;
-        const applicableSteps = getApplicableSteps();
-        
-        // Check if this is a valid step in our flow
-        if (applicableSteps.includes(step)) {
-          // Update the current step in our context
-          setCurrentStep(step);
-        } else {
-          // If we're on an invalid step (e.g., team pages for personal workspace),
-          // redirect to the appropriate step in the flow
-          const currentIndex = applicableSteps.indexOf(currentStep);
-          if (currentIndex >= 0) {
-            navigate(`/onboarding/${applicableSteps[currentIndex]}`, { replace: true });
-          } else {
-            // Fallback to the beginning if we can't determine current position
-            navigate('/onboarding/welcome', { replace: true });
-          }
-        }
-      }
-    };
-    
-    handleHistoryChange();
-  }, [location.pathname, workspaceType, currentStep, setCurrentStep, navigate, getApplicableSteps]);
   
   // Redirect logic for team vs personal workspace
   useEffect(() => {
@@ -56,7 +27,7 @@ export function OnboardingRouter() {
     if (workspaceType === "personal") {
       if (location.pathname.includes("team-workspace") || 
           location.pathname.includes("team-invite")) {
-        navigate("/onboarding/theme-selection", { replace: true });
+        navigate("/onboarding/theme-selection");
       }
     }
   }, [workspaceType, location.pathname, navigate]);
@@ -64,43 +35,38 @@ export function OnboardingRouter() {
   // Save current step to localStorage when route changes
   useEffect(() => {
     const currentPath = location.pathname;
-    if (currentPath.startsWith('/onboarding/')) {
-      const currentOnboardingStep = currentPath.replace('/onboarding/', '');
+    const currentOnboardingStep = currentPath.replace('/onboarding/', '');
+    
+    // Only save if we're on a valid onboarding step
+    if (currentOnboardingStep && currentOnboardingStep !== '') {
+      localStorage.setItem('onboardingStep', currentOnboardingStep);
       
-      // Only save if we're on a valid onboarding step
-      if (currentOnboardingStep && currentOnboardingStep !== '') {
-        localStorage.setItem('onboardingStep', currentOnboardingStep);
-        
-        // Only call saveProgress if user is authenticated
-        if (user) {
-          saveProgress();
-        }
+      // Only call saveProgress if user is authenticated
+      if (user) {
+        saveProgress();
       }
     }
   }, [location.pathname, saveProgress, user]);
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Progress indicator - more subtle design */}
-      <div className="fixed top-0 left-0 right-0 h-0.5 bg-gray-900 z-50 overflow-hidden">
+      {/* Progress indicator - visible on all onboarding pages */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-800 z-50">
         <div 
-          className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-500 ease-in-out"
+          className="h-full bg-indigo-600 transition-all duration-300"
           style={{ 
-            width: `${getProgressPercentage(currentStep, workspaceType)}%`,
-            boxShadow: '0 0 8px rgba(99, 102, 241, 0.5)'
+            width: `${getProgressPercentage(currentStep, workspaceType)}%`
           }}
         />
       </div>
       
-      {/* Session progress tooltip - only show briefly and then fade out */}
+      {/* Resume session notification - show if returning */}
       {localStorage.getItem('returningUser') === 'true' && (
-        <div className="fixed top-4 right-4 hidden">
-          <div className="bg-indigo-900/80 backdrop-blur-sm text-white px-4 py-2 rounded-md text-sm z-50 flex items-center shadow-lg border border-indigo-700/50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Resumed from last session
-          </div>
+        <div className="fixed top-4 right-4 bg-indigo-900 text-white px-4 py-2 rounded-md text-sm z-50 flex items-center shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Resumed from last session
         </div>
       )}
       

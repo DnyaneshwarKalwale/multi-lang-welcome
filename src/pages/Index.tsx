@@ -82,12 +82,12 @@ const Index = () => {
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                Get more leads on <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-500">LinkedIn</span> <br />
+                Get more engagement on <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-500">Twitter</span> <br />
                 with high-performing posts
               </h1>
               
               <p className="text-gray-400 text-lg mb-8 max-w-xl">
-                Scripe knows what works by analyzing thousands of viral LinkedIn posts daily. 
+                Scripe knows what works by analyzing thousands of viral Twitter posts daily. 
                 No generic AI fluff - train the AI with your knowledge to generate personalized content.
               </p>
               
@@ -210,7 +210,7 @@ const Index = () => {
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Trusted by the leading LinkedIn Top Voices
+              Trusted by the leading Twitter Influencers
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto">
               From leading creators to established enterprises
@@ -245,11 +245,10 @@ const Index = () => {
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              The first human-quality LinkedIn tool
+              The first human-quality Twitter tool
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto">
-              Scripe simplifies strategy and content creation for LinkedIn by turning unstructured voice, 
-              video and text inputs into personalized social posts with human-level quality.
+              Generate customized Twitter posts that match your voice and engage your audience
             </p>
           </div>
           
@@ -268,7 +267,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Voice to content</h3>
               <p className="text-gray-400">
-                Speak your thoughts with Scripe's Voice-to-Post, or write down your ideas, and Scripe will create LinkedIn posts for you.
+                Speak your thoughts with Scripe's Voice-to-Post, or write down your ideas, and Scripe will create Twitter posts for you.
               </p>
             </motion.div>
             
@@ -305,7 +304,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Goal-oriented analytics</h3>
               <p className="text-gray-400">
-                Track your LinkedIn performance to optimize your strategy and posts for maximum engagement.
+                Track your Twitter performance to optimize your strategy and posts for maximum engagement.
               </p>
             </motion.div>
           </div>
@@ -388,7 +387,7 @@ const Index = () => {
             <div>
               <h4 className="font-semibold text-lg mb-4">Resources</h4>
               <ul className="space-y-3">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">LinkedIn Hacks</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Twitter Hacks</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Personal Branding</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Success Stories</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Scripe News</a></li>

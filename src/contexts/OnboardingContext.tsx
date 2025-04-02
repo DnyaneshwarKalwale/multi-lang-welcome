@@ -21,7 +21,7 @@ type OnboardingStep =
   | "dashboard";
 
 type WorkspaceType = "team" | "personal" | null;
-type ThemeType = "dark" | "light" | null;
+type ThemeType = "light" | "dark";
 type LanguageType = "english" | "german" | null;
 type PostFormat = "standard" | "formatted" | "chunky" | "short" | "emojis" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
@@ -58,7 +58,6 @@ interface OnboardingContextType {
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
   saveProgress: () => Promise<void>;
-  getApplicableSteps: () => OnboardingStep[];
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -70,7 +69,7 @@ const allSteps: OnboardingStep[] = [
   "team-workspace",
   "team-invite",
   "theme-selection",
-  "language-selection", 
+  "language-selection",
   "post-format",
   "post-frequency",
   "registration",
@@ -265,25 +264,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [workspaceType, currentStep]);
 
-  // Add effect to apply the theme whenever it changes
-  useEffect(() => {
-    if (theme) {
-      // Save to localStorage
-      localStorage.setItem("theme", theme);
-      
-      // Apply the theme to document
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-        document.documentElement.classList.remove("light");
-        document.documentElement.style.setProperty("color-scheme", "dark");
-      } else {
-        document.documentElement.classList.add("light");
-        document.documentElement.classList.remove("dark");
-        document.documentElement.style.setProperty("color-scheme", "light");
-      }
-    }
-  }, [theme]);
-
   const value = {
     currentStep,
     setCurrentStep,
@@ -310,8 +290,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     nextStep,
     prevStep,
     getStepProgress,
-    saveProgress,
-    getApplicableSteps
+    saveProgress
   };
 
   return (
