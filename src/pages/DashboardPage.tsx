@@ -10,9 +10,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeamInvitationNotification from "@/components/TeamInvitationNotification";
-import DashboardPostCard from "@/components/DashboardPostCard";
-import DashboardAnalyticsCard from "@/components/DashboardAnalyticsCard";
-import DashboardProfileCard from "@/components/DashboardProfileCard";
+import { DashboardPostCard, DashboardAnalyticsCard, DashboardProfileCard } from "@/components/DashboardCard";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";

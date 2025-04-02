@@ -1,90 +1,140 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { useEffect, useState } from "react";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import api from "@/services/api";
-import { toast } from "sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
-import CustomNavbar from "@/components/CustomNavbar"; // Use custom navbar
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
-import CustomIndex from "./pages/CustomIndex"; // Use custom index
-import RegistrationPage from "./pages/RegistrationPage";
-import LanguageSelectionPage from "./pages/LanguageSelectionPage";
-import PostFormatPage from "./pages/PostFormatPage";
-import PostFrequencyPage from "./pages/PostFrequencyPage";
-import ThemeSelectionPage from "./pages/ThemeSelectionPage";
-import TeamSelectionPage from "./pages/TeamSelectionPage";
-import TeamInvitePage from "./pages/TeamInvitePage";
-import ExtensionInstallPage from "./pages/ExtensionInstallPage";
-import CompletionPage from "./pages/CompletionPage";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
-import DashboardPage from "./pages/DashboardPage";
-import OAuthCallbackPage from "./pages/OAuthCallbackPage";
-import PendingInvitationsPage from "./pages/PendingInvitationsPage";
-import TeamWorkspacePage from "./pages/TeamWorkspacePage";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import DashboardPage from "./pages/DashboardPage";
+import PendingInvitationsPage from "./pages/PendingInvitationsPage";
+import { useEffect, useState } from "react";
 
-function App() {
-  return (
+const queryClient = new QueryClient();
+
+// Protected Onboarding Route Component
+function ProtectedOnboardingRoute() {
+  const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+  
+  // Check for saved onboarding progress when component mounts
+  useEffect(() => {
+    // Only run this if the user is authenticated and hasn't completed onboarding
+    if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
+      setIsLoadingProgress(true);
+      
+      // Get saved step from localStorage
+      const savedStep = localStorage.getItem('onboardingStep');
+      
+      if (savedStep) {
+        // Redirect to the saved step
+        navigate(`/onboarding/${savedStep}`, { replace: true });
+      } else {
+        // If no saved step, start from the beginning
+        navigate('/onboarding/welcome', { replace: true });
+      }
+      
+      setIsLoadingProgress(false);
+    }
+  }, [isAuthenticated, user, navigate, location.pathname]);
+  
+  // If still loading user or onboarding progress, show loading spinner
+  if (loading || isLoadingProgress) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+  
+  // If user is authenticated and has completed onboarding, redirect to dashboard
+  if (isAuthenticated && user?.onboardingCompleted) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Otherwise, show the onboarding flow
+  // The OnboardingRouter will handle loading saved progress internally
+  return <OnboardingRouter />;
+}
+
+// Protected Dashboard Route Component
+function ProtectedDashboardRoute() {
+  const { user, isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // Always prioritize localStorage value since it's set immediately at completion time
+  // This prevents redirection back to onboarding extension-install page
+  const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+  
+  if (!onboardingCompleted) {
+    // If we have a user object and it says onboarding is completed, update localStorage
+    if (user && user.onboardingCompleted) {
+      localStorage.setItem('onboardingCompleted', 'true');
+      return <DashboardPage />;
+    }
+    
+    // Otherwise redirect to onboarding
+    const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
+    return <Navigate to={`/onboarding/${savedStep}`} replace />;
+  }
+  
+  return <DashboardPage />;
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
             <OnboardingProvider>
-              <CustomNavbar />
-              <Toaster />
-              <Routes>
-                <Route path="/" element={<CustomIndex />} />
-                <Route path="/registration" element={<RegistrationPage />} />
-                <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-                <Route path="/verify" element={<VerifyEmailPage />} />
-
-                {/* Protected routes */}
-                <Route element={<InvitationCheckRoute />}>
-                  <Route
-                    path="/pending-invitations"
-                    element={<PendingInvitationsPage />}
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={<DashboardPage />}
-                  />
-                  <Route
-                    path="/team-workspace"
-                    element={<TeamWorkspacePage />}
-                  />
-
-                  {/* Onboarding routes */}
-                  <Route
-                    path="/language-selection"
-                    element={<LanguageSelectionPage />}
-                  />
-                  <Route path="/post-format" element={<PostFormatPage />} />
-                  <Route
-                    path="/post-frequency"
-                    element={<PostFrequencyPage />}
-                  />
-                  <Route path="/theme" element={<ThemeSelectionPage />} />
-                  <Route path="/team" element={<TeamSelectionPage />} />
-                  <Route path="/team-invite" element={<TeamInvitePage />} />
-                  <Route
-                    path="/extension-install"
-                    element={<ExtensionInstallPage />}
-                  />
-                  <Route path="/completion" element={<CompletionPage />} />
-                </Route>
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
+                  <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+                  <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+                  
+                  {/* Check for invitations first, then redirect to onboarding or dashboard */}
+                  <Route element={<InvitationCheckRoute />}>
+                    <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+                    <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+                  </Route>
+                  
+                  <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </TooltipProvider>
             </OnboardingProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>
-  );
-}
+  </QueryClientProvider>
+);
 
 export default App;

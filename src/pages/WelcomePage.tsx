@@ -1,54 +1,130 @@
-
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import WelcomeCard from "@/components/WelcomeCard";
-import { ArrowRight, TwitterIcon } from "lucide-react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ScripeIcon } from "@/components/ScripeIcon";
+import { ContinueButton } from "@/components/ContinueButton";
+import { ProgressDots } from "@/components/ProgressDots";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export default function WelcomePage() {
+  const { nextStep } = useOnboarding();
+  const navigate = useNavigate();
+
+  const handleSkipToDashboard = () => {
+    // Mark onboarding as completed in localStorage
+    localStorage.setItem('onboardingCompleted', 'true');
+    navigate("/dashboard");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-brand-light/50 dark:from-gray-900 dark:to-brand-dark/50 relative overflow-hidden">
-      <div className="absolute inset-0 bg-hero-pattern bg-no-repeat bg-center opacity-30 dark:opacity-10" />
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+      </div>
       
-      <div className="container px-4 py-12 relative z-10">
+      <motion.div 
+        className="max-w-3xl w-full text-center relative"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <motion.div 
+          className="mb-10 flex justify-center"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+        >
+          <ScripeIcon size={100} />
+        </motion.div>
+        
+        <motion.h1 
+          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+        >
+          Welcome to Scripe
+        </motion.h1>
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-md mx-auto text-center mb-12"
+          transition={{ duration: 0.7, delay: 0.4 }}
         >
-          <TwitterIcon className="h-12 w-12 mx-auto text-brand-purple mb-6" />
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Welcome to <span className="text-gradient">Scripe</span>
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Let's create algorithm-optimized Twitter content that helps you grow your audience.
+          <p className="text-xl text-gray-300 mb-2">
+            Scripe is the content workspace to share valuable posts everyday.
+          </p>
+          <p className="text-xl text-gray-300 mb-8">
+            Receive tailored, algorithm-optimized Twitter posts in &lt;5 minutes.
           </p>
         </motion.div>
         
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
+        <motion.div 
+          className="flex flex-col items-center justify-center mb-12 max-w-md mx-auto"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="max-w-md mx-auto"
+          transition={{ duration: 0.7, delay: 0.5 }}
         >
-          <Card className="glass-card border border-gray-100 dark:border-gray-800">
-            <div className="p-6">
-              <WelcomeCard />
-              
-              <div className="mt-8">
-                <Link to="/language-selection">
-                  <Button className="w-full primary-button group">
-                    Continue
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
+          <Button 
+            onClick={nextStep} 
+            variant="gradient"
+            className="w-full py-4 px-8 rounded-full text-lg font-medium mb-4 flex items-center justify-center transition-all duration-300"
+          >
+            Get started
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 text-sm"
+            onClick={handleSkipToDashboard}
+          >
+            Skip to dashboard
+          </Button>
         </motion.div>
-      </div>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.6 }}
+        >
+          <ProgressDots total={8} current={0} />
+        </motion.div>
+        
+        {/* Features highlight */}
+        <motion.div 
+          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.7 }}
+        >
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">🚀</span>
+            </div>
+            <h3 className="text-lg font-medium mb-2">AI-Powered Content</h3>
+            <p className="text-gray-400 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
+          </div>
+          
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">📊</span>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Engagement Analytics</h3>
+            <p className="text-gray-400 text-sm">Track performance metrics and optimize your content strategy with detailed insights.</p>
+          </div>
+          
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">⏱️</span>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Save Time</h3>
+            <p className="text-gray-400 text-sm">Create weeks of content in minutes and schedule posts for optimal engagement times.</p>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
