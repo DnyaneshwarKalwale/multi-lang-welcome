@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -11,12 +11,46 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { useNavigate } from "react-router-dom";
+
+// Manually define steps for direct navigation
+const allSteps = [
+  "welcome",
+  "team-selection",
+  "team-workspace",
+  "team-invite",
+  "theme-selection",
+  "language-selection",
+  "post-format",
+  "post-frequency",
+  "registration",
+  "extension-install",
+  "completion",
+  "dashboard"
+];
 
 export default function PostFormatPage() {
-  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress, workspaceType } = useOnboarding();
   const { current, total } = getStepProgress();
   const [postLength, setPostLength] = React.useState(50);
   const [hoveredFormat, setHoveredFormat] = React.useState<string | null>(null);
+  const navigate = useNavigate();
+
+  // Debug logging for postFormat
+  useEffect(() => {
+    console.log("Current postFormat:", postFormat);
+  }, [postFormat]);
+
+  // Function to get applicable steps based on workspace type
+  const getApplicableSteps = (): string[] => {
+    if (workspaceType === "personal") {
+      // Skip team-workspace and team-invite steps for personal accounts
+      return allSteps.filter(step => 
+        step !== "team-workspace" && step !== "team-invite"
+      );
+    }
+    return [...allSteps]; // Return a copy to avoid mutations
+  };
 
   const formatOptions = [
     {
@@ -55,6 +89,51 @@ export default function PostFormatPage() {
       preview: "✨ BIG NEWS! ✨\n\nOur new product is here! 🚀\n\n💯 Faster workflow\n⏱️ Saves 5 hours/week\n📈 34% more engagement\n\nTry it now! 👇\n[link]"
     }
   ];
+
+  // Handle format selection with logging
+  const handleFormatSelect = (formatId: string) => {
+    console.log("Setting format to:", formatId);
+    setPostFormat(formatId as any);
+  };
+
+  // Handle continue button click with logging
+  const handleContinue = () => {
+    console.log("Continue button clicked");
+    console.log("Current postFormat:", postFormat);
+    
+    if (postFormat) {
+      console.log("Saving selected format:", postFormat);
+      
+      // Try to save the format to localStorage as a backup
+      localStorage.setItem('selectedPostFormat', postFormat);
+      
+      // Determine the next page directly
+      const steps = getApplicableSteps();
+      const currentIndex = steps.indexOf("post-format");
+      
+      console.log("Current step index:", currentIndex, "in steps:", steps);
+      
+      if (currentIndex >= 0 && currentIndex < steps.length - 1) {
+        const nextPage = steps[currentIndex + 1];
+        console.log("Navigating directly to:", nextPage);
+        
+        // First try the nextStep function
+        try {
+          nextStep();
+        } catch (e) {
+          console.error("Error calling nextStep:", e);
+        }
+        
+        // Then use direct navigation as a fallback
+        setTimeout(() => {
+          console.log("Using direct navigation fallback");
+          navigate(`/onboarding/${nextPage}`);
+        }, 100);
+      }
+    } else {
+      console.log("Can't proceed - no format selected");
+    }
+  };
 
   // Animation variants
   const fadeIn = {
@@ -224,7 +303,7 @@ export default function PostFormatPage() {
                   transition-all hover:bg-gray-800/70 hover:shadow-lg
                   ${postFormat === format.id ? 'ring-2 ring-indigo-600 shadow-glow' : 'opacity-80'}
                 `}
-                onClick={() => setPostFormat(format.id)}
+                onClick={() => handleFormatSelect(format.id)}
                 onMouseEnter={() => setHoveredFormat(format.id)}
                 onMouseLeave={() => setHoveredFormat(null)}
                 variants={itemVariants}
@@ -325,7 +404,7 @@ export default function PostFormatPage() {
           transition={{ delay: 0.8 }}
         >
           <Button 
-            onClick={nextStep}
+            onClick={handleContinue}
             disabled={!postFormat}
             variant="gradient"
             animation="pulse"
@@ -335,6 +414,14 @@ export default function PostFormatPage() {
             <span>Continue</span>
             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
           </Button>
+        </motion.div>
+        
+        {/* Debug information */}
+        <motion.div 
+          className="text-xs text-gray-600 text-center mb-4"
+          variants={fadeIn}
+        >
+          Selected format: {postFormat || "none"}
         </motion.div>
         
         <motion.div
