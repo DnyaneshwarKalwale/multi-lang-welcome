@@ -70,9 +70,8 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
             // If onboarding is completed, navigate to dashboard
             navigate('/dashboard');
           } else {
-            // If no saved step, start at the beginning of onboarding or use success callback
-            if (onSuccess) onSuccess();
-            else navigate("/onboarding/welcome");
+            // If no saved step, start at the beginning of onboarding
+            navigate("/onboarding/welcome");
           }
           
           // Close the login sheet
