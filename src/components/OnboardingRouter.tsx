@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -15,7 +16,11 @@ import ExtensionInstallPage from "@/pages/ExtensionInstallPage";
 import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
 
-export function OnboardingRouter() {
+interface OnboardingRouterProps {
+  children?: React.ReactNode;
+}
+
+export function OnboardingRouter({ children }: OnboardingRouterProps) {
   const { workspaceType, currentStep, saveProgress } = useOnboarding();
   const { user } = useAuth();
   const location = useLocation();

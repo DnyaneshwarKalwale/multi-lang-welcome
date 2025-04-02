@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, useState } from "react";
@@ -135,7 +136,7 @@ function App() {
           <AuthProvider>
             <OnboardingProvider>
               <CustomNavbar />
-              <Toaster position="top-center" />
+              <Toaster />
               <Routes>
                 <Route path="/" element={<CustomIndex />} />
                 <Route path="/registration" element={<RegistrationPage />} />
@@ -150,21 +151,11 @@ function App() {
                   />
                   <Route
                     path="/dashboard"
-                    element={
-                      <OnboardingRouter
-                        component={<DashboardPage />}
-                        redirectTo="/language-selection"
-                      />
-                    }
+                    element={<DashboardPage />}
                   />
                   <Route
                     path="/team-workspace"
-                    element={
-                      <OnboardingRouter
-                        component={<TeamWorkspacePage />}
-                        redirectTo="/language-selection"
-                      />
-                    }
+                    element={<TeamWorkspacePage />}
                   />
 
                   {/* Onboarding routes */}
