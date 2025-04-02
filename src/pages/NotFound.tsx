@@ -1,13 +1,11 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileQuestion, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { useContext } from "react";
-import { AuthContext } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NotFound() {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useAuth();
   
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center p-4 bg-gradient-to-b from-white to-brand-light/50 dark:from-gray-900 dark:to-brand-dark/50">
