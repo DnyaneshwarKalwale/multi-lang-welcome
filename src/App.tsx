@@ -134,6 +134,7 @@ function App() {
                 <Route path="/" element={<CustomIndex />} />
                 <Route path="/registration" element={<RegistrationPage />} />
                 <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+                <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
                 <Route path="/verify" element={<VerifyEmailPage />} />
 
                 {/* Public onboarding routes */}
