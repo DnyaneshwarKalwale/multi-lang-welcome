@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 const config = {
@@ -52,30 +53,9 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // New modern color palette
-        'brand': {
-          primary: '#6366f1', // Indigo
-          secondary: '#10b981', // Emerald
-          accent: '#f59e0b', // Amber
-          success: '#22c55e', // Green
-          warning: '#f97316', // Orange
-          error: '#ef4444', // Red
-          info: '#3b82f6', // Blue
-          purple: '#a855f7', // Purple
-          pink: '#ec4899', // Pink
-          gray: {
-            50: '#f9fafb',
-            100: '#f3f4f6',
-            200: '#e5e7eb',
-            300: '#d1d5db',
-            400: '#9ca3af',
-            500: '#6b7280',
-            600: '#4b5563',
-            700: '#374151',
-            800: '#1f2937',
-            900: '#111827',
-          },
-        },
+        // Add Scripe brand colors
+        'scripe-purple': '#7c5af5',
+        'scripe-teal': '#4de3c7',
       },
       borderRadius: {
         lg: "var(--radius)",

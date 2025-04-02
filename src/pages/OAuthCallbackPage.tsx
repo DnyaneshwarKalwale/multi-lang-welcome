@@ -1,186 +1,146 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { Loader2, CheckCircle2, XCircle, Sparkles, Zap } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { ScripeLogotype } from '@/components/ScripeIcon';
+import axios from 'axios';
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { nextStep } = useOnboarding();
-  const { t } = useLanguage();
-  const { login } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [error, setError] = useState("");
-
-  // Animation variants
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>('Authenticating...');
+  
   useEffect(() => {
-    const handleOAuthCallback = async () => {
+    const processAuth = async () => {
+      // Parse query parameters
+      const params = new URLSearchParams(location.search);
+      const token = params.get('token');
+      const onboarding = params.get('onboarding') === 'true';
+      const errorParam = params.get('error');
+      
+      console.log('OAuth callback received with params:', { 
+        token: token ? '(token present)' : '(no token)', 
+        onboarding, 
+        error: errorParam 
+      });
+      
+      if (errorParam) {
+        console.error('OAuth error from server:', errorParam);
+        setError(errorParam);
+        setTimeout(() => navigate('/'), 3000);
+        return;
+      }
+      
+      if (!token) {
+        console.error('No authentication token received');
+        setError('No authentication token received');
+        setTimeout(() => navigate('/'), 3000);
+        return;
+      }
+      
+      // Set token in localStorage
+      localStorage.setItem('token', token);
+      
+      // Fetch user info to verify token works
+      setStatus('Verifying authentication...');
       try {
-        const params = new URLSearchParams(location.search);
-        const token = params.get('token');
-        const onboarding = params.get('onboarding') === 'true';
-        const error = params.get('error');
-
-        if (error) {
-          setStatus('error');
-          setError(t('oauthError'));
-          return;
-        }
-
-        if (!token) {
-          setStatus('error');
-          setError(t('noCodeProvided'));
-          return;
-        }
-
-        // Store the token in localStorage
-        localStorage.setItem('token', token);
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        const response = await axios.get(`${baseApiUrl}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         
-        // Set onboarding status
-        if (onboarding) {
-          localStorage.setItem('onboardingStep', 'welcome');
-          localStorage.setItem('onboardingCompleted', 'false');
-        } else {
-          localStorage.setItem('onboardingCompleted', 'true');
-        }
-
-        // Set success status
-        setStatus('success');
-
-        // Navigate after a short delay
-        setTimeout(() => {
+        const userData = response.data.user;
+        console.log('User authenticated successfully:', { 
+          id: userData.id, 
+          email: userData.email || '(no email)',
+          onboardingCompleted: userData.onboardingCompleted,
+          authMethod: userData.authMethod
+        });
+        
+        // Store onboarding status in localStorage for other components to use
+        localStorage.setItem('onboardingCompleted', userData.onboardingCompleted ? 'true' : 'false');
+      } catch (error) {
+        console.error('Error verifying user data:', error);
+        // Continue anyway since we have a token
+      }
+      
+      // Check for pending invitations
+      setStatus('Checking for invitations...');
+      try {
+        // Don't check if user has skipped invitations
+        const skippedInvitations = localStorage.getItem('skippedInvitations');
+        if (skippedInvitations === 'true') {
+          console.log('Skipping invitation check - user previously skipped');
+          // Redirect based on onboarding status
           if (onboarding) {
             navigate('/onboarding/welcome');
           } else {
             navigate('/dashboard');
           }
-        }, 2000);
-
+          return;
+        }
+        
+        // Fetch invitations
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        try {
+          const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const invitations = response.data.data || [];
+          console.log(`Found ${invitations.length} pending invitations`);
+          
+          // If has invitations, go to pending invitations page
+          if (invitations.length > 0) {
+            navigate('/pending-invitations');
+            return;
+          }
+        } catch (invError) {
+          console.error('Failed to check invitations:', invError);
+          // If the endpoint doesn't exist or returns an error, continue with normal flow
+          // This prevents the app from getting stuck during development
+        }
       } catch (err) {
-        setStatus('error');
-        setError(t('oauthError'));
+        console.error('Failed to check invitations:', err);
+        // Continue with normal flow even if invitation check fails
+      }
+      
+      // Normal flow - redirect based on onboarding status
+      console.log('Redirecting to', onboarding ? 'onboarding' : 'dashboard');
+      if (onboarding) {
+        navigate('/onboarding/welcome');
+      } else {
+        navigate('/dashboard');
       }
     };
-
-    handleOAuthCallback();
-  }, [location, navigate, t]);
+    
+    processAuth();
+  }, [location, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 py-6 sm:py-10 gradient-dark text-white relative overflow-hidden">
-      {/* Modern gradient background */}
-      <div className="absolute inset-0 opacity-30 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-brand-primary/20 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-brand-secondary/20 blur-[120px]"></div>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
+      <ScripeLogotype className="mb-8" />
+      
+      <div className="max-w-md text-center">
+        {error ? (
+          <>
+            <h1 className="text-2xl font-bold text-red-500 mb-4">Authentication Failed</h1>
+            <p className="text-gray-400 mb-6">
+              {error}. You'll be redirected to the login page.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-center mb-6">
+              <Loader2 className="h-12 w-12 text-primary animate-spin" />
+            </div>
+            <h1 className="text-2xl font-bold mb-4">Authentication Successful</h1>
+            <p className="text-gray-400">
+              {status}
+            </p>
+          </>
+        )}
       </div>
-      
-      {/* Decorative elements */}
-      <motion.div 
-        className="absolute opacity-10 pointer-events-none hidden sm:block"
-        animate={{ 
-          y: [0, -15, 0],
-          x: [0, 10, 0],
-          rotate: [0, 5, 0],
-        }}
-        transition={{ 
-          repeat: Infinity, 
-          duration: 8, 
-          ease: "easeInOut" 
-        }}
-        style={{ top: '15%', right: '10%' }}
-      >
-        <Sparkles size={80} className="text-brand-primary" />
-      </motion.div>
-      
-      <motion.div 
-        className="absolute opacity-10 pointer-events-none hidden sm:block"
-        animate={{ 
-          y: [0, 20, 0],
-          x: [0, -15, 0],
-          rotate: [0, -5, 0],
-        }}
-        transition={{ 
-          repeat: Infinity, 
-          duration: 10, 
-          ease: "easeInOut",
-          delay: 1 
-        }}
-        style={{ bottom: '20%', left: '8%' }}
-      >
-        <Zap size={60} className="text-brand-pink" />
-      </motion.div>
-      
-      <motion.div 
-        className="max-w-md w-full px-2 sm:px-4 text-center" 
-        variants={fadeIn}
-        initial="initial"
-        animate="animate"
-      >
-        <motion.div 
-          className="mb-4 sm:mb-8 flex justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <ScripeIconRounded className="w-16 h-16 sm:w-20 sm:h-20" />
-        </motion.div>
-        
-        <motion.div 
-          className="flex flex-col items-center justify-center"
-          variants={fadeIn}
-          transition={{ delay: 0.2 }}
-        >
-          {status === 'loading' && (
-            <>
-              <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-brand-primary animate-spin mb-4" />
-              <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-brand-gray-900 dark:text-white">
-                {t('connecting')}
-              </h2>
-              <p className="text-brand-gray-300">
-                {t('connectingDescription')}
-              </p>
-            </>
-          )}
-          
-          {status === 'success' && (
-            <>
-              <CheckCircle2 className="w-12 h-12 sm:w-16 sm:h-16 text-brand-success mb-4" />
-              <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-brand-gray-900 dark:text-white">
-                {t('connected')}
-              </h2>
-              <p className="text-brand-gray-300">
-                {t('connectedDescription')}
-              </p>
-            </>
-          )}
-          
-          {status === 'error' && (
-            <>
-              <XCircle className="w-12 h-12 sm:w-16 sm:h-16 text-brand-error mb-4" />
-              <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-brand-gray-900 dark:text-white">
-                {t('connectionError')}
-              </h2>
-              <p className="text-brand-gray-300 mb-4">
-                {error}
-              </p>
-              <button
-                onClick={() => navigate(-1)}
-                className="text-brand-primary hover:text-brand-primary/80 transition-colors"
-              >
-                {t('tryAgain')}
-              </button>
-            </>
-          )}
-        </motion.div>
-      </motion.div>
     </div>
   );
 } 

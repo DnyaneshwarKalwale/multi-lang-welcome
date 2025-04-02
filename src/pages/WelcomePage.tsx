@@ -1,179 +1,128 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ScripeIcon } from "@/components/ScripeIcon";
 import { ContinueButton } from "@/components/ContinueButton";
+import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { Sparkles, Zap, Globe2, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function WelcomePage() {
   const { nextStep } = useOnboarding();
-  const { t } = useLanguage();
+  const navigate = useNavigate();
 
-  // Animation variants
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5 }
-    }
+  const handleSkipToDashboard = () => {
+    // Mark onboarding as completed in localStorage
+    localStorage.setItem('onboardingCompleted', 'true');
+    navigate("/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 py-6 sm:py-10 gradient-dark text-white relative overflow-hidden">
-      {/* Modern gradient background */}
-      <div className="absolute inset-0 opacity-30 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-brand-primary/20 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-brand-secondary/20 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
       </div>
       
-      {/* Decorative elements */}
       <motion.div 
-        className="absolute opacity-10 pointer-events-none hidden sm:block"
-        animate={{ 
-          y: [0, -15, 0],
-          x: [0, 10, 0],
-          rotate: [0, 5, 0],
-        }}
-        transition={{ 
-          repeat: Infinity, 
-          duration: 8, 
-          ease: "easeInOut" 
-        }}
-        style={{ top: '15%', right: '10%' }}
-      >
-        <Sparkles size={80} className="text-brand-primary" />
-      </motion.div>
-      
-      <motion.div 
-        className="absolute opacity-10 pointer-events-none hidden sm:block"
-        animate={{ 
-          y: [0, 20, 0],
-          x: [0, -15, 0],
-          rotate: [0, -5, 0],
-        }}
-        transition={{ 
-          repeat: Infinity, 
-          duration: 10, 
-          ease: "easeInOut",
-          delay: 1 
-        }}
-        style={{ bottom: '20%', left: '8%' }}
-      >
-        <Zap size={60} className="text-brand-pink" />
-      </motion.div>
-      
-      <motion.div 
-        className="max-w-4xl w-full px-2 sm:px-4" 
-        variants={fadeIn}
-        initial="initial"
-        animate="animate"
+        className="max-w-3xl w-full text-center relative"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
       >
         <motion.div 
-          className="mb-4 sm:mb-8 flex justify-center"
+          className="mb-10 flex justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <ScripeIconRounded className="w-16 h-16 sm:w-20 sm:h-20" />
+          <ScripeIcon size={100} />
         </motion.div>
         
         <motion.h1 
-          className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center bg-clip-text text-transparent gradient-primary"
-          variants={fadeIn}
-          transition={{ delay: 0.2 }}
+          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
         >
-          {t('welcomeTitle')}
+          Welcome to Scripe
         </motion.h1>
         
-        <motion.p 
-          className="text-base sm:text-xl text-brand-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto px-2"
-          variants={fadeIn}
-          transition={{ delay: 0.3 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
         >
-          {t('welcomeDescription')}
-        </motion.p>
-        
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-10"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div 
-            className="card-modern p-4 sm:p-6 flex flex-col items-center text-center"
-            variants={itemVariants}
-          >
-            <div className="p-4 sm:p-6 rounded-full mb-4 sm:mb-6 bg-brand-primary/20">
-              <Globe2 className="w-12 h-12 sm:w-16 sm:h-16 text-brand-primary" />
-            </div>
-            <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-brand-gray-900 dark:text-white">
-              {t('welcomeFeature1Title')}
-            </h3>
-            <p className="text-sm sm:text-base text-brand-gray-600 dark:text-brand-gray-300">
-              {t('welcomeFeature1Description')}
-            </p>
-          </motion.div>
-          
-          <motion.div 
-            className="card-modern p-4 sm:p-6 flex flex-col items-center text-center"
-            variants={itemVariants}
-          >
-            <div className="p-4 sm:p-6 rounded-full mb-4 sm:mb-6 bg-brand-secondary/20">
-              <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-brand-secondary" />
-            </div>
-            <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-brand-gray-900 dark:text-white">
-              {t('welcomeFeature2Title')}
-            </h3>
-            <p className="text-sm sm:text-base text-brand-gray-600 dark:text-brand-gray-300">
-              {t('welcomeFeature2Description')}
-            </p>
-          </motion.div>
-          
-          <motion.div 
-            className="card-modern p-4 sm:p-6 flex flex-col items-center text-center"
-            variants={itemVariants}
-          >
-            <div className="p-4 sm:p-6 rounded-full mb-4 sm:mb-6 bg-brand-accent/20">
-              <Zap className="w-12 h-12 sm:w-16 sm:h-16 text-brand-accent" />
-            </div>
-            <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-brand-gray-900 dark:text-white">
-              {t('welcomeFeature3Title')}
-            </h3>
-            <p className="text-sm sm:text-base text-brand-gray-600 dark:text-brand-gray-300">
-              {t('welcomeFeature3Description')}
-            </p>
-          </motion.div>
+          <p className="text-xl text-gray-300 mb-2">
+            Scripe is the content workspace to share valuable posts everyday.
+          </p>
+          <p className="text-xl text-gray-300 mb-8">
+            Receive tailored, algorithm-optimized Twitter posts in &lt;5 minutes.
+          </p>
         </motion.div>
         
         <motion.div 
-          className="flex flex-col items-center gap-4 sm:gap-6"
-          variants={fadeIn}
-          transition={{ delay: 0.5 }}
+          className="flex flex-col items-center justify-center mb-12 max-w-md mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.5 }}
         >
-          <ContinueButton 
-            onClick={nextStep}
-            className="button-primary"
+          <Button 
+            onClick={nextStep} 
+            variant="gradient"
+            className="w-full py-4 px-8 rounded-full text-lg font-medium mb-4 flex items-center justify-center transition-all duration-300"
           >
-            {t('getStarted')}
-          </ContinueButton>
+            Get started
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 text-sm"
+            onClick={handleSkipToDashboard}
+          >
+            Skip to dashboard
+          </Button>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.6 }}
+        >
+          <ProgressDots total={8} current={0} />
+        </motion.div>
+        
+        {/* Features highlight */}
+        <motion.div 
+          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.7 }}
+        >
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">🚀</span>
+            </div>
+            <h3 className="text-lg font-medium mb-2">AI-Powered Content</h3>
+            <p className="text-gray-400 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
+          </div>
+          
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">📊</span>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Engagement Analytics</h3>
+            <p className="text-gray-400 text-sm">Track performance metrics and optimize your content strategy with detailed insights.</p>
+          </div>
+          
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-6 rounded-xl">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <span className="text-2xl">⏱️</span>
+            </div>
+            <h3 className="text-lg font-medium mb-2">Save Time</h3>
+            <p className="text-gray-400 text-sm">Create weeks of content in minutes and schedule posts for optimal engagement times.</p>
+          </div>
         </motion.div>
       </motion.div>
     </div>

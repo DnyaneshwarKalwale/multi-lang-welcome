@@ -1,28 +1,17 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
+import React from "react";
+import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
+import { ProgressDots } from "@/components/ProgressDots";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { 
-  Clock, 
-  Sparkles, 
-  Zap,
-  Globe2,
-  MessageSquare,
-  ArrowRight,
-  Calendar,
-  Timer,
-  CalendarDays,
-  CalendarClock,
-  Twitter
-} from "lucide-react";
+import { Calendar, Clock, CheckCircle, Twitter } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function PostFrequencyPage() {
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  const [frequency, setFrequency] = useState("daily");
-  const [isSaving, setIsSaving] = useState(false);
+  const { postFrequency, setPostFrequency, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { current, total } = getStepProgress();
+
+  const frequencyOptions = [1, 2, 3, 4, 5, 6, 7];
 
   // Animation variants
   const fadeIn = {
@@ -30,219 +19,142 @@ export default function PostFrequencyPage() {
     animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  const handleSaveFrequency = () => {
-    setIsSaving(true);
-    // Simulate saving frequency
-    setTimeout(() => {
-      setIsSaving(false);
-      navigate("/dashboard");
-    }, 2000);
-  };
-
-  const frequencyOptions = [
-    { id: "daily", label: t('daily'), icon: Calendar, description: t('dailyDescription') },
-    { id: "weekly", label: t('weekly'), icon: CalendarDays, description: t('weeklyDescription') },
-    { id: "monthly", label: t('monthly'), icon: CalendarClock, description: t('monthlyDescription') },
-    { id: "custom", label: t('custom'), icon: Timer, description: t('customDescription') }
-  ];
-
   return (
-    <div className="min-h-screen bg-brand-gray-900 text-white">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10" />
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-900 blur-[120px]"></div>
+      </div>
       
-      {/* Decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-brand-primary/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-secondary/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      </div>
-
-      {/* Content */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
-        <motion.div
-          className="w-full max-w-2xl mx-auto text-center"
+      <motion.div 
+        className="max-w-3xl w-full text-center"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.div 
+          className="flex items-center justify-center gap-2 mb-4"
           variants={fadeIn}
-          initial="initial"
-          animate="animate"
+          transition={{ delay: 0.1 }}
         >
-          {/* Header */}
-          <motion.div
-            className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-primary/20 flex items-center justify-center"
-            variants={itemVariants}
-          >
-            <Twitter className="w-12 h-12 text-brand-primary" />
-          </motion.div>
-
-          <motion.h1 
-            className="text-3xl sm:text-4xl font-bold text-white mb-4"
-            variants={itemVariants}
-          >
-            {t('setPostFrequency')}
-          </motion.h1>
-          <motion.p 
-            className="text-brand-gray-300 text-lg mb-8"
-            variants={itemVariants}
-          >
-            {t('setPostFrequencyDescription')}
-          </motion.p>
-
-          {/* Frequency options */}
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            {frequencyOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <motion.button
-                  key={option.id}
-                  onClick={() => setFrequency(option.id)}
-                  className={`card-modern p-6 text-left transition-all duration-300 ${
-                    frequency === option.id
-                      ? "border-brand-primary bg-brand-primary/10"
-                      : "hover:border-brand-gray-600"
-                  }`}
-                  variants={itemVariants}
-                >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-brand-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">{option.label}</h3>
-                  </div>
-                  <p className="text-brand-gray-300">{option.description}</p>
-                </motion.button>
-              );
-            })}
-          </motion.div>
-
-          {/* Feature cards */}
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-brand-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('consistentPosting')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('consistentPostingDescription')}</p>
-            </motion.div>
-
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-brand-secondary" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('optimalTiming')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('optimalTimingDescription')}</p>
-            </motion.div>
-
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-accent/20 flex items-center justify-center">
-                  <Globe2 className="w-5 h-5 text-brand-accent" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('audienceEngagement')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('audienceEngagementDescription')}</p>
-            </motion.div>
-
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-pink/20 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-brand-pink" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('contentStrategy')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('contentStrategyDescription')}</p>
-            </motion.div>
-          </motion.div>
-
-          {/* Action buttons */}
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-          >
-            <Button
-              onClick={handleSaveFrequency}
-              disabled={isSaving}
-              className="bg-brand-primary hover:bg-brand-primary/90 text-white"
-            >
-              {isSaving ? t('saving') : t('saveFrequency')}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button
-              onClick={() => navigate("/dashboard")}
-              variant="outline"
-              className="text-brand-gray-300 border-brand-gray-700 hover:bg-brand-gray-800"
-            >
-              {t('skipForNow')}
-            </Button>
-          </motion.div>
+          <Twitter size={20} className="text-blue-400" />
+          <span className="text-blue-400 font-medium">Twitter Schedule</span>
         </motion.div>
-      </div>
+        
+        <motion.h1 
+          className="text-4xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400"
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
+          How often do you want to tweet per week?
+        </motion.h1>
+        <motion.p 
+          className="text-lg text-gray-400 mb-10"
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
+        >
+          We recommend tweeting at least 1-2 times per week for optimal engagement.
+        </motion.p>
+        
+        <motion.div 
+          className="flex justify-center gap-2 mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          {frequencyOptions.map((frequency) => (
+            <Button
+              key={frequency}
+              variant={postFrequency === frequency ? "default" : "outline"}
+              onClick={() => setPostFrequency(frequency as any)}
+              className={`
+                w-16 h-16 rounded-xl text-xl font-semibold p-0
+                ${postFrequency === frequency 
+                  ? 'bg-blue-600 hover:bg-blue-700 border-none text-white' 
+                  : 'border-gray-700 text-gray-400 hover:border-blue-500 hover:text-blue-500'}
+              `}
+            >
+              {frequency}
+            </Button>
+          ))}
+        </motion.div>
+        
+        <motion.div 
+          className="mb-24 relative"
+          variants={fadeIn}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="max-w-md mx-auto p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800">
+            <div className="flex items-center mb-6">
+              <Calendar className="text-blue-500 mr-3" size={28} />
+              <h3 className="text-xl font-medium">Posting Schedule</h3>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1 mb-6">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                <div 
+                  key={day + i} 
+                  className={`
+                    h-12 flex items-center justify-center rounded 
+                    ${i < (postFrequency || 0) ? 'bg-blue-600/20 border border-blue-600/50' : 'bg-gray-800 border border-gray-700'}
+                  `}
+                >
+                  <span className="text-sm font-medium">{day}</span>
+                  {i < (postFrequency || 0) && (
+                    <CheckCircle className="ml-1 text-blue-500" size={12} />
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex items-center justify-between border-t border-gray-800 pt-4">
+              <div className="flex items-center text-gray-400">
+                <Clock size={16} className="mr-2" />
+                <span className="text-sm">Optimal tweeting time</span>
+              </div>
+              <span className="text-sm text-white bg-blue-600/20 px-3 py-1 rounded border border-blue-600/50">
+                9:00 - 11:00 AM
+              </span>
+            </div>
+          </div>
+          
+          {postFrequency && (
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-blue-600/20 border border-blue-600 rounded-lg text-white text-sm">
+              <strong className="mr-1">AI will suggest:</strong> 
+              {postFrequency === 1 ? 'One tweet per week' : `${postFrequency} tweets per week`}
+            </div>
+          )}
+        </motion.div>
+        
+        <motion.div 
+          className="flex justify-between mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.6 }}
+        >
+          <BackButton 
+            onClick={prevStep}
+            variant="twitter"
+          >
+            Back
+          </BackButton>
+          <ContinueButton 
+            onClick={nextStep}
+            disabled={!postFrequency}
+            variant="twitter"
+          >
+            Continue
+          </ContinueButton>
+        </motion.div>
+        
+        <motion.div
+          variants={fadeIn}
+          transition={{ delay: 0.7 }}
+          className="flex flex-col items-center"
+        >
+          <ProgressDots total={total} current={current} color="blue" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

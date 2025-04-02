@@ -1,247 +1,139 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { Button } from "@/components/ui/button";
-import { 
-  Mail, 
-  Sparkles, 
-  Zap,
-  Globe2,
-  MessageSquare,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  RefreshCw,
-  Twitter
-} from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ScripeLogotype } from '@/components/ScripeIcon';
+import { Button } from '@/components/ui/button';
+import { authApi } from '@/services/api';
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function VerifyEmailPage() {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useLanguage();
-  const [isResending, setIsResending] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const { token } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [verificationResult, setVerificationResult] = useState<'pending' | 'success' | 'error'>('pending');
+  const [error, setError] = useState<string | null>(null);
+  const [email] = useState<string | null>(location.state?.email || null);
 
-  // Animation variants
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.3
+  useEffect(() => {
+    const verifyToken = async () => {
+      // Only attempt verification if a token is provided
+      if (token) {
+        try {
+          setLoading(true);
+          const response = await authApi.verifyEmail(token);
+          setVerificationResult('success');
+          
+          // Store the token
+          localStorage.setItem('token', response.token);
+          
+          // After 2 seconds, redirect to onboarding
+          setTimeout(() => {
+            navigate('/onboarding/welcome');
+          }, 2000);
+        } catch (err: any) {
+          setVerificationResult('error');
+          setError(err.response?.data?.error || 'Verification failed. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // No token means just showing instructions
+        setLoading(false);
       }
-    }
-  };
+    };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  const handleResendVerification = () => {
-    setIsResending(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsResending(false);
-    }, 2000);
-  };
-
-  const handleCheckVerification = () => {
-    // Simulate checking verification status
-    setIsVerified(true);
-  };
+    verifyToken();
+  }, [token, navigate]);
 
   return (
-    <div className="min-h-screen bg-brand-gray-900 text-white">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10" />
-      
-      {/* Decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-brand-primary/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-secondary/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+    <div className="min-h-screen bg-black flex flex-col items-center p-6 md:p-8">
+      <div className="self-start mb-12">
+        <ScripeLogotype />
       </div>
-
-      {/* Content */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
-        <motion.div
-          className="w-full max-w-2xl mx-auto text-center"
-          variants={fadeIn}
-          initial="initial"
-          animate="animate"
-        >
-          {/* Header */}
-          <motion.div
-            className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-primary/20 flex items-center justify-center"
-            variants={itemVariants}
-          >
-            <Twitter className="w-12 h-12 text-brand-primary" />
-          </motion.div>
-
-          <motion.h1 
-            className="text-3xl sm:text-4xl font-bold text-white mb-4"
-            variants={itemVariants}
-          >
-            {t('verifyEmail')}
-          </motion.h1>
-          <motion.p 
-            className="text-brand-gray-300 text-lg mb-8"
-            variants={itemVariants}
-          >
-            {t('verifyEmailDescription')}
-          </motion.p>
-
-          {/* Status section */}
-          <motion.div 
-            className="card-modern p-6 mb-8"
-            variants={itemVariants}
-          >
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              {isVerified ? (
-                <CheckCircle2 className="w-6 h-6 text-brand-primary" />
-              ) : (
-                <Clock className="w-6 h-6 text-brand-secondary" />
-              )}
-              <h3 className="text-lg font-semibold text-white">
-                {isVerified ? t('emailVerified') : t('verificationPending')}
-              </h3>
-            </div>
-            <p className="text-brand-gray-300">
-              {isVerified 
-                ? t('emailVerifiedDescription')
-                : t('verificationPendingDescription')}
+      
+      <div className="max-w-md w-full text-center">
+        {!token ? (
+          // No token - show verification instructions
+          <>
+            <h1 className="text-3xl font-bold mb-6">Check your inbox</h1>
+            <p className="text-gray-400 mb-8">
+              We've sent a verification link to {email || 'your email address'}. 
+              Please check your inbox and click the link to verify your account.
             </p>
-          </motion.div>
-
-          {/* Feature cards */}
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
+            <p className="text-gray-500 mb-8">
+              The email should arrive within a few minutes. If you don't see it, check your spam folder.
+            </p>
+            <Button 
+              onClick={() => navigate('/')}
+              className="bg-primary hover:bg-primary/90 px-8 py-2"
             >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-brand-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('secureAccount')}</h3>
+              Return to login
+            </Button>
+          </>
+        ) : (
+          // Token provided - show verification status
+          loading ? (
+            // Loading state
+            <div className="flex flex-col items-center justify-center">
+              <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Verifying your email</h2>
+              <p className="text-gray-400">Please wait while we verify your email address...</p>
+            </div>
+          ) : verificationResult === 'success' ? (
+            // Success state
+            <div className="flex flex-col items-center justify-center">
+              <div className="bg-green-900/20 rounded-full p-4 mb-4">
+                <CheckCircle2 className="h-12 w-12 text-green-500" />
               </div>
-              <p className="text-brand-gray-300">{t('secureAccountDescription')}</p>
-            </motion.div>
-
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-brand-secondary" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('accessFeatures')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('accessFeaturesDescription')}</p>
-            </motion.div>
-
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-accent/20 flex items-center justify-center">
-                  <Globe2 className="w-5 h-5 text-brand-accent" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('multiLanguage')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('multiLanguageDescription')}</p>
-            </motion.div>
-
-            <motion.div 
-              className="card-modern p-4 sm:p-6"
-              variants={itemVariants}
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-brand-pink/20 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-brand-pink" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">{t('contentStrategy')}</h3>
-              </div>
-              <p className="text-brand-gray-300">{t('contentStrategyDescription')}</p>
-            </motion.div>
-          </motion.div>
-
-          {/* Action buttons */}
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-          >
-            {isVerified ? (
-              <Button
-                onClick={() => navigate("/dashboard")}
-                className="bg-brand-primary hover:bg-brand-primary/90 text-white"
+              <h2 className="text-2xl font-bold mb-2">Email verified successfully!</h2>
+              <p className="text-gray-400 mb-4">Your email has been verified. You'll be redirected to continue the onboarding process.</p>
+              <Alert variant="default" className="bg-gray-800 border-gray-700 mb-6">
+                <AlertTitle>Redirecting you...</AlertTitle>
+                <AlertDescription>
+                  You'll be redirected automatically in a few seconds.
+                </AlertDescription>
+              </Alert>
+              <Button 
+                onClick={() => navigate('/onboarding/welcome')}
+                className="bg-primary hover:bg-primary/90 px-8 py-2"
               >
-                {t('goToDashboard')}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                Continue to onboarding
               </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={handleResendVerification}
-                  disabled={isResending}
-                  className="bg-brand-primary hover:bg-brand-primary/90 text-white"
-                >
-                  {isResending ? t('resending') : t('resendVerification')}
-                  <RefreshCw className="w-4 h-4 ml-2" />
-                </Button>
-                <Button
-                  onClick={handleCheckVerification}
+            </div>
+          ) : (
+            // Error state
+            <div className="flex flex-col items-center justify-center">
+              <div className="bg-red-900/20 rounded-full p-4 mb-4">
+                <AlertCircle className="h-12 w-12 text-red-500" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Verification failed</h2>
+              <p className="text-gray-400 mb-4">{error || 'An error occurred during verification.'}</p>
+              <Alert variant="destructive" className="bg-red-900/20 border-red-900 mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  The verification link may be expired or invalid. Please try again or request a new verification email.
+                </AlertDescription>
+              </Alert>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={() => navigate('/')}
                   variant="outline"
-                  className="text-brand-gray-300 border-brand-gray-700 hover:bg-brand-gray-800"
+                  className="px-6 py-2"
                 >
-                  {t('checkVerification')}
-                  <CheckCircle2 className="w-4 h-4 ml-2" />
+                  Return to login
                 </Button>
-              </>
-            )}
-          </motion.div>
-        </motion.div>
+                <Button 
+                  // Request new verification email functionality would go here
+                  onClick={() => navigate('/')}
+                  className="bg-primary hover:bg-primary/90 px-6 py-2"
+                >
+                  Request new link
+                </Button>
+              </div>
+            </div>
+          )
+        )}
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ export default function PostFormatPage() {
     {
       id: "thread",
       title: "Thread",
-      icon: <AlignLeft size={24} className="text-brand-primary" />,
+      icon: <AlignLeft size={24} className="text-blue-500" />,
       description: "Multi-tweet threads with a clear storyline",
       example: "1/ We've analyzed 1,000+ viral threads...\n2/ Here's what works consistently...\n3/ Starting with hook + promise...",
       stats: { engagement: 85, reach: 78, effort: 70 }
@@ -32,7 +32,7 @@ export default function PostFormatPage() {
     {
       id: "concise",
       title: "Concise",
-      icon: <MessageSquareText size={24} className="text-brand-secondary" />,
+      icon: <MessageSquareText size={24} className="text-cyan-500" />,
       description: "Short, impactful tweets within character limits",
       example: "Just discovered the most effective way to grow your audience without spending hours on content creation.",
       stats: { engagement: 70, reach: 65, effort: 30 }
@@ -40,7 +40,7 @@ export default function PostFormatPage() {
     {
       id: "hashtag",
       title: "Hashtag",
-      icon: <Hash size={24} className="text-brand-accent" />,
+      icon: <Hash size={24} className="text-green-500" />,
       description: "Strategic hashtags to increase tweet visibility",
       example: "This writing technique doubled my engagement rate overnight #WritingCommunity #ContentCreation #GrowthHacking",
       stats: { engagement: 60, reach: 90, effort: 40 }
@@ -48,7 +48,7 @@ export default function PostFormatPage() {
     {
       id: "visual",
       title: "Visual",
-      icon: <Image size={24} className="text-brand-warning" />,
+      icon: <Image size={24} className="text-yellow-500" />,
       description: "Image-focused tweets for better engagement",
       example: "[Image] + Caption: The before/after results speak for themselves. Swipe to see the difference.",
       stats: { engagement: 88, reach: 75, effort: 55 }
@@ -56,7 +56,7 @@ export default function PostFormatPage() {
     {
       id: "viral",
       title: "Viral",
-      icon: <Sparkles size={24} className="text-brand-purple" />,
+      icon: <Sparkles size={24} className="text-pink-500" />,
       description: "Trend-focused tweets optimized for sharing",
       example: "I tested this viral trend on 50 accounts. Only 3 techniques consistently got results. Here they are:",
       stats: { engagement: 95, reach: 85, effort: 65 }
@@ -90,20 +90,21 @@ export default function PostFormatPage() {
   };
 
   const calculateCharacterCount = () => {
+    // Map slider value to character count range
     if (postLength < 30) return "~100 characters";
     if (postLength < 70) return "~200 characters";
     return "280+ characters";
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 py-6 sm:py-10 gradient-dark text-white relative overflow-hidden">
-      {/* Modern gradient background */}
-      <div className="absolute inset-0 opacity-30 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-brand-primary/20 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-brand-secondary/20 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 py-6 sm:py-10 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-900 blur-[120px]"></div>
       </div>
       
-      {/* Decorative elements */}
+      {/* Twitter-like floating elements for decoration */}
       <motion.div 
         className="absolute opacity-10 pointer-events-none hidden sm:block"
         animate={{ 
@@ -118,7 +119,7 @@ export default function PostFormatPage() {
         }}
         style={{ top: '15%', right: '10%' }}
       >
-        <Twitter size={80} className="text-brand-primary" />
+        <Twitter size={80} className="text-blue-400" />
       </motion.div>
       
       <motion.div 
@@ -136,7 +137,7 @@ export default function PostFormatPage() {
         }}
         style={{ bottom: '20%', left: '8%' }}
       >
-        <HeartHandshake size={60} className="text-brand-pink" />
+        <HeartHandshake size={60} className="text-pink-400" />
       </motion.div>
       
       <motion.div 
@@ -154,7 +155,7 @@ export default function PostFormatPage() {
         }}
         style={{ top: '30%', left: '15%' }}
       >
-        <TrendingUp size={50} className="text-brand-success" />
+        <TrendingUp size={50} className="text-green-400" />
       </motion.div>
       
       <motion.div 
@@ -172,7 +173,7 @@ export default function PostFormatPage() {
         }}
         style={{ bottom: '30%', right: '12%' }}
       >
-        <Reply size={45} className="text-brand-info" />
+        <Reply size={45} className="text-cyan-400" />
       </motion.div>
       
       {/* Back button */}
@@ -198,7 +199,7 @@ export default function PostFormatPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center bg-clip-text text-transparent gradient-primary"
+          className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -210,12 +211,12 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.25 }}
         >
-          <Twitter size={18} className="text-brand-primary" />
-          <span className="text-brand-primary font-medium text-sm sm:text-base">Twitter Optimization</span>
+          <Twitter size={18} className="text-blue-400" />
+          <span className="text-blue-400 font-medium text-sm sm:text-base">Twitter Optimization</span>
         </motion.div>
         
         <motion.p 
-          className="text-base sm:text-xl text-brand-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto px-2"
+          className="text-base sm:text-xl text-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto px-2"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
@@ -238,28 +239,26 @@ export default function PostFormatPage() {
               <motion.div 
                 key={format.id}
                 className={`
-                  card-modern
-                  p-2 sm:p-3 flex flex-col cursor-pointer 
-                  transition-all duration-300
-                  ${postFormat === format.id ? 'ring-2 ring-brand-primary shadow-lg shadow-brand-primary/20' : 'opacity-90'}
+                  bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-lg p-2 sm:p-3 flex flex-col cursor-pointer 
+                  transition-all hover:bg-gray-800/70 hover-lift group
+                  ${postFormat === format.id ? 'ring-2 ring-blue-600 shadow-glow' : 'opacity-90'}
                 `}
                 onClick={() => setPostFormat(format.id as any)}
                 variants={itemVariants}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
-                <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-brand-gray-800/50 to-brand-gray-900/50 mb-2 sm:mb-3 relative flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-gray-800/30 to-transparent"></div>
+                <div className="w-full aspect-square rounded-md bg-gray-800/80 mb-2 sm:mb-3 relative flex items-center justify-center overflow-hidden">
                   {format.icon}
                 </div>
-                <h3 className="text-sm sm:text-base font-semibold mb-1 text-brand-gray-900 dark:text-white">{format.title}</h3>
-                <p className="text-xs sm:text-sm text-brand-gray-600 dark:text-brand-gray-300 mb-2 flex-grow">{format.description}</p>
-                <div className="text-[10px] sm:text-xs text-brand-gray-500 dark:text-brand-gray-400 bg-brand-gray-100 dark:bg-brand-gray-800/30 rounded-lg p-1.5 border border-brand-gray-200/50 dark:border-brand-gray-700/50">
+                <h3 className="text-sm sm:text-base font-semibold mb-1">{format.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-400 mb-2 flex-grow">{format.description}</p>
+                <div className="text-[10px] sm:text-xs text-gray-500 bg-gray-800/50 rounded-md p-1.5">
                   <p className="font-mono whitespace-pre-line">{format.example}</p>
                 </div>
-                <div className="mt-2 pt-2 border-t border-brand-gray-200/50 dark:border-brand-gray-700/50">
+                <div className="mt-2 pt-2 border-t border-gray-800">
                   <div className="flex justify-between text-[10px] sm:text-xs">
-                    <span className="text-brand-gray-600 dark:text-brand-gray-400">Engagement</span>
-                    <span className="text-brand-primary">{format.stats.engagement}%</span>
+                    <span className="text-gray-400">Engagement</span>
+                    <span className="text-blue-400">{format.stats.engagement}%</span>
                   </div>
                 </div>
               </motion.div>
@@ -272,10 +271,10 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <div className="w-full max-w-md card-modern p-4">
+          <div className="w-full max-w-md">
             <div className="flex justify-between mb-2">
-              <span className="text-sm sm:text-base text-brand-gray-700 dark:text-brand-gray-300">Post Length</span>
-              <span className="text-sm sm:text-base text-brand-primary">{calculateCharacterCount()}</span>
+              <span className="text-sm sm:text-base text-gray-400">Post Length</span>
+              <span className="text-sm sm:text-base text-blue-400">{calculateCharacterCount()}</span>
             </div>
             <Slider
               value={[postLength]}
@@ -289,7 +288,7 @@ export default function PostFormatPage() {
           <ContinueButton 
             onClick={nextStep}
             disabled={!postFormat}
-            className="button-primary"
+            className="w-full sm:w-auto"
           />
         </motion.div>
       </motion.div>
@@ -297,6 +296,7 @@ export default function PostFormatPage() {
       <ProgressDots 
         current={current} 
         total={total} 
+        variant="twitter"
         className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2"
       />
     </div>

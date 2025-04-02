@@ -20,7 +20,7 @@ interface LoginSheetProps {
 export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { login, error, clearError, isLoading } = useAuth();
+  const { login, error, clearError, loading } = useAuth();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,22 +30,22 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Get the backend URL from environment variable
-    const baseApiUrl = import.meta.env.VITE_API_URL;
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Redirect to backend Google auth endpoint with the correct callback URL
-    window.location.href = `${baseUrl}/api/auth/google?callback=${baseUrl}/api/auth/google/callback`;
+    // Redirect to backend Google auth endpoint with the dynamic URL
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // Get the backend URL from environment variable
-    const baseApiUrl = import.meta.env.VITE_API_URL;
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Redirect to backend Twitter auth endpoint with the correct callback URL
-    window.location.href = `${baseUrl}/api/auth/twitter?callback=${baseUrl}/api/auth/twitter/callback`;
+    // Redirect to backend Twitter auth endpoint
+    window.location.href = `${baseUrl}/api/auth/twitter`;
     onOpenChange(false);
   };
   
@@ -70,8 +70,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
             // If onboarding is completed, navigate to dashboard
             navigate('/dashboard');
           } else {
-            // If no saved step, start at the beginning of onboarding
-            navigate("/onboarding/welcome");
+            // If no saved step, start at the beginning of onboarding or use success callback
+            if (onSuccess) onSuccess();
+            else navigate("/onboarding/welcome");
           }
           
           // Close the login sheet
@@ -165,7 +166,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                   variant="outline" 
                   className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
                   onClick={handleGoogleAuth}
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
                   <span>Continue with Google</span>
@@ -177,7 +178,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                   variant="outline" 
                   className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
                   onClick={handleTwitterAuth}
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   <Twitter size={18} className="text-[#1DA1F2]" />
                   <span>Continue with Twitter</span>
@@ -239,9 +240,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                   type="submit" 
                   variant="gradient"
                   className="w-full text-white font-medium h-12 transition-all duration-200"
-                  disabled={isLoading}
+                  disabled={loading}
                 >
-                  {isLoading ? (
+                  {loading ? (
                     <div className="flex items-center justify-center">
                       <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

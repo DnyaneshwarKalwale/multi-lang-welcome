@@ -1,28 +1,29 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
+import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { 
-  Users, 
-  Mail, 
-  Plus, 
-  X,
-  Sparkles,
-  Zap,
-  Globe2,
-  MessageSquare,
-  Twitter
+  Users, X, UserPlus, Mail, 
+  UserCircle2, UserCog, UserCircle,
+  Loader2
 } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 export default function TeamInvitePage() {
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  const [invites, setInvites] = useState([{ email: "", role: "member" }]);
+  const { workspaceName, teamMembers, setTeamMembers, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { user } = useAuth();
+  const { current, total } = getStepProgress();
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<string[]>([]);
+  const [teamId, setTeamId] = useState<string | null>(null);
 
   // Animation variants
   const fadeIn = {
@@ -30,209 +31,301 @@ export default function TeamInvitePage() {
     animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.3
+  // Fetch user's teams on component mount to see if team already exists
+  useEffect(() => {
+    const fetchUserTeams = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        const response = await axios.get(
+          `${baseApiUrl}/teams`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Find a team with the current workspace name
+        const existingTeam = response.data.data.find(
+          (team: any) => team.name === workspaceName
+        );
+
+        if (existingTeam) {
+          setTeamId(existingTeam._id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch teams:", error);
       }
+    };
+
+    fetchUserTeams();
+  }, [workspaceName]);
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const addTeamMember = () => {
+    if (!newMemberEmail.trim()) {
+      setEmailError("Please enter an email address");
+      return;
     }
-  };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5 }
+    if (!validateEmail(newMemberEmail)) {
+      setEmailError("Please enter a valid email address");
+      return;
     }
+
+    if (teamMembers.some(member => member.email === newMemberEmail)) {
+      setEmailError("This email has already been added");
+      return;
+    }
+
+    setTeamMembers([...teamMembers, { email: newMemberEmail, role: "member" }]);
+    setNewMemberEmail("");
+    setEmailError("");
   };
 
-  const addInvite = () => {
-    setInvites([...invites, { email: "", role: "member" }]);
+  const removeTeamMember = (email: string) => {
+    setTeamMembers(teamMembers.filter(member => member.email !== email));
   };
 
-  const removeInvite = (index: number) => {
-    setInvites(invites.filter((_, i) => i !== index));
+  const toggleRole = (email: string) => {
+    setTeamMembers(
+      teamMembers.map(member => 
+        member.email === email 
+          ? { ...member, role: member.role === "admin" ? "member" : "admin" } 
+          : member
+      )
+    );
   };
 
-  const updateInvite = (index: number, field: "email" | "role", value: string) => {
-    const newInvites = [...invites];
-    newInvites[index] = { ...newInvites[index], [field]: value };
-    setInvites(newInvites);
-  };
+  const sendInvitations = async () => {
+    if (teamMembers.length === 0) {
+      nextStep();
+      return;
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle invite submission
-    navigate("/dashboard");
+    setIsSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error("Authentication error. Please login again.");
+        return;
+      }
+
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      
+      // First, create the team if it doesn't exist
+      let currentTeamId = teamId;
+      if (!currentTeamId) {
+        const createTeamResponse = await axios.post(
+          `${baseApiUrl}/teams`,
+          {
+            name: workspaceName,
+            description: `Team workspace for ${workspaceName}`
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        currentTeamId = createTeamResponse.data.data._id;
+        setTeamId(currentTeamId);
+      }
+      
+      // Then, send invitations to team members
+      const formattedInvitations = teamMembers.map(member => ({
+        email: member.email,
+        role: member.role === "admin" ? "admin" : "editor"
+      }));
+      
+      const inviteResponse = await axios.post(
+        `${baseApiUrl}/teams/${currentTeamId}/invitations`,
+        { invitations: formattedInvitations },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Get results of invitations
+      const results = inviteResponse.data.data.invitationResults;
+      const successfulInvites = results.filter((result: any) => result.success);
+      
+      // Store successful invites
+      const invitedEmails = successfulInvites.map((result: any) => result.email);
+      setPendingInvites(invitedEmails);
+
+      if (successfulInvites.length > 0) {
+        toast.success(`Invitations sent to ${successfulInvites.length} team members`);
+      } else {
+        toast.info("No new invitations were sent");
+      }
+      
+      nextStep();
+    } catch (error) {
+      console.error("Failed to send invitations:", error);
+      toast.error("Failed to send invitations. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-brand-gray-900 text-white">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10" />
-      
-      {/* Decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-brand-primary/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-secondary/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
       </div>
-
-      {/* Content */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
-        <motion.div
-          className="w-full max-w-2xl mx-auto"
+      
+      {/* Back button */}
+      <BackButton 
+        onClick={prevStep} 
+        absolute 
+      />
+      
+      <motion.div 
+        className="max-w-2xl w-full"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.h1 
+          className="text-4xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
           variants={fadeIn}
-          initial="initial"
-          animate="animate"
+          transition={{ delay: 0.2 }}
         >
-          {/* Header */}
-          <div className="text-center mb-8">
-            <motion.div
-              className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-primary/20 flex items-center justify-center"
-              variants={itemVariants}
+          Invite members to {workspaceName}
+        </motion.h1>
+        
+        <motion.p 
+          className="text-xl text-gray-300 mb-12 text-center"
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
+        >
+          Team members can collaborate on content creation and share analytics.
+        </motion.p>
+        
+        <motion.div 
+          className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 mb-12 border border-gray-800"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          <label className="block text-lg font-medium mb-4 text-gray-200">
+            <Mail className="inline-block mr-2" />
+            Invite team members
+          </label>
+          
+          <div className="flex mb-2">
+            <Input 
+              value={newMemberEmail}
+              onChange={(e) => {
+                setNewMemberEmail(e.target.value);
+                if (emailError) setEmailError("");
+              }}
+              placeholder="colleague@example.com"
+              className="bg-gray-800/70 border-gray-700 rounded-r-none h-12 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addTeamMember();
+                }
+              }}
+            />
+            <Button 
+              onClick={addTeamMember}
+              className="rounded-l-none bg-indigo-600 hover:bg-indigo-700 h-12"
             >
-              <Twitter className="w-12 h-12 text-brand-primary" />
-            </motion.div>
-            <motion.h1 
-              className="text-3xl sm:text-4xl font-bold text-white mb-4"
-              variants={itemVariants}
-            >
-              {t('inviteTeamMembers')}
-            </motion.h1>
-            <motion.p 
-              className="text-brand-gray-300 text-lg"
-              variants={itemVariants}
-            >
-              {t('inviteTeamDescription')}
-            </motion.p>
+              <UserPlus className="mr-2" size={18} />
+              Add
+            </Button>
           </div>
+          
+          {emailError && (
+            <p className="text-red-500 text-sm mt-1 mb-4">{emailError}</p>
+          )}
 
-          {/* Invite form */}
-          <motion.form 
-            onSubmit={handleSubmit}
-            className="space-y-6"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            {invites.map((invite, index) => (
-              <motion.div
-                key={index}
-                className="card-modern p-4 sm:p-6"
-                variants={itemVariants}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`email-${index}`} className="text-brand-gray-300">
-                        {t('emailAddress')}
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-gray-400" />
-                        <Input
-                          id={`email-${index}`}
-                          type="email"
-                          value={invite.email}
-                          onChange={(e) => updateInvite(index, "email", e.target.value)}
-                          className="pl-10 bg-brand-gray-800 border-brand-gray-700 text-white placeholder:text-brand-gray-400"
-                          placeholder={t('enterEmail')}
-                        />
-                      </div>
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-300 mb-4">
+              Team members ({teamMembers.length})
+            </label>
+            
+            {teamMembers.length === 0 ? (
+              <div className="text-center py-6 bg-gray-800/50 rounded-lg border border-gray-800">
+                <UserCircle className="mx-auto mb-2 text-gray-500" size={32} />
+                <p className="text-gray-500">No team members added yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {teamMembers.map((member) => (
+                  <div 
+                    key={member.email}
+                    className="flex items-center justify-between p-3 bg-gray-800/70 rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    <div className="flex items-center">
+                      {member.role === "admin" ? (
+                        <UserCog className="mr-3 text-indigo-400" size={20} />
+                      ) : (
+                        <UserCircle2 className="mr-3 text-blue-400" size={20} />
+                      )}
+                      <span className="text-sm">{member.email}</span>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`role-${index}`} className="text-brand-gray-300">
-                        {t('role')}
-                      </Label>
-                      <select
-                        id={`role-${index}`}
-                        value={invite.role}
-                        onChange={(e) => updateInvite(index, "role", e.target.value)}
-                        className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleRole(member.email)}
+                        className="text-xs hover:bg-gray-700/70"
                       >
-                        <option value="member">{t('member')}</option>
-                        <option value="admin">{t('admin')}</option>
-                        <option value="editor">{t('editor')}</option>
-                      </select>
+                        {member.role === "admin" ? "Admin" : "Member"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeTeamMember(member.email)}
+                        className="text-gray-400 hover:text-red-500 hover:bg-gray-700/70"
+                      >
+                        <X size={16} />
+                      </Button>
                     </div>
                   </div>
-
-                  {invites.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeInvite(index)}
-                      className="ml-4 p-2 text-brand-gray-400 hover:text-brand-error transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-
-            <motion.div
-              variants={itemVariants}
-              className="flex justify-center"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addInvite}
-                className="text-brand-primary border-brand-primary hover:bg-brand-primary/10"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {t('addAnother')}
-              </Button>
-            </motion.div>
-
-            <motion.div
-              variants={itemVariants}
-              className="flex justify-center space-x-4"
-            >
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => navigate("/dashboard")}
-                className="text-brand-gray-300 hover:text-white"
-              >
-                {t('skipForNow')}
-              </Button>
-              <Button
-                type="submit"
-                className="bg-brand-primary hover:bg-brand-primary/90 text-white"
-              >
-                {t('sendInvites')}
-              </Button>
-            </motion.div>
-          </motion.form>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-8 text-center text-sm text-gray-400">
+            <p>You can invite more members after setup is complete</p>
+          </div>
         </motion.div>
-      </div>
+        
+        <motion.div 
+          className="flex justify-center mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.5 }}
+        >
+          <ContinueButton 
+            onClick={sendInvitations}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending invites...
+              </>
+            ) : (
+              'Continue'
+            )}
+          </ContinueButton>
+        </motion.div>
+        
+        <motion.div
+          variants={fadeIn}
+          transition={{ delay: 0.6 }}
+          className="flex flex-col items-center"
+        >
+          <ProgressDots total={total} current={current} color="purple" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 } 
