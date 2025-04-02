@@ -1,599 +1,490 @@
 import React, { useState } from "react";
-import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Sun, Moon, 
-  Users, ChevronRight,
-  BarChart2, LineChart, 
-  Calendar, Settings, LogOut, 
-  BellRing, Menu, X,
-  ArrowUpRight, Clock, TrendingUp,
-  Terminal, Activity, Layers,
-  Search, Upload, Download, User,
-  Twitter
+  Mic, Upload, Calendar, BarChart3, Twitter, 
+  Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
+  Maximize2, MessageSquare, ThumbsUp, Share2
 } from "lucide-react";
+import { 
+  Card, CardContent, CardDescription, CardFooter, 
+  CardHeader, CardTitle 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-export default function DashboardPage() {
-  const { firstName, lastName, workspaceName, workspaceType } = useOnboarding();
-  const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
-  const { language, t } = useLanguage();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentTab, setCurrentTab] = useState("overview");
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+const DashboardPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState("create");
 
-  const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
-  const userFullName = `${firstName} ${lastName}`;
-  const userInitials = firstName && lastName ? `${firstName.charAt(0)}${lastName.charAt(0)}` : "US";
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
-  };
-
-  const menuItems = [
-    { 
-      id: "overview", 
-      icon: Layers, 
-      label: language === "english" ? "Overview" : "Übersicht",
-    },
-    { 
-      id: "analytics", 
-      icon: BarChart2, 
-      label: language === "english" ? "Analytics" : "Analytik",
-    },
-    { 
-      id: "activity", 
-      icon: Activity, 
-      label: language === "english" ? "Activity" : "Aktivität",
-    },
-    { 
-      id: "calendar", 
-      icon: Calendar, 
-      label: language === "english" ? "Calendar" : "Kalender",
-    },
-    { 
-      id: "terminal", 
-      icon: Terminal, 
-      label: language === "english" ? "Console" : "Konsole",
-    },
-    { 
-      id: "settings", 
-      icon: Settings, 
-      label: language === "english" ? "Settings" : "Einstellungen",
-    },
-  ];
-
-  // Recent activities
-  const recentActivities = [
+  // Sample tweets data
+  const scheduledTweets = [
     {
       id: 1,
-      title: language === "english" ? "Project created" : "Projekt erstellt",
-      description: language === "english" ? "New dashboard project initialized" : "Neues Dashboard-Projekt initialisiert",
-      time: language === "english" ? "2 hours ago" : "vor 2 Stunden",
-      icon: Layers
+      content: "Just released our latest feature: AI-powered tweet suggestions! Create better content in half the time. #AI #Twitter",
+      scheduledTime: "Today, 3:30 PM",
+      isThread: false,
     },
     {
       id: 2,
-      title: language === "english" ? "Analytics report" : "Analysebericht",
-      description: language === "english" ? "Weekly analytics report generated" : "Wöchentlicher Analysebericht generiert",
-      time: language === "english" ? "Yesterday" : "Gestern",
-      icon: LineChart
+      content: "5 ways to improve your Twitter engagement:\n\n1. Post consistently\n2. Use relevant hashtags\n3. Engage with your audience\n4. Share valuable content\n5. Analyze your performance",
+      scheduledTime: "Tomorrow, 10:00 AM",
+      isThread: true,
+      threadCount: 5,
     },
     {
       id: 3,
-      title: language === "english" ? "Team meeting" : "Team-Meeting",
-      description: language === "english" ? "Scheduled for tomorrow at 10:00 AM" : "Geplant für morgen um 10:00 Uhr",
-      time: language === "english" ? "12 hours ago" : "vor 12 Stunden",
-      icon: Users
+      content: "How our team increased Twitter engagement by 300% in just 30 days. The results might surprise you!",
+      scheduledTime: "Apr 5, 1:15 PM",
+      isThread: false,
     }
   ];
 
-  // Stats cards data
-  const statsCards = [
-    {
-      title: language === "english" ? "Total Users" : "Gesamtbenutzer",
-      value: "3,721",
-      change: "+12.5%",
-      trend: "up",
-      icon: Users,
-      color: "bg-blue-500"
+  // Sample analytics data
+  const analyticsData = {
+    impressions: {
+      data: [1200, 1800, 2200, 1900, 2500, 2800, 3100],
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      increase: 23,
+      timeframe: "Last 7 days"
     },
-    {
-      title: language === "english" ? "Active Sessions" : "Aktive Sitzungen",
-      value: "584",
-      change: "+7.2%",
-      trend: "up",
-      icon: Activity,
-      color: "bg-purple-500"
+    engagement: {
+      data: [5.2, 6.8, 4.9, 7.2, 8.1, 7.5, 9.3],
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      increase: 15,
+      timeframe: "Last 7 days"
     },
-    {
-      title: language === "english" ? "Conversion Rate" : "Konversionsrate",
-      value: "24.8%",
-      change: "-3.1%",
-      trend: "down",
-      icon: TrendingUp,
-      color: "bg-amber-500"
-    },
-    {
-      title: language === "english" ? "Avg. Session" : "Durchschn. Sitzung",
-      value: "8m 42s",
-      change: "+2.3%",
-      trend: "up",
-      icon: Clock,
-      color: "bg-teal-500"
+    followers: {
+      data: [120, 125, 128, 132, 138, 142, 150],
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      increase: 8,
+      timeframe: "Last 7 days"
     }
-  ];
-
-  const notifications = [
-    {
-      id: 1,
-      title: language === "english" ? "System Update" : "Systemupdate",
-      description: language === "english" ? "New features available" : "Neue Funktionen verfügbar",
-      time: language === "english" ? "Just now" : "Gerade eben",
-      unread: true
-    },
-    {
-      id: 2,
-      title: language === "english" ? "New Team Member" : "Neues Teammitglied",
-      description: language === "english" ? "John Doe joined your team" : "John Doe ist deinem Team beigetreten",
-      time: language === "english" ? "2 hours ago" : "vor 2 Stunden",
-      unread: true
-    },
-    {
-      id: 3,
-      title: language === "english" ? "Report Ready" : "Bericht fertig",
-      description: language === "english" ? "Monthly report is ready to view" : "Monatsbericht ist bereit zur Ansicht",
-      time: language === "english" ? "Yesterday" : "Gestern",
-      unread: false
-    }
-  ];
-
-  // Animation variants
-  const fadeInUp = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 }
   };
 
-  const fadeIn = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
+  // Sample recent tweets
+  const recentTweets = [
+    {
+      id: 101,
+      content: "Just launched our AI Twitter Assistant! Generate tweets, schedule content, and analyze performance - all in one place.",
+      date: "1h ago",
+      stats: {
+        likes: 45,
+        retweets: 12,
+        replies: 8,
+        impressions: 1250
+      }
+    },
+    {
+      id: 102,
+      content: "How we built our Twitter management platform in 30 days with React, Tailwind, and AI. A thread on our journey and lessons learned.",
+      date: "5h ago",
+      stats: {
+        likes: 89,
+        retweets: 24,
+        replies: 15,
+        impressions: 3200
       }
     }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
-  };
-
-  // Add navigate to Twitter dashboard function
-  const navigateToTwitterDashboard = () => {
-    navigate('/twitter-dashboard');
-  };
+  ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden flex">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 -z-10 opacity-5 dark:opacity-10 overflow-hidden">
-        <div className="absolute top-[10%] -right-[30%] w-[70%] h-[70%] rounded-full bg-blue-400 dark:bg-blue-600 blur-[120px]"></div>
-        <div className="absolute bottom-[10%] -left-[30%] w-[70%] h-[70%] rounded-full bg-purple-400 dark:bg-purple-600 blur-[120px]"></div>
-      </div>
-      
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-dots-pattern opacity-5 dark:opacity-10 -z-10"></div>
-      
-      {/* Mobile sidebar toggle */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="bg-background/60 backdrop-blur-sm border border-border shadow-md"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+    <div className="container px-4 py-8 mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Twitter Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your content and analyze performance</p>
+        </div>
+        <Button size="sm" variant="gradient" className="gap-2">
+          <Twitter className="h-4 w-4" />
+          <span>Connect Twitter</span>
         </Button>
       </div>
-      
-      {/* Sidebar */}
-      <motion.div 
-        className={`bg-card border-r border-border h-screen flex flex-col fixed lg:static top-0 left-0 w-72 z-40 transition-transform transform
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="p-6 border-b border-border flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">{userInitials}</span>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <h1 className="text-xl font-semibold truncate">{dashboardName}</h1>
-            <p className="text-sm text-muted-foreground truncate">
-              {language === "english" ? "Dashboard" : "Armaturenbrett"}
-            </p>
-          </div>
-        </div>
-        
-        <div className="p-4 flex-1 overflow-y-auto">
-          <nav className="space-y-1">
-            {menuItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={currentTab === item.id ? "secondary" : "ghost"}
-                className={`w-full justify-start py-6 px-4 text-base mb-1 ${
-                  currentTab === item.id 
-                    ? "bg-primary/10 dark:bg-primary/20 text-primary font-medium"
-                    : "hover:bg-primary/5 dark:hover:bg-primary/10"
-                }`}
-                onClick={() => setCurrentTab(item.id)}
-              >
-                <item.icon size={20} className="mr-3" />
-                {item.label}
-              </Button>
-            ))}
-          </nav>
-        </div>
-        
-        <div className="p-4 border-t border-border">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
-            onClick={handleLogout}
-          >
-            <LogOut size={20} className="mr-3" />
-            {language === "english" ? "Logout" : "Abmelden"}
-          </Button>
-        </div>
-      </motion.div>
-      
-      {/* Main content */}
-      <div className="flex-1 overflow-y-auto h-screen">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
-          <div className="flex justify-between items-center p-4">
-            <div className="flex items-center">
-              <h2 className="text-xl font-semibold hidden sm:block">
-                {menuItems.find(item => item.id === currentTab)?.label}
-              </h2>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="rounded-full relative"
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                >
-                  <BellRing size={20} />
-                  {notifications.some(n => n.unread) && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </Button>
-                
-                {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg border border-border shadow-xl z-50">
-                    <div className="p-4 border-b border-border flex justify-between items-center">
-                      <h3 className="font-semibold">
-                        {language === "english" ? "Notifications" : "Benachrichtigungen"}
-                      </h3>
-                      <Button variant="ghost" size="sm" className="text-primary">
-                        {language === "english" ? "Mark all read" : "Alle als gelesen markieren"}
+
+      <Tabs defaultValue="create" className="mb-8">
+        <TabsList className="grid grid-cols-4 mb-8">
+          <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-teal-50 dark:data-[state=active]:bg-teal-900/20">
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Create
+          </TabsTrigger>
+          <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-violet-50 dark:data-[state=active]:bg-violet-900/20">
+            <Calendar className="h-4 w-4 mr-2" />
+            Schedule
+          </TabsTrigger>
+          <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-900/20">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="tweets" onClick={() => setActiveTab("tweets")} className="data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-800">
+            <Twitter className="h-4 w-4 mr-2" />
+            My Tweets
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="create" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Zap className="h-5 w-5 mr-2 text-amber-500" />
+                    Create New Tweet
+                  </CardTitle>
+                  <CardDescription>
+                    Record, write, or upload content to generate tweets
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <Button variant="outline" className="gap-2 rounded-full">
+                      <Mic className="h-4 w-4 text-red-500" />
+                      Record Voice
+                    </Button>
+                    <Button variant="outline" className="gap-2 rounded-full">
+                      <Upload className="h-4 w-4 text-blue-500" />
+                      Upload Media
+                    </Button>
+                    <Button variant="outline" className="gap-2 rounded-full">
+                      <Edit3 className="h-4 w-4 text-purple-500" />
+                      Write Text
+                    </Button>
+                  </div>
+
+                  <Textarea 
+                    placeholder="What's happening?" 
+                    className="min-h-[150px] text-base resize-none"
+                  />
+
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="gap-1 py-1 border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">
+                        <Twitter className="h-3 w-3" />
+                        Twitter
+                      </Badge>
+                      <span>280 characters</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Schedule
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
+                        <Maximize2 className="h-3 w-3" />
+                        Thread
                       </Button>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.map((notification) => (
-                        <div 
-                          key={notification.id} 
-                          className={`p-4 border-b border-border hover:bg-muted/50 ${notification.unread ? "bg-primary/5" : ""}`}
-                        >
-                          <div className="flex gap-3">
-                            {notification.unread && <div className="w-2 h-2 mt-2 rounded-full bg-primary flex-shrink-0"></div>}
-                            <div className={`flex-1 ${!notification.unread ? "pl-5" : ""}`}>
-                              <p className="font-medium">{notification.title}</p>
-                              <p className="text-sm text-muted-foreground">{notification.description}</p>
-                              <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
-                            </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between border-t pt-4">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    Generate with AI
+                  </Button>
+                  <Button size="sm" className="px-4">Post Tweet</Button>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Eye className="h-5 w-5 mr-2 text-blue-500" />
+                    Preview
+                  </CardTitle>
+                  <CardDescription>
+                    See how your tweet will appear
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="border dark:border-gray-800 rounded-xl p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Avatar>
+                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarFallback>DP</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="font-semibold text-sm">David Porter</span>
+                          <span className="text-gray-500 text-sm">@davidporter</span>
+                        </div>
+                        <p className="text-sm mt-1">
+                          Just launched our AI Twitter Assistant! Generate tweets, schedule content, and analyze performance - all in one place. Try it today and see the difference. #TwitterAI #ContentCreation
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-6 ml-12 text-gray-500 text-sm">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>12</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>24</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        <span>78</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="h-5 w-5 mr-2 text-violet-500" />
+                    Upcoming Tweets
+                  </CardTitle>
+                  <CardDescription>
+                    Scheduled for publication
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px] pr-4">
+                    <div className="space-y-4">
+                      {scheduledTweets.map((tweet) => (
+                        <div key={tweet.id} className="border dark:border-gray-800 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <p className="text-sm line-clamp-2 mb-2">{tweet.content}</p>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-teal-600 dark:text-teal-400 font-medium">
+                              {tweet.scheduledTime}
+                            </span>
+                            {tweet.isThread && (
+                              <Badge variant="outline" className="h-5 px-2 text-xs">
+                                Thread ({tweet.threadCount})
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="p-3">
-                      <Button variant="outline" className="w-full">
-                        {language === "english" ? "View all notifications" : "Alle Benachrichtigungen anzeigen"}
-                      </Button>
+                  </ScrollArea>
+                </CardContent>
+                <CardFooter className="border-t pt-4">
+                  <Button variant="ghost" size="sm" className="w-full">View Calendar</Button>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
+                    AI Suggestions
+                  </CardTitle>
+                  <CardDescription>
+                    Trending topics to write about
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2.5">
+                  {["#TechTrends2023", "Content Marketing Tips", "Social Media Strategy", "Twitter Algorithm Updates", "Remote Work Tools"].map((topic, i) => (
+                    <div key={i} className="flex items-center border dark:border-gray-800 rounded-lg p-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer">
+                      <span className="text-sm">{topic}</span>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="schedule">
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Calendar</CardTitle>
+              <CardDescription>
+                Manage and schedule your upcoming tweets
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[500px] flex items-center justify-center border border-dashed rounded-lg">
+                <p className="text-gray-500">Calendar and scheduling interface would be implemented here</p>
               </div>
-              
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="rounded-full"
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-              </Button>
-              
-              <div className="relative">
-                <Button 
-                  variant="ghost" 
-                  className="flex items-center gap-2 rounded-full"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                >
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">{userInitials}</span>
-                  </div>
-                </Button>
-                
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-60 bg-card rounded-lg border border-border shadow-xl z-50">
-                    <div className="p-4 border-b border-border">
-                      <p className="font-medium">{userFullName}</p>
-                      <p className="text-sm text-muted-foreground">{user?.email || "user@example.com"}</p>
-                    </div>
-                    <div className="p-2">
-                      <Button variant="ghost" className="w-full justify-start">
-                        <User size={16} className="mr-2" />
-                        {language === "english" ? "Profile" : "Profil"}
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start">
-                        <Settings size={16} className="mr-2" />
-                        {language === "english" ? "Settings" : "Einstellungen"}
-                      </Button>
-                    </div>
-                    <div className="p-2 border-t border-border">
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
-                        onClick={handleLogout}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Impressions</CardTitle>
+                <CardDescription>
+                  Total views of your tweets
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[180px] mt-2 relative">
+                  <div className="absolute inset-0 flex items-end">
+                    {analyticsData.impressions.data.map((value, index) => (
+                      <div 
+                        key={index} 
+                        className="flex-1 mx-0.5"
+                        style={{ height: `${(value / Math.max(...analyticsData.impressions.data)) * 100}%` }}
                       >
-                        <LogOut size={16} className="mr-2" />
-                        {language === "english" ? "Logout" : "Abmelden"}
-                      </Button>
-                    </div>
+                        <div 
+                          className="w-full h-full rounded-t-sm bg-gradient-to-t from-blue-500/40 to-cyan-400/40 dark:from-blue-500/60 dark:to-cyan-400/60"
+                          style={{ opacity: 0.5 + ((index + 1) / analyticsData.impressions.data.length) * 0.5 }}
+                        ></div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-        
-        {/* Main dashboard content */}
-        <main className="p-6">
-          {/* Welcome section */}
-          <motion.div 
-            className="mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <h1 className="text-3xl font-bold mb-2">
-              {language === "english" ? "Welcome back, " : "Willkommen zurück, "} 
-              <span className="text-primary">{firstName}</span>
-            </h1>
-            <p className="text-muted-foreground">
-              {language === "english" 
-                ? "Here's what's happening with your projects today." 
-                : "Hier ist, was heute mit deinen Projekten passiert."}
-            </p>
-            
-            {/* Add Twitter Dashboard Button */}
-            <div className="mt-4">
-              <Button 
-                onClick={navigateToTwitterDashboard}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                <Twitter className="mr-2 h-4 w-4" />
-                {language === "english" ? "Go to Twitter Dashboard" : "Zum Twitter-Dashboard"}
-              </Button>
-            </div>
-          </motion.div>
-          
-          {/* Stats grid */}
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {statsCards.map((card, index) => (
-              <motion.div 
-                key={index}
-                variants={itemVariants}
-                className="bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <p className="text-muted-foreground text-sm mb-1">{card.title}</p>
-                      <h3 className="text-2xl font-bold">{card.value}</h3>
-                    </div>
-                    <div className={`p-3 rounded-lg ${card.color} text-white`}>
-                      <card.icon size={20} />
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className={`text-sm font-medium ${card.trend === 'up' ? 'text-green-500' : 'text-red-500'} mr-1`}>
-                      {card.change}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {language === "english" ? "vs last month" : "im Vgl. zum Vormonat"}
+                </div>
+                <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
+                  {analyticsData.impressions.labels.map((label, index) => (
+                    <span key={index}>{label}</span>
+                  ))}
+                </div>
+                <div className="mt-4 pt-3 border-t flex justify-between items-center">
+                  <p className="text-xs text-gray-500">{analyticsData.impressions.timeframe}</p>
+                  <div className="flex items-center text-sm">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                      ↑ {analyticsData.impressions.increase}%
                     </span>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-          
-          {/* Two-column layout for charts and activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Chart area */}
-            <motion.div 
-              className="lg:col-span-2 bg-card border border-border rounded-xl p-6 shadow-sm"
-              variants={fadeInUp}
-              initial="initial"
-              animate="animate"
-              transition={{ duration: 0.4, delay: 0.2 }}
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold">
-                  {language === "english" ? "Performance Overview" : "Leistungsübersicht"}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="text-xs">
-                    {language === "english" ? "Weekly" : "Wöchentlich"}
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-xs bg-primary/10 border-primary/20 text-primary">
-                    {language === "english" ? "Monthly" : "Monatlich"}
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-xs">
-                    {language === "english" ? "Yearly" : "Jährlich"}
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Chart placeholder */}
-              <div className="h-72 w-full relative bg-gradient-to-b from-primary/10 to-transparent rounded-lg flex items-center justify-center">
-                <div className="absolute inset-0 bg-dots-pattern opacity-10"></div>
-                <div className="text-center">
-                  <LineChart className="mx-auto h-10 w-10 text-primary opacity-80 mb-2" />
-                  <p className="text-muted-foreground mb-3">
-                    {language === "english" ? "Interactive chart area" : "Interaktiver Diagrammbereich"}
-                  </p>
-                  <Button variant="outline" size="sm" className="border-dashed">
-                    {language === "english" ? "Generate Chart" : "Diagramm generieren"}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-            
-            {/* Recent activity */}
-            <motion.div 
-              className="bg-card border border-border rounded-xl shadow-sm overflow-hidden"
-              variants={fadeInUp}
-              initial="initial"
-              animate="animate"
-              transition={{ duration: 0.4, delay: 0.3 }}
-            >
-              <div className="p-6 border-b border-border">
-                <h3 className="text-lg font-semibold">
-                  {language === "english" ? "Recent Activity" : "Letzte Aktivität"}
-                </h3>
-              </div>
-              
-              <div className="divide-y divide-border max-h-[350px] overflow-y-auto">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex gap-4">
-                      <div className="mt-1 p-2 rounded-full bg-primary/10 text-primary">
-                        <activity.icon size={18} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Engagement Rate</CardTitle>
+                <CardDescription>
+                  Interactions with your content
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[180px] mt-2 relative">
+                  <div className="absolute inset-0 flex items-end">
+                    {analyticsData.engagement.data.map((value, index) => (
+                      <div 
+                        key={index} 
+                        className="flex-1 mx-0.5"
+                        style={{ height: `${(value / Math.max(...analyticsData.engagement.data)) * 100}%` }}
+                      >
+                        <div 
+                          className="w-full h-full rounded-t-sm bg-gradient-to-t from-violet-500/40 to-purple-400/40 dark:from-violet-500/60 dark:to-purple-400/60"
+                          style={{ opacity: 0.5 + ((index + 1) / analyticsData.engagement.data.length) * 0.5 }}
+                        ></div>
                       </div>
-                      <div>
-                        <p className="font-medium mb-1">{activity.title}</p>
-                        <p className="text-sm text-muted-foreground mb-1">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
+                  {analyticsData.engagement.labels.map((label, index) => (
+                    <span key={index}>{label}</span>
+                  ))}
+                </div>
+                <div className="mt-4 pt-3 border-t flex justify-between items-center">
+                  <p className="text-xs text-gray-500">{analyticsData.engagement.timeframe}</p>
+                  <div className="flex items-center text-sm">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                      ↑ {analyticsData.engagement.increase}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Followers Growth</CardTitle>
+                <CardDescription>
+                  New followers over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[180px] mt-2 relative">
+                  <div className="absolute inset-0 flex items-end">
+                    {analyticsData.followers.data.map((value, index) => (
+                      <div 
+                        key={index} 
+                        className="flex-1 mx-0.5"
+                        style={{ height: `${(value / Math.max(...analyticsData.followers.data)) * 100}%` }}
+                      >
+                        <div 
+                          className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40 dark:from-teal-500/60 dark:to-emerald-400/60"
+                          style={{ opacity: 0.5 + ((index + 1) / analyticsData.followers.data.length) * 0.5 }}
+                        ></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
+                  {analyticsData.followers.labels.map((label, index) => (
+                    <span key={index}>{label}</span>
+                  ))}
+                </div>
+                <div className="mt-4 pt-3 border-t flex justify-between items-center">
+                  <p className="text-xs text-gray-500">{analyticsData.followers.timeframe}</p>
+                  <div className="flex items-center text-sm">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                      ↑ {analyticsData.followers.increase}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="tweets">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              {recentTweets.map((tweet) => (
+                <Card key={tweet.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <Avatar>
+                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarFallback>DP</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">David Porter</span>
+                            <span className="text-gray-500 text-sm">@davidporter</span>
+                            <span className="text-gray-500 text-sm">·</span>
+                            <span className="text-gray-500 text-sm">{tweet.date}</span>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-sm mb-4">{tweet.content}</p>
+                        <div className="flex gap-6 text-gray-500 text-sm">
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>{tweet.stats.replies}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Share2 className="h-4 w-4" />
+                            <span>{tweet.stats.retweets}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <ThumbsUp className="h-4 w-4" />
+                            <span>{tweet.stats.likes}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" />
+                            <span>{tweet.stats.impressions}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="p-4 border-t border-border">
-                <Button variant="ghost" className="w-full">
-                  {language === "english" ? "View All Activity" : "Alle Aktivitäten anzeigen"}
-                  <ChevronRight size={16} className="ml-1" />
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-          
-          {/* Quick actions */}
-          <motion.div 
-            className="bg-card border border-border rounded-xl p-6 shadow-sm mb-6"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.4, delay: 0.4 }}
-          >
-            <h3 className="text-lg font-semibold mb-4">
-              {language === "english" ? "Quick Actions" : "Schnellaktionen"}
-            </h3>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {[
-                { 
-                  icon: Upload, 
-                  label: language === "english" ? "Upload" : "Hochladen",
-                  color: "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                },
-                { 
-                  icon: Download, 
-                  label: language === "english" ? "Download" : "Herunterladen",
-                  color: "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                },
-                { 
-                  icon: Search, 
-                  label: language === "english" ? "Search" : "Suche",
-                  color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                },
-                { 
-                  icon: Users, 
-                  label: language === "english" ? "Team" : "Team",
-                  color: "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                },
-                { 
-                  icon: Settings, 
-                  label: language === "english" ? "Settings" : "Einstellungen",
-                  color: "bg-slate-500/10 text-slate-500 border-slate-500/20"
-                },
-                { 
-                  icon: ArrowUpRight, 
-                  label: language === "english" ? "Export" : "Exportieren",
-                  color: "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                }
-              ].map((action, index) => (
-                <Button 
-                  key={index}
-                  variant="outline"
-                  className={`flex-col h-24 rounded-xl ${action.color} border`}
-                >
-                  <action.icon size={24} className="mb-2" />
-                  <span>{action.label}</span>
-                </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </motion.div>
-        </main>
-        
-        {/* Footer */}
-        <footer className="border-t border-border p-6 text-center text-sm text-muted-foreground">
-          <p>
-            &copy; {new Date().getFullYear()} Scripe. {language === "english" ? "All rights reserved." : "Alle Rechte vorbehalten."}
-          </p>
-        </footer>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
+};
+
+export default DashboardPage;

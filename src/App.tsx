@@ -15,7 +15,6 @@ import NotFound from "./pages/NotFound";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
-import TwitterDashboardPage from "./pages/TwitterDashboardPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -146,37 +145,6 @@ function ProtectedDashboardRoute() {
   return <DashboardPage />;
 }
 
-// Protected Twitter Dashboard Route Component
-function ProtectedTwitterDashboardRoute() {
-  const { user, isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  
-  // Always prioritize localStorage value since it's set immediately at completion time
-  // This prevents redirection back to onboarding extension-install page
-  const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
-  
-  if (!onboardingCompleted) {
-    // If we have a user object and it says onboarding is completed, update localStorage
-    if (user && user.onboardingCompleted) {
-      localStorage.setItem('onboardingCompleted', 'true');
-      return <TwitterDashboardPage />;
-    }
-    
-    // Otherwise redirect to onboarding
-    const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
-    return <Navigate to={`/onboarding/${savedStep}`} replace />;
-  }
-  
-  return <TwitterDashboardPage />;
-}
-
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -199,7 +167,6 @@ const App = () => (
                     <Route element={<InvitationCheckRoute />}>
                       <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
                       <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
-                      <Route path="/twitter-dashboard" element={<ProtectedTwitterDashboardRoute />} />
                     </Route>
                     
                     <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
