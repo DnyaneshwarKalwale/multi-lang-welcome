@@ -143,7 +143,7 @@ export default function DashboardPage() {
         transition={{ duration: 0.4 }}
       >
         <div className="mb-8">
-          <ScripeLogotype className="h-8" />
+          <ScripeLogotype className="h-8 text-gray-900 dark:text-white" />
         </div>
         
         <Button 
@@ -163,11 +163,11 @@ export default function DashboardPage() {
               variant={item.active ? "ghost" : "transparent"}
               className={`w-full justify-start gap-3 text-sm transition-all duration-200 ${
                 item.active 
-                  ? "bg-gray-800/70 dark:bg-gray-800/70 text-foreground font-medium" 
-                  : "text-gray-600 dark:text-gray-400 hover:text-foreground"
+                  ? "bg-gray-100/80 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 font-medium" 
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
-              <item.icon size={18} />
+              <item.icon size={18} className={item.active ? "text-teal-600 dark:text-teal-400" : ""} />
               {item.label}
             </Button>
           ))}
@@ -202,8 +202,8 @@ export default function DashboardPage() {
                 className="w-8 h-8 rounded-full mr-3 object-cover" 
               />
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium truncate">{userFullName}</p>
-                <p className="text-xs text-gray-500 truncate">Free plan</p>
+                <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{userFullName}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 truncate">Free plan</p>
               </div>
             </button>
             
@@ -262,24 +262,24 @@ export default function DashboardPage() {
                 <Button 
                 variant="transparent" 
                   size="sm" 
-                className="hidden md:flex items-center gap-1 transition-all duration-200"
+                className="hidden md:flex items-center gap-1 transition-all duration-200 text-gray-700 dark:text-gray-300"
               >
                 <Bell size={16} />
                 </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="hidden md:flex items-center gap-1 transition-all duration-200"
+                className="hidden md:flex items-center gap-1 transition-all duration-200 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
               >
                 <Grid size={16} className="mr-1" />
                 View all
               </Button>
             </div>
-        </div>
+          </div>
         </motion.div>
         
         {/* Dashboard content */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-transparent">
           {/* Quick stats */}
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
@@ -336,7 +336,7 @@ export default function DashboardPage() {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gradient-blue">Recent Content</h2>
-              <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300 transition-all duration-200">
+              <Button variant="ghost" size="sm" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-all duration-200">
                 View all
               </Button>
             </div>
@@ -382,16 +382,16 @@ export default function DashboardPage() {
               {cards.map((card, index) => (
                 <motion.div 
                   key={index} 
-                  className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-5 hover-lift"
+                  className="bg-white/80 dark:bg-card/50 backdrop-blur-sm border border-border rounded-xl p-5 hover-lift"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
                 >
-                  <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-full bg-teal-100 dark:bg-indigo-600/20 flex items-center justify-center mb-4">
                     <span className="text-2xl">{card.icon}</span>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">{card.title}</h3>
+                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">{card.title}</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{card.description}</p>
                   <Button variant="ghost" className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 px-0 hover:bg-transparent group">
                     {card.buttonText}

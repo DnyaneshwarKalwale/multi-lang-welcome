@@ -171,54 +171,74 @@ export function DashboardAnalyticsCard({
   increase,
   timeframe
 }: DashboardAnalyticsCardProps) {
-  const max = Math.max(...data);
-  
+  // Convert the data to a format suitable for the line chart
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        data,
+        borderColor: '#0EA5E9',
+        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
+
   return (
-    <motion.div
-      className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-5 hover-lift transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-medium text-gradient-blue">{title}</h3>
-        <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center">
-          <BarChart className="w-4 h-4 text-indigo-400" />
+    <div className="bg-white dark:bg-gray-900/50 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{title}</h3>
+        <div className="flex items-center text-sm">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${increase > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
+            {increase > 0 ? '↑' : '↓'} {Math.abs(increase)}%
+          </span>
         </div>
       </div>
       
-      <div className="h-32 mb-4 relative">
-        <div className="absolute inset-0 flex items-end justify-between">
+      <div className="h-32 relative">
+        {/* Chart component would go here */}
+        <div className="absolute inset-0 flex items-end">
           {data.map((value, index) => (
             <div 
               key={index} 
-              className="relative group flex flex-col items-center"
-              style={{ width: `${100 / data.length}%` }}
+              className="flex-1 mx-0.5"
+              style={{ height: `${(value / Math.max(...data)) * 100}%` }}
             >
               <div 
-                className="absolute bottom-full mb-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded"
-                style={{ transform: 'translateX(-50%)' }}
-              >
-                {value}
-              </div>
-              <div 
-                className="w-5/6 bg-gradient-to-t from-indigo-600 to-indigo-500 rounded-t transition-all duration-300 group-hover:from-indigo-500 group-hover:to-indigo-400"
-                style={{ height: `${max > 0 ? (value / max) * 100 : 0}%` }}
+                className="w-full h-full rounded-t-sm bg-gradient-to-t from-cyan-500/40 to-teal-400/40 dark:from-cyan-500/60 dark:to-teal-400/60"
+                style={{ opacity: 0.5 + ((index + 1) / data.length) * 0.5 }}
               ></div>
-              <div className="text-xs text-gray-500 mt-1.5 text-center">{labels[index]}</div>
             </div>
           ))}
         </div>
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">{timeframe}</div>
-        <div className={`flex items-center text-sm font-medium ${increase >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {increase >= 0 ? '↑' : '↓'} {Math.abs(increase)}%
+        
+        {/* Line chart overlay */}
+        <div className="absolute inset-0 flex items-end">
+          <svg width="100%" height="100%" viewBox={`0 0 ${data.length * 20} 100`} preserveAspectRatio="none">
+            <path
+              d={`M0,${100 - (data[0] / Math.max(...data)) * 100} ${data.map((value, index) => `L${index * 20 + 10},${100 - (value / Math.max(...data)) * 100}`).join(' ')}`}
+              fill="none"
+              stroke="#0EA5E9"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
       </div>
-    </motion.div>
+      
+      <div className="flex justify-between items-center mt-4 px-1 text-xs text-gray-500 dark:text-gray-400">
+        {labels.map((label, index) => (
+          <span key={index}>{label}</span>
+        ))}
+      </div>
+      
+      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+        <p className="text-xs text-gray-500 dark:text-gray-400">{timeframe}</p>
+      </div>
+    </div>
   );
 }
 
@@ -237,48 +257,43 @@ interface DashboardProfileCardProps {
 
 export function DashboardProfileCard({ user, stats }: DashboardProfileCardProps) {
   return (
-    <motion.div
-      className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover-lift transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}
-    >
-      <div className="h-24 bg-gradient-to-r from-indigo-600 to-purple-600 shine"></div>
-      <div className="p-5 -mt-12">
-        <div className="flex flex-col items-center mb-6">
-          <img 
-            src={user.avatar} 
-            alt={user.name} 
-            className="w-20 h-20 rounded-full border-4 border-gray-900 object-cover shadow-lg" 
-          />
-          <h3 className="mt-3 font-semibold">{user.name}</h3>
-          <p className="text-sm text-gray-400">{user.role}</p>
+    <div className="bg-white dark:bg-gray-900/50 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all">
+      <div className="flex items-center mb-5">
+        <img 
+          src={user.avatar} 
+          alt={user.name} 
+          className="w-10 h-10 rounded-full object-cover mr-3 ring-2 ring-teal-400/30 dark:ring-teal-400/50"
+        />
+        <div>
+          <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{user.name}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
         </div>
-        
-        <div className="grid grid-cols-3 gap-3 mb-3">
-          <div className="bg-gray-800/60 p-2 rounded-lg text-center hover-lift transition-all duration-300">
-            <div className="text-xl font-bold text-indigo-400">{stats.posts}</div>
-            <div className="text-xs text-gray-500">Posts</div>
-          </div>
-          <div className="bg-gray-800/60 p-2 rounded-lg text-center hover-lift transition-all duration-300">
-            <div className="text-xl font-bold text-indigo-400">{stats.followers}</div>
-            <div className="text-xs text-gray-500">Followers</div>
-          </div>
-          <div className="bg-gray-800/60 p-2 rounded-lg text-center hover-lift transition-all duration-300">
-            <div className="text-xl font-bold text-indigo-400">{stats.views}</div>
-            <div className="text-xs text-gray-500">Views</div>
-          </div>
-        </div>
-        
-        <Button 
-          variant="transparent"
-          className="w-full border border-gray-800 flex items-center justify-center gap-1.5 hover:border-indigo-500 transition-all duration-200"
-        >
-          <Users className="w-4 h-4" />
-          <span>View Twitter profile</span>
-        </Button>
       </div>
-    </motion.div>
+      
+      <div className="grid grid-cols-3 gap-2 mb-5">
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg text-center">
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">{stats.posts}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Posts</p>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg text-center">
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">{stats.followers.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Followers</p>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg text-center">
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">{stats.views.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Views</p>
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-800">
+        <p className="text-xs text-gray-500 dark:text-gray-400">Profile completion</p>
+        <p className="text-xs font-medium text-teal-600 dark:text-teal-400">85%</p>
+      </div>
+      
+      <div className="mt-2 h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+        <div className="h-full bg-gradient-to-r from-teal-400 to-cyan-500 rounded-full" style={{ width: '85%' }}></div>
+      </div>
+    </div>
   );
+} 
 } 
