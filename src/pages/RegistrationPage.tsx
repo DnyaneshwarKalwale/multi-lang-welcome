@@ -5,7 +5,7 @@ import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, UserPlus } from "lucide-react";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -50,13 +50,27 @@ export default function RegistrationPage() {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
       </div>
+      
+      {/* Background pattern */}
+      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
       
       {/* Back button */}
       <BackButton 
@@ -80,7 +94,7 @@ export default function RegistrationPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
+          className="text-4xl font-bold mb-6 text-gradient"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -88,21 +102,22 @@ export default function RegistrationPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-xl text-gray-300 mb-12"
+          className="text-xl text-gray-600 dark:text-gray-300 mb-12"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          Let's personalize your experience with Scripe
+          Let's personalize your experience with Novus
         </motion.p>
         
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-12 max-w-xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <motion.div variants={itemVariants}>
-            <label htmlFor="firstName" className="block text-sm font-medium text-white mb-2 text-left">
+          <motion.div variants={itemVariants} className="group">
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
+              <User className="w-4 h-4 mr-2 text-cyan-600 dark:text-cyan-400" />
               First Name
             </label>
             <Input 
@@ -110,12 +125,15 @@ export default function RegistrationPage() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Enter your first name"
-              className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+              className="bg-white/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
+                         focus:border-cyan-500 dark:focus:border-cyan-500 focus:ring-cyan-500 dark:focus:ring-cyan-500 
+                         transition-all text-gray-900 dark:text-white shadow-sm group-hover:shadow-md"
             />
           </motion.div>
           
-          <motion.div variants={itemVariants}>
-            <label htmlFor="lastName" className="block text-sm font-medium text-white mb-2 text-left">
+          <motion.div variants={itemVariants} className="group">
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left flex items-center">
+              <UserPlus className="w-4 h-4 mr-2 text-violet-600 dark:text-violet-400" />
               Last Name
             </label>
             <Input 
@@ -123,7 +141,9 @@ export default function RegistrationPage() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Enter your last name"
-              className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+              className="bg-white/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
+                         focus:border-cyan-500 dark:focus:border-cyan-500 focus:ring-cyan-500 dark:focus:ring-cyan-500 
+                         transition-all text-gray-900 dark:text-white shadow-sm group-hover:shadow-md"
             />
           </motion.div>
         </motion.div>
@@ -142,7 +162,10 @@ export default function RegistrationPage() {
           
           <Button
             variant="outline"
-            className="px-8 py-3 rounded-full text-white border-gray-700 hover:bg-gray-800 hover:text-white transition-all duration-300"
+            rounded="full"
+            className="px-8 py-3 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 
+                     hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400 
+                     transition-all duration-300"
             onClick={handleSkipToDashboard}
           >
             Skip to dashboard
@@ -153,7 +176,7 @@ export default function RegistrationPage() {
           variants={fadeIn}
           transition={{ delay: 0.6 }}
         >
-          <ProgressDots total={total} current={current} />
+          <ProgressDots total={total} current={current} color="gradient" />
         </motion.div>
       </motion.div>
     </div>

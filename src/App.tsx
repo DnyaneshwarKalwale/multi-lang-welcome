@@ -17,8 +17,51 @@ import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 const queryClient = new QueryClient();
+
+// Loading spinner component with our new design
+function LoadingSpinner() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="relative">
+        {/* Background circle with subtle pulsing effect */}
+        <motion.div 
+          className="absolute inset-0 w-28 h-28 rounded-full bg-gradient-to-r from-teal-400/10 to-cyan-500/10"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Spinning borders */}
+        <div className="w-20 h-20 border-t-4 border-b-4 border-transparent rounded-full animate-spin-slow"></div>
+        <div className="absolute inset-0 w-20 h-20 border-t-4 border-l-4 border-r-4 border-transparent border-t-teal-400 border-r-cyan-500 border-l-teal-400 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '3s' }}></div>
+        <div className="absolute inset-0 w-20 h-20 border-b-4 border-r-4 border-transparent border-r-cyan-500 border-b-cyan-500 rounded-full animate-spin-slow" style={{ animationDuration: '2s' }}></div>
+        
+        {/* Pulsing checkmark */}
+        <motion.div 
+          className="absolute inset-0 flex items-center justify-center text-teal-500 dark:text-teal-400"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 16L14 20L22 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
+      </div>
+      
+      {/* Loading text */}
+      <motion.div 
+        className="absolute mt-28 text-sm font-medium text-gray-600 dark:text-gray-400"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        Loading Novus...
+      </motion.div>
+    </div>
+  );
+}
 
 // Protected Onboarding Route Component
 function ProtectedOnboardingRoute() {
@@ -50,11 +93,7 @@ function ProtectedOnboardingRoute() {
   
   // If still loading user or onboarding progress, show loading spinner
   if (loading || isLoadingProgress) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
   
   // If user is authenticated and has completed onboarding, redirect to dashboard
@@ -72,11 +111,7 @@ function ProtectedDashboardRoute() {
   const { user, isAuthenticated, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
   
   if (!isAuthenticated) {

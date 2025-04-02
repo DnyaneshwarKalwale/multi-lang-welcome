@@ -1,13 +1,28 @@
-
-<svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g opacity="0.15">
-    <circle cx="720" cy="400" r="300" stroke="#8B5CF6" stroke-width="2" />
-    <circle cx="720" cy="400" r="200" stroke="#0EA5E9" stroke-width="2" />
-    <circle cx="720" cy="400" r="100" stroke="#F97316" stroke-width="2" />
-    <path d="M420 400H1020" stroke="#D946EF" stroke-width="2" stroke-dasharray="8 8" />
-    <path d="M720 100V700" stroke="#D946EF" stroke-width="2" stroke-dasharray="8 8" />
-    <rect x="570" y="250" width="300" height="300" stroke="#8B5CF6" stroke-width="2" />
-    <path d="M570 250L870 550" stroke="#0EA5E9" stroke-width="2" />
-    <path d="M870 250L570 550" stroke="#0EA5E9" stroke-width="2" />
-  </g>
+<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.5" fill="#06B6D4" opacity="0.2" />
+    </pattern>
+    <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#14B8A6" stroke-width="0.5" opacity="0.1" />
+    </pattern>
+    <pattern id="novus-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="100" height="100" fill="url(#dots)" />
+      <rect x="0" y="0" width="100" height="100" fill="url(#grid)" />
+      <path d="M20,50 L40,30 L60,50 L40,70 Z" fill="none" stroke="#0891B2" stroke-width="0.5" opacity="0.15" />
+      <path d="M70,20 L90,40 L70,60 L50,40 Z" fill="none" stroke="#0D9488" stroke-width="0.5" opacity="0.15" />
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 18 -7" result="glow" />
+      <feBlend in="SourceGraphic" in2="glow" mode="normal" />
+    </filter>
+  </defs>
+  
+  <rect x="0" y="0" width="100%" height="100%" fill="url(#novus-pattern)" />
+  
+  <circle cx="10%" cy="20%" r="80" fill="#06b6d4" opacity="0.1" filter="url(#glow)" />
+  <circle cx="90%" cy="85%" r="100" fill="#7c3aed" opacity="0.1" filter="url(#glow)" />
+  <circle cx="65%" cy="10%" r="60" fill="#0ea5e9" opacity="0.1" filter="url(#glow)" />
+  <circle cx="30%" cy="80%" r="120" fill="#8b5cf6" opacity="0.1" filter="url(#glow)" />
 </svg>

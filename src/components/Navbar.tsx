@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScripeLogotype, ScripeIconRounded } from "@/components/ScripeIcon";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,7 +44,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   return (
     <div 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-black/80 backdrop-blur-md shadow-md" : "bg-transparent"
+        scrolled ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-md" : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-6 py-4">
@@ -57,7 +57,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             transition={{ duration: 0.5 }}
           >
             <a href="/" className="flex items-center">
-              <ScripeLogotype className="h-8 w-auto" />
+              <ScripeLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
             </a>
           </motion.div>
           
@@ -67,13 +67,13 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               <motion.a
                 key={index}
                 href={item.href}
-                className="text-gray-400 hover:text-white transition-colors duration-200 relative group text-sm"
+                className="text-gray-600 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors duration-200 relative group text-sm"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
                 {item.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-300 group-hover:w-full"></span>
               </motion.a>
             ))}
       </div>
@@ -86,8 +86,8 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               transition={{ duration: 0.3, delay: 0.5 }}
             >
             <Button 
-                variant="transparent" 
-                className="text-gray-300 hover:text-white hover:bg-gray-800/30"
+                variant="ghost" 
+                className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-gray-100/80 dark:hover:bg-gray-800/50"
               onClick={onLoginClick}
             >
               Log in
@@ -98,16 +98,15 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.6 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
             >
               <Button 
-                variant="gradient"
-                animation="pulse"
-                rounded="full"
-                className="px-6 shine"
+                className="bg-gradient-to-r from-cyan-500 to-violet-600 text-white rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300"
                 onClick={onRegisterClick}
               >
                 <span>Start for free</span>
-                <ChevronRight size={16} className="ml-1" />
+                <ArrowRight size={16} className="ml-2 animate-slide-in-right" />
             </Button>
             </motion.div>
           </div>
@@ -115,9 +114,9 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <Button 
-              variant="transparent" 
+              variant="ghost" 
               size="icon" 
-              className="text-gray-400 hover:text-white"
+              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400"
               onClick={toggleMenu}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -130,11 +129,11 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div 
-            className="md:hidden fixed inset-0 z-50 pt-20 bg-black/95 backdrop-blur-md"
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ duration: 0.3 }}
+            className="md:hidden fixed inset-0 z-50 pt-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md"
+            initial={{ opacity: 0, y: '-100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '-100%' }}
+            transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
           >
             <div className="flex flex-col items-center justify-start p-6 h-full">
               <motion.div 
@@ -151,7 +150,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                   <motion.a
                     key={index}
                     href={item.href}
-                    className="text-xl text-gray-300 hover:text-white font-medium transition-colors"
+                    className="text-xl text-gray-700 dark:text-gray-200 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium transition-colors"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -171,7 +170,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                 >
                   <Button 
                     variant="outline" 
-                    className="w-full bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                    className="w-full bg-transparent border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400"
                     onClick={() => {
                       onLoginClick();
                       handleClose();
@@ -186,17 +185,18 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.6 }}
                   className="w-full"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <Button 
-                    variant="gradient"
-                    rounded="full"
-                    className="w-full"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-violet-600 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => {
                       onRegisterClick();
                       handleClose();
                     }}
                   >
-                    Start for free
+                    <span>Start for free</span>
+                    <ArrowRight size={16} className="ml-2" />
                   </Button>
                 </motion.div>
               </div>

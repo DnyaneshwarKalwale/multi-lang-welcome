@@ -49,13 +49,14 @@ export function OnboardingRouter() {
   }, [location.pathname, saveProgress, user]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Progress indicator - visible on all onboarding pages */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-800 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-800 z-50">
         <div 
-          className="h-full bg-indigo-600 transition-all duration-300"
+          className="h-full bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-500 ease-in-out"
           style={{ 
-            width: `${getProgressPercentage(currentStep, workspaceType)}%`
+            width: `${getProgressPercentage(currentStep, workspaceType)}%`,
+            boxShadow: '0 0 10px rgba(6, 182, 212, 0.5)'
           }}
         />
       </div>

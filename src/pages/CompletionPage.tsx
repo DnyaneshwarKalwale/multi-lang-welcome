@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, Loader2, Share2, Twitter, RefreshCw } from "lucide-react";
+import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -146,12 +146,15 @@ export default function CompletionPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-teal-200 dark:bg-teal-900 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
       </div>
+      
+      {/* Background pattern */}
+      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
       
       <motion.div 
         className="max-w-3xl w-full text-center space-y-8"
@@ -160,36 +163,37 @@ export default function CompletionPage() {
         animate="visible"
       >
         <motion.div className="flex flex-col items-center" variants={itemVariants}>
-          <div className="p-2 mb-4 rounded-full bg-green-500/20 border border-green-500/30">
-            <CheckCircle className="w-16 h-16 text-green-500" />
+          <div className="p-3 mb-6 rounded-full bg-gradient-to-r from-teal-400/20 to-cyan-500/20 border border-teal-400/30 shadow-lg">
+            <CheckCircle className="w-16 h-16 text-gradient" strokeWidth={1.5} />
           </div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center gap-2">
+          <h1 className="text-4xl md:text-5xl font-bold text-gradient flex items-center justify-center gap-2">
             Onboarding Complete!
             <span role="img" aria-label="celebration">🎉</span>
           </h1>
-          <p className="text-gray-300 text-xl mt-4 max-w-xl mx-auto">
-            Your setup is finished. Now let's make your Twitter content strategy easier with Scripe.
+          <p className="text-gray-600 dark:text-gray-300 text-xl mt-4 max-w-xl mx-auto">
+            Your setup is finished. Now let's make your content strategy easier with Novus.
           </p>
         </motion.div>
         
         <motion.div 
-          className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 max-w-2xl mx-auto"
+          className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 rounded-xl p-8 max-w-2xl mx-auto shadow-xl"
           variants={itemVariants}
         >
-          <h2 className="text-2xl font-bold mb-6">What's next?</h2>
+          <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-gray-100">What would you like to do next?</h2>
           
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-800/50 p-4 rounded-lg">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
-                <Twitter className="w-6 h-6 text-indigo-400" />
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-cyan-50/80 to-teal-50/80 dark:from-cyan-900/20 dark:to-teal-900/20 p-6 rounded-xl border border-cyan-100 dark:border-cyan-900/30 transition-all duration-300 hover:shadow-md group">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                <Twitter className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-medium mb-1">Generate your first Twitter content</h3>
-                <p className="text-sm text-gray-400 mb-3">
-                  Let our AI create personalized Twitter content based on your preferences
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Generate your first content</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Let our AI create personalized social media content based on your preferences
                 </p>
                 <Button 
-                  variant="gradient"
+                  variant="novus"
+                  animation="lift"
                   rounded="full" 
                   className="w-full md:w-auto"
                   onClick={handleGenerateContent}
@@ -200,24 +204,29 @@ export default function CompletionPage() {
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Generating...
                     </>
-                  ) : "Generate content"}
+                  ) : (
+                    <>
+                      Generate content
+                      <ChevronRight className="ml-1 w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-800/50 p-4 rounded-lg">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
-                <Share2 className="w-6 h-6 text-indigo-400" />
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 p-6 rounded-xl border border-teal-100 dark:border-teal-900/30 transition-all duration-300 hover:shadow-md group">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-teal-400 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                <CloudIcon className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-medium mb-1">Connect your accounts</h3>
-                <p className="text-sm text-gray-400 mb-3">
-                  Link your Twitter accounts to publish content directly
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect your accounts</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Link your social media accounts to publish content directly
                 </p>
                 <Button 
                   variant="outline"
                   rounded="full" 
-                  className="w-full md:w-auto"
+                  className="w-full md:w-auto border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400"
                   onClick={handleUploadFiles}
                   disabled={isUploadingFiles}
                 >
@@ -226,17 +235,22 @@ export default function CompletionPage() {
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Connecting...
                     </>
-                  ) : "Connect accounts"}
+                  ) : (
+                    <>
+                      Connect accounts
+                      <ChevronRight className="ml-1 w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           </div>
           
           <motion.div 
-            className="mt-6 pt-6 border-t border-gray-800 text-center"
+            className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center"
             variants={itemVariants}
           >
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               You can also set these up later from your dashboard
             </p>
           </motion.div>
@@ -245,7 +259,7 @@ export default function CompletionPage() {
         <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
           <ContinueButton 
             onClick={handleGoToDashboard}
-            variant="twitter"
+            variant="cyan"
           >
             Go to Dashboard
           </ContinueButton>
@@ -253,31 +267,31 @@ export default function CompletionPage() {
         
         {error && (
           <motion.div 
-            variants={itemVariants} 
-            className="text-red-400 flex flex-col items-center space-y-2"
+            variants={itemVariants}
+            className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4 rounded-lg text-sm"
           >
             <p>{error}</p>
             {retryCount < maxRetries && (
               <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center"
+                variant="outline"
+                size="sm"
+                className="mt-2 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/50"
                 onClick={handleRetry}
+                disabled={isMarkingComplete}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
+                {isMarkingComplete ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                    Retrying...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-3 h-3 mr-2" />
+                    Retry Update
+                  </>
+                )}
               </Button>
             )}
-          </motion.div>
-        )}
-        
-        {isMarkingComplete && (
-          <motion.div 
-            variants={itemVariants} 
-            className="text-blue-400 flex items-center justify-center"
-          >
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving your preferences...
           </motion.div>
         )}
       </motion.div>

@@ -7,35 +7,61 @@ interface ProgressDotsProps {
   total: number;
   current: number;
   className?: string;
-  color?: "blue" | "purple" | "default";
+  color?: "cyan" | "violet" | "gradient" | "default" | "novus";
+  size?: "sm" | "md" | "lg";
 }
 
 export function ProgressDots({ 
   total, 
   current, 
   className = "",
-  color = "default" 
+  color = "default",
+  size = "md"
 }: ProgressDotsProps) {
   const isMobile = useIsMobile();
   
   // Define colors based on theme
   const activeColors = {
-    blue: "bg-blue-500",
-    purple: "bg-purple-500",
+    cyan: "bg-cyan-500",
+    violet: "bg-violet-600",
+    gradient: "bg-gradient-to-r from-cyan-500 to-violet-600",
+    novus: "bg-gradient-to-r from-teal-400 to-cyan-500",
     default: "bg-primary"
   };
   
   const inactiveColors = {
-    blue: "bg-blue-900/40",
-    purple: "bg-purple-900/40",
-    default: "bg-gray-400 dark:bg-gray-600"
+    cyan: "bg-cyan-200 dark:bg-cyan-900/40",
+    violet: "bg-violet-200 dark:bg-violet-900/40",
+    gradient: "bg-gray-200 dark:bg-gray-700",
+    novus: "bg-gray-100 dark:bg-gray-800/60",
+    default: "bg-gray-300 dark:bg-gray-700"
+  };
+
+  // Define sizes
+  const dotSizes = {
+    sm: {
+      active: isMobile ? "w-2.5 h-2.5" : "w-3 h-3",
+      inactive: isMobile ? "w-1.5 h-1.5" : "w-2 h-2",
+      pulse: isMobile ? "w-5 h-5" : "w-6 h-6"
+    },
+    md: {
+      active: isMobile ? "w-3 h-3" : "w-3.5 h-3.5",
+      inactive: isMobile ? "w-2 h-2" : "w-2.5 h-2.5",
+      pulse: isMobile ? "w-6 h-6" : "w-7 h-7"
+    },
+    lg: {
+      active: isMobile ? "w-4 h-4" : "w-5 h-5",
+      inactive: isMobile ? "w-2.5 h-2.5" : "w-3 h-3",
+      pulse: isMobile ? "w-8 h-8" : "w-10 h-10"
+    }
   };
   
   return (
-    <div className={cn("flex items-center justify-center gap-2", className)}>
+    <div className={cn("flex items-center justify-center gap-3", className)}>
       {Array.from({ length: total }).map((_, index) => {
         const isActive = index <= current;
         const isCurrent = index === current;
+        const isCompleted = index < current;
         
         return (
           <motion.div
@@ -43,52 +69,41 @@ export function ProgressDots({
             className="relative"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05, duration: 0.2 }}
+            transition={{ delay: index * 0.05, duration: 0.3, type: "spring" }}
           >
-            <div
+            <motion.div
               className={cn(
-                "rounded-full transition-all duration-300 ease-in-out",
-                isActive
-                  ? isMobile 
-                    ? `w-2.5 h-2.5 ${activeColors[color]}` 
-                    : `w-3 h-3 ${activeColors[color]}`
-                  : isMobile 
-                    ? `w-1.5 h-1.5 ${inactiveColors[color]}` 
-                    : `w-2 h-2 ${inactiveColors[color]}`
+                "rounded-full transition-all duration-300 ease-in-out shadow-sm",
+                isActive ? dotSizes[size].active : dotSizes[size].inactive,
+                isActive ? activeColors[color] : inactiveColors[color]
               )}
+              initial={false}
+              animate={isCompleted ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 0.5, times: [0, 0.5, 1] }}
             />
             
             {isCurrent && (
               <motion.div
                 className={cn(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                  isMobile ? "w-4 h-4" : "w-5 h-5"
+                  dotSizes[size].pulse
                 )}
                 style={{ 
-                  boxShadow: color === "blue" 
-                    ? "0 0 0 rgba(59, 130, 246, 0.7)" 
-                    : color === "purple"
-                    ? "0 0 0 rgba(168, 85, 247, 0.7)"
-                    : "0 0 0 rgba(124, 58, 237, 0.7)" 
+                  boxShadow: color === "cyan" || color === "novus"
+                    ? "0 0 0 rgba(6, 182, 212, 0.7)" 
+                    : color === "violet"
+                    ? "0 0 0 rgba(124, 58, 237, 0.7)"
+                    : color === "gradient"
+                    ? "0 0 0 rgba(6, 182, 212, 0.7)"
+                    : "0 0 0 rgba(6, 182, 212, 0.7)" 
                 }}
                 animate={{
                   boxShadow: [
-                    color === "blue" 
-                      ? "0 0 0 rgba(59, 130, 246, 0)" 
-                      : color === "purple"
-                      ? "0 0 0 rgba(168, 85, 247, 0)"
-                      : "0 0 0 rgba(124, 58, 237, 0)",
-                    color === "blue" 
-                      ? "0 0 0 4px rgba(59, 130, 246, 0.3)" 
-                      : color === "purple"
-                      ? "0 0 0 4px rgba(168, 85, 247, 0.3)"
-                      : "0 0 0 4px rgba(124, 58, 237, 0.3)",
-                    color === "blue" 
-                      ? "0 0 0 rgba(59, 130, 246, 0)" 
-                      : color === "purple"
-                      ? "0 0 0 rgba(168, 85, 247, 0)"
-                      : "0 0 0 rgba(124, 58, 237, 0)",
+                    "0 0 0 rgba(6, 182, 212, 0)",
+                    "0 0 0 6px rgba(6, 182, 212, 0.2)",
+                    "0 0 0 rgba(6, 182, 212, 0)",
                   ],
+                  scale: [1, 1.05, 1]
                 }}
                 transition={{
                   duration: 2,

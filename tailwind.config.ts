@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 import animatePlugin from "tailwindcss-animate";
@@ -57,12 +56,13 @@ export default {
         },
         // Custom brand colors
         brand: {
-          purple: "#8B5CF6",
-          teal: "#0EA5E9",
-          orange: "#F97316",
-          pink: "#D946EF",
-          light: "#F1F0FB",
-          dark: "#1A1F2C",
+          cyan: "#06b6d4",
+          indigo: "#6366f1",
+          violet: "#7c3aed",
+          teal: "#14b8a6",
+          slate: "#0f172a",
+          light: "#f1f5f9",
+          dark: "#0f172a",
         },
       },
       borderRadius: {
@@ -71,8 +71,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
-        heading: ["Poppins", "sans-serif"],
+        sans: ["Inter", "var(--font-sans)", ...fontFamily.sans],
+        heading: ["Plus Jakarta Sans", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
@@ -94,6 +94,14 @@ export default {
         "slide-in": {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(0)" }
+        },
+        "zoom-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" }
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" }
         }
       },
       animation: {
@@ -101,7 +109,9 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "pulse-slow": "pulse-slow 3s infinite ease-in-out",
-        "slide-in": "slide-in 0.3s ease-out"
+        "slide-in": "slide-in 0.3s ease-out",
+        "zoom-in": "zoom-in 0.4s ease-out",
+        "spin-slow": "spin-slow 8s linear infinite"
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

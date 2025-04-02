@@ -10,7 +10,7 @@ interface BackButtonProps {
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
-  variant?: "default" | "twitter";
+  variant?: "default" | "twitter" | "subtle";
   absolute?: boolean;
 }
 
@@ -30,21 +30,28 @@ export function BackButton({
     return (
       <button
         className={cn(
-          "absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors",
+          "absolute top-8 left-8 md:top-10 md:left-10 flex items-center text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all hover:scale-105",
           className
         )}
         onClick={onClick}
         disabled={disabled}
       >
-        <ArrowLeft size={16} className="mr-2" />
-        {children}
+        <ArrowLeft size={18} className="mr-2 transition-transform" />
+        <span className="font-medium">{children}</span>
       </button>
     );
   }
   
   // Normal button with consistent styling
-  const buttonVariant = variant === "twitter" ? "outline" : "outline";
-  const textColor = variant === "twitter" ? "text-gray-400 hover:text-blue-400 hover:border-blue-500/30" : "text-gray-400 hover:text-indigo-400 hover:border-indigo-500/30";
+  let buttonVariant = "outline";
+  let textColorClass = "text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500/30";
+  
+  if (variant === "twitter") {
+    textColorClass = "text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:border-blue-500/30";
+  } else if (variant === "subtle") {
+    buttonVariant = "ghost";
+    textColorClass = "text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
+  }
   
   return (
     <Button
@@ -53,14 +60,15 @@ export function BackButton({
       variant={buttonVariant}
       rounded="full"
       className={cn(
-        "group px-6 py-6 flex items-center gap-2 transition-all duration-300 border-gray-700 bg-transparent",
-        textColor,
+        "group px-6 py-5 flex items-center gap-2 transition-all duration-300 border-gray-200 dark:border-gray-700 bg-transparent",
+        textColorClass,
+        disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-50 dark:hover:bg-gray-800/50",
         isMobile || fullWidth ? "w-full" : "",
         className
       )}
     >
-      <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform duration-300" />
-      <span className="text-base">{children}</span>
+      <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform duration-300" />
+      <span className="text-base font-medium">{children}</span>
     </Button>
   );
 } 

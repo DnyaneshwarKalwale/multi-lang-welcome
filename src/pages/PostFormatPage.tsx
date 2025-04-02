@@ -24,40 +24,40 @@ export default function PostFormatPage() {
     {
       id: "thread",
       title: "Thread",
-      icon: <AlignLeft size={28} className="text-blue-500" />,
-      description: "Multi-tweet threads with a clear storyline",
+      icon: <AlignLeft size={28} className="text-teal-500 dark:text-teal-400" />,
+      description: "Multi-post threads with a clear storyline",
       example: "1/ We've analyzed 1,000+ viral threads...\n2/ Here's what works consistently...\n3/ Starting with hook + promise...",
       stats: { engagement: 85, reach: 78, effort: 70 }
     },
     {
       id: "concise",
       title: "Concise",
-      icon: <MessageSquareText size={28} className="text-cyan-500" />,
-      description: "Short, impactful tweets within character limits",
+      icon: <MessageSquareText size={28} className="text-cyan-500 dark:text-cyan-400" />,
+      description: "Short, impactful posts within character limits",
       example: "Just discovered the most effective way to grow your audience without spending hours on content creation.",
       stats: { engagement: 70, reach: 65, effort: 30 }
     },
     {
       id: "hashtag",
       title: "Hashtag",
-      icon: <Hash size={28} className="text-green-500" />,
-      description: "Strategic hashtags to increase tweet visibility",
+      icon: <Hash size={28} className="text-emerald-500 dark:text-emerald-400" />,
+      description: "Strategic hashtags to increase post visibility",
       example: "This writing technique doubled my engagement rate overnight #WritingCommunity #ContentCreation #GrowthHacking",
       stats: { engagement: 60, reach: 90, effort: 40 }
     },
     {
       id: "visual",
       title: "Visual",
-      icon: <Image size={28} className="text-yellow-500" />,
-      description: "Image-focused tweets for better engagement",
+      icon: <Image size={28} className="text-blue-500 dark:text-blue-400" />,
+      description: "Image-focused posts for better engagement",
       example: "[Image] + Caption: The before/after results speak for themselves. Swipe to see the difference.",
       stats: { engagement: 88, reach: 75, effort: 55 }
     },
     {
       id: "viral",
       title: "Viral",
-      icon: <Sparkles size={28} className="text-pink-500" />,
-      description: "Trend-focused tweets optimized for sharing",
+      icon: <Sparkles size={28} className="text-cyan-500 dark:text-cyan-400" />,
+      description: "Trend-focused posts optimized for sharing",
       example: "I tested this viral trend on 50 accounts. Only 3 techniques consistently got results. Here they are:",
       stats: { engagement: 95, reach: 85, effort: 65 }
     }
@@ -97,14 +97,17 @@ export default function PostFormatPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-3 sm:px-4 py-6 sm:py-10 bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-3 sm:px-4 py-6 sm:py-10 bg-background text-foreground relative overflow-hidden">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-900 blur-[120px]"></div>
+      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-teal-200 dark:bg-teal-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-200 dark:bg-cyan-900 blur-[120px]"></div>
       </div>
       
-      {/* Twitter-like floating elements for decoration - hidden on smallest screens */}
+      {/* Background pattern */}
+      <div className="absolute inset-0 bg-hero-pattern opacity-5 -z-10"></div>
+      
+      {/* Social media floating elements for decoration - hidden on smallest screens */}
       <div className="hidden sm:block">
         <motion.div 
           className="absolute opacity-10 pointer-events-none"
@@ -120,7 +123,7 @@ export default function PostFormatPage() {
           }}
           style={{ top: '15%', right: '10%' }}
         >
-          <Twitter size={80} className="text-blue-400" />
+          <Twitter size={80} className="text-cyan-500 dark:text-cyan-400" />
         </motion.div>
         
         <motion.div 
@@ -138,7 +141,7 @@ export default function PostFormatPage() {
           }}
           style={{ bottom: '20%', left: '8%' }}
         >
-          <HeartHandshake size={60} className="text-pink-400" />
+          <HeartHandshake size={60} className="text-teal-500 dark:text-teal-400" />
         </motion.div>
         
         <motion.div 
@@ -156,7 +159,7 @@ export default function PostFormatPage() {
           }}
           style={{ top: '30%', left: '15%' }}
         >
-          <TrendingUp size={50} className="text-green-400" />
+          <TrendingUp size={50} className="text-emerald-500 dark:text-emerald-400" />
         </motion.div>
         
         <motion.div 
@@ -174,7 +177,7 @@ export default function PostFormatPage() {
           }}
           style={{ bottom: '30%', right: '12%' }}
         >
-          <Reply size={45} className="text-cyan-400" />
+          <Reply size={45} className="text-cyan-500 dark:text-cyan-400" />
         </motion.div>
       </div>
       
@@ -182,7 +185,6 @@ export default function PostFormatPage() {
       <BackButton 
         onClick={prevStep} 
         absolute 
-        variant="twitter" 
       />
       
       <motion.div 
@@ -201,11 +203,11 @@ export default function PostFormatPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400"
+          className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center text-gradient"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          Choose your Twitter content style
+          Choose your content style
         </motion.h1>
         
         <motion.div 
@@ -213,17 +215,17 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.25 }}
         >
-          <Twitter size={18} className="text-blue-400" />
-          <span className="text-blue-400 font-medium text-sm sm:text-base">Twitter Optimization</span>
+          <Twitter size={18} className="text-cyan-600 dark:text-cyan-400" />
+          <span className="text-cyan-600 dark:text-cyan-400 font-medium text-sm sm:text-base">Social Media Optimization</span>
         </motion.div>
         
         <motion.p 
-          className="text-sm sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto"
+          className="text-sm sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          Scripe analyzes thousands of high-performing tweets to optimize your content strategy.
-          Select the tweet style that resonates with your audience.
+          Novus analyzes thousands of high-performing posts to optimize your content strategy.
+          Select the content style that resonates with your audience.
         </motion.p>
         
         <motion.div 
@@ -241,101 +243,120 @@ export default function PostFormatPage() {
               <motion.div 
                 key={format.id}
                 className={`
-                  bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-3 sm:p-5 flex flex-col cursor-pointer 
-                  transition-all hover:bg-gray-800/70 hover-lift group
-                  ${postFormat === format.id ? 'ring-2 ring-blue-600 shadow-glow' : 'opacity-90'}
+                  bg-white/80 dark:bg-gray-900/50 backdrop-blur-sm border 
+                  ${postFormat === format.id 
+                    ? 'border-teal-400/50 dark:border-teal-400/30 shadow-lg' 
+                    : 'border-gray-200 dark:border-gray-800 opacity-90'} 
+                  rounded-xl p-3 sm:p-5 flex flex-col cursor-pointer 
+                  transition-all hover:bg-gradient-to-br hover:from-cyan-50/80 hover:to-teal-50/80 
+                  dark:hover:from-cyan-900/30 dark:hover:to-teal-900/30 hover:shadow-md group
+                  ${postFormat === format.id ? 'ring-2 ring-teal-400/50 dark:ring-teal-500/40' : ''}
                 `}
                 onClick={() => setPostFormat(format.id as any)}
                 variants={itemVariants}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
-                <div className="w-full aspect-square rounded-lg bg-gray-800/80 mb-2 sm:mb-4 relative flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900/30 to-transparent" />
-                  <div className="z-10">{format.icon}</div>
-                  
+                <div className="mb-2 sm:mb-3 flex justify-between items-start">
+                  <div className="p-1.5 sm:p-2 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30">
+                    {format.icon}
+                  </div>
                   {postFormat === format.id && (
-                    <div className="absolute bottom-2 right-2 bg-blue-600 rounded-full p-1">
-                      <Check size={12} />
-                    </div>
+                    <motion.div 
+                      initial={{ scale: 0, opacity: 0 }} 
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="w-5 h-5 bg-teal-500 dark:bg-teal-400 rounded-full flex items-center justify-center"
+                    >
+                      <Check size={12} className="text-white" />
+                    </motion.div>
                   )}
                 </div>
-                
-                <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">{format.title}</h3>
-                <p className="text-gray-400 text-xs sm:text-sm line-clamp-2 mb-2">{format.description}</p>
-                
-                <div className="mt-auto space-y-1">
-                  {Object.entries(format.stats).map(([key, value]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <span className="text-[10px] sm:text-xs capitalize text-gray-500">{key}</span>
-                      <div className="flex-1 mx-2 bg-gray-800 h-1 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full rounded-full bg-blue-600" 
-                          style={{ width: `${value}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] sm:text-xs text-gray-400">{value}%</span>
-                    </div>
-                  ))}
+                <h3 className="font-medium text-sm sm:text-base mb-1 text-gray-900 dark:text-gray-100">{format.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 flex-grow">{format.description}</p>
+                <div className="text-[9px] sm:text-[10px] bg-gray-100 dark:bg-gray-800/60 p-1.5 rounded font-mono text-gray-500 dark:text-gray-400">
+                  {format.example.substring(0, 42)}...
                 </div>
+                {postFormat === format.id && (
+                  <motion.div 
+                    className="flex justify-between mt-3 text-[10px] text-gray-600 dark:text-gray-400"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="flex flex-col items-center">
+                      <span className="text-teal-600 dark:text-teal-400 font-semibold">{format.stats.engagement}%</span>
+                      <span>Engage</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-cyan-600 dark:text-cyan-400 font-semibold">{format.stats.reach}%</span>
+                      <span>Reach</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold">{format.stats.effort}%</span>
+                      <span>Effort</span>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             ))}
           </motion.div>
           
-          {postFormat && (
-            <motion.div 
-              className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-4 sm:p-6 max-w-3xl mx-auto"
-              variants={fadeIn}
-              transition={{ delay: 0.6 }}
-            >
-              <h3 className="font-medium text-lg mb-2">Example Tweet Format:</h3>
-              <pre className="bg-gray-800/70 rounded-md p-3 text-xs sm:text-sm text-blue-100 overflow-auto max-h-24">
-                {formatOptions.find(f => f.id === postFormat)?.example || "Select a format to see an example"}
-              </pre>
-              
-              <div className="mt-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-sm sm:text-base font-medium">Your preferred tweet length</h4>
-                  <span className="text-xs text-blue-400">{calculateCharacterCount()}</span>
-                </div>
-                <Slider
-                  defaultValue={[50]}
-                  max={100}
-                  step={1}
-                  value={[postLength]}
-                  onValueChange={([value]) => setPostLength(value)}
-                  className="my-6"
-                />
-                <div className="flex justify-between text-xs sm:text-sm text-gray-400">
-                  <span>Shorter</span>
-                  <span>Medium</span>
-                  <span>Longer</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
+          <motion.div 
+            className="bg-white/80 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6 mb-8"
+            variants={itemVariants}
+          >
+            <h3 className="font-medium mb-2 sm:mb-4 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>Post Length</span>
+              <span className="text-xs py-0.5 px-2 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400">
+                {calculateCharacterCount()}
+              </span>
+            </h3>
+            <div className="mb-3">
+              <Slider
+                defaultValue={[50]}
+                max={100}
+                step={1}
+                value={[postLength]}
+                onValueChange={(value) => setPostLength(value[0])}
+                className="py-4"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+              <div>Concise</div>
+              <div>Standard</div>
+              <div>Detailed</div>
+            </div>
+          </motion.div>
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-8"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
           variants={fadeIn}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.5 }}
         >
           <ContinueButton 
-            onClick={nextStep}
+            onClick={nextStep} 
             disabled={!postFormat}
-            variant="twitter"
+            variant="cyan"
           >
             Continue
           </ContinueButton>
+          
+          <Button
+            variant="outline"
+            rounded="full"
+            onClick={() => setPostFormat(null)}
+            className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400"
+          >
+            Reset Selection
+          </Button>
         </motion.div>
         
         <motion.div
           variants={fadeIn}
-          transition={{ delay: 0.8 }}
-          className="flex flex-col items-center"
+          transition={{ delay: 0.6 }}
+          className="flex justify-center"
         >
-          <ProgressDots total={total} current={current} color="blue" />
-          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+          <ProgressDots total={total} current={current} color="novus" />
         </motion.div>
       </motion.div>
     </div>
