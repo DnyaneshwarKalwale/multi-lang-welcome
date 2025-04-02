@@ -137,7 +137,8 @@ export const ScripeLogotype = PrismLogotype;
 export const ScripeIcon = PrismIcon;
 export const ScripeIconRounded = PrismIconRounded;
 
-export function ScripeIcon({ className = "w-6 h-6", size }: IconProps) {
+// Renamed Twitter-styled icons to avoid duplicates
+export function TwitterStyleIcon({ className = "w-6 h-6", size }: IconProps) {
   const sizeStyle = size ? { width: `${size}px`, height: `${size}px` } : {};
   
   return (
@@ -176,15 +177,15 @@ export function ScripeIcon({ className = "w-6 h-6", size }: IconProps) {
   );
 }
 
-export function ScripeIconSquare({ className = "w-10 h-10" }: IconProps) {
+export function TwitterStyleIconSquare({ className = "w-10 h-10" }: IconProps) {
   return (
     <div className={`${className} p-1.5 rounded flex items-center justify-center`}>
-      <ScripeIcon className="w-full h-full" />
+      <TwitterStyleIcon className="w-full h-full" />
     </div>
   );
 }
 
-export function ScripeIconRounded({ className = "w-10 h-10" }: IconProps) {
+export function TwitterStyleIconRounded({ className = "w-10 h-10" }: IconProps) {
   return (
     <div className={`${className} bg-gradient-to-br from-cyan-500 to-violet-600 rounded-full flex items-center justify-center p-2`}>
       <svg 
