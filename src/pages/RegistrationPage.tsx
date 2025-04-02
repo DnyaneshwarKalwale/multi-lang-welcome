@@ -20,8 +20,8 @@ export default function RegistrationPage() {
     localStorage.setItem('user_firstName', firstName);
     localStorage.setItem('user_lastName', lastName);
     
+    // Only use nextStep, don't directly navigate
     nextStep();
-    navigate("/onboarding/extension-install");
   };
   
   const handleSkipToDashboard = () => {

@@ -16,7 +16,6 @@ export default function ExtensionInstallPage() {
   
   const handleContinue = () => {
     nextStep();
-    navigate("/onboarding/completion");
   };
   
   const handleSkipToDashboard = () => {
