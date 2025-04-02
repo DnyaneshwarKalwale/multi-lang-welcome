@@ -1,117 +1,88 @@
 
-import { useContext } from 'react';
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Card } from "@/components/ui/card";
+import { ArrowRight, TwitterIcon } from "lucide-react";
 import { motion } from "framer-motion";
-import { ArrowRight, Twitter, Check } from "lucide-react";
 
 interface CustomWelcomePageProps {
   onLogin: () => void;
 }
 
-const CustomWelcomePage = ({ onLogin }: CustomWelcomePageProps) => {
-  const { isAuthenticated } = useAuth();
-
-  const features = [
-    "Algorithm-optimized content generation",
-    "Personalized Twitter posts in minutes",
-    "Increased engagement and reach",
-    "AI-powered content that drives results",
-    "Simple workflow for fast content creation"
-  ];
-
+export default function CustomWelcomePage({ onLogin }: CustomWelcomePageProps) {
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-white to-brand-light dark:from-gray-900 dark:to-brand-dark">
-      <div className="absolute inset-0 bg-hero-pattern bg-no-repeat bg-center opacity-30 dark:opacity-10" />
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-hero-pattern bg-no-repeat bg-center opacity-20 dark:opacity-10" />
       
-      <div className="container px-4 py-12 lg:py-24 relative z-10">
-        <div className="flex flex-col items-center text-center mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-6"
-          >
-            <Twitter className="h-16 w-16 text-brand-purple mb-4" />
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-              Create <span className="text-gradient">Twitter</span> content<br />with high reach
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Receive tailored, algorithm-optimized Twitter posts in less than 5 minutes with our AI-powered platform.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 w-full max-w-md mx-auto"
-          >
-            {isAuthenticated ? (
-              <Link to="/dashboard" className="w-full">
-                <Button size="lg" className="w-full primary-button">
-                  Go to Dashboard
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/registration" className="w-full">
-                  <Button size="lg" className="w-full primary-button">
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Button variant="outline" size="lg" className="w-full" onClick={onLogin}>
-                  Sign In
-                </Button>
-              </>
-            )}
-          </motion.div>
+      <motion.div
+        className="max-w-md w-full z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="text-center mb-8">
+          <TwitterIcon className="h-14 w-14 mx-auto text-brand-purple mb-6" />
+          <h1 className="text-4xl font-bold mb-4">
+            Welcome to <span className="bg-gradient-to-r from-brand-purple to-brand-pink bg-clip-text text-transparent">Scripe</span>
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
+            Create algorithm-optimized Twitter content that grows your audience.
+          </p>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5 }}
-          className="mt-20"
-        >
-          <Card className="glass-card overflow-hidden max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8">
-              <div>
-                <h2 className="text-2xl font-bold mb-4 text-gradient-blue">Why choose Scripe?</h2>
-                <ul className="space-y-3">
-                  {features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="mt-1 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-full p-0.5">
-                        <Check className="h-4 w-4 text-brand-teal" />
-                      </div>
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="bg-gradient-to-br from-brand-purple/10 to-brand-pink/10 dark:from-brand-purple/20 dark:to-brand-pink/20 rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">Ready to grow your Twitter presence?</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Join thousands of content creators who are leveraging AI to create engaging Twitter content that gets noticed.
-                </p>
-                <Link to={isAuthenticated ? "/dashboard" : "/registration"}>
-                  <Button className="w-full primary-button">
-                    {isAuthenticated ? "Go to Dashboard" : "Start Creating Content"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+        
+        <Card className="glass-card border border-gray-100 dark:border-gray-800 shadow-xl">
+          <div className="p-8">
+            <div className="space-y-4 mb-8">
+              <Feature 
+                title="AI-Driven Content" 
+                description="Analyze viral tweets to create engaging posts" 
+                icon="✨" 
+              />
+              <Feature 
+                title="Personalized Voice" 
+                description="Content that sounds authentically like you" 
+                icon="🎯" 
+              />
+              <Feature 
+                title="Performance Analytics" 
+                description="Track engagement and optimize your strategy" 
+                icon="📊" 
+              />
             </div>
-          </Card>
-        </motion.div>
+            
+            <Button 
+              onClick={onLogin}
+              className="w-full py-6 bg-gradient-to-r from-brand-purple to-brand-pink hover:from-brand-purple/90 hover:to-brand-pink/90 text-white font-medium text-lg rounded-xl group transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              Get Started
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Button>
+            
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+              Join thousands of creators and businesses growing their Twitter presence
+            </p>
+          </div>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}
+
+interface FeatureProps {
+  title: string;
+  description: string;
+  icon: string;
+}
+
+function Feature({ title, description, icon }: FeatureProps) {
+  return (
+    <div className="flex items-start gap-4">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-purple/10 dark:bg-brand-purple/20 flex items-center justify-center text-lg">
+        {icon}
+      </div>
+      <div>
+        <h3 className="font-medium text-lg text-gray-800 dark:text-gray-100">{title}</h3>
+        <p className="text-gray-600 dark:text-gray-300">{description}</p>
       </div>
     </div>
   );
-};
-
-export default CustomWelcomePage;
+}
