@@ -16,9 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ThemeToggle from "@/components/ThemeToggle";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
+  const { theme } = useTheme();
 
   // Sample tweets data
   const scheduledTweets = [
@@ -98,10 +101,13 @@ const DashboardPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Twitter Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your content and analyze performance</p>
         </div>
-        <Button size="sm" variant="gradient" className="gap-2">
-          <Twitter className="h-4 w-4" />
-          <span>Connect Twitter</span>
-        </Button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Button size="sm" variant="gradient" className="gap-2">
+            <Twitter className="h-4 w-4" />
+            <span>Connect Twitter</span>
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="create" className="mb-8">
