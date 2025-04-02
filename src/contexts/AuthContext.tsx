@@ -68,13 +68,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Validate password
+      if (!password) {
+        throw new Error('Please enter your password');
+      }
+
       // Simulate API call
       const response = await new Promise<AuthResponse>((resolve, reject) => {
         setTimeout(() => {
           if (email === 'test@example.com' && password === 'password') {
-            resolve({ success: true, token: 'mock-jwt-token', user: { id: 1, email } });
+            resolve({ 
+              success: true, 
+              token: 'mock-jwt-token', 
+              user: { 
+                id: 1, 
+                email,
+                name: 'Test User',
+                profilePicture: 'https://ui-avatars.com/api/?name=TU&background=6366F1&color=fff'
+              } 
+            });
           } else {
-            reject(new Error('Invalid credentials'));
+            reject(new Error('Invalid email or password'));
           }
         }, 1000);
       });
@@ -86,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
       throw err;
     } finally {
       setIsLoading(false);

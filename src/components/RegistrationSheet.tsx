@@ -36,8 +36,8 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     const baseApiUrl = import.meta.env.VITE_API_URL;
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Redirect to backend Google auth endpoint with the dynamic URL
-    window.location.href = `${baseUrl}/api/auth/google?callback=${window.location.origin}/auth/social-callback`;
+    // Redirect to backend Google auth endpoint with the correct callback URL
+    window.location.href = `${baseUrl}/api/auth/google?callback=${baseUrl}/api/auth/google/callback`;
   };
   
   // Handle Twitter auth
@@ -46,8 +46,8 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     const baseApiUrl = import.meta.env.VITE_API_URL;
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Redirect to backend Twitter auth endpoint
-    window.location.href = `${baseUrl}/api/auth/twitter?callback=${window.location.origin}/auth/social-callback`;
+    // Redirect to backend Twitter auth endpoint with the correct callback URL
+    window.location.href = `${baseUrl}/api/auth/twitter?callback=${baseUrl}/api/auth/twitter/callback`;
     onOpenChange(false);
   };
   
