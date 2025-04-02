@@ -164,7 +164,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
@@ -176,7 +176,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
@@ -203,13 +203,13 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               animate="visible"
             >
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1.5">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-white mb-1.5">Email</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -219,7 +219,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               
               <motion.div variants={itemVariants}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-400">Password</label>
+                  <label htmlFor="password" className="block text-sm font-medium text-white">Password</label>
                   <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Forgot password?</a>
                 </div>
                 <div className="relative">
@@ -227,7 +227,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="password" 
                     type="password" 
                     placeholder="Enter your password" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

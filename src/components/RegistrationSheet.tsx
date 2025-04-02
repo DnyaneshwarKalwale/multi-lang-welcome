@@ -141,7 +141,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
@@ -153,7 +153,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200" 
+                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
@@ -181,12 +181,12 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-400 mb-1.5">First name</label>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-white mb-1.5">First name</label>
                   <div className="relative">
                     <Input 
                       id="firstName" 
                       placeholder="Enter your first name" 
-                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
@@ -195,12 +195,12 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-400 mb-1.5">Last name</label>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-white mb-1.5">Last name</label>
                   <div className="relative">
                     <Input 
                       id="lastName" 
                       placeholder="Enter your last name" 
-                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
@@ -210,13 +210,13 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1.5">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-white mb-1.5">Email</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -225,13 +225,13 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </motion.div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1.5">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-white mb-1.5">Password</label>
                 <div className="relative">
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder="Create a secure password (min. 8 characters)" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     minLength={8}
