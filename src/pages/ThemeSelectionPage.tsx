@@ -113,7 +113,7 @@ export default function ThemeSelectionPage() {
                   <div className="w-full h-full rounded-full bg-white scale-50"></div>
                 )}
               </div>
-              <span className={`text-lg ${theme === "light" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('light')}</span>
+              <span className={`text-lg ${theme === "light" ? "text-black dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>{t('light')}</span>
             </div>
           </motion.div>
           
@@ -148,7 +148,7 @@ export default function ThemeSelectionPage() {
                   <div className="w-full h-full rounded-full bg-white scale-50"></div>
                 )}
               </div>
-              <span className={`text-lg ${theme === "dark" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('dark')}</span>
+              <span className={`text-lg ${theme === "dark" ? "text-black dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>{t('dark')}</span>
             </div>
           </motion.div>
         </motion.div>
