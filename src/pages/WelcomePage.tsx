@@ -19,21 +19,21 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white">
       <div className="max-w-3xl w-full text-center">
         <div className="mb-10 flex justify-center">
           <ScripeIcon size={100} />
         </div>
         
-        <h1 className="text-5xl font-bold mb-6 text-gray-900">
+        <h1 className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
           {t('welcomeTitle')}
         </h1>
         
         <div>
-          <p className="text-xl text-gray-600 mb-2">
+          <p className="text-xl text-gray-300 mb-2">
             {t('welcomeSubtitle')}
           </p>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-gray-300 mb-8">
             {t('welcomeDescription')}
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function WelcomePage() {
             <Button
               onClick={handleGetStarted}
               variant="default"
-              className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 h-12 text-lg"
+              className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full flex items-center gap-2 transition-all duration-300 h-12 text-lg"
             >
               <span>{t('getStarted')}</span>
               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -61,28 +61,28 @@ export default function WelcomePage() {
         
         {/* Features highlight */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          <div className="bg-white shadow p-6 rounded-xl border border-gray-200">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-              <Twitter className="w-6 h-6 text-blue-600" />
+          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
+              <Twitter className="w-6 h-6 text-indigo-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2">AI-Powered Twitter Content</h3>
-            <p className="text-gray-600 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
+            <h3 className="text-lg font-medium mb-2 text-white">AI-Powered Twitter Content</h3>
+            <p className="text-gray-400 text-sm">Generate high-quality Twitter posts based on your unique voice and audience preferences.</p>
           </div>
           
-          <div className="bg-white shadow p-6 rounded-xl border border-gray-200">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <span className="text-2xl">📊</span>
             </div>
-            <h3 className="text-lg font-medium mb-2">Twitter Analytics</h3>
-            <p className="text-gray-600 text-sm">Track performance metrics and optimize your Twitter strategy with detailed engagement insights.</p>
+            <h3 className="text-lg font-medium mb-2 text-white">Twitter Analytics</h3>
+            <p className="text-gray-400 text-sm">Track performance metrics and optimize your Twitter strategy with detailed engagement insights.</p>
           </div>
           
-          <div className="bg-white shadow p-6 rounded-xl border border-gray-200">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300">
+            <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
               <span className="text-2xl">⏱️</span>
             </div>
-            <h3 className="text-lg font-medium mb-2">Save Time</h3>
-            <p className="text-gray-600 text-sm">Create weeks of Twitter content in minutes and schedule posts for optimal engagement times.</p>
+            <h3 className="text-lg font-medium mb-2 text-white">Save Time</h3>
+            <p className="text-gray-400 text-sm">Create weeks of Twitter content in minutes and schedule posts for optimal engagement times.</p>
           </div>
         </div>
       </div>

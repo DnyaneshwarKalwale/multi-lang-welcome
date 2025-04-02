@@ -164,12 +164,12 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="relative w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 overflow-hidden rounded-lg" 
+                  className="relative w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 overflow-hidden rounded-lg text-white" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
                   <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5 relative z-10" />
-                  <span className="relative z-10">Continue with Google</span>
+                  <span className="relative z-10 text-white">Continue with Google</span>
                   <motion.div 
                     className="absolute inset-0 bg-white/5" 
                     initial={{ scale: 0, opacity: 0 }}
@@ -182,12 +182,12 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="relative w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 overflow-hidden rounded-lg" 
+                  className="relative w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 overflow-hidden rounded-lg text-white" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
                   <Twitter size={18} className="text-[#1DA1F2] relative z-10" />
-                  <span className="relative z-10">Continue with Twitter</span>
+                  <span className="relative z-10 text-white">Continue with Twitter</span>
                   <motion.div 
                     className="absolute inset-0 bg-white/5" 
                     initial={{ scale: 0, opacity: 0 }}
@@ -203,7 +203,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 <div className="w-full border-t border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-black text-gray-500 uppercase text-xs tracking-wider">Or continue with email</span>
+                <span className="px-2 bg-black text-gray-400 uppercase text-xs tracking-wider">Or continue with email</span>
               </div>
             </motion.div>
             
@@ -215,13 +215,13 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               animate="visible"
             >
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1.5">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all rounded-lg"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all rounded-lg text-white placeholder:text-gray-500"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -231,7 +231,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               
               <motion.div variants={itemVariants}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-400">Password</label>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-300">Password</label>
                   <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Forgot password?</a>
                 </div>
                 <div className="relative">
@@ -239,7 +239,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="password" 
                     type="password" 
                     placeholder="Enter your password" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all rounded-lg"
+                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all rounded-lg text-white placeholder:text-gray-500"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -249,50 +249,38 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               
               <motion.div variants={itemVariants}>
                 <Button 
-                  type="submit" 
-                  variant="gradient"
-                  className="w-full text-white font-medium h-12 transition-all duration-300 rounded-lg relative overflow-hidden"
-                  rounded="lg"
+                  type="submit"
                   disabled={loading}
+                  className="w-full h-12 font-medium bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg flex items-center justify-center gap-2"
                 >
-                  <motion.div 
-                    className="absolute inset-0 bg-white/10" 
-                    initial={{ scale: 0, opacity: 0 }}
-                    whileHover={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
                   {loading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="animate-spin h-5 w-5 text-white mr-2" />
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       <span>Logging in...</span>
-                    </div>
+                    </>
                   ) : (
-                    <span className="relative z-10">Log in</span>
+                    <span>Log in</span>
                   )}
                 </Button>
               </motion.div>
-              
-              <motion.div 
-                className="text-center text-sm text-gray-400 pt-2"
-                variants={itemVariants}
-              >
-                Don't have an account?{" "}
-                <button
-                  onClick={handleSignUp}
-                  className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors underline-offset-2 hover:underline"
-                >
-                  Sign up
-                </button>
-              </motion.div>
             </motion.form>
+            
+            <motion.div 
+              className="flex justify-center mt-7 text-sm text-gray-300"
+              variants={itemVariants}
+            >
+              <p>
+                Don't have an account? <button onClick={handleSignUp} className="text-indigo-400 hover:text-indigo-300 transition-colors">Sign up</button>
+              </p>
+            </motion.div>
           </motion.div>
         </SheetContent>
       </Sheet>
       
-      {/* Render the registration sheet */}
+      {/* Registration Sheet */}
       <RegistrationSheet 
-        open={openRegistrationSheet} 
-        onOpenChange={setOpenRegistrationSheet} 
+        open={openRegistrationSheet}
+        onOpenChange={setOpenRegistrationSheet}
         onSuccess={onSuccess}
       />
     </>
