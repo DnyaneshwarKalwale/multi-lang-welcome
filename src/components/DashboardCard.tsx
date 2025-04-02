@@ -40,119 +40,111 @@ export function DashboardPostCard({
   onPublish
 }: DashboardPostCardProps) {
   return (
-    <motion.div
-      className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover-lift transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}
-    >
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center">
-            <img 
-              src={author.avatar} 
-              alt={author.name} 
-              className="w-10 h-10 rounded-full mr-3 object-cover border border-gray-700" 
-            />
-            <div>
-              <div className="font-medium text-sm">{author.name}</div>
-              <div className="flex items-center text-xs text-gray-500">
-                {status === "published" ? (
-                  <Eye className="w-3 h-3 mr-1" />
-                ) : status === "scheduled" ? (
-                  <Calendar className="w-3 h-3 mr-1" />
-                ) : (
-                  <Clock className="w-3 h-3 mr-1" />
-                )}
-                <span>
-                  {status === "published" 
-                    ? `Published ${date}` 
-                    : status === "scheduled" 
-                    ? `Scheduled for ${date}` 
-                    : `Last edited ${date}`}
-                </span>
-              </div>
+    <div className="bg-white dark:bg-gray-900/50 p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center">
+          <img 
+            src={author.avatar} 
+            alt={author.name} 
+            className="w-10 h-10 rounded-full mr-3 object-cover ring-2 ring-teal-400/30 dark:ring-teal-400/50" 
+          />
+          <div>
+            <div className="font-medium text-sm text-gray-900 dark:text-white">{author.name}</div>
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+              {status === "published" ? (
+                <Eye className="w-3 h-3 mr-1" />
+              ) : status === "scheduled" ? (
+                <Calendar className="w-3 h-3 mr-1" />
+              ) : (
+                <Clock className="w-3 h-3 mr-1" />
+              )}
+              <span>
+                {status === "published" 
+                  ? `Published ${date}` 
+                  : status === "scheduled" 
+                  ? `Scheduled for ${date}` 
+                  : `Last edited ${date}`}
+              </span>
             </div>
-          </div>
-          
-          <div className="flex space-x-1">
-            {onEdit && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-full text-gray-400 hover:text-indigo-400 hover:bg-gray-800 transition-all duration-200"
-                onClick={onEdit}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-800 transition-all duration-200"
-                onClick={onDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
         
-        <h3 className="text-lg font-semibold mb-2 line-clamp-1">{title}</h3>
-        <p className="text-gray-400 text-sm mb-4 line-clamp-3">{content}</p>
-        
-        {imageSrc && (
-          <div className="mb-4 rounded-lg overflow-hidden image-hover-zoom">
-            <img 
-              src={imageSrc} 
-              alt={title} 
-              className="w-full h-48 object-cover transition-transform duration-500" 
-            />
-          </div>
-        )}
-        
-        {stats && (
-          <div className="flex items-center justify-between mb-4 py-2 border-t border-gray-800">
-            {stats.views !== undefined && (
-              <div className="flex items-center text-xs text-gray-500 hover:text-indigo-400 transition-colors duration-200">
-                <Eye className="w-4 h-4 mr-1" />
-                <span>{stats.views}</span>
-              </div>
-            )}
-            {stats.likes !== undefined && (
-              <div className="flex items-center text-xs text-gray-500 hover:text-indigo-400 transition-colors duration-200">
-                <ThumbsUp className="w-4 h-4 mr-1" />
-                <span>{stats.likes}</span>
-              </div>
-            )}
-            {stats.comments !== undefined && (
-              <div className="flex items-center text-xs text-gray-500 hover:text-indigo-400 transition-colors duration-200">
-                <MessageSquare className="w-4 h-4 mr-1" />
-                <span>{stats.comments}</span>
-              </div>
-            )}
-            {stats.shares !== undefined && (
-              <div className="flex items-center text-xs text-gray-500 hover:text-indigo-400 transition-colors duration-200">
-                <Share2 className="w-4 h-4 mr-1" />
-                <span>{stats.shares}</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {status === "draft" && onPublish && (
-          <Button 
-            variant="gradient"
-            className="w-full group transition-all duration-300"
-            onClick={onPublish}
-          >
-            <span>Publish now</span>
-          </Button>
-        )}
+        <div className="flex space-x-1">
+          {onEdit && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              onClick={onEdit}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
-    </motion.div>
+      
+      <h3 className="text-lg font-semibold mb-2 line-clamp-1 text-gray-900 dark:text-white">{title}</h3>
+      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">{content}</p>
+      
+      {imageSrc && (
+        <div className="mb-4 rounded-lg overflow-hidden image-hover-zoom">
+          <img 
+            src={imageSrc} 
+            alt={title} 
+            className="w-full h-48 object-cover transition-transform duration-500" 
+          />
+        </div>
+      )}
+      
+      {stats && (
+        <div className="flex items-center justify-between mb-4 py-2 border-t border-gray-100 dark:border-gray-800">
+          {stats.views !== undefined && (
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200">
+              <Eye className="w-4 h-4 mr-1" />
+              <span>{stats.views}</span>
+            </div>
+          )}
+          {stats.likes !== undefined && (
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200">
+              <ThumbsUp className="w-4 h-4 mr-1" />
+              <span>{stats.likes}</span>
+            </div>
+          )}
+          {stats.comments !== undefined && (
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200">
+              <MessageSquare className="w-4 h-4 mr-1" />
+              <span>{stats.comments}</span>
+            </div>
+          )}
+          {stats.shares !== undefined && (
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200">
+              <Share2 className="w-4 h-4 mr-1" />
+              <span>{stats.shares}</span>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {status === "draft" && onPublish && (
+        <Button 
+          variant="gradient"
+          className="w-full group transition-all duration-300"
+          onClick={onPublish}
+        >
+          <span>Publish now</span>
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -295,5 +287,4 @@ export function DashboardProfileCard({ user, stats }: DashboardProfileCardProps)
       </div>
     </div>
   );
-} 
 } 
