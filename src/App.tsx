@@ -21,6 +21,13 @@ import { motion } from "framer-motion";
 
 const queryClient = new QueryClient();
 
+// Set default theme class on document before React hydration
+// This helps prevent theme flicker on page load
+document.documentElement.classList.add("dark");
+if (!localStorage.getItem("theme")) {
+  localStorage.setItem("theme", "dark");
+}
+
 // Loading spinner component with our new design
 function LoadingSpinner() {
   return (

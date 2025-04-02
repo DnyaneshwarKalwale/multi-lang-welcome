@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScripeLogotype, ScripeIconRounded } from "@/components/ScripeIcon";
-import { Menu, X, ChevronRight, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronRight, ArrowRight, Moon, Sun } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
+import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -14,6 +16,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   
   // Track scroll position to change navbar appearance
   useEffect(() => {
@@ -83,6 +86,14 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+            >
+              <ThemeToggle />
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.5 }}
             >
             <Button 
@@ -112,11 +123,13 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
           </div>
             
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center">
+            <ThemeToggle />
+            
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400"
+              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 ml-2"
               onClick={toggleMenu}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

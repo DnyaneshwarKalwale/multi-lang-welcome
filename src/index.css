@@ -56,7 +56,7 @@
     --muted: 223 47% 12%;
     --muted-foreground: 210 20% 80%;
     
-    --accent: 187 75% 45%;
+    --accent: 187 75% 25%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -161,15 +161,15 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-teal-400 to-cyan-500 dark:from-teal-300 dark:to-cyan-400 bg-clip-text text-transparent;
   }
   
   .text-gradient-blue {
-    @apply bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent;
   }
   
   .text-gradient-alt {
-    @apply bg-gradient-to-r from-cyan-500 to-teal-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-cyan-500 to-teal-400 dark:from-cyan-400 dark:to-teal-300 bg-clip-text text-transparent;
   }
   
   .animate-slide-up {

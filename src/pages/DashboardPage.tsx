@@ -163,8 +163,8 @@ export default function DashboardPage() {
               variant={item.active ? "ghost" : "transparent"}
               className={`w-full justify-start gap-3 text-sm transition-all duration-200 ${
                 item.active 
-                  ? "bg-gray-800/70 text-white font-medium" 
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-gray-800/70 dark:bg-gray-800/70 text-foreground font-medium" 
+                  : "text-gray-600 dark:text-gray-400 hover:text-foreground"
               }`}
             >
               <item.icon size={18} />
@@ -173,8 +173,8 @@ export default function DashboardPage() {
           ))}
         </div>
         
-        <div className="border-t border-gray-800 pt-4 mb-2">
-          <p className="text-sm text-gray-500 px-3 mb-2">Personal Brand</p>
+        <div className="border-t border-border pt-4 mb-2">
+          <p className="text-sm text-gray-500 dark:text-gray-500 px-3 mb-2">Personal Brand</p>
         </div>
         
         <div className="space-y-1 mb-auto flex-grow">
@@ -182,7 +182,7 @@ export default function DashboardPage() {
             <Button 
               key={item.label} 
               variant="transparent" 
-              className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-white transition-all duration-200"
+              className="w-full justify-start gap-3 text-sm text-gray-600 dark:text-gray-400 hover:text-foreground transition-all duration-200"
             >
               <item.icon size={18} />
               {item.label}
@@ -190,10 +190,10 @@ export default function DashboardPage() {
           ))}
         </div>
         
-        <div className="border-t border-gray-800 pt-4 mt-auto">
+        <div className="border-t border-border pt-4 mt-auto">
           <div className="relative">
             <button 
-              className="flex items-center w-full p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              className="flex items-center w-full p-2 rounded-lg hover:bg-accent transition-colors"
               onClick={() => setShowUserMenu(!showUserMenu)}
             >
               <img 
@@ -208,7 +208,7 @@ export default function DashboardPage() {
             </button>
             
             {showUserMenu && (
-              <div className="absolute bottom-full mb-2 left-0 w-full bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-20 py-1">
+              <div className="absolute bottom-full mb-2 left-0 w-full bg-card rounded-lg border border-border shadow-xl z-20 py-1">
                 <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
                   <User size={16} />
                   Profile
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                   <Settings size={16} />
                   Settings
                 </Button>
-                <div className="border-t border-gray-700 my-1"></div>
+                <div className="border-t border-border my-1"></div>
                 <Button 
                   variant="transparent" 
                   className="w-full justify-start text-sm gap-2 px-3 text-red-400 hover:text-red-300"
@@ -233,10 +233,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mt-4 px-2">
             <div className="flex items-center">
               <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-              <p className="text-xs text-gray-500">15 credits left</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">15 credits left</p>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleTheme}>
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            <Button variant="ghost" size="icon" className="rounded-full text-gray-600 dark:text-gray-400 hover:text-foreground" onClick={toggleTheme}>
+              {theme === "dark" ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} className="text-teal-500" />}
             </Button>
           </div>
         </div>
@@ -255,8 +255,8 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-xl font-bold text-gradient">
                 {dashboardName}
-          </h1>
-              <p className="text-sm text-gray-400">Welcome back! Here's what's happening with your content</p>
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Welcome back! Here's what's happening with your content</p>
             </div>
             <div className="flex items-center space-x-2">
                 <Button 
@@ -392,11 +392,11 @@ export default function DashboardPage() {
                     <span className="text-2xl">{card.icon}</span>
                   </div>
                   <h3 className="text-lg font-medium mb-2">{card.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4">{card.description}</p>
-                  <Button variant="ghost" className="text-indigo-400 hover:text-indigo-300 px-0 hover:bg-transparent group">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{card.description}</p>
+                  <Button variant="ghost" className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 px-0 hover:bg-transparent group">
                     {card.buttonText}
                     <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
-              </Button>
+                  </Button>
                 </motion.div>
               ))}
             </div>
