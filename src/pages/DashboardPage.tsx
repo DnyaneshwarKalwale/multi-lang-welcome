@@ -134,10 +134,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground flex overflow-hidden">
       {/* Sidebar */}
       <motion.div 
-        className="w-64 bg-gray-900/50 backdrop-blur-sm border-r border-gray-800 p-5 flex flex-col sticky top-0 h-screen overflow-y-auto overflow-x-hidden flex-shrink-0"
+        className="w-64 bg-card/50 backdrop-blur-sm border-r border-border p-5 flex flex-col sticky top-0 h-screen overflow-y-auto overflow-x-hidden flex-shrink-0"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
@@ -246,7 +246,7 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Header */}
         <motion.div 
-          className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-5 sticky top-0 z-10 flex-shrink-0"
+          className="bg-background/50 backdrop-blur-sm border-b border-border p-5 sticky top-0 z-10 flex-shrink-0"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -382,7 +382,7 @@ export default function DashboardPage() {
               {cards.map((card, index) => (
                 <motion.div 
                   key={index} 
-                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-5 hover-lift"
+                  className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-5 hover-lift"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
@@ -406,7 +406,7 @@ export default function DashboardPage() {
       
       {/* Invite Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Team Invitation</DialogTitle>
           </DialogHeader>
