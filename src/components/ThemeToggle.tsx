@@ -1,18 +1,16 @@
-
-import { useContext } from 'react';
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
-import { ThemeContext } from '@/contexts/ThemeContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const ThemeToggle = () => {
-  const { theme, setTheme } = useContext(ThemeContext);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <Button
       variant="ghost"
       size="icon"
       className="rounded-full w-9 h-9"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={toggleTheme}
       aria-label="Toggle theme"
     >
       {theme === 'dark' ? (
