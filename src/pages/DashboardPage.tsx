@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Mic, Upload, Calendar, BarChart3, Twitter, 
@@ -28,11 +28,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from '@/contexts/AuthContext';
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const [showFullContent, setShowFullContent] = useState<boolean>(false);
+  
+  const { user, logout } = useAuth();
 
   // Sample tweets data
   const scheduledTweets = [
@@ -105,468 +109,284 @@ const DashboardPage: React.FC = () => {
     }
   ];
 
-  // Mock user data
-  const user = {
-    name: "David Porter",
-    email: "david@example.com",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg"
+  const handleLogout = () => {
+    logout();
   };
 
-  // Handle logout
-  const handleLogout = () => {
-    // Implement logout logic here
-    navigate("/");
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    
+    // Use firstName and lastName from the existing User interface
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    
+    // Fallback to email
+    if (user.email) {
+      return user.email[0].toUpperCase();
+    }
+    
+    return 'U';
+  };
+
+  // Get user's full name
+  const getUserFullName = () => {
+    if (!user) return 'User';
+    
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    
+    return user.email?.split('@')[0] || 'User';
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Custom Navbar */}
-      <div className="sticky top-0 w-full z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center">
-              <SekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
-            </div>
+    <div className="flex min-h-screen flex-col">
+      {/* Custom Navbar for Dashboard */}
+      <div className="sticky top-0 z-10 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center justify-between px-4">
+          <div className="flex">
+            <a href="/" className="flex items-center justify-center">
+              <img
+                src="/logo-sekcion.png"
+                alt="Sekcion Logo"
+                className="h-8 w-auto"
+              />
+            </a>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button variant="outline" className="hidden md:flex">
+              Connect Twitter
+            </Button>
+            <ThemeToggle />
             
-            {/* Actions */}
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex items-center gap-2 text-sm"
-              >
-                <Twitter className="h-4 w-4 text-blue-500" />
-                <span>Connect Twitter</span>
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>DP</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                    </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarImage src={user?.profilePicture} alt={getUserFullName()} />
+                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{getUserFullName()}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Twitter className="mr-2 h-4 w-4 text-blue-500" />
-                    <span>Connect Twitter</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="cursor-pointer text-red-500 focus:text-red-500" 
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem className="md:hidden">Connect Twitter</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
-      
-      <div className="container px-4 py-8 mx-auto">
-        <Tabs defaultValue="create" className="mb-8">
-          <TabsList className="grid grid-cols-4 mb-8">
-            <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-teal-50 dark:data-[state=active]:bg-teal-900/20">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create
-            </TabsTrigger>
-            <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-violet-50 dark:data-[state=active]:bg-violet-900/20">
-              <Calendar className="h-4 w-4 mr-2" />
-              Schedule
-            </TabsTrigger>
-            <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-900/20">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="tweets" onClick={() => setActiveTab("tweets")} className="data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-800">
-              <Twitter className="h-4 w-4 mr-2" />
-              My Tweets
-            </TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="create" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Zap className="h-5 w-5 mr-2 text-amber-500" />
-                      Create New Tweet
-                    </CardTitle>
-                    <CardDescription>
-                      Record, write, or upload content to generate tweets
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-3 mb-4">
-                      <Button variant="outline" className="gap-2 rounded-full">
-                        <Mic className="h-4 w-4 text-red-500" />
-                        Record Voice
-                      </Button>
-                      <Button variant="outline" className="gap-2 rounded-full">
-                        <Upload className="h-4 w-4 text-blue-500" />
-                        Upload Media
-                      </Button>
-                      <Button variant="outline" className="gap-2 rounded-full">
-                        <Edit3 className="h-4 w-4 text-purple-500" />
-                        Write Text
-                      </Button>
+      <main className="flex-1">
+        <div className="container relative">
+          <div className="mx-auto max-w-5xl">
+            <div className="mt-8 flex flex-col">
+              <div className="flex flex-col gap-6">
+                <div className="rounded-lg border bg-card p-6 shadow">
+                  <div className="grid gap-4">
+                    <div className="grid gap-1">
+                      <h3 className="text-2xl font-semibold">Twitter Activity Overview</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Recent tweets, engagements, and analytics from your Twitter accounts.
+                      </p>
                     </div>
-
-                    <Textarea 
-                      placeholder="What's happening?" 
-                      className="min-h-[150px] text-base resize-none"
-                    />
-
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="gap-1 py-1 border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">
-                          <Twitter className="h-3 w-3" />
-                          Twitter
-                        </Badge>
-                        <span>280 characters</span>
-                      </div>
-                      <div className="flex gap-3">
-                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Schedule
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
-                          <Maximize2 className="h-3 w-3" />
-                          Thread
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between border-t pt-4">
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <Sparkles className="h-4 w-4 text-amber-500" />
-                      Generate with AI
-                    </Button>
-                    <Button size="sm" className="px-4">Post Tweet</Button>
-                  </CardFooter>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Eye className="h-5 w-5 mr-2 text-blue-500" />
-                      Preview
-                    </CardTitle>
-                    <CardDescription>
-                      See how your tweet will appear
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border dark:border-gray-800 rounded-xl p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>DP</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm">{user.name}</span>
-                            <span className="text-gray-500 text-sm">@davidporter</span>
-                          </div>
-                          <p className="text-sm mt-1">
-                            Just launched our AI Twitter Assistant! Generate tweets, schedule content, and analyze performance - all in one place. Try it today and see the difference. #TwitterAI #ContentCreation
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="rounded-lg border bg-card p-4">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={user?.profilePicture} alt={getUserFullName()} />
+                            <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{getUserFullName()}</span>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-sm">
+                            Just published our latest blog post on AI advancements! Check it out #AI #Technology
                           </p>
                         </div>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>2h ago</span>
+                          <span>•</span>
+                          <span>12 likes</span>
+                          <span>•</span>
+                          <span>3 retweets</span>
+                        </div>
                       </div>
-                      <div className="flex gap-6 ml-12 text-gray-500 text-sm">
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          <span>12</span>
+                      <div className="rounded-lg border bg-card p-4">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={user?.profilePicture} alt={getUserFullName()} />
+                            <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{getUserFullName()}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Share2 className="h-3.5 w-3.5" />
-                          <span>24</span>
+                        <div className="mt-2">
+                          <p className="text-sm">
+                            Excited to announce our new product launch next week! Stay tuned for more details. #ProductLaunch
+                          </p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          <span>78</span>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>5h ago</span>
+                          <span>•</span>
+                          <span>24 likes</span>
+                          <span>•</span>
+                          <span>8 retweets</span>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border bg-card p-4">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={user?.profilePicture} alt={getUserFullName()} />
+                            <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{getUserFullName()}</span>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-sm">
+                            We're hiring! Join our team of talented developers and designers. DM for details.
+                          </p>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>1d ago</span>
+                          <span>•</span>
+                          <span>37 likes</span>
+                          <span>•</span>
+                          <span>15 retweets</span>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Clock className="h-5 w-5 mr-2 text-violet-500" />
-                      Upcoming Tweets
-                    </CardTitle>
-                    <CardDescription>
-                      Scheduled for publication
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[300px] pr-4">
-                      <div className="space-y-4">
-                        {scheduledTweets.map((tweet) => (
-                          <div key={tweet.id} className="border dark:border-gray-800 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <p className="text-sm line-clamp-2 mb-2">{tweet.content}</p>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-teal-600 dark:text-teal-400 font-medium">
-                                {tweet.scheduledTime}
-                              </span>
-                              {tweet.isThread && (
-                                <Badge variant="outline" className="h-5 px-2 text-xs">
-                                  Thread ({tweet.threadCount})
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                  <CardFooter className="border-t pt-4">
-                    <Button variant="ghost" size="sm" className="w-full">View Calendar</Button>
-                  </CardFooter>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
-                      AI Suggestions
-                    </CardTitle>
-                    <CardDescription>
-                      Trending topics to write about
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2.5">
-                    {["#TechTrends2023", "Content Marketing Tips", "Social Media Strategy", "Twitter Algorithm Updates", "Remote Work Tools"].map((topic, i) => (
-                      <div key={i} className="flex items-center border dark:border-gray-800 rounded-lg p-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer">
-                        <span className="text-sm">{topic}</span>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="schedule">
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Calendar</CardTitle>
-                <CardDescription>
-                  Manage and schedule your upcoming tweets
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[500px] flex items-center justify-center border border-dashed rounded-lg">
-                  <p className="text-gray-500">Calendar and scheduling interface would be implemented here</p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Impressions</CardTitle>
-                  <CardDescription>
-                    Total views of your tweets
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px] mt-2 relative">
-                    <div className="absolute inset-0 flex items-end">
-                      {analyticsData.impressions.data.map((value, index) => (
-                        <div 
-                          key={index} 
-                          className="flex-1 mx-0.5"
-                          style={{ height: `${(value / Math.max(...analyticsData.impressions.data)) * 100}%` }}
-                        >
-                          <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-blue-500/40 to-cyan-400/40 dark:from-blue-500/60 dark:to-cyan-400/60"
-                            style={{ opacity: 0.5 + ((index + 1) / analyticsData.impressions.data.length) * 0.5 }}
-                          ></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
-                    {analyticsData.impressions.labels.map((label, index) => (
-                      <span key={index}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                    <p className="text-xs text-gray-500">{analyticsData.impressions.timeframe}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                        ↑ {analyticsData.impressions.increase}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Engagement Rate</CardTitle>
-                  <CardDescription>
-                    Interactions with your content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px] mt-2 relative">
-                    <div className="absolute inset-0 flex items-end">
-                      {analyticsData.engagement.data.map((value, index) => (
-                        <div 
-                          key={index} 
-                          className="flex-1 mx-0.5"
-                          style={{ height: `${(value / Math.max(...analyticsData.engagement.data)) * 100}%` }}
-                        >
-                          <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-violet-500/40 to-purple-400/40 dark:from-violet-500/60 dark:to-purple-400/60"
-                            style={{ opacity: 0.5 + ((index + 1) / analyticsData.engagement.data.length) * 0.5 }}
-                          ></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
-                    {analyticsData.engagement.labels.map((label, index) => (
-                      <span key={index}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                    <p className="text-xs text-gray-500">{analyticsData.engagement.timeframe}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                        ↑ {analyticsData.engagement.increase}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Followers Growth</CardTitle>
-                  <CardDescription>
-                    New followers over time
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px] mt-2 relative">
-                    <div className="absolute inset-0 flex items-end">
-                      {analyticsData.followers.data.map((value, index) => (
-                        <div 
-                          key={index} 
-                          className="flex-1 mx-0.5"
-                          style={{ height: `${(value / Math.max(...analyticsData.followers.data)) * 100}%` }}
-                        >
-                          <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40 dark:from-teal-500/60 dark:to-emerald-400/60"
-                            style={{ opacity: 0.5 + ((index + 1) / analyticsData.followers.data.length) * 0.5 }}
-                          ></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
-                    {analyticsData.followers.labels.map((label, index) => (
-                      <span key={index}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                    <p className="text-xs text-gray-500">{analyticsData.followers.timeframe}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                        ↑ {analyticsData.followers.increase}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="tweets">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                {recentTweets.map((tweet) => (
-                  <Card key={tweet.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>DP</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{user.name}</span>
-                              <span className="text-gray-500 text-sm">@davidporter</span>
-                              <span className="text-gray-500 text-sm">·</span>
-                              <span className="text-gray-500 text-sm">{tweet.date}</span>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-lg border bg-card p-6 shadow">
+                    <h3 className="text-xl font-semibold">Scheduled Tweets</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Manage your upcoming tweets and post schedule.
+                    </p>
+                    <div className="mt-4">
+                      <div className="rounded-lg border bg-card p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm">
+                              New feature announcement for our app...
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Tomorrow, 9:00 AM
+                            </p>
                           </div>
-                          <p className="text-sm mb-4">{tweet.content}</p>
-                          <div className="flex gap-6 text-gray-500 text-sm">
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-4 w-4" />
-                              <span>{tweet.stats.replies}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Share2 className="h-4 w-4" />
-                              <span>{tweet.stats.retweets}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <ThumbsUp className="h-4 w-4" />
-                              <span>{tweet.stats.likes}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="h-4 w-4" />
-                              <span>{tweet.stats.impressions}</span>
-                            </div>
-                          </div>
+                          <Button variant="outline" size="sm">
+                            Edit
+                          </Button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <div className="rounded-lg border bg-card p-3 mt-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm">
+                              Weekly industry news roundup #Technology
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Friday, 3:00 PM
+                            </p>
+                          </div>
+                          <Button variant="outline" size="sm">
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border bg-card p-6 shadow">
+                    <h3 className="text-xl font-semibold">Analytics</h3>
+                    <p className="text-sm text-muted-foreground">
+                      View your Twitter engagement metrics.
+                    </p>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Profile Views</span>
+                        <span className="font-medium">1,245</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">New Followers</span>
+                        <span className="font-medium">+83</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Engagement Rate</span>
+                        <span className="font-medium">4.7%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Total Impressions</span>
+                        <span className="font-medium">12.4K</span>
+                      </div>
+                    </div>
+                    <Button className="mt-4 w-full" variant="outline">
+                      View Full Analytics
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-card p-6 shadow">
+                  <h3 className="text-xl font-semibold">Content Ideas</h3>
+                  <p className="text-sm text-muted-foreground">
+                    AI-generated content suggestions based on your audience.
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-lg border bg-card p-3">
+                      <p className="text-sm font-medium">Industry Trends</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        "Share your thoughts on the latest AI developments in content creation. What excites you the most?"
+                      </p>
+                      <div className="mt-2 flex justify-end gap-2">
+                        <Button size="sm" variant="outline">Save</Button>
+                        <Button size="sm">Use Template</Button>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border bg-card p-3">
+                      <p className="text-sm font-medium">Engagement Question</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        "What's one productivity tool you couldn't live without? We're currently loving @tool for managing our social media!"
+                      </p>
+                      <div className="mt-2 flex justify-end gap-2">
+                        <Button size="sm" variant="outline">Save</Button>
+                        <Button size="sm">Use Template</Button>
+                      </div>
+                    </div>
+                    <div className={`rounded-lg border bg-card p-3 ${!showFullContent && "hidden"}`}>
+                      <p className="text-sm font-medium">Product Highlight</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        "Did you know our latest feature can help you save 5+ hours per week on content scheduling? Here's how it works..."
+                      </p>
+                      <div className="mt-2 flex justify-end gap-2">
+                        <Button size="sm" variant="outline">Save</Button>
+                        <Button size="sm">Use Template</Button>
+                      </div>
+                    </div>
+                  </div>
+                  {!showFullContent && (
+                    <Button
+                      onClick={() => setShowFullContent(true)}
+                      variant="outline"
+                      className="mt-4 w-full"
+                    >
+                      Load More Ideas
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
