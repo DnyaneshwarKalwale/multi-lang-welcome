@@ -8,15 +8,20 @@ interface ProgressDotsProps {
   current: number;
   className?: string;
   color?: "blue" | "purple" | "default";
+  variant?: "twitter";
 }
 
 export function ProgressDots({ 
   total, 
   current, 
   className = "",
-  color = "default" 
+  color = "default",
+  variant
 }: ProgressDotsProps) {
   const isMobile = useIsMobile();
+  
+  // If variant is twitter, set color to blue
+  const finalColor = variant === "twitter" ? "blue" : color;
   
   // Define colors based on theme
   const activeColors = {
@@ -50,11 +55,11 @@ export function ProgressDots({
                 "rounded-full transition-all duration-300 ease-in-out",
                 isActive
                   ? isMobile 
-                    ? `w-2.5 h-2.5 ${activeColors[color]}` 
-                    : `w-3 h-3 ${activeColors[color]}`
+                    ? `w-2.5 h-2.5 ${activeColors[finalColor]}` 
+                    : `w-3 h-3 ${activeColors[finalColor]}`
                   : isMobile 
-                    ? `w-1.5 h-1.5 ${inactiveColors[color]}` 
-                    : `w-2 h-2 ${inactiveColors[color]}`
+                    ? `w-1.5 h-1.5 ${inactiveColors[finalColor]}` 
+                    : `w-2 h-2 ${inactiveColors[finalColor]}`
               )}
             />
             
@@ -65,27 +70,27 @@ export function ProgressDots({
                   isMobile ? "w-4 h-4" : "w-5 h-5"
                 )}
                 style={{ 
-                  boxShadow: color === "blue" 
+                  boxShadow: finalColor === "blue" 
                     ? "0 0 0 rgba(59, 130, 246, 0.7)" 
-                    : color === "purple"
+                    : finalColor === "purple"
                     ? "0 0 0 rgba(168, 85, 247, 0.7)"
                     : "0 0 0 rgba(124, 58, 237, 0.7)" 
                 }}
                 animate={{
                   boxShadow: [
-                    color === "blue" 
+                    finalColor === "blue" 
                       ? "0 0 0 rgba(59, 130, 246, 0)" 
-                      : color === "purple"
+                      : finalColor === "purple"
                       ? "0 0 0 rgba(168, 85, 247, 0)"
                       : "0 0 0 rgba(124, 58, 237, 0)",
-                    color === "blue" 
+                    finalColor === "blue" 
                       ? "0 0 0 4px rgba(59, 130, 246, 0.3)" 
-                      : color === "purple"
+                      : finalColor === "purple"
                       ? "0 0 0 4px rgba(168, 85, 247, 0.3)"
                       : "0 0 0 4px rgba(124, 58, 237, 0.3)",
-                    color === "blue" 
+                    finalColor === "blue" 
                       ? "0 0 0 rgba(59, 130, 246, 0)" 
-                      : color === "purple"
+                      : finalColor === "purple"
                       ? "0 0 0 rgba(168, 85, 247, 0)"
                       : "0 0 0 rgba(124, 58, 237, 0)",
                   ],
