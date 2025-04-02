@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
@@ -12,6 +12,7 @@ import confetti from 'canvas-confetti';
 
 export default function CompletionPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { nextStep, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency } = useOnboarding();
   const { user, fetchUser } = useAuth();
   
@@ -19,6 +20,46 @@ export default function CompletionPage() {
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [error, setError] = useState("");
+  
+  // Block returning to onboarding steps if onboarding is completed
+  useEffect(() => {
+    const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+    
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (location.pathname.includes('/onboarding/completion')) {
+        e.preventDefault();
+        e.returnValue = ''; // This is required for Chrome
+      }
+    };
+
+    // Add event listener for beforeunload
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [location]);
+  
+  // Prevent back navigation after completion
+  useEffect(() => {
+    // When onboarding is completed, prevent going back to previous steps
+    if (localStorage.getItem('onboardingCompleted') === 'true') {
+      // Push current state to history to prevent direct back navigation
+      window.history.pushState(null, '', window.location.href);
+      
+      const handlePopState = () => {
+        // If user tries to go back, push current state again and redirect to dashboard
+        window.history.pushState(null, '', window.location.href);
+        navigate("/dashboard", { replace: true });
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [navigate]);
   
   // Trigger confetti effect on load
   useEffect(() => {
@@ -113,7 +154,7 @@ export default function CompletionPage() {
   const handleSkip = () => {
     // Ensure onboarding is marked as completed in localStorage regardless of API success
     localStorage.setItem('onboardingCompleted', 'true');
-    navigate("/dashboard");
+    navigate("/dashboard", { replace: true });
   };
   
   const handleGenerateContent = () => {
@@ -122,7 +163,7 @@ export default function CompletionPage() {
     // Simulate content generation (would connect to real API in production)
     setTimeout(() => {
       setIsGeneratingContent(false);
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }, 2000);
   };
   
@@ -132,7 +173,7 @@ export default function CompletionPage() {
     // Simulate file upload (would connect to real API in production)
     setTimeout(() => {
       setIsUploadingFiles(false);
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }, 2000);
   };
 

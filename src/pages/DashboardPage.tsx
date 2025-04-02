@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import TeamInvitationNotification from "@/components/TeamInvitationNotification"
 import { DashboardPostCard, DashboardAnalyticsCard, DashboardProfileCard } from "@/components/DashboardCard";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ProfileSettingsSheet } from "@/components/ProfileSettingsSheet";
 
 // Dashboard page
@@ -22,9 +22,34 @@ export default function DashboardPage() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profileSettingsOpen, setProfileSettingsOpen] = useState(false);
+
+  // Prevent navigating back to onboarding once in the dashboard
+  useEffect(() => {
+    // Set onboarding as completed if not already set
+    if (localStorage.getItem('onboardingCompleted') !== 'true') {
+      localStorage.setItem('onboardingCompleted', 'true');
+    }
+    
+    // Handle browser back button to prevent going back to onboarding pages
+    window.history.pushState(null, '', window.location.href);
+    
+    const handlePopState = () => {
+      // If user tries to go back, push current state again to stay on dashboard
+      if (location.pathname === '/onboarding/dashboard' || location.pathname === '/dashboard') {
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [location.pathname]);
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
   const userFullName = `${firstName} ${lastName}`;
@@ -32,7 +57,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const handleOpenProfileSettings = () => {

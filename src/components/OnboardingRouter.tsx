@@ -16,10 +16,39 @@ import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
 
 export function OnboardingRouter() {
-  const { workspaceType, currentStep, saveProgress } = useOnboarding();
+  const { workspaceType, currentStep, setCurrentStep, saveProgress, getApplicableSteps } = useOnboarding();
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Handle browser back/forward button navigation
+  useEffect(() => {
+    const handleHistoryChange = () => {
+      const path = location.pathname;
+      if (path.startsWith('/onboarding/')) {
+        const step = path.replace('/onboarding/', '') as any;
+        const applicableSteps = getApplicableSteps();
+        
+        // Check if this is a valid step in our flow
+        if (applicableSteps.includes(step)) {
+          // Update the current step in our context
+          setCurrentStep(step);
+        } else {
+          // If we're on an invalid step (e.g., team pages for personal workspace),
+          // redirect to the appropriate step in the flow
+          const currentIndex = applicableSteps.indexOf(currentStep);
+          if (currentIndex >= 0) {
+            navigate(`/onboarding/${applicableSteps[currentIndex]}`, { replace: true });
+          } else {
+            // Fallback to the beginning if we can't determine current position
+            navigate('/onboarding/welcome', { replace: true });
+          }
+        }
+      }
+    };
+    
+    handleHistoryChange();
+  }, [location.pathname, workspaceType, currentStep, setCurrentStep, navigate, getApplicableSteps]);
   
   // Redirect logic for team vs personal workspace
   useEffect(() => {
@@ -27,7 +56,7 @@ export function OnboardingRouter() {
     if (workspaceType === "personal") {
       if (location.pathname.includes("team-workspace") || 
           location.pathname.includes("team-invite")) {
-        navigate("/onboarding/theme-selection");
+        navigate("/onboarding/theme-selection", { replace: true });
       }
     }
   }, [workspaceType, location.pathname, navigate]);
@@ -35,15 +64,17 @@ export function OnboardingRouter() {
   // Save current step to localStorage when route changes
   useEffect(() => {
     const currentPath = location.pathname;
-    const currentOnboardingStep = currentPath.replace('/onboarding/', '');
-    
-    // Only save if we're on a valid onboarding step
-    if (currentOnboardingStep && currentOnboardingStep !== '') {
-      localStorage.setItem('onboardingStep', currentOnboardingStep);
+    if (currentPath.startsWith('/onboarding/')) {
+      const currentOnboardingStep = currentPath.replace('/onboarding/', '');
       
-      // Only call saveProgress if user is authenticated
-      if (user) {
-        saveProgress();
+      // Only save if we're on a valid onboarding step
+      if (currentOnboardingStep && currentOnboardingStep !== '') {
+        localStorage.setItem('onboardingStep', currentOnboardingStep);
+        
+        // Only call saveProgress if user is authenticated
+        if (user) {
+          saveProgress();
+        }
       }
     }
   }, [location.pathname, saveProgress, user]);

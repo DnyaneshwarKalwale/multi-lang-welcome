@@ -58,6 +58,7 @@ interface OnboardingContextType {
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
   saveProgress: () => Promise<void>;
+  getApplicableSteps: () => OnboardingStep[];
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -309,7 +310,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     nextStep,
     prevStep,
     getStepProgress,
-    saveProgress
+    saveProgress,
+    getApplicableSteps
   };
 
   return (
