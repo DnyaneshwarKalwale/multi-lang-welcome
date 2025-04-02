@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -11,7 +12,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { useNavigate } from "react-router-dom";
 
 // Map Twitter formats to existing context formats
 const formatMapping = {
@@ -23,7 +23,7 @@ const formatMapping = {
 };
 
 export default function PostFormatPage() {
-  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress, workspaceType } = useOnboarding();
+  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
   const [postLength, setPostLength] = React.useState(50);
   const [hoveredFormat, setHoveredFormat] = React.useState<string | null>(null);
@@ -72,31 +72,21 @@ export default function PostFormatPage() {
     }
   ];
 
-  // Define a separate function to go to post frequency page
-  const goToPostFrequency = () => {
-    // Directly navigate to the post-frequency page
-    navigate("/onboarding/post-frequency");
-  };
-
   // Handle format selection with logging
   const handleFormatSelect = (formatId: string) => {
     console.log("Setting format to:", formatId);
     setPostFormat(formatId as any);
   };
 
-  // Handle continue button click with direct navigation
+  // Handle continue button - DIRECT NAVIGATION APPROACH
   const handleContinue = () => {
     console.log("Continue button clicked");
-    console.log("Current postFormat:", postFormat);
-    
     if (postFormat) {
-      console.log("Saving selected format:", postFormat);
+      // Save to localStorage as a backup
       localStorage.setItem('selectedPostFormat', postFormat);
       
-      // Force navigation directly to post-frequency
-      goToPostFrequency();
-    } else {
-      console.log("Can't proceed - no format selected");
+      // DIRECT NAVIGATION - bypassing any context issues
+      navigate("/onboarding/post-frequency");
     }
   };
 
