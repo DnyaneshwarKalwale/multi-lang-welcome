@@ -5,7 +5,9 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
-import { SunIcon, MoonIcon } from "lucide-react";
+import { SunIcon, MoonIcon, ArrowLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
 
 export default function ThemeSelectionPage() {
   const { theme, setTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
@@ -33,18 +35,74 @@ export default function ThemeSelectionPage() {
     }
   }, []);
 
+  // Animation variants
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center px-4 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="max-w-3xl w-full text-center">
-        <h1 className="text-4xl font-bold mb-4">{t('chooseStyle')}</h1>
-        <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-10`}>
-          {t('styleDescription')}
-        </p>
+    <div className={`min-h-screen flex flex-col items-center justify-center px-4 py-10 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} relative overflow-hidden`}>
+      {/* Animated gradient background */}
+      {theme === 'dark' && (
+        <div className="absolute inset-0 opacity-20 -z-10">
+          <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px] animate-pulse-slow"></div>
+          <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px] animate-pulse-slow-delay"></div>
+        </div>
+      )}
+      
+      {/* Back button */}
+      <motion.button
+        className={`absolute top-10 left-10 flex items-center ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors`}
+        onClick={prevStep}
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <ArrowLeft size={16} className="mr-2" />
+        {t('back')}
+      </motion.button>
+      
+      <motion.div 
+        className="max-w-3xl w-full text-center"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.div 
+          className="mb-8 flex justify-center"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <ScripeIconRounded className="w-20 h-20" />
+        </motion.div>
         
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 border ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} rounded-xl overflow-hidden mb-12`}>
-          <div 
-            className={`${theme === "light" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center`}
+        <motion.h1 
+          className={`text-4xl font-bold mb-4 text-center ${theme === 'dark' ? 'bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400' : 'text-gray-900'}`}
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
+          {t('chooseStyle')}
+        </motion.h1>
+        
+        <motion.p 
+          className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-10 text-center max-w-2xl mx-auto`}
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
+        >
+          {t('styleDescription')}
+        </motion.p>
+        
+        <motion.div 
+          className={`grid grid-cols-1 md:grid-cols-2 gap-4 border ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} rounded-xl overflow-hidden mb-12 shadow-lg`}
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          <motion.div 
+            className={`${theme === "light" ? "ring-2 ring-indigo-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/70 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all duration-300 hover:shadow-lg`}
             onClick={() => handleThemeChange("light")}
+            whileHover={{ y: -5 }}
           >
             <div className="mb-6 w-full rounded-lg overflow-hidden shadow-lg relative">
               <div className="bg-white p-4 rounded-lg w-full aspect-video flex flex-col">
@@ -67,18 +125,19 @@ export default function ThemeSelectionPage() {
               <div className={`absolute inset-0 ${theme === "light" ? "bg-transparent" : "bg-black/30"}`}></div>
             </div>
             <div className="flex items-center">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "light" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "light" ? "border-indigo-600 bg-indigo-600" : "border-gray-500"}`}>
                 {theme === "light" && (
                   <div className="w-full h-full rounded-full bg-white scale-50"></div>
                 )}
               </div>
               <span className={`text-lg ${theme === "light" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('light')}</span>
             </div>
-          </div>
+          </motion.div>
           
-          <div 
-            className={`${theme === "dark" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center`}
+          <motion.div 
+            className={`${theme === "dark" ? "ring-2 ring-indigo-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/70 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all duration-300 hover:shadow-lg`}
             onClick={() => handleThemeChange("dark")}
+            whileHover={{ y: -5 }}
           >
             <div className="mb-6 w-full rounded-lg overflow-hidden shadow-lg relative">
               <div className="bg-gray-800 p-4 rounded-lg w-full aspect-video flex flex-col">
@@ -94,41 +153,48 @@ export default function ThemeSelectionPage() {
                     <div className="h-full bg-gray-700 rounded"></div>
                   </div>
                 </div>
-                <div className="absolute top-2 right-2 bg-purple-900/50 text-purple-400 p-1 rounded-full">
+                <div className="absolute top-2 right-2 bg-indigo-900/50 text-indigo-400 p-1 rounded-full">
                   <MoonIcon size={16} />
                 </div>
               </div>
               <div className={`absolute inset-0 ${theme === "dark" ? "bg-transparent" : "bg-black/30"}`}></div>
             </div>
             <div className="flex items-center">
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "dark" ? "border-purple-600 bg-purple-600" : "border-gray-500"}`}>
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${theme === "dark" ? "border-indigo-600 bg-indigo-600" : "border-gray-500"}`}>
                 {theme === "dark" && (
                   <div className="w-full h-full rounded-full bg-white scale-50"></div>
                 )}
               </div>
               <span className={`text-lg ${theme === "dark" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('dark')}</span>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
-        <div className="flex justify-between mb-12">
+        <motion.div 
+          className="flex justify-center mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.8 }}
+        >
           <Button 
-            variant="outline" 
-            onClick={prevStep}
-            className={`${theme === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-600'}`}
-          >
-            {t('back')}
-          </Button>
-          <ContinueButton 
             onClick={nextStep}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            variant={theme === 'dark' ? "gradient" : "default"}
+            animation="pulse"
+            rounded="full"
+            className={`group px-8 py-3 flex items-center gap-2 transition-all duration-300 ${theme === 'dark' ? 'shadow-xl hover:shadow-indigo-500/25' : 'shadow-lg bg-indigo-600 hover:bg-indigo-700'}`}
           >
-            {t('continue')}
-          </ContinueButton>
-        </div>
+            <span>{t('continue')}</span>
+            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+          </Button>
+        </motion.div>
         
-        <ProgressDots total={total} current={current} />
-      </div>
+        <motion.div
+          variants={fadeIn}
+          transition={{ delay: 0.9 }}
+          className="flex justify-center"
+        >
+          <ProgressDots total={total} current={current} />
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

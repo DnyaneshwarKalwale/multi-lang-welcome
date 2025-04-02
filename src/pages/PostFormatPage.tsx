@@ -13,21 +13,14 @@ import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { useNavigate } from "react-router-dom";
 
-// Manually define steps for direct navigation
-const allSteps = [
-  "welcome",
-  "team-selection",
-  "team-workspace",
-  "team-invite",
-  "theme-selection",
-  "language-selection",
-  "post-format",
-  "post-frequency",
-  "registration",
-  "extension-install",
-  "completion",
-  "dashboard"
-];
+// Map Twitter formats to existing context formats
+const formatMapping = {
+  "standard": "standard",
+  "threaded": "threaded", // Already added to context
+  "engagement": "engagement", // Already added to context
+  "concise": "concise", // Already added to context
+  "emojis": "emojis"
+};
 
 export default function PostFormatPage() {
   const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress, workspaceType } = useOnboarding();
@@ -40,17 +33,6 @@ export default function PostFormatPage() {
   useEffect(() => {
     console.log("Current postFormat:", postFormat);
   }, [postFormat]);
-
-  // Function to get applicable steps based on workspace type
-  const getApplicableSteps = (): string[] => {
-    if (workspaceType === "personal") {
-      // Skip team-workspace and team-invite steps for personal accounts
-      return allSteps.filter(step => 
-        step !== "team-workspace" && step !== "team-invite"
-      );
-    }
-    return [...allSteps]; // Return a copy to avoid mutations
-  };
 
   const formatOptions = [
     {
@@ -90,46 +72,29 @@ export default function PostFormatPage() {
     }
   ];
 
+  // Define a separate function to go to post frequency page
+  const goToPostFrequency = () => {
+    // Directly navigate to the post-frequency page
+    navigate("/onboarding/post-frequency");
+  };
+
   // Handle format selection with logging
   const handleFormatSelect = (formatId: string) => {
     console.log("Setting format to:", formatId);
     setPostFormat(formatId as any);
   };
 
-  // Handle continue button click with logging
+  // Handle continue button click with direct navigation
   const handleContinue = () => {
     console.log("Continue button clicked");
     console.log("Current postFormat:", postFormat);
     
     if (postFormat) {
       console.log("Saving selected format:", postFormat);
-      
-      // Try to save the format to localStorage as a backup
       localStorage.setItem('selectedPostFormat', postFormat);
       
-      // Determine the next page directly
-      const steps = getApplicableSteps();
-      const currentIndex = steps.indexOf("post-format");
-      
-      console.log("Current step index:", currentIndex, "in steps:", steps);
-      
-      if (currentIndex >= 0 && currentIndex < steps.length - 1) {
-        const nextPage = steps[currentIndex + 1];
-        console.log("Navigating directly to:", nextPage);
-        
-        // First try the nextStep function
-        try {
-          nextStep();
-        } catch (e) {
-          console.error("Error calling nextStep:", e);
-        }
-        
-        // Then use direct navigation as a fallback
-        setTimeout(() => {
-          console.log("Using direct navigation fallback");
-          navigate(`/onboarding/${nextPage}`);
-        }, 100);
-      }
+      // Force navigation directly to post-frequency
+      goToPostFrequency();
     } else {
       console.log("Can't proceed - no format selected");
     }
