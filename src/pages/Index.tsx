@@ -16,6 +16,13 @@ const Index = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
+  // Add debug code
+  console.log("Index component rendering...");
+  
+  useEffect(() => {
+    console.log("Index component mounted");
+  }, []);
+
   // Handle scroll events to change navbar appearance
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +38,7 @@ const Index = () => {
   };
 
   const handleLoginSuccess = () => {
+    console.log("handleLoginSuccess called");
     setIsLoginOpen(false);
     navigate("/onboarding/welcome");
   };

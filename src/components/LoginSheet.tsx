@@ -55,28 +55,41 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     
     if (email && password) {
       try {
+        console.log("Attempting to log in with email:", email);
+        
         // Await user data from login function
         const userData = await login(email, password);
+        console.log("Login successful, received user data:", userData);
         
-        // If we got here, login was successful
-        // Get the saved onboarding step from localStorage
+        // Close the login sheet before navigation
+        onOpenChange(false);
+        
+        // If onSuccess callback is provided, use it (for handling navigation in Index.tsx)
+        if (onSuccess) {
+          console.log("Using onSuccess callback for navigation");
+          onSuccess();
+          return;
+        }
+        
+        // Otherwise, handle navigation based on user state
         const savedStep = localStorage.getItem('onboardingStep');
         const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+        console.log("Saved onboarding step:", savedStep);
+        console.log("Onboarding completed:", onboardingCompleted);
         
         // If we have a saved step and onboarding is not completed, redirect to that step
         if (savedStep && !onboardingCompleted) {
+          console.log("Navigating to saved step:", `/onboarding/${savedStep}`);
           navigate(`/onboarding/${savedStep}`);
         } else if (onboardingCompleted) {
           // If onboarding is completed, navigate to dashboard
+          console.log("Navigating to dashboard");
           navigate('/dashboard');
         } else {
-          // If no saved step, start at the beginning of onboarding or use success callback
-          if (onSuccess) onSuccess();
-          else navigate("/onboarding/welcome");
+          // If no saved step, start at the beginning of onboarding
+          console.log("Navigating to welcome page");
+          navigate("/onboarding/welcome");
         }
-        
-        // Close the login sheet
-        onOpenChange(false);
         
       } catch (err) {
         // Login error is already handled by the auth context
