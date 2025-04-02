@@ -1,17 +1,25 @@
 import React, { useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { SunIcon, MoonIcon } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function ThemeSelectionPage() {
   const { theme, setTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { setTheme: setGlobalTheme } = useTheme();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
+
+  // Animation variants
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
 
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: "light" | "dark") => {
@@ -34,17 +42,50 @@ export default function ThemeSelectionPage() {
   }, []);
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center px-4 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="max-w-3xl w-full text-center">
-        <h1 className="text-4xl font-bold mb-4">{t('chooseStyle')}</h1>
-        <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-10`}>
-          {t('styleDescription')}
-        </p>
+    <div className={`min-h-screen flex flex-col items-center justify-center px-4 py-8 ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} relative overflow-hidden`}>
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className={`absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full ${theme === 'dark' ? 'bg-indigo-900' : 'bg-indigo-200'} blur-[120px]`}></div>
+        <div className={`absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full ${theme === 'dark' ? 'bg-purple-900' : 'bg-purple-200'} blur-[120px]`}></div>
+      </div>
+      
+      {/* Back button */}
+      <BackButton 
+        onClick={prevStep} 
+        absolute
+      />
+      
+      <motion.div 
+        className="max-w-3xl w-full text-center"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.h1 
+          className={`text-4xl font-bold mb-4 text-center ${theme === 'dark' ? 'bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400' : 'text-indigo-900'}`}
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
+          {t('chooseStyle')}
+        </motion.h1>
         
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 border ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} rounded-xl overflow-hidden mb-12`}>
-          <div 
-            className={`${theme === "light" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center`}
+        <motion.p 
+          className={`text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-10 text-center`}
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
+        >
+          {t('styleDescription')}
+        </motion.p>
+        
+        <motion.div 
+          className={`grid grid-cols-1 md:grid-cols-2 gap-4 border ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} rounded-xl overflow-hidden mb-12`}
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          <motion.div 
+            className={`${theme === "light" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all`}
             onClick={() => handleThemeChange("light")}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
             <div className="mb-6 w-full rounded-lg overflow-hidden shadow-lg relative">
               <div className="bg-white p-4 rounded-lg w-full aspect-video flex flex-col">
@@ -74,11 +115,12 @@ export default function ThemeSelectionPage() {
               </div>
               <span className={`text-lg ${theme === "light" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('light')}</span>
             </div>
-          </div>
+          </motion.div>
           
-          <div 
-            className={`${theme === "dark" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center`}
+          <motion.div 
+            className={`${theme === "dark" ? "ring-2 ring-purple-600" : ""} cursor-pointer ${theme === 'dark' ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-gray-100'} p-6 flex flex-col items-center justify-center transition-all`}
             onClick={() => handleThemeChange("dark")}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
             <div className="mb-6 w-full rounded-lg overflow-hidden shadow-lg relative">
               <div className="bg-gray-800 p-4 rounded-lg w-full aspect-video flex flex-col">
@@ -108,27 +150,28 @@ export default function ThemeSelectionPage() {
               </div>
               <span className={`text-lg ${theme === "dark" ? (theme === 'dark' ? "text-white" : "text-black") : (theme === 'dark' ? "text-gray-400" : "text-gray-600")}`}>{t('dark')}</span>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
-        <div className="flex justify-between mb-12">
-          <Button 
-            variant="outline" 
-            onClick={prevStep}
-            className={`${theme === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-600'}`}
-          >
-            {t('back')}
-          </Button>
-          <ContinueButton 
-            onClick={nextStep}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
+        <motion.div 
+          className="flex justify-center mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.5 }}
+        >
+          <ContinueButton onClick={nextStep}>
             {t('continue')}
           </ContinueButton>
-        </div>
+        </motion.div>
         
-        <ProgressDots total={total} current={current} />
-      </div>
+        <motion.div
+          variants={fadeIn}
+          transition={{ delay: 0.6 }}
+          className="flex flex-col items-center"
+        >
+          <ProgressDots total={total} current={current} color="purple" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

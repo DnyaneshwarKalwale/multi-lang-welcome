@@ -163,7 +163,7 @@ export default function CompletionPage() {
           <div className="p-2 mb-4 rounded-full bg-green-500/20 border border-green-500/30">
             <CheckCircle className="w-16 h-16 text-green-500" />
           </div>
-          <h1 className="text-4xl font-bold flex items-center justify-center gap-2">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center gap-2">
             Onboarding Complete!
             <span role="img" aria-label="celebration">🎉</span>
           </h1>
@@ -243,41 +243,41 @@ export default function CompletionPage() {
         </motion.div>
       
         <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
-          <Button 
+          <ContinueButton 
             onClick={handleGoToDashboard}
             variant="gradient"
-            className="w-full py-4 px-8 rounded-full text-lg font-medium flex items-center justify-center shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
           >
-            Go to dashboard
-          </Button>
+            Go to Dashboard
+          </ContinueButton>
         </motion.div>
-      
-        {isMarkingComplete && (
-          <motion.div 
-            className="text-sm text-gray-500 flex items-center justify-center mt-4"
-            variants={itemVariants}
-          >
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving your preferences...
-          </motion.div>
-        )}
-      
+        
         {error && (
           <motion.div 
-            className="bg-red-900/30 border border-red-900 text-red-200 p-3 rounded-lg flex flex-col items-center mt-4 max-w-md mx-auto"
-            variants={itemVariants}
+            variants={itemVariants} 
+            className="text-red-400 flex flex-col items-center space-y-2"
           >
-            <p className="mb-2">{error}</p>
+            <p>{error}</p>
             {retryCount < maxRetries && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={handleRetry} 
-                className="mt-2 text-white border-red-700 hover:bg-red-900/50"
+                className="flex items-center"
+                onClick={handleRetry}
               >
-                <RefreshCw className="w-4 h-4 mr-2" /> Retry ({retryCount}/{maxRetries})
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
               </Button>
             )}
+          </motion.div>
+        )}
+        
+        {isMarkingComplete && (
+          <motion.div 
+            variants={itemVariants} 
+            className="text-blue-400 flex items-center justify-center"
+          >
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Saving your preferences...
           </motion.div>
         )}
       </motion.div>

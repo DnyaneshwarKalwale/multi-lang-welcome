@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 export default function TeamInvitePage() {
   const { workspaceName, teamMembers, setTeamMembers, nextStep, prevStep, getStepProgress } = useOnboarding();
@@ -22,6 +24,12 @@ export default function TeamInvitePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<string[]>([]);
   const [teamId, setTeamId] = useState<string | null>(null);
+
+  // Animation variants
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
 
   // Fetch user's teams on component mount to see if team already exists
   useEffect(() => {
@@ -161,15 +169,47 @@ export default function TeamInvitePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
-      <div className="max-w-2xl w-full">
-        <h1 className="text-4xl font-bold mb-4 text-center">Invite members to {workspaceName}</h1>
-        <p className="text-lg text-gray-400 mb-12 text-center">
-          Team members can collaborate on content creation and share analytics.
-        </p>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+      </div>
+      
+      {/* Back button */}
+      <BackButton 
+        onClick={prevStep} 
+        absolute 
+      />
+      
+      <motion.div 
+        className="max-w-2xl w-full"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.h1 
+          className="text-4xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
+          Invite members to {workspaceName}
+        </motion.h1>
         
-        <div className="bg-gray-900 rounded-xl p-8 mb-12">
-          <label className="block text-lg font-medium mb-4">
+        <motion.p 
+          className="text-xl text-gray-300 mb-12 text-center"
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
+        >
+          Team members can collaborate on content creation and share analytics.
+        </motion.p>
+        
+        <motion.div 
+          className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 mb-12 border border-gray-800"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          <label className="block text-lg font-medium mb-4 text-gray-200">
             <Mail className="inline-block mr-2" />
             Invite team members
           </label>
@@ -182,7 +222,7 @@ export default function TeamInvitePage() {
                 if (emailError) setEmailError("");
               }}
               placeholder="colleague@example.com"
-              className="bg-gray-800 border-gray-700 rounded-r-none"
+              className="bg-gray-800/70 border-gray-700 rounded-r-none h-12 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -192,7 +232,7 @@ export default function TeamInvitePage() {
             />
             <Button 
               onClick={addTeamMember}
-              className="rounded-l-none bg-purple-600 hover:bg-purple-700"
+              className="rounded-l-none bg-indigo-600 hover:bg-indigo-700 h-12"
             >
               <UserPlus className="mr-2" size={18} />
               Add
@@ -204,7 +244,7 @@ export default function TeamInvitePage() {
           )}
 
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-400 mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-4">
               Team members ({teamMembers.length})
             </label>
             
@@ -218,11 +258,11 @@ export default function TeamInvitePage() {
                 {teamMembers.map((member) => (
                   <div 
                     key={member.email}
-                    className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-gray-800/70 rounded-lg hover:bg-gray-800 transition-colors"
                   >
                     <div className="flex items-center">
                       {member.role === "admin" ? (
-                        <UserCog className="mr-3 text-purple-400" size={20} />
+                        <UserCog className="mr-3 text-indigo-400" size={20} />
                       ) : (
                         <UserCircle2 className="mr-3 text-blue-400" size={20} />
                       )}
@@ -233,7 +273,7 @@ export default function TeamInvitePage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleRole(member.email)}
-                        className="text-xs"
+                        className="text-xs hover:bg-gray-700/70"
                       >
                         {member.role === "admin" ? "Admin" : "Member"}
                       </Button>
@@ -241,7 +281,7 @@ export default function TeamInvitePage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeTeamMember(member.email)}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-gray-400 hover:text-red-500 hover:bg-gray-700/70"
                       >
                         <X size={16} />
                       </Button>
@@ -255,20 +295,15 @@ export default function TeamInvitePage() {
           <div className="mt-8 text-center text-sm text-gray-400">
             <p>You can invite more members after setup is complete</p>
           </div>
-        </div>
+        </motion.div>
         
-        <div className="flex justify-between mb-12">
-          <Button 
-            variant="outline" 
-            onClick={prevStep}
-            className="border-gray-700 text-gray-400"
-            disabled={isSubmitting}
-          >
-            Back
-          </Button>
+        <motion.div 
+          className="flex justify-center mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.5 }}
+        >
           <ContinueButton 
             onClick={sendInvitations}
-            className="bg-purple-600 hover:bg-purple-700"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -280,10 +315,17 @@ export default function TeamInvitePage() {
               'Continue'
             )}
           </ContinueButton>
-        </div>
+        </motion.div>
         
-        <ProgressDots total={total} current={current} />
-      </div>
+        <motion.div
+          variants={fadeIn}
+          transition={{ delay: 0.6 }}
+          className="flex flex-col items-center"
+        >
+          <ProgressDots total={total} current={current} color="purple" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 } 

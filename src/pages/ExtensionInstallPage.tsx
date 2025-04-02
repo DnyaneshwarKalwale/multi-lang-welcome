@@ -1,11 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
+import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { ArrowLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ExtensionInstallPage() {
@@ -25,10 +26,6 @@ export default function ExtensionInstallPage() {
     navigate("/dashboard");
   };
 
-  const handlePrev = () => {
-    prevStep();
-  };
-
   // Animation variants
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -44,16 +41,10 @@ export default function ExtensionInstallPage() {
       </div>
       
       {/* Back button */}
-      <motion.button
-        className="absolute top-10 left-10 flex items-center text-gray-400 hover:text-white transition-colors"
-        onClick={handlePrev}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <ArrowLeft size={16} className="mr-2" />
-        Back
-      </motion.button>
+      <BackButton 
+        onClick={prevStep} 
+        absolute 
+      />
       
       <motion.div 
         className="max-w-3xl w-full text-center"
@@ -142,17 +133,13 @@ export default function ExtensionInstallPage() {
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <Button 
-            variant="gradient"
-            className="w-full py-4 px-8 rounded-full mb-4 flex items-center justify-center shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
-            onClick={handleContinue}
-          >
+          <ContinueButton onClick={handleContinue}>
             Continue without installing
-          </Button>
+          </ContinueButton>
           
           <Button
             variant="ghost"
-            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 transition-all duration-300 text-sm"
+            className="text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-full px-8 py-3 mt-4 transition-all duration-300 text-sm"
             onClick={handleSkipToDashboard}
           >
             Skip to dashboard
@@ -162,8 +149,10 @@ export default function ExtensionInstallPage() {
         <motion.div
           variants={fadeIn}
           transition={{ delay: 0.6 }}
+          className="flex flex-col items-center"
         >
-          <ProgressDots total={total} current={current} />
+          <ProgressDots total={total} current={current} color="indigo" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
         </motion.div>
       </motion.div>
     </div>

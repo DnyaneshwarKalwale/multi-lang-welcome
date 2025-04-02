@@ -6,24 +6,64 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function LanguageSelectionPage() {
   const { language, setLanguage, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
+  // Animation variants
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-black text-white">
-      <div className="max-w-3xl w-full text-center">
-        <h1 className="text-4xl font-bold mb-4">{t('chooseLanguage')}</h1>
-        <p className="text-lg text-gray-400 mb-10">
-          {t('languageDescription')}
-        </p>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-black text-white relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 opacity-20 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
+      </div>
+      
+      {/* Back button */}
+      <BackButton 
+        onClick={prevStep} 
+        absolute 
+      />
+      
+      <motion.div 
+        className="max-w-3xl w-full text-center"
+        variants={fadeIn}
+        initial="initial"
+        animate="animate"
+      >
+        <motion.h1 
+          className="text-4xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"
+          variants={fadeIn}
+          transition={{ delay: 0.2 }}
+        >
+          {t('chooseLanguage')}
+        </motion.h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div 
-            className={`bg-gray-900 border-2 ${language === "english" ? "border-purple-600" : "border-gray-800"} rounded-xl p-8 cursor-pointer hover:border-purple-600/60 transition-all`}
+        <motion.p 
+          className="text-xl text-gray-300 mb-10 text-center"
+          variants={fadeIn}
+          transition={{ delay: 0.3 }}
+        >
+          {t('languageDescription')}
+        </motion.p>
+        
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.4 }}
+        >
+          <motion.div 
+            className={`bg-gray-900/50 backdrop-blur-sm border-2 ${language === "english" ? "border-purple-600" : "border-gray-800"} rounded-xl p-8 cursor-pointer hover:border-purple-600/60 transition-all`}
             onClick={() => setLanguage("english")}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
             <div className="flex items-start">
               <div className="w-10 h-10 flex-shrink-0 rounded mr-4 overflow-hidden">
@@ -51,11 +91,12 @@ export default function LanguageSelectionPage() {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
           
-          <div 
-            className={`bg-gray-900 border-2 ${language === "german" ? "border-purple-600" : "border-gray-800"} rounded-xl p-8 cursor-pointer hover:border-purple-600/60 transition-all`}
+          <motion.div 
+            className={`bg-gray-900/50 backdrop-blur-sm border-2 ${language === "german" ? "border-purple-600" : "border-gray-800"} rounded-xl p-8 cursor-pointer hover:border-purple-600/60 transition-all`}
             onClick={() => setLanguage("german")}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
             <div className="flex items-start">
               <div className="w-10 h-10 flex-shrink-0 rounded mr-4 overflow-hidden">
@@ -79,25 +120,31 @@ export default function LanguageSelectionPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
-        <div className="flex justify-between mb-12">
-          <BackButton 
-            onClick={prevStep}
-          >
-            {t('back')}
-          </BackButton>
+        <motion.div 
+          className="flex justify-center mb-12"
+          variants={fadeIn}
+          transition={{ delay: 0.5 }}
+        >
           <ContinueButton 
             onClick={nextStep}
             disabled={!language}
           >
             {t('continue')}
           </ContinueButton>
-        </div>
+        </motion.div>
         
-        <ProgressDots total={total} current={current} color="purple" />
-      </div>
+        <motion.div
+          variants={fadeIn}
+          transition={{ delay: 0.6 }}
+          className="flex flex-col items-center"
+        >
+          <ProgressDots total={total} current={current} color="purple" />
+          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
