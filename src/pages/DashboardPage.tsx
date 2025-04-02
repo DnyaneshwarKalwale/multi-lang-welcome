@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/contexts/ThemeContext";
+import { SekcionIconRounded, SekcionLogotype } from "@/components/ScripeIcon";
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
@@ -97,9 +98,12 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="container px-4 py-8 mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Twitter Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your content and analyze performance</p>
+        <div className="flex items-center gap-3">
+          <SekcionIconRounded className="h-12 w-12" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sekcion for Twitter</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your Twitter content and analyze performance</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
