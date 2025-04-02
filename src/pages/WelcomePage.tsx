@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import WelcomeCard from "@/components/WelcomeCard";
+import { WelcomeCard } from "@/components/WelcomeCard";
 import { ArrowRight, TwitterIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -35,7 +35,11 @@ export default function WelcomePage() {
         >
           <Card className="glass-card border border-gray-100 dark:border-gray-800">
             <div className="p-6">
-              <WelcomeCard />
+              <WelcomeCard 
+                title="Grow Your Twitter Audience"
+                description="Our AI-powered tools help you create engaging content that resonates with your audience."
+                icon={<TwitterIcon className="h-5 w-5 text-indigo-400" />}
+              />
               
               <div className="mt-8">
                 <Link to="/language-selection">
