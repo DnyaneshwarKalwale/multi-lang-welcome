@@ -39,6 +39,7 @@ export function OnboardingRouter() {
     
     // Only save if we're on a valid onboarding step
     if (currentOnboardingStep && currentOnboardingStep !== '') {
+      // Store the current step in localStorage
       localStorage.setItem('onboardingStep', currentOnboardingStep);
       
       // Only call saveProgress if user is authenticated

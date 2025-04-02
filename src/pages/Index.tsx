@@ -32,7 +32,7 @@ const Index = () => {
 
   const handleLoginSuccess = () => {
     setIsLoginOpen(false);
-    navigate("/onboarding/welcome");
+    navigate("/onboarding/welcome", { replace: true });
   };
 
   const handleRegisterSuccess = () => {

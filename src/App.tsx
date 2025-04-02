@@ -36,11 +36,11 @@ function ProtectedOnboardingRoute() {
       // Get saved step from localStorage
       const savedStep = localStorage.getItem('onboardingStep');
       
-      if (savedStep) {
-        // Redirect to the saved step
+      if (savedStep && savedStep !== 'welcome') {
+        // Redirect to the saved step only if it's not 'welcome'
         navigate(`/onboarding/${savedStep}`, { replace: true });
       } else {
-        // If no saved step, start from the beginning
+        // If no saved step or it's 'welcome', start from the beginning
         navigate('/onboarding/welcome', { replace: true });
       }
       
