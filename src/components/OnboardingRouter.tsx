@@ -60,16 +60,6 @@ export function OnboardingRouter() {
         />
       </div>
       
-      {/* Resume session notification - show if returning */}
-      {localStorage.getItem('returningUser') === 'true' && (
-        <div className="fixed top-4 right-4 bg-indigo-900 text-white px-4 py-2 rounded-md text-sm z-50 flex items-center shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Resumed from last session
-        </div>
-      )}
-      
       <Routes>
         <Route path="welcome" element={<WelcomePage />} />
         <Route path="team-selection" element={<TeamSelectionPage />} />
