@@ -216,44 +216,44 @@ export default function CompletionPage() {
             </p>
           </motion.div>
         </motion.div>
-      </motion.div>
       
-      <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
-        <Button 
-          onClick={handleGoToDashboard}
-          variant="gradient"
-          className="w-full py-4 px-8 rounded-full text-lg font-medium flex items-center justify-center shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
-        >
-          Go to dashboard
-        </Button>
-      </motion.div>
-      
-      {isMarkingComplete && (
-        <motion.div 
-          className="text-sm text-gray-500 flex items-center justify-center mt-4"
-          variants={itemVariants}
-        >
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Saving your preferences...
-        </motion.div>
-      )}
-      
-      {error && (
-        <motion.div 
-          className="bg-red-900/30 border border-red-900 text-red-200 p-3 rounded-lg flex flex-col items-center mt-4 max-w-md mx-auto"
-          variants={itemVariants}
-        >
-          <p className="mb-2">{error}</p>
+        <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
           <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRetry} 
-            className="mt-2 text-white border-red-700 hover:bg-red-900/50"
+            onClick={handleGoToDashboard}
+            variant="gradient"
+            className="w-full py-4 px-8 rounded-full text-lg font-medium flex items-center justify-center shadow-xl hover:shadow-indigo-500/25 transition-all duration-300"
           >
-            <RefreshCw className="w-4 h-4 mr-2" /> Retry
+            Go to dashboard
           </Button>
         </motion.div>
-      )}
-    </motion.div>
+      
+        {isMarkingComplete && (
+          <motion.div 
+            className="text-sm text-gray-500 flex items-center justify-center mt-4"
+            variants={itemVariants}
+          >
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Saving your preferences...
+          </motion.div>
+        )}
+      
+        {error && (
+          <motion.div 
+            className="bg-red-900/30 border border-red-900 text-red-200 p-3 rounded-lg flex flex-col items-center mt-4 max-w-md mx-auto"
+            variants={itemVariants}
+          >
+            <p className="mb-2">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRetry} 
+              className="mt-2 text-white border-red-700 hover:bg-red-900/50"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+            </Button>
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
   );
 } 
