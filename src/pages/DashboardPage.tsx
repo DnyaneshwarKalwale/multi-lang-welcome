@@ -6,7 +6,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Sun, Moon, Home, Upload, FileText, Lightbulb, Calendar, 
   BarChart, BookOpen, Twitter, Image, Plus, Bell, 
-  ChevronRight, Grid, Settings, LogOut, User
+  ChevronRight, Grid, Settings, LogOut, User,
+  BarChart3, Sparkles, Zap, Users, MessageSquare
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeamInvitationNotification from "@/components/TeamInvitationNotification";
@@ -14,6 +15,9 @@ import { DashboardPostCard, DashboardAnalyticsCard, DashboardProfileCard } from 
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { Progress } from "@/components/ui/progress";
 
 // Dashboard page
 export default function DashboardPage() {
@@ -23,6 +27,8 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { t } = useLanguage();
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'content' | 'analytics'>('overview');
 
   const dashboardName = workspaceType === "team" ? workspaceName : `${firstName}'s workspace`;
   const userFullName = `${firstName} ${lastName}`;
@@ -133,275 +139,271 @@ export default function DashboardPage() {
     animate: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="min-h-screen bg-brand-gray-900 text-white">
       {/* Sidebar */}
-      <motion.div 
-        className="w-64 bg-gray-900/50 backdrop-blur-sm border-r border-gray-800 p-5 flex flex-col h-screen overflow-y-auto overflow-x-hidden"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="mb-8">
-          <ScripeLogotype className="h-8" />
-        </div>
-        
-        <Button 
-          variant="gradient" 
-          className="gap-2 mb-8 hover-glow shine"
-          rounded="lg"
-          animation="pulse"
-        >
-          <Plus size={16} />
-          Create new post
-        </Button>
-        
-        <div className="space-y-1 mb-8">
-          {sidebarItems.map((item) => (
-            <Button 
-              key={item.label} 
-              variant={item.active ? "ghost" : "transparent"}
-              className={`w-full justify-start gap-3 text-sm transition-all duration-200 ${
-                item.active 
-                  ? "bg-gray-800/70 text-white font-medium" 
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="border-t border-gray-800 pt-4 mb-2">
-          <p className="text-sm text-gray-500 px-3 mb-2">Personal Brand</p>
-        </div>
-        
-        <div className="space-y-1 mb-auto">
-          {personalBrandItems.map((item) => (
-            <Button 
-              key={item.label} 
-              variant="transparent" 
-              className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-white transition-all duration-200"
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="border-t border-gray-800 pt-4">
-          <div className="relative">
-            <button 
-              className="flex items-center w-full p-2 rounded-lg hover:bg-gray-800 transition-colors"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            >
-              <img 
-                src={user?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(userInitials) + "&background=6366F1&color=fff"} 
-                alt={userFullName}
-                className="w-8 h-8 rounded-full mr-3 object-cover" 
-              />
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium truncate">{userFullName}</p>
-                <p className="text-xs text-gray-500 truncate">Free plan</p>
-              </div>
-            </button>
-            
-            {showUserMenu && (
-              <div className="absolute bottom-full mb-2 left-0 w-full bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-20 py-1">
-                <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
-                  <User size={16} />
-                  Profile
-                </Button>
-                <Button variant="transparent" className="w-full justify-start text-sm gap-2 px-3">
-                  <Settings size={16} />
-                  Settings
-                </Button>
-                <div className="border-t border-gray-700 my-1"></div>
-                <Button 
-                  variant="transparent" 
-                  className="w-full justify-start text-sm gap-2 px-3 text-red-400 hover:text-red-300"
-                  onClick={handleLogout}
-                >
-                  <LogOut size={16} />
-                  Log out
-                </Button>
-              </div>
-            )}
+      <div className="fixed inset-y-0 left-0 w-64 bg-brand-gray-800 border-r border-brand-gray-700">
+        <div className="flex flex-col h-full">
+          <div className="p-4 sm:p-6">
+            <ScripeIconRounded className="w-8 h-8" />
           </div>
           
-          <div className="flex items-center justify-between mt-4 px-2">
-            <div className="flex items-center">
-              <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-              <p className="text-xs text-gray-500">15 credits left</p>
-            </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleTheme}>
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </Button>
+          <nav className="flex-1 px-2 sm:px-4 space-y-1">
+            <button
+              onClick={() => setSelectedTab('overview')}
+              className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedTab === 'overview'
+                  ? 'bg-brand-primary/20 text-brand-primary'
+                  : 'text-brand-gray-300 hover:bg-brand-gray-700/50 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5 mr-3" />
+              {t('overview')}
+            </button>
+            
+            <button
+              onClick={() => setSelectedTab('content')}
+              className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedTab === 'content'
+                  ? 'bg-brand-primary/20 text-brand-primary'
+                  : 'text-brand-gray-300 hover:bg-brand-gray-700/50 hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-5 h-5 mr-3" />
+              {t('content')}
+            </button>
+            
+            <button
+              onClick={() => setSelectedTab('analytics')}
+              className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedTab === 'analytics'
+                  ? 'bg-brand-primary/20 text-brand-primary'
+                  : 'text-brand-gray-300 hover:bg-brand-gray-700/50 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5 mr-3" />
+              {t('analytics')}
+            </button>
+          </nav>
+          
+          <div className="p-4 sm:p-6 border-t border-brand-gray-700">
+            <button
+              onClick={() => navigate('/settings')}
+              className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-brand-gray-300 hover:bg-brand-gray-700/50 hover:text-white transition-colors"
+            >
+              <Settings className="w-5 h-5 mr-3" />
+              {t('settings')}
+            </button>
           </div>
         </div>
-      </motion.div>
-      
+      </div>
+
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-black to-gray-900">
+      <div className="pl-64">
         {/* Header */}
-        <motion.div 
-          className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-5 sticky top-0 z-10"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-bold text-gradient">
-                {dashboardName}
-              </h1>
-              <p className="text-sm text-gray-400">Welcome back! Here's what's happening with your content</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="transparent" 
-                size="sm" 
-                className="hidden md:flex items-center gap-1 transition-all duration-200"
-              >
-                <Bell size={16} />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex items-center gap-1 transition-all duration-200"
-              >
-                <Grid size={16} className="mr-1" />
-                View all
-              </Button>
+        <header className="h-16 border-b border-brand-gray-700 bg-brand-gray-800/50 backdrop-blur-sm">
+          <div className="h-full px-4 sm:px-6 flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-white">
+              {t('dashboard')}
+            </h1>
+            
+            <div className="flex items-center space-x-4">
+              <button className="p-2 text-brand-gray-300 hover:text-white transition-colors">
+                <Bell className="w-5 h-5" />
+              </button>
+              
+              <button className="flex items-center space-x-2 text-brand-gray-300 hover:text-white transition-colors">
+                <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center">
+                  <span className="text-sm font-medium text-brand-primary">JD</span>
+                </div>
+                <span className="text-sm">John Doe</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        </motion.div>
-        
-        {/* Dashboard content */}
-        <div className="p-6">
-          {/* Quick stats */}
+        </header>
+
+        {/* Page content */}
+        <main className="p-4 sm:p-6">
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
           >
-            <DashboardAnalyticsCard 
-              title="Profile Views"
-              data={analyticsData.views.data}
-              labels={analyticsData.views.labels}
-              increase={analyticsData.views.increase}
-              timeframe={analyticsData.views.timeframe}
-            />
-            
-            <DashboardAnalyticsCard 
-              title="Engagement Rate"
-              data={analyticsData.engagement.data}
-              labels={analyticsData.engagement.labels}
-              increase={analyticsData.engagement.increase}
-              timeframe={analyticsData.engagement.timeframe}
-            />
-            
-            <DashboardProfileCard
-              user={profileData.user}
-              stats={profileData.stats}
-            />
-            
-            <motion.div
-              className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-5 text-white hover-lift shine"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.5)" }}
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
             >
-              <h3 className="font-medium mb-2">Upgrade to Pro</h3>
-              <p className="text-sm text-indigo-100 mb-4">Get unlimited posts, analytics, and AI features</p>
-              <div className="flex justify-between items-center">
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">50% OFF</span>
-                <Button variant="transparent" size="sm" className="bg-white/20 hover:bg-white/30 text-white group">
-                  Upgrade <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </Button>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-brand-gray-300">{t('totalPosts')}</h3>
+                <MessageSquare className="w-5 h-5 text-brand-primary" />
+              </div>
+              <p className="text-2xl font-semibold text-white mb-2">24</p>
+              <div className="flex items-center text-sm text-brand-success">
+                <span className="mr-1">↑</span>
+                <span>12%</span>
+                <span className="ml-1 text-brand-gray-400">vs last month</span>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-brand-gray-300">{t('engagement')}</h3>
+                <BarChart3 className="w-5 h-5 text-brand-secondary" />
+              </div>
+              <p className="text-2xl font-semibold text-white mb-2">4.2%</p>
+              <div className="flex items-center text-sm text-brand-success">
+                <span className="mr-1">↑</span>
+                <span>8%</span>
+                <span className="ml-1 text-brand-gray-400">vs last month</span>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-brand-gray-300">{t('followers')}</h3>
+                <Users className="w-5 h-5 text-brand-accent" />
+              </div>
+              <p className="text-2xl font-semibold text-white mb-2">1.2K</p>
+              <div className="flex items-center text-sm text-brand-success">
+                <span className="mr-1">↑</span>
+                <span>5%</span>
+                <span className="ml-1 text-brand-gray-400">vs last month</span>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-brand-gray-300">{t('scheduledPosts')}</h3>
+                <Calendar className="w-5 h-5 text-brand-pink" />
+              </div>
+              <p className="text-2xl font-semibold text-white mb-2">8</p>
+              <div className="flex items-center text-sm text-brand-success">
+                <span className="mr-1">↑</span>
+                <span>3</span>
+                <span className="ml-1 text-brand-gray-400">for today</span>
               </div>
             </motion.div>
           </motion.div>
-          
-          {/* Recent content */}
+
           <motion.div 
-            className="mb-8"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={{ delay: 0.1 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gradient-blue">Recent Content</h2>
-              <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300 transition-all duration-200">
-                View all
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {recentPosts.map((post, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-                >
-                  <DashboardPostCard
-                    title={post.title}
-                    content={post.content}
-                    author={post.author}
-                    status={post.status as "draft" | "scheduled" | "published"}
-                    date={post.date}
-                    stats={post.stats}
-                    imageSrc={post.imageSrc}
-                    onEdit={() => console.log("Edit", post.title)}
-                    onDelete={() => console.log("Delete", post.title)}
-                    onPublish={() => console.log("Publish", post.title)}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-          
-          {/* Get started section */}
-          <motion.div 
-            className="mb-8"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gradient">Get Started</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {cards.map((card, index) => (
-                <motion.div 
-                  key={index} 
-                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-5 hover-lift"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)" }}
-                >
-                  <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center mb-4">
-                    <span className="text-2xl">{card.icon}</span>
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">{t('contentPerformance')}</h3>
+                <Button variant="ghost" className="text-brand-primary hover:text-brand-primary/80">
+                  {t('viewAll')}
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-brand-gray-300">{t('engagementRate')}</span>
+                    <span className="text-sm font-medium text-white">4.2%</span>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">{card.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4">{card.description}</p>
-                  <Button variant="ghost" className="text-indigo-400 hover:text-indigo-300 px-0 hover:bg-transparent group">
-                    {card.buttonText}
-                    <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
+                  <Progress value={42} className="h-2 bg-brand-gray-700" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-brand-gray-300">{t('reach')}</span>
+                    <span className="text-sm font-medium text-white">12.5K</span>
+                  </div>
+                  <Progress value={75} className="h-2 bg-brand-gray-700" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-brand-gray-300">{t('conversion')}</span>
+                    <span className="text-sm font-medium text-white">2.8%</span>
+                  </div>
+                  <Progress value={28} className="h-2 bg-brand-gray-700" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">{t('recentActivity')}</h3>
+                <Button variant="ghost" className="text-brand-primary hover:text-brand-primary/80">
+                  {t('viewAll')}
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Plus className="w-4 h-4 text-brand-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white">{t('newPostCreated')}</p>
+                    <p className="text-xs text-brand-gray-400">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-success/20 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-brand-success" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white">{t('postScheduled')}</p>
+                    <p className="text-xs text-brand-gray-400">4 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-warning/20 flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-4 h-4 text-brand-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white">{t('performanceAlert')}</p>
+                    <p className="text-xs text-brand-gray-400">6 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </div>
+        </main>
       </div>
       
       {/* Invite Dialog */}

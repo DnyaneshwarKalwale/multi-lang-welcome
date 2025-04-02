@@ -1,28 +1,36 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { 
-  Clock, 
   Sparkles, 
   Zap,
   Globe2,
   MessageSquare,
   ArrowRight,
+  Twitter,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Mail,
+  Bell,
+  Share2,
+  Heart,
+  MessageCircle,
+  BarChart2,
+  Users,
   Calendar,
-  Timer,
-  CalendarDays,
-  CalendarClock,
-  Twitter
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Hash,
+  AtSign
 } from "lucide-react";
 
-export default function PostFrequencyPage() {
+export default function IndexPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [frequency, setFrequency] = useState("daily");
-  const [isSaving, setIsSaving] = useState(false);
 
   // Animation variants
   const fadeIn = {
@@ -49,22 +57,6 @@ export default function PostFrequencyPage() {
       transition: { duration: 0.5 }
     }
   };
-
-  const handleSaveFrequency = () => {
-    setIsSaving(true);
-    // Simulate saving frequency
-    setTimeout(() => {
-      setIsSaving(false);
-      navigate("/dashboard");
-    }, 2000);
-  };
-
-  const frequencyOptions = [
-    { id: "daily", label: t('daily'), icon: Calendar, description: t('dailyDescription') },
-    { id: "weekly", label: t('weekly'), icon: CalendarDays, description: t('weeklyDescription') },
-    { id: "monthly", label: t('monthly'), icon: CalendarClock, description: t('monthlyDescription') },
-    { id: "custom", label: t('custom'), icon: Timer, description: t('customDescription') }
-  ];
 
   return (
     <div className="min-h-screen bg-brand-gray-900 text-white">
@@ -119,45 +111,54 @@ export default function PostFrequencyPage() {
             className="text-3xl sm:text-4xl font-bold text-white mb-4"
             variants={itemVariants}
           >
-            {t('setPostFrequency')}
+            {t('welcomeToSocialHub')}
           </motion.h1>
           <motion.p 
             className="text-brand-gray-300 text-lg mb-8"
             variants={itemVariants}
           >
-            {t('setPostFrequencyDescription')}
+            {t('welcomeDescription')}
           </motion.p>
 
-          {/* Frequency options */}
+          {/* Social Media Integration */}
           <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
+            className="card-modern p-6 mb-8"
+            variants={itemVariants}
           >
-            {frequencyOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <motion.button
-                  key={option.id}
-                  onClick={() => setFrequency(option.id)}
-                  className={`card-modern p-6 text-left transition-all duration-300 ${
-                    frequency === option.id
-                      ? "border-brand-primary bg-brand-primary/10"
-                      : "hover:border-brand-gray-600"
-                  }`}
-                  variants={itemVariants}
-                >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-brand-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white">{option.label}</h3>
-                  </div>
-                  <p className="text-brand-gray-300">{option.description}</p>
-                </motion.button>
-              );
-            })}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <motion.button
+                className="flex flex-col items-center justify-center p-4 rounded-lg bg-brand-gray-800 hover:bg-brand-gray-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Twitter className="w-6 h-6 text-brand-primary mb-2" />
+                <span className="text-sm text-brand-gray-300">Twitter</span>
+              </motion.button>
+              <motion.button
+                className="flex flex-col items-center justify-center p-4 rounded-lg bg-brand-gray-800 hover:bg-brand-gray-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Facebook className="w-6 h-6 text-brand-secondary mb-2" />
+                <span className="text-sm text-brand-gray-300">Facebook</span>
+              </motion.button>
+              <motion.button
+                className="flex flex-col items-center justify-center p-4 rounded-lg bg-brand-gray-800 hover:bg-brand-gray-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Instagram className="w-6 h-6 text-brand-accent mb-2" />
+                <span className="text-sm text-brand-gray-300">Instagram</span>
+              </motion.button>
+              <motion.button
+                className="flex flex-col items-center justify-center p-4 rounded-lg bg-brand-gray-800 hover:bg-brand-gray-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Linkedin className="w-6 h-6 text-brand-pink mb-2" />
+                <span className="text-sm text-brand-gray-300">LinkedIn</span>
+              </motion.button>
+            </div>
           </motion.div>
 
           {/* Feature cards */}
@@ -175,9 +176,9 @@ export default function PostFrequencyPage() {
                 <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-brand-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">{t('consistentPosting')}</h3>
+                <h3 className="text-lg font-semibold text-white">{t('aiPoweredContent')}</h3>
               </div>
-              <p className="text-brand-gray-300">{t('consistentPostingDescription')}</p>
+              <p className="text-brand-gray-300">{t('aiPoweredContentDescription')}</p>
             </motion.div>
 
             <motion.div 
@@ -188,9 +189,9 @@ export default function PostFrequencyPage() {
                 <div className="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center">
                   <Zap className="w-5 h-5 text-brand-secondary" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">{t('optimalTiming')}</h3>
+                <h3 className="text-lg font-semibold text-white">{t('smartAnalytics')}</h3>
               </div>
-              <p className="text-brand-gray-300">{t('optimalTimingDescription')}</p>
+              <p className="text-brand-gray-300">{t('smartAnalyticsDescription')}</p>
             </motion.div>
 
             <motion.div 
@@ -201,9 +202,9 @@ export default function PostFrequencyPage() {
                 <div className="w-10 h-10 rounded-full bg-brand-accent/20 flex items-center justify-center">
                   <Globe2 className="w-5 h-5 text-brand-accent" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">{t('audienceEngagement')}</h3>
+                <h3 className="text-lg font-semibold text-white">{t('multiLanguage')}</h3>
               </div>
-              <p className="text-brand-gray-300">{t('audienceEngagementDescription')}</p>
+              <p className="text-brand-gray-300">{t('multiLanguageDescription')}</p>
             </motion.div>
 
             <motion.div 
@@ -226,23 +227,22 @@ export default function PostFrequencyPage() {
             className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
           >
             <Button
-              onClick={handleSaveFrequency}
-              disabled={isSaving}
+              onClick={() => navigate("/register")}
               className="bg-brand-primary hover:bg-brand-primary/90 text-white"
             >
-              {isSaving ? t('saving') : t('saveFrequency')}
+              {t('getStarted')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/login")}
               variant="outline"
               className="text-brand-gray-300 border-brand-gray-700 hover:bg-brand-gray-800"
             >
-              {t('skipForNow')}
+              {t('login')}
             </Button>
           </motion.div>
         </motion.div>
       </div>
     </div>
   );
-}
+} 

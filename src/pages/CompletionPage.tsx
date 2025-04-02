@@ -1,38 +1,40 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ContinueButton } from "@/components/ContinueButton";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, Loader2, Share2, Twitter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
-import { useAuth } from "@/contexts/AuthContext";
+import { 
+  CheckCircle2, 
+  Sparkles, 
+  Zap,
+  Globe2,
+  MessageSquare,
+  ArrowRight,
+  Twitter
+} from "lucide-react";
 
 export default function CompletionPage() {
   const navigate = useNavigate();
-  const { nextStep, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency } = useOnboarding();
-  const { user, fetchUser } = useAuth();
-  
-  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
-  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
-  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
-  const [error, setError] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
-  const [maxRetries] = useState(3);
-  
-  // Animation variants for staggered animations
-  const containerVariants = {
+  const { t } = useLanguage();
+
+  // Animation variants
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
+  const staggerContainer = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { 
-        staggerChildren: 0.2,
+        staggerChildren: 0.1,
         delayChildren: 0.3
       }
     }
   };
-  
+
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -41,246 +43,152 @@ export default function CompletionPage() {
       transition: { duration: 0.5 }
     }
   };
-  
-  // Mark onboarding as complete
-  useEffect(() => {
-    // Always set this flag locally to ensure we can navigate to dashboard
-    localStorage.setItem('onboardingCompleted', 'true');
-    
-    const markOnboardingComplete = async () => {
-      if (!user) {
-        return;
-      }
-      
-      setIsMarkingComplete(true);
-      
-      try {
-        // Get API URL from env or fallback
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          throw new Error("No authentication token found");
-        }
-        
-        // Prepare onboarding data
-        const onboardingData = {
-          onboardingCompleted: true,
-          workspaceType: workspaceType || 'personal',
-          workspaceName: workspaceName || `${firstName}'s Workspace`,
-          language: language || 'english',
-          theme: theme || 'dark',
-          postFormat: postFormat || 'casual',
-          postFrequency: postFrequency || 'daily'
-        };
-        
-        console.log("Updating onboarding status with data:", onboardingData);
-        
-        // Update the user's onboarding progress on the server
-        const response = await axios({
-          method: 'post',
-          url: `${baseApiUrl}/users/update-onboarding`,
-          data: onboardingData,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          timeout: 15000 // Extended timeout
-        });
-        
-        console.log("Update onboarding response:", response.data);
-        
-        // Fetch updated user data
-        await fetchUser();
-        setIsMarkingComplete(false);
-        setError("");
-      } catch (err: any) {
-        console.error("Error marking onboarding as complete:", err);
-        
-        // More detailed error message with retry info
-        const errorMsg = err.response?.data?.error || err.message || 'Failed to connect to the server';
-        setError(`${errorMsg}. ${retryCount < maxRetries ? 'You can retry the update.' : 'Your settings are saved locally.'}`);
-        
-        setIsMarkingComplete(false);
-      }
-    };
-    
-    markOnboardingComplete();
-  }, [user, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency, fetchUser, retryCount, maxRetries]);
-  
-  const handleGoToDashboard = () => {
-    // Ensure the onboarding is marked as completed before going to dashboard
-    localStorage.setItem('onboardingCompleted', 'true');
-    navigate("/dashboard");
-  };
-  
-  const handleRetry = () => {
-    if (retryCount < maxRetries) {
-      setError("");
-      setRetryCount(prev => prev + 1);
-    } else {
-      setError("Maximum retry attempts reached. Your settings are saved locally.");
-      // Still allow proceeding to dashboard
-      localStorage.setItem('onboardingCompleted', 'true');
-    }
-  };
-  
-  const handleGenerateContent = () => {
-    setIsGeneratingContent(true);
-    
-    // Simulate content generation (would connect to real API in production)
-    setTimeout(() => {
-      setIsGeneratingContent(false);
-      navigate("/dashboard");
-    }, 2000);
-  };
-  
-  const handleUploadFiles = () => {
-    setIsUploadingFiles(true);
-    
-    // Simulate file upload (would connect to real API in production)
-    setTimeout(() => {
-      setIsUploadingFiles(false);
-      navigate("/dashboard");
-    }, 2000);
-  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-indigo-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-purple-900 blur-[120px]"></div>
-      </div>
+    <div className="min-h-screen bg-brand-gray-900 text-white">
+      {/* Background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10" />
       
-      <motion.div 
-        className="max-w-3xl w-full text-center space-y-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div className="flex flex-col items-center" variants={itemVariants}>
-          <div className="p-2 mb-4 rounded-full bg-green-500/20 border border-green-500/30">
-            <CheckCircle className="w-16 h-16 text-green-500" />
-          </div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center gap-2">
-            Onboarding Complete!
-            <span role="img" aria-label="celebration">🎉</span>
-          </h1>
-          <p className="text-gray-300 text-xl mt-4 max-w-xl mx-auto">
-            Your setup is finished. Now let's make your Twitter content strategy easier with Scripe.
-          </p>
-        </motion.div>
-        
-        <motion.div 
-          className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 max-w-2xl mx-auto"
-          variants={itemVariants}
+      {/* Decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-brand-primary/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-secondary/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+        <motion.div
+          className="w-full max-w-2xl mx-auto text-center"
+          variants={fadeIn}
+          initial="initial"
+          animate="animate"
         >
-          <h2 className="text-2xl font-bold mb-6">What's next?</h2>
-          
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-800/50 p-4 rounded-lg">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
-                <Twitter className="w-6 h-6 text-indigo-400" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-medium mb-1">Generate your first Twitter content</h3>
-                <p className="text-sm text-gray-400 mb-3">
-                  Let our AI create personalized Twitter content based on your preferences
-                </p>
-                <Button 
-                  variant="gradient"
-                  rounded="full" 
-                  className="w-full md:w-auto"
-                  onClick={handleGenerateContent}
-                  disabled={isGeneratingContent}
-                >
-                  {isGeneratingContent ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : "Generate content"}
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-800/50 p-4 rounded-lg">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
-                <Share2 className="w-6 h-6 text-indigo-400" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-medium mb-1">Connect your accounts</h3>
-                <p className="text-sm text-gray-400 mb-3">
-                  Link your Twitter accounts to publish content directly
-                </p>
-                <Button 
-                  variant="outline"
-                  rounded="full" 
-                  className="w-full md:w-auto"
-                  onClick={handleUploadFiles}
-                  disabled={isUploadingFiles}
-                >
-                  {isUploadingFiles ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : "Connect accounts"}
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <motion.div 
-            className="mt-6 pt-6 border-t border-gray-800 text-center"
+          {/* Header */}
+          <motion.div
+            className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-primary/20 flex items-center justify-center"
             variants={itemVariants}
           >
-            <p className="text-gray-400 mb-4">
-              You can also set these up later from your dashboard
-            </p>
+            <Twitter className="w-12 h-12 text-brand-primary" />
+          </motion.div>
+
+          {/* Title and description */}
+          <motion.h1 
+            className="text-3xl sm:text-4xl font-bold text-white mb-4"
+            variants={itemVariants}
+          >
+            {t('setupComplete')}
+          </motion.h1>
+          <motion.p 
+            className="text-brand-gray-300 text-lg mb-8"
+            variants={itemVariants}
+          >
+            {t('setupCompleteDescription')}
+          </motion.p>
+
+          {/* Feature cards */}
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-brand-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('aiPoweredContent')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('aiPoweredContentDescription')}</p>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-brand-secondary" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('smartAnalytics')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('smartAnalyticsDescription')}</p>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-accent/20 flex items-center justify-center">
+                  <Globe2 className="w-5 h-5 text-brand-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('multiLanguage')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('multiLanguageDescription')}</p>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-pink/20 flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-brand-pink" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('contentStrategy')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('contentStrategyDescription')}</p>
+            </motion.div>
+          </motion.div>
+
+          {/* Action buttons */}
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
+          >
+            <Button
+              onClick={() => navigate("/dashboard")}
+              className="bg-brand-primary hover:bg-brand-primary/90 text-white"
+            >
+              {t('goToDashboard')}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/settings")}
+              className="text-brand-gray-300 border-brand-gray-700 hover:bg-brand-gray-800"
+            >
+              {t('customizeSettings')}
+            </Button>
           </motion.div>
         </motion.div>
-      
-        <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
-          <ContinueButton 
-            onClick={handleGoToDashboard}
-            variant="gradient"
-          >
-            Go to Dashboard
-          </ContinueButton>
-        </motion.div>
-        
-        {error && (
-          <motion.div 
-            variants={itemVariants} 
-            className="text-red-400 flex flex-col items-center space-y-2"
-          >
-            <p>{error}</p>
-            {retryCount < maxRetries && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center"
-                onClick={handleRetry}
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
-              </Button>
-            )}
-          </motion.div>
-        )}
-        
-        {isMarkingComplete && (
-          <motion.div 
-            variants={itemVariants} 
-            className="text-blue-400 flex items-center justify-center"
-          >
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving your preferences...
-          </motion.div>
-        )}
-      </motion.div>
+      </div>
     </div>
   );
 } 

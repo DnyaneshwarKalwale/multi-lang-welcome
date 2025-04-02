@@ -1,180 +1,286 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
-
-interface TeamInvitation {
-  id: string;
-  teamId: string;
-  teamName: string;
-  role: string;
-  createdAt: string;
-}
+import { 
+  Mail, 
+  Sparkles, 
+  Zap,
+  Globe2,
+  MessageSquare,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  UserPlus,
+  Twitter
+} from "lucide-react";
 
 export default function PendingInvitationsPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
+  const [isResponding, setIsResponding] = useState(false);
 
-  // Fetch invitations when component mounts
-  const fetchInvitations = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        // If no token, redirect to login
-        navigate('/login');
-        return;
+  // Mock data for pending invitations
+  const pendingInvitations = [
+    {
+      id: 1,
+      workspace: "Marketing Team",
+      inviter: "John Doe",
+      role: "Content Creator",
+      status: "pending",
+      date: "2024-03-20"
+    },
+    {
+      id: 2,
+      workspace: "Product Team",
+      inviter: "Jane Smith",
+      role: "Social Media Manager",
+      status: "pending",
+      date: "2024-03-19"
+    }
+  ];
+
+  // Animation variants
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.3
       }
-
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setInvitations(response.data.data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Failed to fetch invitations:', err);
-      setError('Failed to load invitations');
-      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchInvitations();
-  }, []);
-
-  const handleAcceptInvitation = async (invitationId: string) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      // Navigate to team dashboard
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Failed to accept invitation:', err);
-      setError('Failed to accept invitation');
-      setLoading(false);
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
     }
   };
 
-  const handleDeclineInvitation = async (invitationId: string) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      // Remove this invitation from the list
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
-      setLoading(false);
-    } catch (err) {
-      console.error('Failed to decline invitation:', err);
-      setError('Failed to decline invitation');
-      setLoading(false);
-    }
+  const handleAcceptInvitation = (id: number) => {
+    setIsResponding(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsResponding(false);
+      navigate("/dashboard");
+    }, 2000);
   };
 
-  const handleSkip = () => {
-    // Store in local storage that user has skipped invitations
-    localStorage.setItem('skippedInvitations', 'true');
-    navigate('/dashboard');
+  const handleDeclineInvitation = (id: number) => {
+    setIsResponding(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsResponding(false);
+    }, 2000);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-6">
-      <div className="max-w-md w-full bg-gray-900 rounded-xl shadow-2xl p-8">
-        {loading ? (
-          <p className="mt-4">Loading invitations...</p>
-        ) : error ? (
-          <div className="text-center">
-            <p className="text-red-500 mb-4">{error}</p>
-            <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
-          </div>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold mb-6 text-center">Pending Invitations</h1>
-            
-            {invitations.length === 0 ? (
-              <div className="text-center">
-                <p className="mb-4">You have no pending invitations.</p>
-                <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
-              </div>
-            ) : (
-              <>
-                <p className="mb-4 text-gray-400">
-                  You have been invited to join the following teams:
-                </p>
-                
-                <div className="space-y-4 mb-6">
-                  {invitations.map(invitation => (
-                    <div 
-                      key={invitation.id} 
-                      className="p-4 border border-gray-800 rounded-lg bg-gray-800/50"
-                    >
-                      <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-md flex items-center justify-center text-white font-bold mr-3">
-                          {invitation.teamName.substring(0, 1).toUpperCase()}
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{invitation.teamName}</h3>
-                          <p className="text-xs text-gray-400">Role: {invitation.role}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex space-x-2 justify-end">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleDeclineInvitation(invitation.id)}
-                          className="text-sm border-gray-700 text-gray-400 hover:bg-gray-800"
-                        >
-                          Decline
-                        </Button>
-                        <Button 
-                          onClick={() => handleAcceptInvitation(invitation.id)}
-                          className="text-sm bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          Accept
-                        </Button>
-                      </div>
+    <div className="min-h-screen bg-brand-gray-900 text-white">
+      {/* Background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10" />
+      
+      {/* Decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-brand-primary/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-secondary/20 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+        <motion.div
+          className="w-full max-w-2xl mx-auto text-center"
+          variants={fadeIn}
+          initial="initial"
+          animate="animate"
+        >
+          {/* Header */}
+          <motion.div
+            className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-primary/20 flex items-center justify-center"
+            variants={itemVariants}
+          >
+            <Twitter className="w-12 h-12 text-brand-primary" />
+          </motion.div>
+
+          <motion.h1 
+            className="text-3xl sm:text-4xl font-bold text-white mb-4"
+            variants={itemVariants}
+          >
+            {t('pendingInvitations')}
+          </motion.h1>
+          <motion.p 
+            className="text-brand-gray-300 text-lg mb-8"
+            variants={itemVariants}
+          >
+            {t('pendingInvitationsDescription')}
+          </motion.p>
+
+          {/* Invitations list */}
+          <motion.div 
+            className="space-y-4 mb-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {pendingInvitations.map((invitation) => (
+              <motion.div
+                key={invitation.id}
+                className="card-modern p-6"
+                variants={itemVariants}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-brand-primary/20 flex items-center justify-center">
+                      <UserPlus className="w-6 h-6 text-brand-primary" />
                     </div>
-                  ))}
+                    <div className="text-left">
+                      <h3 className="text-lg font-semibold text-white">{invitation.workspace}</h3>
+                      <p className="text-brand-gray-300">
+                        {t('invitedBy')} {invitation.inviter}
+                      </p>
+                      <p className="text-brand-gray-400 text-sm">
+                        {t('role')}: {invitation.role}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => handleAcceptInvitation(invitation.id)}
+                      disabled={isResponding}
+                      className="bg-brand-primary hover:bg-brand-primary/90 text-white"
+                    >
+                      {isResponding ? t('responding') : t('accept')}
+                      <CheckCircle2 className="w-4 h-4 ml-2" />
+                    </Button>
+                    <Button
+                      onClick={() => handleDeclineInvitation(invitation.id)}
+                      disabled={isResponding}
+                      variant="outline"
+                      className="text-brand-gray-300 border-brand-gray-700 hover:bg-brand-gray-800"
+                    >
+                      {t('decline')}
+                      <XCircle className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="text-center mt-8">
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleSkip}
-                    className="text-gray-400"
-                  >
-                    Skip for now
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    You can accept these invitations later from your dashboard
-                  </p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Feature cards */}
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-brand-primary" />
                 </div>
-              </>
-            )}
-          </>
-        )}
+                <h3 className="text-lg font-semibold text-white">{t('teamCollaboration')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('teamCollaborationDescription')}</p>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-brand-secondary" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('sharedResources')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('sharedResourcesDescription')}</p>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-accent/20 flex items-center justify-center">
+                  <Globe2 className="w-5 h-5 text-brand-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('multiLanguage')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('multiLanguageDescription')}</p>
+            </motion.div>
+
+            <motion.div 
+              className="card-modern p-4 sm:p-6"
+              variants={itemVariants}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-pink/20 flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-brand-pink" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">{t('contentStrategy')}</h3>
+              </div>
+              <p className="text-brand-gray-300">{t('contentStrategyDescription')}</p>
+            </motion.div>
+          </motion.div>
+
+          {/* Action buttons */}
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
+          >
+            <Button
+              onClick={() => navigate("/dashboard")}
+              className="bg-brand-primary hover:bg-brand-primary/90 text-white"
+            >
+              {t('goToDashboard')}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button
+              onClick={() => navigate("/settings")}
+              variant="outline"
+              className="text-brand-gray-300 border-brand-gray-700 hover:bg-brand-gray-800"
+            >
+              {t('manageInvitations')}
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

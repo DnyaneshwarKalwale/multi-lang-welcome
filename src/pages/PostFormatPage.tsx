@@ -24,7 +24,7 @@ export default function PostFormatPage() {
     {
       id: "thread",
       title: "Thread",
-      icon: <AlignLeft size={32} className="text-blue-500" />,
+      icon: <AlignLeft size={24} className="text-brand-primary" />,
       description: "Multi-tweet threads with a clear storyline",
       example: "1/ We've analyzed 1,000+ viral threads...\n2/ Here's what works consistently...\n3/ Starting with hook + promise...",
       stats: { engagement: 85, reach: 78, effort: 70 }
@@ -32,7 +32,7 @@ export default function PostFormatPage() {
     {
       id: "concise",
       title: "Concise",
-      icon: <MessageSquareText size={32} className="text-cyan-500" />,
+      icon: <MessageSquareText size={24} className="text-brand-secondary" />,
       description: "Short, impactful tweets within character limits",
       example: "Just discovered the most effective way to grow your audience without spending hours on content creation.",
       stats: { engagement: 70, reach: 65, effort: 30 }
@@ -40,7 +40,7 @@ export default function PostFormatPage() {
     {
       id: "hashtag",
       title: "Hashtag",
-      icon: <Hash size={32} className="text-green-500" />,
+      icon: <Hash size={24} className="text-brand-accent" />,
       description: "Strategic hashtags to increase tweet visibility",
       example: "This writing technique doubled my engagement rate overnight #WritingCommunity #ContentCreation #GrowthHacking",
       stats: { engagement: 60, reach: 90, effort: 40 }
@@ -48,7 +48,7 @@ export default function PostFormatPage() {
     {
       id: "visual",
       title: "Visual",
-      icon: <Image size={32} className="text-yellow-500" />,
+      icon: <Image size={24} className="text-brand-warning" />,
       description: "Image-focused tweets for better engagement",
       example: "[Image] + Caption: The before/after results speak for themselves. Swipe to see the difference.",
       stats: { engagement: 88, reach: 75, effort: 55 }
@@ -56,7 +56,7 @@ export default function PostFormatPage() {
     {
       id: "viral",
       title: "Viral",
-      icon: <Sparkles size={32} className="text-pink-500" />,
+      icon: <Sparkles size={24} className="text-brand-purple" />,
       description: "Trend-focused tweets optimized for sharing",
       example: "I tested this viral trend on 50 accounts. Only 3 techniques consistently got results. Here they are:",
       stats: { engagement: 95, reach: 85, effort: 65 }
@@ -90,23 +90,22 @@ export default function PostFormatPage() {
   };
 
   const calculateCharacterCount = () => {
-    // Map slider value to character count range
     if (postLength < 30) return "~100 characters";
     if (postLength < 70) return "~200 characters";
     return "280+ characters";
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-black text-white relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-900 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-cyan-900 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 py-6 sm:py-10 gradient-dark text-white relative overflow-hidden">
+      {/* Modern gradient background */}
+      <div className="absolute inset-0 opacity-30 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-brand-primary/20 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-brand-secondary/20 blur-[120px]"></div>
       </div>
       
-      {/* Twitter-like floating elements for decoration */}
+      {/* Decorative elements */}
       <motion.div 
-        className="absolute opacity-10 pointer-events-none"
+        className="absolute opacity-10 pointer-events-none hidden sm:block"
         animate={{ 
           y: [0, -15, 0],
           x: [0, 10, 0],
@@ -119,11 +118,11 @@ export default function PostFormatPage() {
         }}
         style={{ top: '15%', right: '10%' }}
       >
-        <Twitter size={80} className="text-blue-400" />
+        <Twitter size={80} className="text-brand-primary" />
       </motion.div>
       
       <motion.div 
-        className="absolute opacity-10 pointer-events-none"
+        className="absolute opacity-10 pointer-events-none hidden sm:block"
         animate={{ 
           y: [0, 20, 0],
           x: [0, -15, 0],
@@ -137,11 +136,11 @@ export default function PostFormatPage() {
         }}
         style={{ bottom: '20%', left: '8%' }}
       >
-        <HeartHandshake size={60} className="text-pink-400" />
+        <HeartHandshake size={60} className="text-brand-pink" />
       </motion.div>
       
       <motion.div 
-        className="absolute opacity-10 pointer-events-none"
+        className="absolute opacity-10 pointer-events-none hidden sm:block"
         animate={{ 
           y: [0, -10, 0],
           x: [0, -10, 0],
@@ -155,11 +154,11 @@ export default function PostFormatPage() {
         }}
         style={{ top: '30%', left: '15%' }}
       >
-        <TrendingUp size={50} className="text-green-400" />
+        <TrendingUp size={50} className="text-brand-success" />
       </motion.div>
       
       <motion.div 
-        className="absolute opacity-10 pointer-events-none"
+        className="absolute opacity-10 pointer-events-none hidden sm:block"
         animate={{ 
           y: [0, 15, 0],
           x: [0, 5, 0],
@@ -173,7 +172,7 @@ export default function PostFormatPage() {
         }}
         style={{ bottom: '30%', right: '12%' }}
       >
-        <Reply size={45} className="text-cyan-400" />
+        <Reply size={45} className="text-brand-info" />
       </motion.div>
       
       {/* Back button */}
@@ -184,22 +183,22 @@ export default function PostFormatPage() {
       />
       
       <motion.div 
-        className="max-w-4xl w-full" 
+        className="max-w-4xl w-full px-2 sm:px-4" 
         variants={fadeIn}
         initial="initial"
         animate="animate"
       >
         <motion.div 
-          className="mb-8 flex justify-center"
+          className="mb-4 sm:mb-8 flex justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <ScripeIconRounded className="w-20 h-20" />
+          <ScripeIconRounded className="w-16 h-16 sm:w-20 sm:h-20" />
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400"
+          className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center bg-clip-text text-transparent gradient-primary"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -207,16 +206,16 @@ export default function PostFormatPage() {
         </motion.h1>
         
         <motion.div 
-          className="flex items-center justify-center gap-2 mb-8"
+          className="flex items-center justify-center gap-2 mb-4 sm:mb-8"
           variants={fadeIn}
           transition={{ delay: 0.25 }}
         >
-          <Twitter size={20} className="text-blue-400" />
-          <span className="text-blue-400 font-medium">Twitter Optimization</span>
+          <Twitter size={18} className="text-brand-primary" />
+          <span className="text-brand-primary font-medium text-sm sm:text-base">Twitter Optimization</span>
         </motion.div>
         
         <motion.p 
-          className="text-xl text-gray-300 mb-10 text-center max-w-2xl mx-auto"
+          className="text-base sm:text-xl text-brand-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto px-2"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
@@ -225,13 +224,13 @@ export default function PostFormatPage() {
         </motion.p>
         
         <motion.div 
-          className="mb-10"
+          className="mb-6 sm:mb-10"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
         >
           <motion.div 
-            className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-10"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 mb-4 sm:mb-6"
             variants={fadeIn}
             transition={{ delay: 0.4 }}
           >
@@ -239,157 +238,67 @@ export default function PostFormatPage() {
               <motion.div 
                 key={format.id}
                 className={`
-                  bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-5 flex flex-col cursor-pointer 
-                  transition-all hover:bg-gray-800/70 hover-lift group
-                  ${postFormat === format.id ? 'ring-2 ring-blue-600 shadow-glow' : 'opacity-90'}
+                  card-modern
+                  p-2 sm:p-3 flex flex-col cursor-pointer 
+                  transition-all duration-300
+                  ${postFormat === format.id ? 'ring-2 ring-brand-primary shadow-lg shadow-brand-primary/20' : 'opacity-90'}
                 `}
                 onClick={() => setPostFormat(format.id as any)}
                 variants={itemVariants}
-                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
-                <div className="w-full aspect-square rounded-lg bg-gray-800/80 mb-4 relative flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800/50 to-gray-900/90 z-0"></div>
-                  <div className="relative z-10 p-3">
-                    {format.icon}
-                    {postFormat === format.id && (
-                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    )}
+                <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-brand-gray-800/50 to-brand-gray-900/50 mb-2 sm:mb-3 relative flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-gray-800/30 to-transparent"></div>
+                  {format.icon}
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold mb-1 text-brand-gray-900 dark:text-white">{format.title}</h3>
+                <p className="text-xs sm:text-sm text-brand-gray-600 dark:text-brand-gray-300 mb-2 flex-grow">{format.description}</p>
+                <div className="text-[10px] sm:text-xs text-brand-gray-500 dark:text-brand-gray-400 bg-brand-gray-100 dark:bg-brand-gray-800/30 rounded-lg p-1.5 border border-brand-gray-200/50 dark:border-brand-gray-700/50">
+                  <p className="font-mono whitespace-pre-line">{format.example}</p>
+                </div>
+                <div className="mt-2 pt-2 border-t border-brand-gray-200/50 dark:border-brand-gray-700/50">
+                  <div className="flex justify-between text-[10px] sm:text-xs">
+                    <span className="text-brand-gray-600 dark:text-brand-gray-400">Engagement</span>
+                    <span className="text-brand-primary">{format.stats.engagement}%</span>
                   </div>
-                  
-                  <motion.div 
-                    className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                    initial={false}
-                    animate={postFormat === format.id ? { opacity: 0.2 } : { opacity: 0 }}
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <h3 className="text-sm font-medium flex items-center gap-1.5">
-                    {format.title}
-                    {format.id === "thread" && <span className="text-xs text-blue-400 font-normal">(Popular)</span>}
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-1">{format.description}</p>
-                </div>
-                
-                <div className="mt-auto">
-                  <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Effectiveness</div>
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="flex-1">
-                      <div className="flex justify-between text-[10px] mb-1">
-                        <span>Engagement</span>
-                        <span className="text-blue-400">{format.stats.engagement}%</span>
-                      </div>
-                      <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-blue-500 rounded-full" 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${format.stats.engagement}%` }}
-                          transition={{ duration: 1, delay: 0.6 + index * 0.1 }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className={`
-                  mt-3 p-2 rounded-md text-[10px] leading-tight
-                  ${postFormat === format.id ? 'bg-blue-900/30 text-gray-300' : 'bg-gray-800/50 text-gray-500'}
-                  transition-colors duration-300
-                `}>
-                  <div className="font-medium mb-1 text-[9px] uppercase tracking-wide text-gray-400">Example:</div>
-                  {format.example}
                 </div>
               </motion.div>
             ))}
           </motion.div>
-          
-          <motion.div 
-            className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 mb-6"
-            variants={fadeIn}
-            transition={{ delay: 0.6 }}
-          >
-            <div className="flex justify-between items-center mb-3">
-              <div>
-                <h3 className="text-sm font-medium mb-1">Tweet length preference</h3>
-                <span className="text-xs text-gray-400">Customize your ideal tweet length</span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-sm text-blue-400 font-medium">
-                  {postLength < 30 ? "Short tweets" : 
-                   postLength < 70 ? "Medium length" : 
-                   "Long-form/Threads"}
-                </span>
-                <span className="text-xs text-gray-400">{calculateCharacterCount()}</span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center">
-              <Slider 
-                defaultValue={[postLength]} 
-                max={100} 
-                step={1}
-                onValueChange={(values) => setPostLength(values[0])}
-                className="py-5"
-              />
-              
-              <div className="text-center rounded-full border border-blue-600/30 px-4 py-2 bg-blue-600/10">
-                <div className="flex items-center gap-2">
-                  <Twitter className="w-4 h-4 text-blue-400" /> 
-                  <span className="text-xs text-blue-400 whitespace-nowrap">Twitter optimized</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-3 mt-5">
-              <div className="flex-1 min-w-[100px] p-3 rounded-md bg-gray-800/50 text-center">
-                <span className="text-xs text-gray-400 block mb-1">Short</span>
-                <span className="text-sm font-medium text-blue-400">High Impact</span>
-              </div>
-              <div className="flex-1 min-w-[100px] p-3 rounded-md bg-gray-800/50 text-center">
-                <span className="text-xs text-gray-400 block mb-1">Medium</span>
-                <span className="text-sm font-medium text-blue-400">Good Balance</span>
-              </div>
-              <div className="flex-1 min-w-[100px] p-3 rounded-md bg-gray-800/50 text-center">
-                <span className="text-xs text-gray-400 block mb-1">Thread</span>
-                <span className="text-sm font-medium text-blue-400">In-depth</span>
-              </div>
-            </div>
-          </motion.div>
-          
-          <motion.p 
-            className="text-sm text-gray-400 text-center max-w-xl mx-auto"
-            variants={fadeIn}
-            transition={{ delay: 0.7 }}
-          >
-            As you use Scripe, the AI will learn from your engagement patterns and continuously refine your Twitter content strategy for optimal results.
-          </motion.p>
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-12"
+          className="flex flex-col items-center gap-4 sm:gap-6"
           variants={fadeIn}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.5 }}
         >
+          <div className="w-full max-w-md card-modern p-4">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm sm:text-base text-brand-gray-700 dark:text-brand-gray-300">Post Length</span>
+              <span className="text-sm sm:text-base text-brand-primary">{calculateCharacterCount()}</span>
+            </div>
+            <Slider
+              value={[postLength]}
+              onValueChange={(value) => setPostLength(value[0])}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+          </div>
+          
           <ContinueButton 
             onClick={nextStep}
             disabled={!postFormat}
-            variant="twitter"
-          >
-            Continue to next step
-          </ContinueButton>
-        </motion.div>
-        
-        <motion.div
-          variants={fadeIn}
-          transition={{ delay: 0.9 }}
-          className="flex flex-col items-center"
-        >
-          <ProgressDots total={total} current={current} color="blue" />
-          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+            className="button-primary"
+          />
         </motion.div>
       </motion.div>
+      
+      <ProgressDots 
+        current={current} 
+        total={total} 
+        className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2"
+      />
     </div>
   );
 }
