@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
+import TeamsPage from "./pages/TeamsPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -228,6 +229,7 @@ const AppRoutes = () => {
       <Route element={<InvitationCheckRoute />}>
         <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
         <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+        <Route path="/teams" element={<TeamsPage />} />
       </Route>
       
       <Route path="/pending-invitations" element={<PendingInvitationsPage />} />

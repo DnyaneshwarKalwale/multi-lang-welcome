@@ -4,7 +4,7 @@ import {
   Mic, Upload, Calendar, BarChart3, Twitter, 
   Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
   Maximize2, MessageSquare, ThumbsUp, Share2,
-  LogOut, User, Settings, ChevronDown
+  LogOut, User, Settings, ChevronDown, Users
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -180,6 +180,10 @@ const DashboardPageContent: React.FC = () => {
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>{t('profile')}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/teams')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Teams</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
