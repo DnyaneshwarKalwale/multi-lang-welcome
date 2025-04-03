@@ -19,6 +19,10 @@ import PendingInvitationsPage from "./pages/PendingInvitationsPage";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import FeaturesPage from "./pages/FeaturesPage";
+import HowItWorksPage from "./pages/HowItWorksPage";
+import TestimonialsPage from "./pages/TestimonialsPage";
+import PricingPage from "./pages/PricingPage";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +155,10 @@ const AppRoutes = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Index />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/testimonials" element={<TestimonialsPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
       <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
