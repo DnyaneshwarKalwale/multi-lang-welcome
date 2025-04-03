@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Mic, Upload, Calendar, BarChart3, Twitter, 
   Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
   Maximize2, MessageSquare, ThumbsUp, Share2,
-  LogOut, User, Settings, ChevronDown, Users
+  LogOut, User, Settings, ChevronDown, Users, Bell
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import axios from "axios";
+import { toast } from "sonner";
 
 // The main Dashboard component
 const DashboardPageContent: React.FC = () => {
@@ -112,6 +114,81 @@ const DashboardPageContent: React.FC = () => {
     }
   ];
 
+  // Add state for notifications
+  const [pendingInvitations, setPendingInvitations] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Add a function to fetch invitations
+  const fetchInvitations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setPendingInvitations(response.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch invitations:', err);
+    }
+  };
+
+  // Call the function on component mount
+  useEffect(() => {
+    fetchInvitations();
+    
+    // Poll for new invitations every minute
+    const intervalId = setInterval(fetchInvitations, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Handle accept/decline
+  const handleAcceptInvitation = async (invitationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const response = await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(`You've joined ${response.data.data.teamName}`);
+      
+      // Remove this invitation from the list
+      setPendingInvitations(pendingInvitations.filter(inv => inv.id !== invitationId));
+      
+      // Close the dropdown
+      setShowNotifications(false);
+    } catch (err) {
+      console.error('Failed to accept invitation:', err);
+      toast.error('Failed to accept invitation. Please try again.');
+    }
+  };
+
+  const handleDeclineInvitation = async (invitationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Invitation declined');
+      
+      // Remove this invitation from the list
+      setPendingInvitations(pendingInvitations.filter(inv => inv.id !== invitationId));
+    } catch (err) {
+      console.error('Failed to decline invitation:', err);
+      toast.error('Failed to decline invitation. Please try again.');
+    }
+  };
+
   // Get user initials for avatar fallback
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -150,6 +227,70 @@ const DashboardPageContent: React.FC = () => {
             {/* Actions */}
             <div className="flex items-center space-x-4">
               <ThemeToggle />
+      
+              <div className="relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <Bell className="h-5 w-5" />
+                  {pendingInvitations.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                      {pendingInvitations.length}
+                    </span>
+                  )}
+                </Button>
+                
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 font-medium">
+                      Team Invitations
+                    </div>
+                    
+                    <div className="max-h-96 overflow-y-auto">
+                      {pendingInvitations.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                          No pending invitations
+                        </div>
+                      ) : (
+                        pendingInvitations.map(invitation => (
+                          <div key={invitation.id} className="p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <div className="flex items-center mb-2">
+                              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-md flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold mr-2">
+                                {invitation.teamName.substring(0, 1).toUpperCase()}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">{invitation.teamName}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Role: {invitation.role}</p>
+                              </div>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeclineInvitation(invitation.id)}
+                                className="h-8 text-xs"
+                              >
+                                Decline
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleAcceptInvitation(invitation.id)}
+                                className="h-8 text-xs"
+                              >
+                                Accept
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
       
               <Button 
                 variant="outline" 
