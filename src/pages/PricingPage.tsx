@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, HelpCircle, X } from "lucide-react";
@@ -94,7 +93,7 @@ const PricingPage = () => {
       answer: "If you're not satisfied with our service, you can request a refund within the first 30 days of your paid subscription. Please contact our support team to process your refund."
     },
     {
-      question: "Can I use Scripe on multiple platforms?",
+      question: "Can I use Sekcion on multiple platforms?",
       answer: "Yes, our Pro and Business plans support publishing to multiple social media platforms including Twitter, Facebook, Instagram, LinkedIn, and more."
     },
     {

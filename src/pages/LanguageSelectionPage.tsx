@@ -160,17 +160,17 @@ export default function LanguageSelectionPage() {
             transition={{ type: "spring", damping: 12 }}
           >
             <div className="relative mb-4">
-              <SekcionIconRounded className="w-20 h-20 text-blue-500" />
+              <SekcionIconRounded className="w-20 h-20 text-teal-500" />
               <motion.div 
                 className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg"
                 animate={{ rotate: [0, 10, 0] }}
                 transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
               >
-                <Globe className="w-6 h-6 text-blue-500" />
+                <Globe className="w-6 h-6 text-teal-500" />
               </motion.div>
             </div>
             
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-emerald-600 dark:from-teal-400 dark:to-emerald-400">
               {getPageTitle()}
             </h1>
             
@@ -198,7 +198,7 @@ export default function LanguageSelectionPage() {
                   relative overflow-hidden rounded-xl shadow-lg 
                   cursor-pointer bg-white dark:bg-gray-800
                   ${onboardingLanguage === lang.code 
-                    ? 'ring-2 ring-blue-500 dark:ring-blue-400' 
+                    ? 'ring-2 ring-teal-500 dark:ring-teal-400' 
                     : 'hover:shadow-xl'}
                   transition-all duration-300
                 `}
@@ -206,7 +206,7 @@ export default function LanguageSelectionPage() {
               >
                 {/* Selected indicator */}
                 {onboardingLanguage === lang.code && (
-                  <div className="absolute top-3 right-3 bg-blue-500 text-white p-1 rounded-full">
+                  <div className="absolute top-3 right-3 bg-teal-500 text-white p-1 rounded-full">
                     <Check className="w-4 h-4" />
                   </div>
                 )}
@@ -241,7 +241,7 @@ export default function LanguageSelectionPage() {
                 
                 {/* Background decorative gradient */}
                 {onboardingLanguage === lang.code && (
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500"></div>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-emerald-500"></div>
                 )}
               </motion.div>
             ))}
@@ -255,12 +255,13 @@ export default function LanguageSelectionPage() {
             transition={{ delay: 0.6 }}
           >
             <Button
-              className="px-8 py-6 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white font-semibold flex items-center gap-2"
+              className="px-8 py-6 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold flex items-center gap-2 shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 transition-all"
               disabled={!onboardingLanguage}
               onClick={handleContinue}
+              size="lg"
             >
               {getContinueButtonText()}
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
           </motion.div>
 

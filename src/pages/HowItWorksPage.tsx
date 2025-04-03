@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
@@ -19,7 +18,7 @@ const HowItWorksPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            How Scripe Works for You
+            How Sekcion Works for You
           </motion.h1>
           <motion.p 
             className="text-lg text-gray-600 dark:text-gray-300 mb-8"
@@ -208,7 +207,7 @@ const HowItWorksPage = () => {
         <div className="bg-gradient-to-r from-teal-500 to-indigo-600 rounded-2xl p-10 text-white text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Streamline Your Content Creation?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of creators who are already using Scripe to create amazing content faster and smarter.
+            Join thousands of creators who are already using Sekcion to create amazing content faster and smarter.
           </p>
           <Button 
             onClick={() => navigate("/")}

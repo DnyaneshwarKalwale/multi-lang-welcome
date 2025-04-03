@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ScripeLogotype, ScripeIcon } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { LoginSheet } from "@/components/LoginSheet";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -64,15 +64,15 @@ const Index = () => {
               <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium transition-colors duration-200">
                 Features
               </a>
-              <a href="#how-it-works" className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium transition-colors duration-200">
+              <Link to="/how-it-works" className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium transition-colors duration-200">
                 How It Works
-              </a>
+              </Link>
               <a href="#testimonials" className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium transition-colors duration-200">
                 Testimonials
               </a>
-              <a href="#pricing" className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium transition-colors duration-200">
+              <Link to="/pricing" className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium transition-colors duration-200">
                 Pricing
-              </a>
+              </Link>
             </nav>
             
             {/* Desktop Actions */}
@@ -113,15 +113,15 @@ const Index = () => {
             <a href="#features" className="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium">
               Features
             </a>
-            <a href="#how-it-works" className="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium">
+            <Link to="/how-it-works" className="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium">
               How It Works
-            </a>
+            </Link>
             <a href="#testimonials" className="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium">
               Testimonials
             </a>
-            <a href="#pricing" className="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium">
+            <Link to="/pricing" className="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 text-sm font-medium">
               Pricing
-            </a>
+            </Link>
             <div className="pt-2 pb-4 space-y-3">
               <Button 
                 variant="ghost" 
