@@ -16,52 +16,44 @@ interface ContextVerifierProps {
 const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [checkedContexts, setCheckedContexts] = useState(false);
   
-  // Set mounted state on first render
-  useEffect(() => {
-    setMounted(true);
-    
-    // Add a short delay to ensure contexts are fully initialized
-    setTimeout(() => {
-      setCheckedContexts(true);
-    }, 500);
-    
-    // Force render after a longer timeout as failsafe
-    const timer = setTimeout(() => {
-      if (mounted) {
-        setIsLoading(false);
-      }
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Access all contexts directly at component level (not in useEffect or conditionals)
+  let authContext;
+  let themeContext;
+  let langContext;
   
-  // Log any errors during render
-  useEffect(() => {
-    if (error) {
-      console.error("Context verification error:", error);
-    }
-  }, [error]);
-  
-  // Check contexts after the initial delay
-  useEffect(() => {
-    if (checkedContexts && mounted) {
-      try {
-        // Now we can safely check for contexts
-        const authContext = useAuth();
-        const themeContext = useTheme();
-        const langContext = useLanguage();
+  try {
+    // Try to access all required contexts
+    authContext = useAuth();
+    themeContext = useTheme();
+    langContext = useLanguage();
+    
+    // If we got here, all contexts are available
+    useEffect(() => {
+      // Wait for theme to be loaded
+      if (themeContext.isThemeLoaded) {
+        // Delay slightly to ensure all contexts are fully initialized
+        const timer = setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
         
-        // If all contexts are accessible, we can proceed
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Context verification failed:", error);
-        setError(error as Error);
+        return () => clearTimeout(timer);
       }
-    }
-  }, [checkedContexts, mounted]);
+    }, [themeContext.isThemeLoaded]);
+  } catch (e) {
+    // If context access fails, set error
+    useEffect(() => {
+      console.error("Context verification failed:", e);
+      setError(e as Error);
+      
+      // Force render after a timeout as failsafe
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }, []);
+  }
   
   // If still loading, show spinner
   if (isLoading) {
