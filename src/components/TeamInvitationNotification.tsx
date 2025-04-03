@@ -22,14 +22,38 @@ export default function TeamInvitationNotification() {
       const token = localStorage.getItem('token');
       if (!token) return;
       
+      console.log('Checking for notification invitations');
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      console.log(`Using API URL: ${baseApiUrl}`);
       
-      setInvitations(response.data.data || []);
+      try {
+        const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const invitations = response.data.data || [];
+        console.log(`Found ${invitations.length} pending invitations for notifications`);
+        setInvitations(invitations);
+      } catch (apiError: any) {
+        console.error('Failed to fetch invitations for notification:', apiError);
+        
+        // Log detailed error information for debugging
+        if (apiError.response) {
+          console.error('Error response:', {
+            status: apiError.response.status,
+            statusText: apiError.response.statusText,
+            data: apiError.response.data
+          });
+        } else if (apiError.request) {
+          console.error('Error request:', apiError.request);
+        }
+        
+        // Don't show anything if there's an error
+        setInvitations([]);
+      }
     } catch (err) {
       console.error('Failed to fetch invitations:', err);
+      setInvitations([]);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, CheckCircle2, XCircle, ShieldAlert } from 'lucide-react';
@@ -104,22 +103,38 @@ export default function OAuthCallbackPage() {
         // Fetch invitations
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
         try {
+          console.log(`Checking for invitations using token for user ${token ? 'with token' : 'missing token'}`);
+          console.log(`Using API URL: ${baseApiUrl}`);
+          
           const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           
           const invitations = response.data.data || [];
-          console.log(`Found ${invitations.length} pending invitations`);
+          console.log(`Found ${invitations.length} pending invitations:`, invitations);
           
           // If has invitations, go to pending invitations page
           if (invitations.length > 0) {
             navigate('/pending-invitations');
             return;
           }
-        } catch (invError) {
+        } catch (invError: any) {
           console.error('Failed to check invitations:', invError);
-          // If the endpoint doesn't exist or returns an error, continue with normal flow
+          
+          // Log detailed error information for debugging
+          if (invError.response) {
+            console.error('Error response:', {
+              status: invError.response.status,
+              statusText: invError.response.statusText,
+              data: invError.response.data
+            });
+          } else if (invError.request) {
+            console.error('Error request:', invError.request);
+          }
+          
+          // If the endpoint doesn't exist (404) or server is down (500+), continue with normal flow
           // This prevents the app from getting stuck during development
+          console.log('Continuing with normal flow after invitation check error');
         }
       } catch (err) {
         console.error('Failed to check invitations:', err);
