@@ -49,23 +49,6 @@ export const authApi = {
     return response.data;
   },
 
-  // Verify OTP
-  verifyOTP: async (email: string, otp: string) => {
-    const response = await api.post('/auth/verify-otp', {
-      email,
-      otp,
-    });
-    return response.data;
-  },
-
-  // Resend OTP
-  resendOTP: async (email: string) => {
-    const response = await api.post('/auth/resend-otp', {
-      email,
-    });
-    return response.data;
-  },
-
   // Twitter direct authentication (for development)
   twitterAuth: async (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => {
     const response = await api.post('/auth/twitter-auth', userData);

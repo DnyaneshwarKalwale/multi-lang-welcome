@@ -25,7 +25,6 @@ interface AuthContextType {
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<void>;
-  updateUser: (updatedUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,10 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.register(firstName, lastName, email, password);
       
-      localStorage.setItem('token', response.token);
       setUser(response.user);
       
-      navigate('/verify-email');
+      navigate('/verify-email', { state: { email } });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
       console.error('Registration error:', err);
@@ -99,12 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('token', response.token);
       setUser(response.user);
-      
-      // If email is not verified, redirect to verification page
-      if (response.requiresVerification) {
-        navigate('/verify-email');
-        return response.user;
-      }
       
       localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
       
@@ -179,10 +171,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = () => {
     setError(null);
   };
-  
-  const updateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-  };
 
   return (
     <AuthContext.Provider
@@ -196,8 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         twitterAuth,
         logout,
         clearError,
-        fetchUser,
-        updateUser
+        fetchUser
       }}
     >
       {children}
