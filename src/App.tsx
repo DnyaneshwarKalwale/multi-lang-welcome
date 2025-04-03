@@ -25,6 +25,7 @@ import HowItWorksPage from "./pages/HowItWorksPage";
 import TestimonialsPage from "./pages/TestimonialsPage";
 import PricingPage from "./pages/PricingPage";
 import ContextVerifier from "./components/ContextVerifier";
+import InvitationTokenPage from "./pages/InvitationTokenPage";
 
 const queryClient = new QueryClient();
 
@@ -233,6 +234,7 @@ const AppRoutes = () => {
       </Route>
       
       <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+      <Route path="/invitations" element={<InvitationTokenPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

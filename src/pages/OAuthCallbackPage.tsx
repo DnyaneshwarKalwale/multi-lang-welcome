@@ -159,6 +159,14 @@ export default function OAuthCallbackPage() {
         // Continue with normal flow even if invitation check fails
       }
       
+      // Check for pending invitation token
+      const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
+      if (pendingInvitationToken) {
+        console.log('Found pending invitation token, redirecting to invitation page');
+        navigate(`/invitations?token=${pendingInvitationToken}`);
+        return;
+      }
+      
       // Normal flow - redirect based on onboarding status
       console.log('Redirecting to', onboarding ? 'onboarding' : 'dashboard');
       if (onboarding) {
