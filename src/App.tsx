@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
@@ -69,14 +69,13 @@ function LoadingSpinner() {
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       >
-        Loading Novus...
+        Loading Sekcion...
       </motion.div>
     </div>
   );
 }
 
-// These protected route components need to be inside the BrowserRouter
-// because they use hooks from react-router-dom
+// The AppRoutes component remained unchanged, but now without BrowserRouter wrapper
 const AppRoutes = () => {
   // Protected Onboarding Route Component
   function ProtectedOnboardingRoute() {
@@ -178,21 +177,19 @@ const AppRoutes = () => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename="/">
-        <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <LanguageProvider>
-              <AuthProvider>
-                <OnboardingProvider>
-                  <AppRoutes />
-                </OnboardingProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </TooltipProvider>
-        </ThemeProvider>
-      </BrowserRouter>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <LanguageProvider>
+            <AuthProvider>
+              <OnboardingProvider>
+                <AppRoutes />
+              </OnboardingProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

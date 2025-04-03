@@ -317,3 +317,18 @@ input, textarea, select {
 .subtle-divider {
   @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent;
 }
+
+/* Fix for router context initial loading */
+#root {
+  display: contents;
+}
+
+.router-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--background);
+  color: var(--foreground);
+}
