@@ -71,27 +71,8 @@ window.toggleTheme = () => {
 // Add theme transition styles to prevent flicker
 const style = document.createElement('style');
 style.innerHTML = `
-  /* Apply targeted transitions only to elements that need them */
-  html, body, 
-  .bg-background, 
-  .text-foreground,
-  [class*="bg-"],
-  [class*="border-"],
-  [class*="text-"],
-  [class*="shadow-"] {
-    transition: none; /* Initially disable transitions */
-  }
-  
-  /* Wait for DOM to be ready before enabling transitions */
-  .theme-transition-ready html,
-  .theme-transition-ready body,
-  .theme-transition-ready .bg-background, 
-  .theme-transition-ready .text-foreground,
-  .theme-transition-ready [class*="bg-"],
-  .theme-transition-ready [class*="border-"],
-  .theme-transition-ready [class*="text-"],
-  .theme-transition-ready [class*="shadow-"] {
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
   }
   
   /* Add base colors that apply before React hydrates */
@@ -113,43 +94,6 @@ style.innerHTML = `
   }
 `;
 document.head.appendChild(style);
-
-// Add a script to manage theme transitions
-const themeTransitionScript = document.createElement('script');
-themeTransitionScript.innerHTML = `
-  // Add class after a short delay to enable transitions
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      document.documentElement.classList.add('theme-transition-ready');
-    }, 300);
-  });
-  
-  // Disable transitions during theme changes
-  function handleThemeChange() {
-    document.documentElement.classList.remove('theme-transition-ready');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.documentElement.classList.add('theme-transition-ready');
-      });
-    });
-  }
-  
-  // Listen for theme class mutations
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (
-        mutation.attributeName === 'class' &&
-        (document.documentElement.classList.contains('dark') || 
-         document.documentElement.classList.contains('light'))
-      ) {
-        handleThemeChange();
-      }
-    });
-  });
-  
-  observer.observe(document.documentElement, { attributes: true });
-`;
-document.head.appendChild(themeTransitionScript);
 
 // Loading spinner component with our new design
 function LoadingSpinner() {

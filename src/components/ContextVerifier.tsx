@@ -21,32 +21,33 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   useEffect(() => {
     setMounted(true);
     
-    // Fix for theme inconsistency: Force a clean theme state at startup
-    const fixThemeConsistency = () => {
-      const themeInLocalStorage = localStorage.getItem('theme');
-      const isDarkInDOM = document.documentElement.classList.contains('dark');
-      const isLightInDOM = document.documentElement.classList.contains('light');
-      
-      // First, remove all theme classes to start fresh
-      document.documentElement.classList.remove('dark', 'light');
-      
-      // Then apply the correct theme
-      const targetTheme = themeInLocalStorage === 'light' ? 'light' : 'dark';
-      document.documentElement.classList.add(targetTheme);
-      localStorage.setItem('theme', targetTheme);
-      
-      // Log the action
-      console.log(`Theme reset to ${targetTheme} for consistency`);
-      
-      // Force a repaint by toggling a property
-      document.body.style.display = 'none';
-      requestAnimationFrame(() => {
-        document.body.style.display = '';
-      });
-    };
+    // Verify theme is correctly set in the DOM
+    const themeInLocalStorage = localStorage.getItem('theme');
+    const isDarkInDOM = document.documentElement.classList.contains('dark');
+    const isLightInDOM = document.documentElement.classList.contains('light');
     
-    // Execute the fix with a slight delay to avoid any race conditions
-    setTimeout(fixThemeConsistency, 50);
+    // Log initial theme state for debugging
+    console.log({
+      themeInLocalStorage,
+      isDarkInDOM,
+      isLightInDOM
+    });
+    
+    // Make sure DOM has at least one theme class set
+    if (!isDarkInDOM && !isLightInDOM) {
+      const theme = themeInLocalStorage === 'light' ? 'light' : 'dark';
+      document.documentElement.classList.add(theme);
+      console.log(`Fixed missing theme class by adding: ${theme}`);
+    }
+    
+    // Synchronize localStorage with DOM if needed
+    if (isDarkInDOM && themeInLocalStorage !== 'dark') {
+      localStorage.setItem('theme', 'dark');
+      console.log('Synchronized localStorage with dark theme from DOM');
+    } else if (isLightInDOM && themeInLocalStorage !== 'light') {
+      localStorage.setItem('theme', 'light');
+      console.log('Synchronized localStorage with light theme from DOM');
+    }
   }, []);
   
   // Safely access contexts to verify availability
