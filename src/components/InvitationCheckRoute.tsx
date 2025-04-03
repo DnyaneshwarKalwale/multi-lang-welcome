@@ -38,11 +38,18 @@ const InvitationCheckRoute = () => {
         
         try {
           const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
+            timeout: 5000 // Add timeout to avoid long waits
           });
 
           const invitations = response.data.data || [];
           console.log(`Found ${invitations.length} pending invitations:`, invitations);
+          
+          // Store invitations in localStorage for offline access
+          if (invitations.length > 0) {
+            localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
+          }
+          
           setHasInvitations(invitations.length > 0);
         } catch (apiError: any) {
           console.error('Failed to check invitations:', apiError);
@@ -56,6 +63,19 @@ const InvitationCheckRoute = () => {
             });
           } else if (apiError.request) {
             console.error('Error request:', apiError.request);
+          }
+          
+          // Check if we have cached invitations we can use
+          const cachedInvitations = localStorage.getItem('cachedInvitations');
+          if (cachedInvitations) {
+            try {
+              const invitations = JSON.parse(cachedInvitations);
+              console.log('Using cached invitations:', invitations);
+              setHasInvitations(invitations.length > 0);
+              return;
+            } catch (cacheError) {
+              console.error('Error parsing cached invitations:', cacheError);
+            }
           }
           
           // If API endpoint doesn't exist or returns error, just proceed

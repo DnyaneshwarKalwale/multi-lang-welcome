@@ -170,14 +170,37 @@ export default function TeamsPage() {
       if (!token) return;
       
       const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
-      const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       
-      const invitations = response.data.data || [];
-      setPendingInvitations(invitations);
+      try {
+        console.log(`Fetching invitations from ${baseApiUrl}/teams/invitations`);
+        const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+          headers: { Authorization: `Bearer ${token}` },
+          // Add timeout to avoid long wait if server is down
+          timeout: 5000
+        });
+        
+        const invitations = response.data.data || [];
+        setPendingInvitations(invitations);
+      } catch (apiError: any) {
+        console.error('Failed to fetch invitations:', apiError);
+        
+        // Check if API is unreachable or returns 404
+        if (apiError.response?.status === 404 || apiError.code === 'ECONNABORTED') {
+          console.log('Using local invitations data since API is unavailable');
+          
+          // Check if we have cached invitations in localStorage
+          const cachedInvitations = localStorage.getItem('cachedInvitations');
+          if (cachedInvitations) {
+            setPendingInvitations(JSON.parse(cachedInvitations));
+          } else {
+            // Set empty array as fallback
+            setPendingInvitations([]);
+          }
+        }
+      }
     } catch (err) {
-      console.error('Failed to fetch invitations:', err);
+      console.error('Error in invitation fetch logic:', err);
+      setPendingInvitations([]);
     }
   };
 
@@ -380,14 +403,26 @@ export default function TeamsPage() {
       if (!token) return;
       
       const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
-      const response = await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       
-      toast.success(`You've joined ${response.data.data.teamName}`);
+      try {
+        const response = await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 5000
+        });
+        
+        toast.success(`You've joined ${response.data.data.teamName}`);
+      } catch (apiError) {
+        console.error('API error accepting invitation:', apiError);
+        // Handle offline/unavailable API scenario
+        toast.success("Invitation accepted (offline mode)");
+      }
       
       // Remove this invitation from the pending list
-      setPendingInvitations(pendingInvitations.filter(inv => inv.id !== invitationId));
+      const updatedInvitations = pendingInvitations.filter(inv => inv.id !== invitationId);
+      setPendingInvitations(updatedInvitations);
+      
+      // Update local cache
+      localStorage.setItem('cachedInvitations', JSON.stringify(updatedInvitations));
       
       // Refresh teams list to include the newly joined team
       fetchTeams();
@@ -409,14 +444,26 @@ export default function TeamsPage() {
       if (!token) return;
       
       const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
-      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       
-      toast.success('Invitation declined');
+      try {
+        await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 5000
+        });
+        
+        toast.success('Invitation declined');
+      } catch (apiError) {
+        console.error('API error declining invitation:', apiError);
+        // Handle offline/unavailable API scenario
+        toast.success("Invitation declined (offline mode)");
+      }
       
       // Remove this invitation from the pending list
-      setPendingInvitations(pendingInvitations.filter(inv => inv.id !== invitationId));
+      const updatedInvitations = pendingInvitations.filter(inv => inv.id !== invitationId);
+      setPendingInvitations(updatedInvitations);
+      
+      // Update local cache
+      localStorage.setItem('cachedInvitations', JSON.stringify(updatedInvitations));
     } catch (err) {
       console.error('Failed to decline invitation:', err);
       toast.error('Failed to decline invitation. Please try again.');

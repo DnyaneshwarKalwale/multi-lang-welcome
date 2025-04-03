@@ -106,35 +106,53 @@ export default function OAuthCallbackPage() {
           console.log(`Checking for invitations using token for user ${token ? 'with token' : 'missing token'}`);
           console.log(`Using API URL: ${baseApiUrl}`);
           
-          const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          const invitations = response.data.data || [];
-          console.log(`Found ${invitations.length} pending invitations:`, invitations);
-          
-          // If has invitations, go to pending invitations page
-          if (invitations.length > 0) {
-            navigate('/pending-invitations');
-            return;
-          }
-        } catch (invError: any) {
-          console.error('Failed to check invitations:', invError);
-          
-          // Log detailed error information for debugging
-          if (invError.response) {
-            console.error('Error response:', {
-              status: invError.response.status,
-              statusText: invError.response.statusText,
-              data: invError.response.data
+          try {
+            const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
+              headers: { Authorization: `Bearer ${token}` },
+              timeout: 5000 // Add timeout to prevent long waits
             });
-          } else if (invError.request) {
-            console.error('Error request:', invError.request);
+            
+            const invitations = response.data.data || [];
+            console.log(`Found ${invitations.length} pending invitations:`, invitations);
+            
+            // Store invitations in localStorage for offline access
+            if (invitations.length > 0) {
+              localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
+              navigate('/pending-invitations');
+              return;
+            }
+          } catch (invError: any) {
+            console.error('Failed to check invitations:', invError);
+            
+            // Log detailed error information for debugging
+            if (invError.response) {
+              console.error('Error response:', {
+                status: invError.response.status,
+                statusText: invError.response.statusText,
+                data: invError.response.data
+              });
+            } else if (invError.request) {
+              console.error('Error request:', invError.request);
+            }
+            
+            // Check if we have cached invitations we can use
+            const cachedInvitations = localStorage.getItem('cachedInvitations');
+            if (cachedInvitations) {
+              const invitations = JSON.parse(cachedInvitations);
+              if (invitations.length > 0) {
+                console.log('Using cached invitations:', invitations);
+                navigate('/pending-invitations');
+                return;
+              }
+            }
+            
+            // If the endpoint doesn't exist (404) or server is down (500+), continue with normal flow
+            // This prevents the app from getting stuck during development
+            console.log('Continuing with normal flow after invitation check error');
           }
-          
-          // If the endpoint doesn't exist (404) or server is down (500+), continue with normal flow
-          // This prevents the app from getting stuck during development
-          console.log('Continuing with normal flow after invitation check error');
+        } catch (err) {
+          console.error('Failed to check invitations:', err);
+          // Continue with normal flow even if invitation check fails
         }
       } catch (err) {
         console.error('Failed to check invitations:', err);
