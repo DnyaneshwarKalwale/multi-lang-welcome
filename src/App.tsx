@@ -71,8 +71,9 @@ window.toggleTheme = () => {
 // Add theme transition styles to prevent flicker
 const style = document.createElement('style');
 style.innerHTML = `
-  .theme-transition {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+  /* Apply transitions to all elements for smoother theme changes */
+  * {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
   }
   
   /* Add base colors that apply before React hydrates */

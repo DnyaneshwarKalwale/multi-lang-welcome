@@ -44,76 +44,77 @@ export default function CompletionPage() {
     }
   };
   
-  // Mark onboarding as complete
+  // No longer automatically mark onboarding as complete when component mounts
   useEffect(() => {
-    // Always set this flag locally to ensure we can navigate to dashboard
-    localStorage.setItem('onboardingCompleted', 'true');
+    // This is now empty as we don't want automatic redirection
+    // We'll only mark onboarding complete when user clicks the dashboard button
+  }, []);
+
+  const markOnboardingComplete = async () => {
+    if (!user) {
+      return;
+    }
     
-    const markOnboardingComplete = async () => {
-      if (!user) {
-        return;
+    setIsMarkingComplete(true);
+    
+    try {
+      // Get API URL from env or fallback
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error("No authentication token found");
       }
       
-      setIsMarkingComplete(true);
+      // Prepare onboarding data
+      const onboardingData = {
+        onboardingCompleted: true,
+        workspaceType: workspaceType || 'personal',
+        workspaceName: workspaceName || `${firstName}'s Workspace`,
+        language: language || 'english',
+        theme: theme || 'dark',
+        postFormat: postFormat || 'casual',
+        postFrequency: postFrequency || 'daily'
+      };
       
-      try {
-        // Get API URL from env or fallback
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          throw new Error("No authentication token found");
-        }
-        
-        // Prepare onboarding data
-        const onboardingData = {
-          onboardingCompleted: true,
-          workspaceType: workspaceType || 'personal',
-          workspaceName: workspaceName || `${firstName}'s Workspace`,
-          language: language || 'english',
-          theme: theme || 'dark',
-          postFormat: postFormat || 'casual',
-          postFrequency: postFrequency || 'daily'
-        };
-        
-        console.log("Updating onboarding status with data:", onboardingData);
-        
-        // Update the user's onboarding progress on the server
-        const response = await axios({
-          method: 'post',
-          url: `${baseApiUrl}/users/update-onboarding`,
-          data: onboardingData,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          timeout: 15000 // Extended timeout
-        });
-        
-        console.log("Update onboarding response:", response.data);
-        
-        // Fetch updated user data
-        await fetchUser();
-        setIsMarkingComplete(false);
-        setError("");
-      } catch (err: any) {
-        console.error("Error marking onboarding as complete:", err);
-        
-        // More detailed error message with retry info
-        const errorMsg = err.response?.data?.error || err.message || 'Failed to connect to the server';
-        setError(`${errorMsg}. ${retryCount < maxRetries ? 'You can retry the update.' : 'Your settings are saved locally.'}`);
-        
-        setIsMarkingComplete(false);
-      }
-    };
-    
-    markOnboardingComplete();
-  }, [user, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency, fetchUser, retryCount, maxRetries]);
+      console.log("Updating onboarding status with data:", onboardingData);
+      
+      // Update the user's onboarding progress on the server
+      const response = await axios({
+        method: 'post',
+        url: `${baseApiUrl}/users/update-onboarding`,
+        data: onboardingData,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        timeout: 15000 // Extended timeout
+      });
+      
+      console.log("Update onboarding response:", response.data);
+      
+      // Fetch updated user data
+      await fetchUser();
+      setIsMarkingComplete(false);
+      setError("");
+      
+      // Set onboarding as completed and navigate to dashboard
+      localStorage.setItem('onboardingCompleted', 'true');
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error("Error marking onboarding as complete:", err);
+      
+      // More detailed error message with retry info
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to connect to the server';
+      setError(`${errorMsg}. ${retryCount < maxRetries ? 'You can retry the update.' : 'Your settings are saved locally.'}`);
+      
+      setIsMarkingComplete(false);
+    }
+  };
   
   const handleGoToDashboard = () => {
-    // Ensure the onboarding is marked as completed before going to dashboard
-    localStorage.setItem('onboardingCompleted', 'true');
-    navigate("/dashboard");
+    // Call the markOnboardingComplete function which will set localStorage and navigate
+    markOnboardingComplete();
   };
   
   const handleRetry = () => {

@@ -26,15 +26,17 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     const isDarkInDOM = document.documentElement.classList.contains('dark');
     const isLightInDOM = document.documentElement.classList.contains('light');
     
-    // Log initial theme state for debugging
-    console.log({
-      themeInLocalStorage,
-      isDarkInDOM,
-      isLightInDOM
-    });
-    
+    // Make sure DOM has exactly one theme class set - not both
+    if (isDarkInDOM && isLightInDOM) {
+      // If both classes are present (invalid state), reset to a clean state
+      // based on localStorage or default to dark
+      document.documentElement.classList.remove('dark', 'light');
+      const preferredTheme = themeInLocalStorage === 'light' ? 'light' : 'dark';
+      document.documentElement.classList.add(preferredTheme);
+      console.log(`Fixed invalid theme state with both classes by setting to: ${preferredTheme}`);
+    }
     // Make sure DOM has at least one theme class set
-    if (!isDarkInDOM && !isLightInDOM) {
+    else if (!isDarkInDOM && !isLightInDOM) {
       const theme = themeInLocalStorage === 'light' ? 'light' : 'dark';
       document.documentElement.classList.add(theme);
       console.log(`Fixed missing theme class by adding: ${theme}`);

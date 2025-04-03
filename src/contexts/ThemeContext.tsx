@@ -25,13 +25,19 @@ const ThemeContext = createContext<ThemeContextType>(initialThemeContext);
  * This function should be used whenever the theme needs to change
  */
 export function applyTheme(theme: Theme) {
-  // Apply theme class to document
+  // Apply theme class to document immediately
   if (theme === "dark") {
-    document.documentElement.classList.add("dark");
-    document.documentElement.classList.remove("light");
+    // Apply dark theme in a single DOM operation to prevent flicker
+    document.documentElement.className = document.documentElement.className
+      .replace(/\blight\b/g, '')
+      .concat(' dark')
+      .trim();
   } else {
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.add("light");
+    // Apply light theme in a single DOM operation to prevent flicker
+    document.documentElement.className = document.documentElement.className
+      .replace(/\bdark\b/g, '')
+      .concat(' light')
+      .trim();
   }
   
   // Save to localStorage
@@ -95,15 +101,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // Setter function that updates both state and DOM
   const setTheme = (newTheme: Theme) => {
+    // Set the state immediately
     setThemeState(newTheme);
+    
+    // Apply the theme change (DOM update)
     applyTheme(newTheme);
     
-    // Manually dispatch storage event for other components
-    window.dispatchEvent(new StorageEvent("storage", {
-      key: "theme",
-      newValue: newTheme,
-      storageArea: localStorage
-    }));
+    // Dispatch storage event for other components after a short delay to ensure DOM changes are applied
+    setTimeout(() => {
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: "theme",
+        newValue: newTheme,
+        storageArea: localStorage
+      }));
+    }, 10);
   };
 
   // Toggle function
