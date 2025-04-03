@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -10,8 +9,8 @@ import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 
 export default function ThemeSelectionPage() {
-  const { theme, setTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
-  const { setTheme: setGlobalTheme } = useTheme();
+  const { theme: onboardingTheme, setTheme: setOnboardingTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { theme: globalTheme, setTheme: setGlobalTheme } = useTheme();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
@@ -46,26 +45,17 @@ export default function ThemeSelectionPage() {
 
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: "light" | "dark") => {
-    setTheme(newTheme);
+    // Set both in onboarding context and global theme context
+    setOnboardingTheme(newTheme);
     setGlobalTheme(newTheme);
-    
-    // Apply directly to document to ensure immediate change
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    }
   };
 
-  // Ensure theme is applied when component loads
+  // Sync onboarding theme with global theme on component mount
   useEffect(() => {
-    if (theme) {
-      handleThemeChange(theme);
-    } else {
-      // Default to dark theme if not set
-      handleThemeChange("dark");
+    if (globalTheme) {
+      setOnboardingTheme(globalTheme);
+    } else if (onboardingTheme) {
+      setGlobalTheme(onboardingTheme);
     }
   }, []);
 
@@ -163,7 +153,7 @@ export default function ThemeSelectionPage() {
           variants={itemVariants}
         >
           <motion.div 
-            className={`${theme === "light" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
+            className={`${globalTheme === "light" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
             onClick={() => handleThemeChange("light")}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
@@ -185,12 +175,12 @@ export default function ThemeSelectionPage() {
             </div>
             
             <div className="flex items-center justify-center">
-              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${theme === "light" ? "bg-primary-500" : "bg-transparent"}`}>
-                {theme === "light" && (
+              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${globalTheme === "light" ? "bg-primary-500" : "bg-transparent"}`}>
+                {globalTheme === "light" && (
                   <div className="w-2 h-2 rounded-full bg-white"></div>
                 )}
               </div>
-              <span className={`text-lg font-medium ${theme === "light" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('light')}</span>
+              <span className={`text-lg font-medium ${globalTheme === "light" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('light')}</span>
             </div>
             
             {/* Floating sun icon */}
@@ -228,7 +218,7 @@ export default function ThemeSelectionPage() {
           </motion.div>
           
           <motion.div 
-            className={`${theme === "dark" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
+            className={`${globalTheme === "dark" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
             onClick={() => handleThemeChange("dark")}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
@@ -250,17 +240,17 @@ export default function ThemeSelectionPage() {
             </div>
             
             <div className="flex items-center justify-center">
-              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${theme === "dark" ? "bg-primary-500" : "bg-transparent"}`}>
-                {theme === "dark" && (
+              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${globalTheme === "dark" ? "bg-primary-500" : "bg-transparent"}`}>
+                {globalTheme === "dark" && (
                   <div className="w-2 h-2 rounded-full bg-white"></div>
                 )}
               </div>
-              <span className={`text-lg font-medium ${theme === "dark" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('dark')}</span>
+              <span className={`text-lg font-medium ${globalTheme === "dark" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('dark')}</span>
             </div>
             
             {/* Floating moon icon */}
             <motion.div 
-              className="absolute top-2 right-2 bg-primary-900/50 text-primary-400 p-1.5 rounded-full z-10"
+              className="absolute top-2 right-2 bg-primary-900/20 text-primary-400 p-1.5 rounded-full z-10"
               animate={{ 
                 y: [0, -5, 0],
                 rotate: [0, -10, 0]
@@ -268,57 +258,63 @@ export default function ThemeSelectionPage() {
               transition={{ 
                 duration: 4, 
                 repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1
+                ease: "easeInOut"
               }}
             >
               <MoonIcon size={18} />
             </motion.div>
             
-            {/* Animated stars */}
+            {/* Animated light rays */}
             <motion.div 
               className="absolute -right-4 -top-4 w-20 h-20 bg-indigo-900 rounded-full opacity-20 blur-xl"
               animate={{
                 scale: [1, 1.2, 1],
-                opacity: [0.15, 0.25, 0.15]
+                opacity: [0.1, 0.2, 0.1]
               }}
               transition={{
-                duration: 4,
+                duration: 3,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
             />
             
             {/* Gradient highlight on hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-800/10 to-indigo-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
           </motion.div>
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mb-8"
+          className="mb-6"
           variants={itemVariants}
         >
-          <Button
-            variant="gradient"
-            className="w-64 py-3 text-white font-bold rounded-full shadow-lg hover:shadow-primary-500/20 relative overflow-hidden group"
-            onClick={nextStep}
-          >
-            <span className="relative z-10">{t('continue')}</span>
-            <motion.div 
-              className="absolute inset-0 bg-gradient-to-r from-primary-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
-            />
-            <motion.div 
-              className="absolute inset-0 bg-gradient-to-r from-primary-600 to-violet-600"
-            />
-          </Button>
+          <ProgressDots 
+            current={current} 
+            total={total} 
+            className="justify-center" 
+          />
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            {current}/{total} {t('steps')}
+          </p>
         </motion.div>
         
         <motion.div
           variants={itemVariants}
-          className="flex flex-col items-center mt-4"
+          className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3"
         >
-          <ProgressDots total={total} current={current} color="cyan" />
-          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
+          <Button
+            variant="outline"
+            className="rounded-full px-6"
+            onClick={prevStep}
+          >
+            {t('back')}
+          </Button>
+          
+          <Button
+            className="rounded-full px-6 bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white"
+            onClick={nextStep}
+          >
+            {t('nextStep')}
+          </Button>
         </motion.div>
       </motion.div>
     </div>

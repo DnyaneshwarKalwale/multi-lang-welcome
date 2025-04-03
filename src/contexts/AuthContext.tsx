@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { authApi } from "@/services/api";
+import { authApi, onboardingApi } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { applyTheme } from "./ThemeContext";
 
 interface User {
   id: string;
@@ -45,6 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { user } = await authApi.getCurrentUser();
       setUser(user);
+      
+      // Fetch user theme preference
+      try {
+        const onboardingData = await onboardingApi.getOnboarding();
+        if (onboardingData.theme) {
+          applyTheme(onboardingData.theme);
+        }
+      } catch (themeError) {
+        console.error("Failed to get user theme preference:", themeError);
+      }
     } catch (error) {
       console.error("Failed to get user data:", error);
     }
@@ -58,6 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const { user } = await authApi.getCurrentUser();
           setUser(user);
+          
+          // Fetch user theme preference
+          try {
+            const onboardingData = await onboardingApi.getOnboarding();
+            if (onboardingData.theme) {
+              applyTheme(onboardingData.theme);
+            }
+          } catch (themeError) {
+            console.error("Failed to get user theme preference:", themeError);
+          }
         } catch (error) {
           console.error("Failed to get user data:", error);
           localStorage.removeItem('token');
@@ -100,6 +121,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
       
+      // Fetch user theme preference after successful login
+      try {
+        const onboardingData = await onboardingApi.getOnboarding();
+        if (onboardingData.theme) {
+          applyTheme(onboardingData.theme);
+        }
+      } catch (themeError) {
+        console.error("Failed to get user theme preference:", themeError);
+      }
+      
       return response.user;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
@@ -122,6 +153,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         localStorage.setItem('token', response.token);
         setUser(response.user);
+        
+        // Fetch user theme preference after successful Twitter auth
+        try {
+          const onboardingData = await onboardingApi.getOnboarding();
+          if (onboardingData.theme) {
+            applyTheme(onboardingData.theme);
+          }
+        } catch (themeError) {
+          console.error("Failed to get user theme preference:", themeError);
+        }
         
         if (!response.user.onboardingCompleted) {
           navigate('/onboarding/welcome');
@@ -163,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // No need to change theme on logout as user preference is still saved in localStorage
     localStorage.removeItem('token');
     setUser(null);
     navigate('/');

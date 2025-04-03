@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { onboardingApi } from "@/services/api";
+import { useAuth } from "./AuthContext";
 
 type Theme = "light" | "dark";
 
@@ -39,6 +41,9 @@ export function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Get the authentication context to check if user is logged in
+  const auth = useAuth();
+  
   // Initialize theme state based on document class
   const [theme, setThemeState] = useState<Theme>(() => {
     // Default to dark if window not available (SSR)
@@ -92,6 +97,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  // Save theme to backend when it changes and user is authenticated
+  useEffect(() => {
+    // Only attempt to save if user is authenticated and component is mounted
+    if (auth.isAuthenticated && mounted) {
+      // Call the API to update theme preference
+      onboardingApi.updateTheme(theme)
+        .then(() => {
+          console.log(`Theme preference saved to backend: ${theme}`);
+        })
+        .catch(error => {
+          console.error("Failed to save theme preference:", error);
+        });
+    }
+  }, [theme, auth.isAuthenticated, mounted]);
 
   // Setter function that updates both state and DOM
   const setTheme = (newTheme: Theme) => {
