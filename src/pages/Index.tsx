@@ -8,6 +8,7 @@ import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { LoginSheet } from "@/components/LoginSheet";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -77,6 +78,7 @@ const Index = () => {
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
+              <ThemeToggle />
               <Button 
                 variant="ghost" 
                 className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400"
@@ -93,17 +95,20 @@ const Index = () => {
             </div>
             
             {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden flex items-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <span className="sr-only">Open menu</span>
-              <div className="relative w-6 h-5">
-                <span className={`absolute block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transform transition duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
-                <span className={`absolute top-2 block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transition duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                <span className={`absolute top-4 block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transform transition duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
-              </div>
-            </button>
+            <div className="md:hidden flex items-center">
+              <ThemeToggle />
+              <button 
+                className="flex items-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none ml-2"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <span className="sr-only">Open menu</span>
+                <div className="relative w-6 h-5">
+                  <span className={`absolute block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transform transition duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
+                  <span className={`absolute top-2 block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transition duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
+                  <span className={`absolute top-4 block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transform transition duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
         
