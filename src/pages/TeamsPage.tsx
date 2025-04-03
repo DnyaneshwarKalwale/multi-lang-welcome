@@ -94,12 +94,16 @@ export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNewTeamDialogOpen, setIsNewTeamDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("editor");
   const [emailError, setEmailError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("");
+  const [newTeamName, setNewTeamName] = useState("");
+  const [teamDescription, setTeamDescription] = useState("");
+  const [teamNameError, setTeamNameError] = useState("");
 
   // Animation variants
   const containerAnimation = {
@@ -261,6 +265,88 @@ export default function TeamsPage() {
     }
   };
 
+  const handleCreateTeamOrInvite = async () => {
+    // If team name is provided, create a new team
+    if (newTeamName.trim()) {
+      await handleCreateTeam();
+    } else if (selectedTeam && inviteEmail.trim()) {
+      // If email is provided and team is selected, send invitation
+      await handleInviteMember();
+    } else if (!selectedTeam && !newTeamName.trim()) {
+      // Show error if neither team name nor existing team is selected
+      setTeamNameError("Please enter a team name or select an existing team");
+    } else if (!inviteEmail.trim()) {
+      setEmailError("Please enter an email address");
+    }
+  };
+
+  const handleCreateTeam = async () => {
+    if (!newTeamName.trim()) {
+      setTeamNameError("Please enter a team name");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication error. Please login again.");
+        return;
+      }
+
+      const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
+      const response = await axios.post(
+        `${baseApiUrl}/teams`,
+        {
+          name: newTeamName,
+          description: teamDescription || `Team workspace for ${newTeamName}`
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const newTeam = response.data.data;
+      toast.success(`Team "${newTeamName}" created successfully`);
+      
+      // If email provided, also send invitation
+      if (inviteEmail && validateEmail(inviteEmail)) {
+        try {
+          const inviteResponse = await axios.post(
+            `${baseApiUrl}/teams/${newTeam._id}/invitations`,
+            { invitations: [{ email: inviteEmail, role: inviteRole }] },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          const results = inviteResponse.data.data.invitationResults;
+          const successfulInvites = results.filter((result: any) => result.success);
+          
+          if (successfulInvites.length > 0) {
+            toast.success(`Invitation sent to ${inviteEmail}`);
+          }
+        } catch (inviteError) {
+          console.error("Failed to send invitation:", inviteError);
+          // Don't fail the whole operation if invitation fails
+        }
+      }
+      
+      // Reset form fields
+      setNewTeamName("");
+      setTeamDescription("");
+      setInviteEmail("");
+      setInviteRole("editor");
+      setIsNewTeamDialogOpen(false);
+      
+      // Refresh the team data
+      await fetchTeams();
+      
+    } catch (error: any) {
+      console.error("Failed to create team:", error);
+      toast.error(error.response?.data?.message || "Failed to create team");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-64px)]">
@@ -279,9 +365,9 @@ export default function TeamsPage() {
               <Users className="h-5 w-5 mr-2 text-primary" />
               Teams
             </h2>
-            <Button variant="outline" size="sm" onClick={() => navigate('/onboarding/team-workspace')}>
+            <Button variant="outline" size="sm" onClick={() => setIsNewTeamDialogOpen(true)}>
               <UserPlus className="h-4 w-4 mr-1" />
-              New
+              New Team
             </Button>
           </div>
           <Tabs orientation="vertical" value={activeTab} className="w-full" onValueChange={handleTabChange}>
@@ -344,16 +430,16 @@ export default function TeamsPage() {
                             <DialogHeader>
                               <DialogTitle>Invite team member</DialogTitle>
                               <DialogDescription>
-                                Send an invitation email to add a new member to your team.
+                                Send an invitation email to add a new member to this team.
                               </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                               <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right">
+                                <Label htmlFor="invite-email" className="text-right">
                                   Email
                                 </Label>
                                 <Input
-                                  id="email"
+                                  id="invite-email"
                                   value={inviteEmail}
                                   onChange={(e) => {
                                     setInviteEmail(e.target.value);
@@ -369,11 +455,11 @@ export default function TeamsPage() {
                                 )}
                               </div>
                               <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="role" className="text-right">
+                                <Label htmlFor="invite-role" className="text-right">
                                   Role
                                 </Label>
                                 <select
-                                  id="role"
+                                  id="invite-role"
                                   value={inviteRole}
                                   onChange={(e) => setInviteRole(e.target.value)}
                                   className="col-span-3 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -564,7 +650,7 @@ export default function TeamsPage() {
               <p className="text-muted-foreground mb-4">
                 Select a team from the list or create a new one
               </p>
-              <Button onClick={() => navigate('/onboarding/team-workspace')}>
+              <Button onClick={() => setIsNewTeamDialogOpen(true)}>
                 <UserPlus className="h-4 w-4 mr-1" />
                 Create New Team
               </Button>
@@ -572,6 +658,113 @@ export default function TeamsPage() {
           )}
         </div>
       </div>
+      <Dialog open={isNewTeamDialogOpen} onOpenChange={setIsNewTeamDialogOpen}>
+        <DialogTrigger asChild>
+          <span className="hidden">New Team</span>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create a new team</DialogTitle>
+            <DialogDescription>
+              Create a new team and optionally invite your first team member.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="team-name" className="text-right">
+                Team Name
+              </Label>
+              <Input
+                id="team-name"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="My awesome team"
+                className="col-span-3"
+              />
+              {teamNameError && (
+                <div className="col-span-4 text-right text-red-500 text-sm">
+                  {teamNameError}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="description"
+                value={teamDescription}
+                onChange={(e) => setTeamDescription(e.target.value)}
+                placeholder="Team description (optional)"
+                className="col-span-3"
+              />
+            </div>
+
+            <Separator className="my-2" />
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-team-email" className="text-right">
+                Invite Email
+              </Label>
+              <Input
+                id="new-team-email"
+                value={inviteEmail}
+                onChange={(e) => {
+                  setInviteEmail(e.target.value);
+                  setEmailError("");
+                }}
+                placeholder="colleague@example.com (optional)"
+                className="col-span-3"
+              />
+              {emailError && (
+                <div className="col-span-4 text-right text-red-500 text-sm">
+                  {emailError}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-team-role" className="text-right">
+                Role
+              </Label>
+              <select
+                id="new-team-role"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value)}
+                className="col-span-3 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="admin">Admin</option>
+                <option value="editor">Editor</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsNewTeamDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTeam}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></div>
+                  Creating...
+                </div>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Create Team
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
