@@ -9,6 +9,7 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
+// Create the context with undefined as default - the provider will set the actual value
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
