@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 interface IconProps {
   className?: string;
@@ -108,6 +109,50 @@ export function SekcionIconRounded({ className = "h-10 w-10", ...props }: React.
           />
         </svg>
       </div>
+      
+      {/* Adding floating particles around the icon */}
+      <motion.div 
+        className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary-400 dark:bg-primary-500 opacity-70"
+        animate={{ 
+          y: [0, -4, 0],
+          opacity: [0.7, 1, 0.7],
+          scale: [1, 1.2, 1]
+        }}
+        transition={{ 
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      <motion.div 
+        className="absolute -bottom-1 left-1 w-1.5 h-1.5 rounded-full bg-violet-400 dark:bg-violet-500 opacity-70"
+        animate={{ 
+          y: [0, 3, 0],
+          opacity: [0.7, 1, 0.7],
+          scale: [1, 1.1, 1]
+        }}
+        transition={{ 
+          duration: 2.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+      />
+      
+      <motion.div 
+        className="absolute top-2 -left-2 w-1 h-1 rounded-full bg-blue-400 dark:bg-blue-500 opacity-70"
+        animate={{ 
+          x: [0, -2, 0],
+          opacity: [0.7, 1, 0.7]
+        }}
+        transition={{ 
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1
+        }}
+      />
     </div>
   );
 }
@@ -168,23 +213,54 @@ export function TwitterStyleIconSquare({ className = "w-10 h-10" }: IconProps) {
   );
 }
 
+// Twitter-styled icons with added floating particles
 export function TwitterStyleIconRounded({ className = "w-10 h-10" }: IconProps) {
   return (
-    <div className={`${className} bg-gradient-to-br from-cyan-500 to-violet-600 rounded-full flex items-center justify-center p-2`}>
-      <svg 
-        className="w-full h-full" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path 
-          d="M8 12L11 15L16 10"
-          stroke="white" 
-          strokeWidth="2.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-      </svg>
+    <div className="relative">
+      <div className={`${className} bg-gradient-to-br from-cyan-500 to-violet-600 rounded-full flex items-center justify-center p-2`}>
+        <svg 
+          className="w-full h-full" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path 
+            d="M8 12L11 15L16 10"
+            stroke="white" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      
+      {/* Adding floating particles */}
+      <motion.div 
+        className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-300 opacity-80"
+        animate={{ 
+          y: [0, -3, 0],
+          opacity: [0.8, 1, 0.8]
+        }}
+        transition={{ 
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      <motion.div 
+        className="absolute -bottom-1 left-0 w-1.5 h-1.5 rounded-full bg-violet-300 opacity-80"
+        animate={{ 
+          y: [0, 3, 0],
+          opacity: [0.8, 1, 0.8]
+        }}
+        transition={{ 
+          duration: 2.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+      />
     </div>
   );
 }

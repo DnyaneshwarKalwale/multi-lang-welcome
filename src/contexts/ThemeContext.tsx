@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Check if theme is saved in localStorage
     const savedTheme = localStorage.getItem("theme") as Theme;
     
-    // Default to dark if no theme is set (change from previous light default)
+    // Default to dark if no theme is set
     if (!savedTheme) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
     }
@@ -66,6 +66,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       // Set default theme to dark
       setTheme("dark");
+      // Apply dark theme to the document immediately
+      document.documentElement.classList.add("dark");
     }
   }, []);
 
