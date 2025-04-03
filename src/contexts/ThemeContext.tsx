@@ -25,23 +25,27 @@ const ThemeContext = createContext<ThemeContextType>(initialThemeContext);
  * This function should be used whenever the theme needs to change
  */
 export function applyTheme(theme: Theme) {
-  // Apply theme class to document immediately
+  // Temporarily disable transitions
+  document.documentElement.classList.remove('theme-transition-ready');
+  
+  // Apply theme class to document - using classList methods which are more reliable
   if (theme === "dark") {
-    // Apply dark theme in a single DOM operation to prevent flicker
-    document.documentElement.className = document.documentElement.className
-      .replace(/\blight\b/g, '')
-      .concat(' dark')
-      .trim();
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
   } else {
-    // Apply light theme in a single DOM operation to prevent flicker
-    document.documentElement.className = document.documentElement.className
-      .replace(/\bdark\b/g, '')
-      .concat(' light')
-      .trim();
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
   }
   
   // Save to localStorage
   localStorage.setItem("theme", theme);
+  
+  // Re-enable transitions after DOM updates
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.documentElement.classList.add('theme-transition-ready');
+    });
+  });
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -70,6 +74,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
     
+    // Synchronize theme with DOM - ensure there's no mismatch
+    if (theme === 'dark' && !document.documentElement.classList.contains('dark')) {
+      applyTheme('dark');
+    } else if (theme === 'light' && !document.documentElement.classList.contains('light')) {
+      applyTheme('light');
+    }
+    
     // Listen for manual theme changes from ThemeToggle or other sources
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "theme") {
@@ -80,12 +91,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       }
     };
     
-    // Use MutationObserver to detect changes to the HTML class
+    // Listen for class changes
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
         if (mutation.attributeName === 'class') {
           const isDark = document.documentElement.classList.contains('dark');
-          setThemeState(isDark ? 'dark' : 'light');
+          const isLight = document.documentElement.classList.contains('light');
+          
+          // Only update if there's a clear theme (not during transitions)
+          if (isDark && !isLight) {
+            setThemeState('dark');
+          } else if (isLight && !isDark) {
+            setThemeState('light');
+          }
         }
       });
     });
@@ -97,24 +115,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       observer.disconnect();
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
+  }, [theme]);
 
   // Setter function that updates both state and DOM
   const setTheme = (newTheme: Theme) => {
-    // Set the state immediately
-    setThemeState(newTheme);
-    
-    // Apply the theme change (DOM update)
+    // Apply the theme change first to update DOM
     applyTheme(newTheme);
     
-    // Dispatch storage event for other components after a short delay to ensure DOM changes are applied
-    setTimeout(() => {
-      window.dispatchEvent(new StorageEvent("storage", {
-        key: "theme",
-        newValue: newTheme,
-        storageArea: localStorage
-      }));
-    }, 10);
+    // Then update the state
+    setThemeState(newTheme);
   };
 
   // Toggle function

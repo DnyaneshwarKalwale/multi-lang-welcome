@@ -21,35 +21,32 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   useEffect(() => {
     setMounted(true);
     
-    // Verify theme is correctly set in the DOM
-    const themeInLocalStorage = localStorage.getItem('theme');
-    const isDarkInDOM = document.documentElement.classList.contains('dark');
-    const isLightInDOM = document.documentElement.classList.contains('light');
-    
-    // Make sure DOM has exactly one theme class set - not both
-    if (isDarkInDOM && isLightInDOM) {
-      // If both classes are present (invalid state), reset to a clean state
-      // based on localStorage or default to dark
+    // Fix for theme inconsistency: Force a clean theme state at startup
+    const fixThemeConsistency = () => {
+      const themeInLocalStorage = localStorage.getItem('theme');
+      const isDarkInDOM = document.documentElement.classList.contains('dark');
+      const isLightInDOM = document.documentElement.classList.contains('light');
+      
+      // First, remove all theme classes to start fresh
       document.documentElement.classList.remove('dark', 'light');
-      const preferredTheme = themeInLocalStorage === 'light' ? 'light' : 'dark';
-      document.documentElement.classList.add(preferredTheme);
-      console.log(`Fixed invalid theme state with both classes by setting to: ${preferredTheme}`);
-    }
-    // Make sure DOM has at least one theme class set
-    else if (!isDarkInDOM && !isLightInDOM) {
-      const theme = themeInLocalStorage === 'light' ? 'light' : 'dark';
-      document.documentElement.classList.add(theme);
-      console.log(`Fixed missing theme class by adding: ${theme}`);
-    }
+      
+      // Then apply the correct theme
+      const targetTheme = themeInLocalStorage === 'light' ? 'light' : 'dark';
+      document.documentElement.classList.add(targetTheme);
+      localStorage.setItem('theme', targetTheme);
+      
+      // Log the action
+      console.log(`Theme reset to ${targetTheme} for consistency`);
+      
+      // Force a repaint by toggling a property
+      document.body.style.display = 'none';
+      requestAnimationFrame(() => {
+        document.body.style.display = '';
+      });
+    };
     
-    // Synchronize localStorage with DOM if needed
-    if (isDarkInDOM && themeInLocalStorage !== 'dark') {
-      localStorage.setItem('theme', 'dark');
-      console.log('Synchronized localStorage with dark theme from DOM');
-    } else if (isLightInDOM && themeInLocalStorage !== 'light') {
-      localStorage.setItem('theme', 'light');
-      console.log('Synchronized localStorage with light theme from DOM');
-    }
+    // Execute the fix with a slight delay to avoid any race conditions
+    setTimeout(fixThemeConsistency, 50);
   }, []);
   
   // Safely access contexts to verify availability
