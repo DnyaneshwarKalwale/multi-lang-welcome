@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,7 +23,7 @@ type OnboardingStep =
 
 type WorkspaceType = "team" | "personal" | null;
 type ThemeType = "light" | "dark";
-type LanguageType = "english" | "german" | null;
+type LanguageType = "english" | "german" | "spanish" | "french" | null;
 type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 

@@ -53,7 +53,7 @@ export default function LanguageSelectionPage() {
   // When onboarding language changes, also update the app language
   useEffect(() => {
     if (onboardingLanguage) {
-      setAppLanguage(onboardingLanguage);
+      setAppLanguage(onboardingLanguage as "english" | "german" | "spanish" | "french");
     }
   }, [onboardingLanguage, setAppLanguage]);
 
@@ -202,7 +202,7 @@ export default function LanguageSelectionPage() {
                     : 'hover:shadow-xl'}
                   transition-all duration-300
                 `}
-                onClick={() => setOnboardingLanguage(lang.code)}
+                onClick={() => setOnboardingLanguage(lang.code as "english" | "german" | "spanish" | "french")}
               >
                 {/* Selected indicator */}
                 {onboardingLanguage === lang.code && (

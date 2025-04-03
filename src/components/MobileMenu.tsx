@@ -3,14 +3,13 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Home, Settings, Users, FileText, LogOut } from 'lucide-react';
-import { useContext } from 'react';
-import { AuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { logout, isAuthenticated } = useContext(AuthContext);
+  const { logout, isAuthenticated } = useAuth();
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
