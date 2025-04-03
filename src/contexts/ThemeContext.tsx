@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 type Theme = "light" | "dark";
@@ -14,15 +15,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check if theme is saved in localStorage
     const savedTheme = localStorage.getItem("theme") as Theme;
-    // Default to dark theme regardless of user preference
-    return savedTheme || "dark";
+    
+    // Respect user's OS preference if no theme is set
+    if (!savedTheme) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    return savedTheme;
   });
 
   useEffect(() => {
     // Update class on document element
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
     } else {
+      document.documentElement.classList.add("light");
       document.documentElement.classList.remove("dark");
     }
     
@@ -30,10 +38,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Force dark mode on initial load 
+  // Force theme on initial load 
   useEffect(() => {
-    if (theme === "dark" && !document.documentElement.classList.contains("dark")) {
-      document.documentElement.classList.add("dark");
+    const savedTheme = localStorage.getItem("theme") as Theme;
+    if (savedTheme) {
+      setTheme(savedTheme);
     }
   }, []);
 
