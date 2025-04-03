@@ -74,7 +74,6 @@ export default function ThemeSelectionPage() {
         <Button
           variant="ghost"
           size="icon"
-          rounded="full"
           className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-primary-100/50 dark:hover:bg-primary-900/20 hover:text-primary-500 dark:hover:text-primary-400"
           onClick={prevStep}
         >
@@ -226,8 +225,6 @@ export default function ThemeSelectionPage() {
         >
           <Button
             variant="gradient"
-            rounded="full"
-            animation="glow"
             className="w-64 py-3 text-white font-bold"
             onClick={nextStep}
           >
