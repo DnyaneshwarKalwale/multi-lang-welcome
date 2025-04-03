@@ -61,7 +61,7 @@ export default function ThemeSelectionPage() {
       <div className="absolute inset-0 -z-10 opacity-30 dark:opacity-20">
         <div className="absolute top-0 -left-[30%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-primary-200 to-primary-300 dark:from-primary-900/30 dark:to-primary-800/20 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[30%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-violet-200 to-violet-300 dark:from-violet-900/30 dark:to-violet-800/20 blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"30\" height=\"30\" viewBox=\"0 0 30 30\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cpath d=\"M1.22676 0C1.91374 0 2.45351 0.539773 2.45351 1.22676C2.45351 1.91374 1.91374 2.45351 1.22676 2.45351C0.539773 2.45351 0 1.91374 0 1.22676C0 0.539773 0.539773 0 1.22676 0Z\" fill=\"rgba(79,70,229,0.1)\"%3E%3C/path%3E%3C/svg%3E')] opacity-50"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2230%22 height=%2230%22 viewBox=%220 0 30 30%22 fill=%22none%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath d=%22M1.22676 0C1.91374 0 2.45351 0.539773 2.45351 1.22676C2.45351 1.91374 1.91374 2.45351 1.22676 2.45351C0.539773 2.45351 0 1.91374 0 1.22676C0 0.539773 0.539773 0 1.22676 0Z%22 fill=%22rgba(79,70,229,0.1)%22%3E%3C/path%3E%3C/svg%3E')] opacity-50"></div>
       </div>
       
       {/* Back button */}
@@ -74,7 +74,7 @@ export default function ThemeSelectionPage() {
         <Button
           variant="ghost"
           size="icon"
-          className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-primary-100/50 dark:hover:bg-primary-900/20 hover:text-primary-500 dark:hover:text-primary-400"
+          className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-primary-100/50 dark:hover:bg-primary-900/20 hover:text-primary-500 dark:hover:text-primary-400 rounded-full"
           onClick={prevStep}
         >
           <ArrowLeft size={18} />
@@ -225,7 +225,7 @@ export default function ThemeSelectionPage() {
         >
           <Button
             variant="gradient"
-            className="w-64 py-3 text-white font-bold"
+            className="w-64 py-3 text-white font-bold rounded-full shadow-lg hover:shadow-primary-500/20"
             onClick={nextStep}
           >
             {t('continue')}
