@@ -106,7 +106,7 @@ const AppRoutes = () => {
       }
     }, [isAuthenticated, user, navigate, location.pathname]);
     
-    // If still loading user or onboarding progress, show loading spinner
+    // If still loading user or onboarding progress.
     if (loading || isLoadingProgress) {
       return <LoadingSpinner />;
     }
@@ -178,7 +178,7 @@ const AppRoutes = () => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename="/">
         <ThemeProvider>
           <TooltipProvider>
             <Toaster />
