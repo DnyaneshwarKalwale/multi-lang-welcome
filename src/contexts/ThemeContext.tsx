@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 type Theme = "light" | "dark";
@@ -7,22 +6,34 @@ interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  isThemeLoaded: boolean; // Added to track theme loading state
 }
 
-// Create the context with undefined as default - the provider will set the actual value
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+// Initialize with sensible defaults to avoid null/undefined errors
+const initialThemeContext: ThemeContextType = {
+  theme: "dark", // Default to dark theme
+  setTheme: () => {},
+  toggleTheme: () => {},
+  isThemeLoaded: false
+};
+
+// Create the context with default values
+const ThemeContext = createContext<ThemeContextType>(initialThemeContext);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Initialize theme state from localStorage or system preference
   const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    
     // Check if theme is saved in localStorage
     const savedTheme = localStorage.getItem("theme") as Theme;
     
-    // Default to dark if no theme is set
-    if (!savedTheme) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
     }
     
-    return savedTheme;
+    // Default to dark if no theme is set or invalid value
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
   });
   
   const [mounted, setMounted] = useState(false);
@@ -59,15 +70,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Apply default theme immediately when component mounts
+  // Apply the initial theme to the document immediately on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      // Set default theme to dark
-      setTheme("dark");
+    // Apply theme to document right away to avoid flicker
+    if (theme === "dark") {
       document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
     }
   }, []);
 
@@ -75,13 +86,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  // Avoid hydration mismatch by rendering children only after mounted
-  if (!mounted) {
-    return <div style={{ visibility: 'hidden' }}>{children}</div>;
-  }
+  // Provide the theme context with the current theme and isThemeLoaded flag
+  const themeContextValue: ThemeContextType = {
+    theme,
+    setTheme,
+    toggleTheme,
+    isThemeLoaded: mounted
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={themeContextValue}>
       {children}
     </ThemeContext.Provider>
   );
@@ -89,7 +103,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;

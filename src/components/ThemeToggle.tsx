@@ -1,13 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, SunMoon, Sparkles } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion, AnimatePresence } from "framer-motion";
 
-// Internal ThemeToggle component
-const InternalThemeToggle = () => {
-  const { theme, toggleTheme } = useTheme();
+const ThemeToggle = () => {
+  const [isMounted, setIsMounted] = useState(false);
+  // Safely access theme context
+  const themeContext = useTheme();
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Only show toggle after component has mounted to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // If theme context isn't ready or component hasn't mounted, render a placeholder
+  if (!isMounted || !themeContext.isThemeLoaded) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative h-10 w-10 rounded-full overflow-hidden border border-primary-100 dark:border-gray-700"
+        disabled
+        aria-label="Theme toggle loading"
+      >
+        <div className="w-5 h-5 opacity-30"></div>
+      </Button>
+    );
+  }
+  
+  const { theme, toggleTheme } = themeContext;
 
   return (
     <Button
@@ -102,16 +125,6 @@ const InternalThemeToggle = () => {
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
-};
-
-// Safe wrapper that catches errors if used outside ThemeProvider
-const ThemeToggle = () => {
-  try {
-    return <InternalThemeToggle />;
-  } catch (error) {
-    console.warn('ThemeToggle rendered outside of ThemeProvider');
-    return null;
-  }
 };
 
 export default ThemeToggle;

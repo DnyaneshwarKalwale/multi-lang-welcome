@@ -34,6 +34,33 @@ if (!localStorage.getItem("theme")) {
   localStorage.setItem("theme", "dark");
 }
 
+// Add theme transition styles to prevent flicker
+const style = document.createElement('style');
+style.innerHTML = `
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+  }
+  
+  /* Add base colors that apply before React hydrates */
+  :root {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+  
+  .dark {
+    color-scheme: dark;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+`;
+document.head.appendChild(style);
+
 // Loading spinner component with our new design
 function LoadingSpinner() {
   return (
