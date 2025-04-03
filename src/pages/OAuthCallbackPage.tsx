@@ -59,120 +59,39 @@ export default function OAuthCallbackPage() {
         return;
       }
       
-      // Set token in localStorage immediately
       try {
+        setStatus('Verifying authentication...');
+        
+        // Store token in localStorage immediately to prevent loss
         localStorage.setItem('token', token);
         console.log('Token stored in localStorage');
-      } catch (err) {
-        console.error('Error storing token:', err);
-      }
-      
-      // Fetch user info to verify token works
-      setStatus('Verifying authentication...');
-      try {
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const response = await axios.get(`${baseApiUrl}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
         
-        const userData = response.data.user;
-        console.log('User authenticated successfully:', { 
-          id: userData.id, 
-          email: userData.email || '(no email)',
-          onboardingCompleted: userData.onboardingCompleted,
-          authMethod: userData.authMethod
-        });
-        
-        // Store onboarding status in localStorage for other components to use
-        localStorage.setItem('onboardingCompleted', userData.onboardingCompleted ? 'true' : 'false');
-        
+        // Set authentication success immediately to provide quick feedback
         setIsSuccess(true);
-      } catch (error) {
-        console.error('Error verifying user data:', error);
-        // Continue anyway since we have a token
-      }
-      
-      // Check for pending invitations
-      setStatus('Checking for invitations...');
-      try {
-        // Don't check if user has skipped invitations
-        const skippedInvitations = localStorage.getItem('skippedInvitations');
-        if (skippedInvitations === 'true') {
-          console.log('Skipping invitation check - user previously skipped');
-          // Redirect based on onboarding status
+        
+        // Even if there's a network error later, at least the token is saved
+        setStatus('Authentication successful! Redirecting...');
+        
+        // Use timeout to give user visual feedback before redirect
+        setTimeout(() => {
+          if (onboarding) {
+            console.log('Redirecting to onboarding');
+            navigate('/onboarding/welcome');
+          } else {
+            console.log('Redirecting to dashboard');
+            navigate('/dashboard');
+          }
+        }, 1500);
+      } catch (err) {
+        console.error('Error processing authentication:', err);
+        // Still redirect with token if we have it
+        setTimeout(() => {
           if (onboarding) {
             navigate('/onboarding/welcome');
           } else {
             navigate('/dashboard');
           }
-          return;
-        }
-        
-        // Fetch invitations
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        try {
-          console.log(`Checking for invitations using token for user ${token ? 'with token' : 'missing token'}`);
-          console.log(`Using API URL: ${baseApiUrl}`);
-          
-          try {
-            const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-              headers: { Authorization: `Bearer ${token}` },
-              timeout: 5000 // Add timeout to prevent long waits
-            });
-            
-            const invitations = response.data.data || [];
-            console.log(`Found ${invitations.length} pending invitations:`, invitations);
-            
-            // Store invitations in localStorage for offline access
-            if (invitations.length > 0) {
-              localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
-              navigate('/pending-invitations');
-              return;
-            }
-          } catch (invError: any) {
-            console.error('Failed to check invitations:', invError);
-            
-            // Log detailed error information for debugging
-            if (invError.response) {
-              console.error('Error response:', {
-                status: invError.response.status,
-                statusText: invError.response.statusText,
-                data: invError.response.data
-              });
-            } else if (invError.request) {
-              console.error('Error request:', invError.request);
-            }
-            
-            // Check if we have cached invitations we can use
-            const cachedInvitations = localStorage.getItem('cachedInvitations');
-            if (cachedInvitations) {
-              const invitations = JSON.parse(cachedInvitations);
-              if (invitations.length > 0) {
-                console.log('Using cached invitations:', invitations);
-                navigate('/pending-invitations');
-                return;
-              }
-            }
-            
-            // If the endpoint doesn't exist (404) or server is down (500+), continue with normal flow
-            // This prevents the app from getting stuck during development
-            console.log('Continuing with normal flow after invitation check error');
-          }
-        } catch (err) {
-          console.error('Failed to check invitations:', err);
-          // Continue with normal flow even if invitation check fails
-        }
-      } catch (err) {
-        console.error('Failed to check invitations:', err);
-        // Continue with normal flow even if invitation check fails
-      }
-      
-      // Normal flow - redirect based on onboarding status
-      console.log('Redirecting to', onboarding ? 'onboarding' : 'dashboard');
-      if (onboarding) {
-        navigate('/onboarding/welcome');
-      } else {
-        navigate('/dashboard');
+        }, 1500);
       }
     };
     

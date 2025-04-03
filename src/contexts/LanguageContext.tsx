@@ -98,7 +98,18 @@ const translations: Record<Language, Record<string, string>> = {
     lastName: "Last Name",
     usernamePreview: "Username Preview",
     profileAppear: "This is how your profile will appear",
-    skipToDashboard: "Skip to dashboard"
+    skipToDashboard: "Skip to dashboard",
+    // Verification OTP translations
+    "verify_your_email": "Verify Your Email",
+    "verification_code": "Verification Code",
+    "verification_code_sent_to": "We've sent a verification code to",
+    "verify_email": "Verify Email",
+    "back_to_login": "Back to Login",
+    "resend_verification_code": "Resend Code",
+    "email_verified": "Email verified successfully!",
+    "email_verified_success": "Your email has been verified!",
+    "redirecting_to_dashboard": "You'll be redirected to the dashboard in a moment.",
+    "verification_code_sent": "Verification code sent to your email",
   },
   german: {
     welcomeTitle: "Willkommen bei Sekcion",
@@ -188,7 +199,18 @@ const translations: Record<Language, Record<string, string>> = {
     lastName: "Nachname",
     usernamePreview: "Benutzername-Vorschau",
     profileAppear: "So wird Ihr Profil erscheinen",
-    skipToDashboard: "Zum Dashboard springen"
+    skipToDashboard: "Zum Dashboard springen",
+    // Verification OTP translations
+    "verify_your_email": "E-Mail bestätigen",
+    "verification_code": "Bestätigungscode",
+    "verification_code_sent_to": "Wir haben einen Bestätigungscode gesendet an",
+    "verify_email": "E-Mail bestätigen",
+    "back_to_login": "Zurück zum Login",
+    "resend_verification_code": "Code erneut senden",
+    "email_verified": "E-Mail erfolgreich bestätigt!",
+    "email_verified_success": "Ihre E-Mail wurde bestätigt!",
+    "redirecting_to_dashboard": "Sie werden in Kürze zum Dashboard weitergeleitet.",
+    "verification_code_sent": "Bestätigungscode an Ihre E-Mail gesendet",
   },
   spanish: {
     welcomeTitle: "Bienvenido a Sekcion",
@@ -278,7 +300,18 @@ const translations: Record<Language, Record<string, string>> = {
     lastName: "Apellido",
     usernamePreview: "Vista previa del nombre de usuario",
     profileAppear: "Así es como aparecerá su perfil",
-    skipToDashboard: "Saltar al panel"
+    skipToDashboard: "Saltar al panel",
+    // Verification OTP translations
+    "verify_your_email": "Verificar Tu Correo",
+    "verification_code": "Código de Verificación",
+    "verification_code_sent_to": "Hemos enviado un código de verificación a",
+    "verify_email": "Verificar Correo",
+    "back_to_login": "Volver al Inicio",
+    "resend_verification_code": "Reenviar Código",
+    "email_verified": "¡Correo verificado con éxito!",
+    "email_verified_success": "¡Tu correo ha sido verificado!",
+    "redirecting_to_dashboard": "Serás redirigido al panel de control en un momento.",
+    "verification_code_sent": "Código de verificación enviado a tu correo",
   },
   french: {
     welcomeTitle: "Bienvenue sur Sekcion",
@@ -368,7 +401,18 @@ const translations: Record<Language, Record<string, string>> = {
     lastName: "Nom",
     usernamePreview: "Aperçu du nom d'utilisateur",
     profileAppear: "Voici comment votre profil apparaîtra",
-    skipToDashboard: "Aller au tableau de bord"
+    skipToDashboard: "Aller au tableau de bord",
+    // Verification OTP translations
+    "verify_your_email": "Vérifier Votre Email",
+    "verification_code": "Code de Vérification",
+    "verification_code_sent_to": "Nous avons envoyé un code de vérification à",
+    "verify_email": "Vérifier Email",
+    "back_to_login": "Retour à la Connexion",
+    "resend_verification_code": "Renvoyer le Code",
+    "email_verified": "Email vérifié avec succès!",
+    "email_verified_success": "Votre email a été vérifié!",
+    "redirecting_to_dashboard": "Vous serez redirigé vers le tableau de bord dans un instant.",
+    "verification_code_sent": "Code de vérification envoyé à votre email",
   }
 };
 

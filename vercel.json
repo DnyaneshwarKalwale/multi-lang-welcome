@@ -4,7 +4,9 @@
   "outputDirectory": "dist",
   "trailingSlash": false,
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "^/auth/social-callback", "dest": "/index.html", "status": 200 },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 } 

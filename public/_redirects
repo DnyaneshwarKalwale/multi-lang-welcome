@@ -1,2 +1,3 @@
 /* /index.html 200
-/auth/social-callback /index.html 200 
+/auth/social-callback /index.html 200
+/auth/social-callback/* /index.html 200 
