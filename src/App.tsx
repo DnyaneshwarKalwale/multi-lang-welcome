@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -27,12 +27,46 @@ import ContextVerifier from "./components/ContextVerifier";
 
 const queryClient = new QueryClient();
 
-// Set default theme class on document before React hydration
-// This helps prevent theme flicker on page load
-document.documentElement.classList.add("dark");
-if (!localStorage.getItem("theme")) {
-  localStorage.setItem("theme", "dark");
-}
+// Initialize theme immediately to prevent flash
+const initializeTheme = () => {
+  // Check if theme is saved in localStorage
+  const savedTheme = localStorage.getItem("theme");
+  
+  if (savedTheme === "light") {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  } else {
+    // Default to dark theme
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+    if (!savedTheme) {
+      localStorage.setItem("theme", "dark");
+    }
+  }
+};
+
+// Run theme initialization immediately
+initializeTheme();
+
+// Add global theme toggle functions to window object
+// @ts-ignore
+window.setLightTheme = () => {
+  applyTheme("light");
+  console.log("Manually set light theme via window function");
+};
+
+// @ts-ignore
+window.setDarkTheme = () => {
+  applyTheme("dark");
+  console.log("Manually set dark theme via window function");
+};
+
+// @ts-ignore
+window.toggleTheme = () => {
+  const isDark = document.documentElement.classList.contains("dark");
+  applyTheme(isDark ? "light" : "dark");
+  console.log("Toggled theme via window function");
+};
 
 // Add theme transition styles to prevent flicker
 const style = document.createElement('style');

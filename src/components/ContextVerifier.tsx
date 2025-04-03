@@ -15,15 +15,51 @@ interface ContextVerifierProps {
 const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [mounted, setMounted] = useState(false);
+  
+  // Set mounted state on component mount
+  useEffect(() => {
+    setMounted(true);
+    
+    // Verify theme is correctly set in the DOM
+    const themeInLocalStorage = localStorage.getItem('theme');
+    const isDarkInDOM = document.documentElement.classList.contains('dark');
+    const isLightInDOM = document.documentElement.classList.contains('light');
+    
+    // Log initial theme state for debugging
+    console.log({
+      themeInLocalStorage,
+      isDarkInDOM,
+      isLightInDOM
+    });
+    
+    // Make sure DOM has at least one theme class set
+    if (!isDarkInDOM && !isLightInDOM) {
+      const theme = themeInLocalStorage === 'light' ? 'light' : 'dark';
+      document.documentElement.classList.add(theme);
+      console.log(`Fixed missing theme class by adding: ${theme}`);
+    }
+    
+    // Synchronize localStorage with DOM if needed
+    if (isDarkInDOM && themeInLocalStorage !== 'dark') {
+      localStorage.setItem('theme', 'dark');
+      console.log('Synchronized localStorage with dark theme from DOM');
+    } else if (isLightInDOM && themeInLocalStorage !== 'light') {
+      localStorage.setItem('theme', 'light');
+      console.log('Synchronized localStorage with light theme from DOM');
+    }
+  }, []);
   
   // Safely access contexts to verify availability
   const safeAccess = () => {
+    if (!mounted) return false;
+    
     try {
       // Get theme context
-      const { isThemeLoaded } = useTheme();
+      const themeContext = useTheme();
       
       // If theme is not loaded yet, just wait
-      if (!isThemeLoaded) {
+      if (!themeContext.isThemeLoaded) {
         return false;
       }
       
@@ -32,17 +68,19 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
         // Get auth context (suppress any error)
         const authContext = useAuth();
       } catch (authError) {
-        console.warn("Auth context not ready yet:", authError);
+        console.warn("Auth context not ready yet");
+        return false;
       }
       
       try {
         // Get language context (suppress any error)
         const langContext = useLanguage();
       } catch (langError) {
-        console.warn("Language context not ready yet:", langError);
+        console.warn("Language context not ready yet");
+        return false;
       }
       
-      // If we got here, essential contexts are available
+      // If we got here, all essential contexts are available
       return true;
     } catch (error) {
       console.error("Context verification failed:", error);

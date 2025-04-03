@@ -20,73 +20,99 @@ const initialThemeContext: ThemeContextType = {
 // Create the context with default values
 const ThemeContext = createContext<ThemeContextType>(initialThemeContext);
 
+/**
+ * Directly sets the theme in the DOM and localStorage
+ * This function should be used whenever the theme needs to change
+ */
+export function applyTheme(theme: Theme) {
+  // Apply theme class to document
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+  } else {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  }
+  
+  // Save to localStorage
+  localStorage.setItem("theme", theme);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Initialize theme state from localStorage or system preference
-  const [theme, setTheme] = useState<Theme>(() => {
+  // Initialize theme state based on document class
+  const [theme, setThemeState] = useState<Theme>(() => {
+    // Default to dark if window not available (SSR)
     if (typeof window === 'undefined') return 'dark';
     
-    // Check if theme is saved in localStorage
-    const savedTheme = localStorage.getItem("theme") as Theme;
+    // Check HTML class first (most reliable)
+    if (document.documentElement.classList.contains("dark")) return "dark";
+    if (document.documentElement.classList.contains("light")) return "light";
     
+    // Check localStorage as fallback
+    const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme === 'light' || savedTheme === 'dark') {
       return savedTheme;
     }
     
-    // Default to dark if no theme is set or invalid value
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
+    // Default to dark
+    return 'dark';
   });
   
   const [mounted, setMounted] = useState(false);
 
-  // Handle theme class on document and save to localStorage
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Add a transition class before changing theme to enable smooth transitions
-    document.documentElement.classList.add('theme-transition');
-    
-    // Update class on document element
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    }
-    
-    // Save to localStorage
-    localStorage.setItem("theme", theme);
-    
-    // Remove transition class after the transition is complete
-    const transitionTimeout = setTimeout(() => {
-      document.documentElement.classList.remove('theme-transition');
-    }, 300);
-    
-    return () => clearTimeout(transitionTimeout);
-  }, [theme, mounted]);
-
-  // Set mounted to true on initial render
+  // Set mounted when component mounts
   useEffect(() => {
     setMounted(true);
+    
+    // Listen for manual theme changes from ThemeToggle or other sources
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "theme") {
+        const newTheme = e.newValue as Theme;
+        if (newTheme === "dark" || newTheme === "light") {
+          setThemeState(newTheme);
+        }
+      }
+    };
+    
+    // Use MutationObserver to detect changes to the HTML class
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setThemeState(isDark ? 'dark' : 'light');
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
-  // Apply the initial theme to the document immediately on mount
-  useEffect(() => {
-    // Apply theme to document right away to avoid flicker
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+  // Setter function that updates both state and DOM
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    applyTheme(newTheme);
+    
+    // Manually dispatch storage event for other components
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "theme",
+      newValue: newTheme,
+      storageArea: localStorage
+    }));
   };
 
-  // Provide the theme context with the current theme and isThemeLoaded flag
+  // Toggle function
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+  };
+
+  // Provide context
   const themeContextValue: ThemeContextType = {
     theme,
     setTheme,
@@ -109,4 +135,4 @@ export function useTheme() {
   return context;
 }
 
-export { ThemeContext }; // Export the context itself so it can be accessed directly
+export { ThemeContext };

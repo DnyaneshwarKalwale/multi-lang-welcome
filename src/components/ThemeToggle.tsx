@@ -1,130 +1,90 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun, SunMoon, Sparkles } from "lucide-react";
-import { useTheme } from '@/contexts/ThemeContext';
-import { motion, AnimatePresence } from "framer-motion";
+import { Moon, Sun } from "lucide-react";
 
-const ThemeToggle = () => {
-  const [isMounted, setIsMounted] = useState(false);
-  // Safely access theme context
-  const themeContext = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
-  
-  // Only show toggle after component has mounted to prevent hydration mismatch
+export default function ThemeToggle() {
+  // Keep track of the current theme
+  const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // On mount, initialize state from HTML class and set up listeners
   useEffect(() => {
-    setIsMounted(true);
+    // Get initial state from HTML
+    const initialIsDark = document.documentElement.classList.contains("dark");
+    setIsDark(initialIsDark);
+    setMounted(true);
+    
+    // Set up storage event listener for syncing across tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "theme") {
+        const newTheme = e.newValue;
+        if (newTheme === "dark") {
+          document.documentElement.classList.add("dark");
+          document.documentElement.classList.remove("light");
+          setIsDark(true);
+        } else if (newTheme === "light") {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.add("light");
+          setIsDark(false);
+        }
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
-  
-  // If theme context isn't ready or component hasn't mounted, render a placeholder
-  if (!isMounted || !themeContext.isThemeLoaded) {
+
+  // Function to toggle theme
+  const toggleTheme = () => {
+    // Determine new theme
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    
+    // Apply theme to document
+    if (newIsDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+      localStorage.setItem("theme", "light");
+    }
+    
+    // Log for debugging
+    console.log(`Theme toggled to: ${newIsDark ? "dark" : "light"}`);
+    
+    // Dispatch storage event for other components to detect the change
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "theme",
+      newValue: newIsDark ? "dark" : "light",
+      storageArea: localStorage
+    }));
+  };
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
     return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative h-10 w-10 rounded-full overflow-hidden border border-primary-100 dark:border-gray-700"
+      <button 
+        className="w-10 h-10 p-2 rounded-md bg-gray-100 dark:bg-gray-800 opacity-50"
         disabled
-        aria-label="Theme toggle loading"
+        aria-label="Theme loading"
       >
-        <div className="w-5 h-5 opacity-30"></div>
-      </Button>
+        <div className="w-5 h-5"></div>
+      </button>
     );
   }
-  
-  const { theme, toggleTheme } = themeContext;
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="relative h-10 w-10 rounded-full overflow-hidden border border-primary-100 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-gray-800"
+    <button
       onClick={toggleTheme}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="w-10 h-10 p-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
       aria-label="Toggle theme"
     >
-      <div className="relative w-full h-full flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          {theme === 'dark' ? (
-            <motion.div
-              key="sun"
-              initial={{ rotate: -30, opacity: 0, scale: 0.5 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: 30, opacity: 0, scale: 0.5 }}
-              transition={{ duration: 0.3 }}
-              className="relative"
-            >
-              <Sun className="h-5 w-5 text-yellow-400" />
-              <AnimatePresence>
-                {isHovered && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute -top-1 -right-1"
-                  >
-                    <Sparkles className="h-3 w-3 text-yellow-300" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="moon"
-              initial={{ rotate: 30, opacity: 0, scale: 0.5 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: -30, opacity: 0, scale: 0.5 }}
-              transition={{ duration: 0.3 }}
-              className="relative"
-            >
-              <Moon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <AnimatePresence>
-                {isHovered && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute -top-1 -right-1"
-                  >
-                    <motion.div
-                      animate={{ 
-                        y: [0, -2, 0],
-                        opacity: [0.5, 1, 0.5]
-                      }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        duration: 2,
-                        ease: "easeInOut" 
-                      }}
-                      className="h-2 w-2 rounded-full bg-indigo-300 dark:bg-indigo-500"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {isHovered && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.2 }}
-            exit={{ opacity: 0 }}
-          >
-            <SunMoon className="h-10 w-10 text-primary-400" />
-          </motion.div>
-        )}
-      </div>
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-primary-200/20 to-violet-200/20 dark:from-primary-900/30 dark:to-violet-900/30"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-      />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      {isDark ? (
+        <Sun className="h-6 w-6 text-yellow-500 dark:text-yellow-300" />
+      ) : (
+        <Moon className="h-6 w-6 text-indigo-700 dark:text-indigo-400" />
+      )}
+    </button>
   );
-};
-
-export default ThemeToggle;
+}
