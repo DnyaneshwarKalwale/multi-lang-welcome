@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import MobileMenu from '@/components/MobileMenu';
 import { ScripeIcon } from '@/components/ScripeIcon';
 import { LogOut, Sparkles, Stars, MessageCircle, Bell, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import TeamInvitationNotification from './TeamInvitationNotification';
 
 const CustomNavbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -121,6 +121,8 @@ const CustomNavbar = () => {
           
           {isAuthenticated ? (
             <div className="hidden lg:flex items-center gap-4">
+              <TeamInvitationNotification />
+              
               <motion.div className="relative">
                 <motion.div
                   whileHover={{ scale: 1.05 }}

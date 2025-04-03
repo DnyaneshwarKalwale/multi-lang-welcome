@@ -1,120 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
-import { toast } from "sonner";
-
-interface TeamInvitation {
-  id: string;
-  teamId: string;
-  teamName: string;
-  role: string;
-  createdAt: string;
-}
+import { useInvitations } from "@/contexts/InvitationContext";
 
 export default function TeamInvitationNotification() {
-  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const { invitations, loading, acceptInvitation, declineInvitation } = useInvitations();
   
-  const fetchInvitations = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      
-      console.log('Checking for notification invitations');
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      console.log(`Using API URL: ${baseApiUrl}`);
-      
-      try {
-        const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const invitations = response.data.data || [];
-        console.log(`Found ${invitations.length} pending invitations for notifications`);
-        setInvitations(invitations);
-      } catch (apiError: any) {
-        console.error('Failed to fetch invitations for notification:', apiError);
-        
-        // Log detailed error information for debugging
-        if (apiError.response) {
-          console.error('Error response:', {
-            status: apiError.response.status,
-            statusText: apiError.response.statusText,
-            data: apiError.response.data
-          });
-        } else if (apiError.request) {
-          console.error('Error request:', apiError.request);
-        }
-        
-        // Don't show anything if there's an error
-        setInvitations([]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch invitations:', err);
-      setInvitations([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInvitations();
-    
-    // Poll for new invitations every minute
-    const intervalId = setInterval(fetchInvitations, 60000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const handleAcceptInvitation = async (invitationId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const response = await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Remove this invitation from the list
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
-      
-      // Show success toast
-      toast.success(`You've joined ${response.data.data.teamName}`);
-      
-      // Close the dropdown
-      setIsOpen(false);
-    } catch (err) {
-      console.error('Failed to accept invitation:', err);
-      toast.error('Failed to accept invitation. Please try again.');
-    }
-  };
-
-  const handleDeclineInvitation = async (invitationId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Remove this invitation from the list
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
-      
-      // Show success toast
-      toast.success('Invitation declined');
-    } catch (err) {
-      console.error('Failed to decline invitation:', err);
-      toast.error('Failed to decline invitation. Please try again.');
-    }
-  };
-  
-  // Only show the component if there are invitations
-  if (loading) {
+  // Don't render if loading or no invitations
+  if (loading || invitations.length === 0) {
     return null;
   }
   
@@ -158,13 +52,19 @@ export default function TeamInvitationNotification() {
                   </div>
                   <div className="flex justify-end space-x-2">
                     <button
-                      onClick={() => handleDeclineInvitation(invitation.id)}
+                      onClick={() => {
+                        declineInvitation(invitation.id);
+                        setIsOpen(false);
+                      }}
                       className="text-xs text-gray-400 hover:text-gray-300"
                     >
                       Decline
                     </button>
                     <Button
-                      onClick={() => handleAcceptInvitation(invitation.id)}
+                      onClick={() => {
+                        acceptInvitation(invitation.id);
+                        setIsOpen(false);
+                      }}
                       className="bg-indigo-600 hover:bg-indigo-700 text-xs py-1 h-auto"
                       size="sm"
                     >

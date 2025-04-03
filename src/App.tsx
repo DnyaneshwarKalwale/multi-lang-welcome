@@ -7,6 +7,7 @@ import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { InvitationProvider } from "@/contexts/InvitationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
@@ -25,7 +26,6 @@ import HowItWorksPage from "./pages/HowItWorksPage";
 import TestimonialsPage from "./pages/TestimonialsPage";
 import PricingPage from "./pages/PricingPage";
 import ContextVerifier from "./components/ContextVerifier";
-import InvitationTokenPage from "./pages/InvitationTokenPage";
 
 const queryClient = new QueryClient();
 
@@ -234,7 +234,6 @@ const AppRoutes = () => {
       </Route>
       
       <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
-      <Route path="/invitations" element={<InvitationTokenPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -247,15 +246,17 @@ const App = () => (
         <TooltipProvider>
           <LanguageProvider>
             <AuthProvider>
-              <OnboardingProvider>
-                <ContextVerifier>
-                  <AppRoutes />
-                </ContextVerifier>
-              </OnboardingProvider>
+              <InvitationProvider>
+                <OnboardingProvider>
+                  <ContextVerifier>
+                    <AppRoutes />
+                    <Toaster />
+                    <Sonner position="top-right" richColors closeButton theme="dark" />
+                  </ContextVerifier>
+                </OnboardingProvider>
+              </InvitationProvider>
             </AuthProvider>
           </LanguageProvider>
-          <Toaster />
-          <Sonner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
