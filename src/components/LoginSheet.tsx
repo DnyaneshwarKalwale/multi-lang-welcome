@@ -78,9 +78,21 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
           // Close the login sheet
           onOpenChange(false);
         }
-      } catch (err) {
-        // Login error is already handled by the auth context
-        console.error("Login error:", err);
+      } catch (err: any) {
+        // Check if error response indicates unverified email
+        if (err?.response?.data?.requireVerification) {
+          // Store email for verification page
+          localStorage.setItem('pendingVerificationEmail', email);
+          
+          // Close login sheet
+          onOpenChange(false);
+          
+          // Redirect to email verification page
+          navigate('/verify-email');
+        } else {
+          // Login error is already handled by the auth context
+          console.error("Login error:", err);
+        }
       }
     }
   };

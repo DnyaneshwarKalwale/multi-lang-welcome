@@ -61,9 +61,21 @@ export const authApi = {
     return response.data;
   },
 
-  // Verify email
+  // Verify email with token (legacy)
   verifyEmail: async (token: string) => {
     const response = await api.get(`/auth/verify-email/${token}`);
+    return response.data;
+  },
+  
+  // Verify email with OTP
+  verifyOTP: async (email: string, otp: string) => {
+    const response = await api.post('/auth/verify-otp', { email, otp });
+    return response.data;
+  },
+  
+  // Resend OTP
+  resendOTP: async (email: string) => {
+    const response = await api.post('/auth/resend-otp', { email });
     return response.data;
   },
 };
