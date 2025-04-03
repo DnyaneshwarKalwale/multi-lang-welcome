@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { authApi, onboardingApi } from "@/services/api";
+import { authApi } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { applyTheme } from "./ThemeContext";
 
 interface User {
   id: string;
@@ -26,7 +25,6 @@ interface AuthContextType {
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<void>;
-  syncThemeWithBackend: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,39 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  // Method to get the current theme from localStorage
-  const getCurrentTheme = () => {
-    if (document.documentElement.classList.contains("dark")) return "dark";
-    if (document.documentElement.classList.contains("light")) return "light";
-    return localStorage.getItem("theme") as "dark" | "light" || "dark";
-  };
-
-  // Method to sync current theme with backend
-  const syncThemeWithBackend = async () => {
-    if (!user) return;
-    
-    try {
-      const currentTheme = getCurrentTheme();
-      await onboardingApi.updateTheme(currentTheme);
-      console.log(`Theme synced with backend: ${currentTheme}`);
-    } catch (error) {
-      console.error("Failed to sync theme with backend:", error);
-    }
-  };
-
-  // Method to apply theme from backend settings
-  const applyThemeFromBackend = async () => {
-    try {
-      const onboardingData = await onboardingApi.getOnboarding();
-      if (onboardingData.theme) {
-        applyTheme(onboardingData.theme);
-        console.log(`Applied theme from backend: ${onboardingData.theme}`);
-      }
-    } catch (themeError) {
-      console.error("Failed to get user theme preference:", themeError);
-    }
-  };
 
   const fetchUser = async () => {
     const token = localStorage.getItem('token');
@@ -80,9 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { user } = await authApi.getCurrentUser();
       setUser(user);
-      
-      // Fetch user theme preference
-      await applyThemeFromBackend();
     } catch (error) {
       console.error("Failed to get user data:", error);
     }
@@ -96,9 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const { user } = await authApi.getCurrentUser();
           setUser(user);
-          
-          // Fetch user theme preference
-          await applyThemeFromBackend();
         } catch (error) {
           console.error("Failed to get user data:", error);
           localStorage.removeItem('token');
@@ -110,13 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     checkAuthStatus();
   }, []);
-
-  // Sync theme with backend whenever user auth state changes
-  useEffect(() => {
-    if (user) {
-      syncThemeWithBackend();
-    }
-  }, [user]);
 
   const register = async (firstName: string, lastName: string, email: string, password: string) => {
     try {
@@ -148,9 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
       
-      // Fetch user theme preference after successful login
-      await applyThemeFromBackend();
-      
       return response.user;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
@@ -173,9 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         localStorage.setItem('token', response.token);
         setUser(response.user);
-        
-        // Fetch user theme preference after successful Twitter auth
-        await applyThemeFromBackend();
         
         if (!response.user.onboardingCompleted) {
           navigate('/onboarding/welcome');
@@ -217,7 +163,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    // No need to change theme on logout as user preference is still saved in localStorage
     localStorage.removeItem('token');
     setUser(null);
     navigate('/');
@@ -239,8 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         twitterAuth,
         logout,
         clearError,
-        fetchUser,
-        syncThemeWithBackend
+        fetchUser
       }}
     >
       {children}

@@ -1,158 +1,261 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import ThemeDebugHelper from "@/components/ThemeDebugHelper";
-import LoadingScreen from "./components/LoadingScreen";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { OnboardingRouter } from "@/components/OnboardingRouter";
+import InvitationCheckRoute from "@/components/InvitationCheckRoute";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import DashboardPage from "./pages/DashboardPage";
+import PendingInvitationsPage from "./pages/PendingInvitationsPage";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import FeaturesPage from "./pages/FeaturesPage";
+import HowItWorksPage from "./pages/HowItWorksPage";
+import TestimonialsPage from "./pages/TestimonialsPage";
+import PricingPage from "./pages/PricingPage";
 import ContextVerifier from "./components/ContextVerifier";
 
-// Pages
-const Index = lazy(() => import("@/pages/Index"));
-const ThemeSelectionPage = lazy(() => import("@/pages/ThemeSelectionPage"));
-const LanguageSelectionPage = lazy(() => import("@/pages/LanguageSelectionPage"));
-const LoginPage = lazy(() => import("@/pages/Index"));
-const RegisterPage = lazy(() => import("@/pages/Index"));
-const ForgotPasswordPage = lazy(() => import("@/pages/Index"));
-const ResetPasswordPage = lazy(() => import("@/pages/Index"));
-const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
-const NotFoundPage = lazy(() => import("@/pages/NotFound"));
-
-// Create a client
 const queryClient = new QueryClient();
 
-// Initialize theme based on local storage and system preference
-function initializeTheme() {
-  try {
-    // Check if theme already exists in localStorage
-    const savedTheme = localStorage.getItem("theme");
-    
-    // If we already have a theme class on the document, don't override it
-    const hasThemeClass = document.documentElement.classList.contains("dark") || 
-                          document.documentElement.classList.contains("light");
-    
-    if (hasThemeClass) {
-      console.log("Theme class already exists on document");
-      return;
-    }
-    
-    // Apply saved theme if it exists
-    if (savedTheme) {
-      console.log(`Applying saved theme: ${savedTheme}`);
-      document.documentElement.classList.add(savedTheme);
-      document.documentElement.classList.remove(savedTheme === "dark" ? "light" : "dark");
-      return;
-    }
-    
-    // Otherwise check user preference
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    console.log(`System prefers dark mode: ${prefersDark}`);
-    document.documentElement.classList.add(prefersDark ? "dark" : "light");
-    document.documentElement.classList.remove(prefersDark ? "light" : "dark");
-    localStorage.setItem("theme", prefersDark ? "dark" : "light");
-  } catch (error) {
-    console.error("Failed to initialize theme, defaulting to dark", error);
-    // Default to dark theme if something goes wrong
-    document.documentElement.classList.add("dark");
-    document.documentElement.classList.remove("light");
-  }
-}
-
-// Add global functions for manually toggling theme in development
-if (process.env.NODE_ENV === "development") {
-  (window as any).forceDarkTheme = () => {
-    document.documentElement.classList.add("dark");
-    document.documentElement.classList.remove("light");
-    localStorage.setItem("theme", "dark");
-    console.log("Forced dark theme");
-  };
+// Initialize theme immediately to prevent flash
+const initializeTheme = () => {
+  // Check if theme is saved in localStorage
+  const savedTheme = localStorage.getItem("theme");
   
-  (window as any).forceLightTheme = () => {
-    document.documentElement.classList.add("light");
+  if (savedTheme === "light") {
     document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
-    console.log("Forced light theme");
-  };
-}
-
-// Add global setTheme function for compatibility with IndexThemeToggle
-window.setTheme = (theme: "dark" | "light") => {
-  if (theme === "dark") {
+    document.documentElement.classList.add("light");
+  } else {
+    // Default to dark theme
     document.documentElement.classList.add("dark");
     document.documentElement.classList.remove("light");
-  } else {
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.add("light");
+    if (!savedTheme) {
+      localStorage.setItem("theme", "dark");
+    }
   }
-  localStorage.setItem("theme", theme);
-  console.log(`Theme set to ${theme} via global setTheme`);
 };
 
-// Protected route component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <LoadingScreen />;
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-}
-
-// App routes with context usage
-function AppRoutes() {
-  return (
-    <Suspense fallback={<LoadingScreen />}>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/theme" element={<ThemeSelectionPage />} />
-        <Route path="/language" element={<LanguageSelectionPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route 
-          path="/dashboard/*" 
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Suspense>
-  );
-}
-
-// Initialize theme on load
+// Run theme initialization immediately
 initializeTheme();
 
-export default function App() {
+// Add global theme toggle functions to window object
+// @ts-ignore
+window.setLightTheme = () => {
+  applyTheme("light");
+  console.log("Manually set light theme via window function");
+};
+
+// @ts-ignore
+window.setDarkTheme = () => {
+  applyTheme("dark");
+  console.log("Manually set dark theme via window function");
+};
+
+// @ts-ignore
+window.toggleTheme = () => {
+  const isDark = document.documentElement.classList.contains("dark");
+  applyTheme(isDark ? "light" : "dark");
+  console.log("Toggled theme via window function");
+};
+
+// Add theme transition styles to prevent flicker
+const style = document.createElement('style');
+style.innerHTML = `
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+  }
+  
+  /* Add base colors that apply before React hydrates */
+  :root {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+  
+  .dark {
+    color-scheme: dark;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+`;
+document.head.appendChild(style);
+
+// Loading spinner component with our new design
+function LoadingSpinner() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <LanguageProvider>
-                <ContextVerifier>
-                  <AppRoutes />
-                  <Toaster />
-                  <ThemeDebugHelper />
-                </ContextVerifier>
-              </LanguageProvider>
-            </ThemeProvider>
-          </AuthProvider>
-        </TooltipProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="relative">
+        {/* Background circle with subtle pulsing effect */}
+        <motion.div 
+          className="absolute inset-0 w-28 h-28 rounded-full bg-gradient-to-r from-teal-400/10 to-cyan-500/10"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Spinning borders */}
+        <div className="w-20 h-20 border-t-4 border-b-4 border-transparent rounded-full animate-spin-slow"></div>
+        <div className="absolute inset-0 w-20 h-20 border-t-4 border-l-4 border-r-4 border-transparent border-t-teal-400 border-r-cyan-500 border-l-teal-400 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '3s' }}></div>
+        <div className="absolute inset-0 w-20 h-20 border-b-4 border-r-4 border-transparent border-r-cyan-500 border-b-cyan-500 rounded-full animate-spin-slow" style={{ animationDuration: '2s' }}></div>
+        
+        {/* Pulsing checkmark */}
+        <motion.div 
+          className="absolute inset-0 flex items-center justify-center text-teal-500 dark:text-teal-400"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 16L14 20L22 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
+      </div>
+      
+      {/* Loading text */}
+      <motion.div 
+        className="absolute mt-28 text-sm font-medium text-gray-600 dark:text-gray-400"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        Loading Sekcion...
+      </motion.div>
+    </div>
   );
 }
+
+// The AppRoutes component remained unchanged, but now without BrowserRouter wrapper
+const AppRoutes = () => {
+  // Protected Onboarding Route Component
+  function ProtectedOnboardingRoute() {
+    const { user, isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+    
+    // Check for saved onboarding progress when component mounts
+    useEffect(() => {
+      // Only run this if the user is authenticated and hasn't completed onboarding
+      if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
+        setIsLoadingProgress(true);
+        
+        // Get saved step from localStorage
+        const savedStep = localStorage.getItem('onboardingStep');
+        
+        if (savedStep) {
+          // Redirect to the saved step
+          navigate(`/onboarding/${savedStep}`, { replace: true });
+        } else {
+          // If no saved step, start from the beginning
+          navigate('/onboarding/welcome', { replace: true });
+        }
+        
+        setIsLoadingProgress(false);
+      }
+    }, [isAuthenticated, user, navigate, location.pathname]);
+    
+    // If still loading user or onboarding progress.
+    if (loading || isLoadingProgress) {
+      return <LoadingSpinner />;
+    }
+    
+    // If user is authenticated and has completed onboarding, redirect to dashboard
+    if (isAuthenticated && user?.onboardingCompleted) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    
+    // Otherwise, show the onboarding flow
+    return <OnboardingRouter />;
+  }
+
+  // Protected Dashboard Route Component
+  function ProtectedDashboardRoute() {
+    const { user, isAuthenticated, loading } = useAuth();
+    
+    if (loading) {
+      return <LoadingSpinner />;
+    }
+    
+    if (!isAuthenticated) {
+      return <Navigate to="/" replace />;
+    }
+    
+    // Always prioritize localStorage value since it's set immediately at completion time
+    // This prevents redirection back to onboarding extension-install page
+    const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+    
+    if (!onboardingCompleted) {
+      // If we have a user object and it says onboarding is completed, update localStorage
+      if (user && user.onboardingCompleted) {
+        localStorage.setItem('onboardingCompleted', 'true');
+        return <DashboardPage />;
+      }
+      
+      // Otherwise redirect to onboarding
+      const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
+      return <Navigate to={`/onboarding/${savedStep}`} replace />;
+    }
+    
+    return <DashboardPage />;
+  }
+
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/testimonials" element={<TestimonialsPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+      
+      {/* Check for invitations first, then redirect to onboarding or dashboard */}
+      <Route element={<InvitationCheckRoute />}>
+        <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+        <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+      </Route>
+      
+      <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
+const App = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <OnboardingProvider>
+                <ContextVerifier>
+                  <AppRoutes />
+                </ContextVerifier>
+              </OnboardingProvider>
+            </AuthProvider>
+          </LanguageProvider>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
+
+export default App;

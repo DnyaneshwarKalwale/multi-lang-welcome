@@ -8,7 +8,7 @@ import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { LoginSheet } from "@/components/LoginSheet";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import IndexThemeToggle from "@/components/IndexThemeToggle";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -78,7 +78,7 @@ const Index = () => {
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              <IndexThemeToggle />
+              <ThemeToggle />
               <Button 
                 variant="ghost" 
                 className="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400"
@@ -96,7 +96,7 @@ const Index = () => {
             
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
-              <IndexThemeToggle />
+              <ThemeToggle />
               <button 
                 className="flex items-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none ml-2"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
