@@ -6,7 +6,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
 import { useTheme } from "@/contexts/ThemeContext";
-import TeamInvitationNotification from './TeamInvitationNotification';
 
 interface NavbarProps {
   onLoginClick: () => void;

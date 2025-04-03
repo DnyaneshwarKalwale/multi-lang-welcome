@@ -7,7 +7,6 @@ import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { InvitationProvider } from "@/contexts/InvitationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
@@ -246,17 +245,15 @@ const App = () => (
         <TooltipProvider>
           <LanguageProvider>
             <AuthProvider>
-              <InvitationProvider>
-                <OnboardingProvider>
-                  <ContextVerifier>
-                    <AppRoutes />
-                    <Toaster />
-                    <Sonner position="top-right" richColors closeButton theme="dark" />
-                  </ContextVerifier>
-                </OnboardingProvider>
-              </InvitationProvider>
+              <OnboardingProvider>
+                <ContextVerifier>
+                  <AppRoutes />
+                </ContextVerifier>
+              </OnboardingProvider>
             </AuthProvider>
           </LanguageProvider>
+          <Toaster />
+          <Sonner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

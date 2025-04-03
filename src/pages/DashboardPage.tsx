@@ -32,7 +32,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import axios from "axios";
 import { toast } from "sonner";
-import TeamInvitationNotification from '@/components/TeamInvitationNotification';
 
 // The main Dashboard component
 const DashboardPageContent: React.FC = () => {
@@ -277,7 +276,67 @@ const DashboardPageContent: React.FC = () => {
               <ThemeToggle />
       
               <div className="relative">
-                <TeamInvitationNotification />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <Bell className="h-5 w-5" />
+                  {pendingInvitations.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                      {pendingInvitations.length}
+                    </span>
+                  )}
+                </Button>
+                
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 font-medium">
+                      Team Invitations
+                    </div>
+                    
+                    <div className="max-h-96 overflow-y-auto">
+                      {pendingInvitations.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                          No pending invitations
+                        </div>
+                      ) : (
+                        pendingInvitations.map(invitation => (
+                          <div key={invitation.id} className="p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <div className="flex items-center mb-2">
+                              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-md flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold mr-2">
+                                {invitation.teamName.substring(0, 1).toUpperCase()}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">{invitation.teamName}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Role: {invitation.role}</p>
+                              </div>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeclineInvitation(invitation.id)}
+                                className="h-8 text-xs"
+                              >
+                                Decline
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleAcceptInvitation(invitation.id)}
+                                className="h-8 text-xs"
+                              >
+                                Accept
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
       
               <Button 
@@ -291,26 +350,44 @@ const DashboardPageContent: React.FC = () => {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar>
-                      <AvatarImage src={user?.profilePicture || ''} alt={getUserFullName()} />
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user?.profilePicture} alt={getUserFullName()} />
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>My Account</span>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{getUserFullName()}</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{t('profile')}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center space-x-2">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/teams')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Teams</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>{t('settings')}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Twitter className="mr-2 h-4 w-4 text-blue-500" />
+                    <span>{t('connectTwitter')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center space-x-2">
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-red-500 focus:text-red-500" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{t('logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
