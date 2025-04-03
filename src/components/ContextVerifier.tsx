@@ -17,13 +17,18 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [checkedContexts, setCheckedContexts] = useState(false);
   
   // Set mounted state on first render
   useEffect(() => {
     setMounted(true);
     
-    // If mounted and contexts are ready after 2 seconds, force loading to false
-    // This is a fallback in case our context checking has a bug
+    // Add a short delay to ensure contexts are fully initialized
+    setTimeout(() => {
+      setCheckedContexts(true);
+    }, 500);
+    
+    // Force render after a longer timeout as failsafe
     const timer = setTimeout(() => {
       if (mounted) {
         setIsLoading(false);
@@ -40,56 +45,23 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     }
   }, [error]);
   
-  // Safely access contexts to verify availability
-  const safeAccess = () => {
-    if (!mounted) return false;
-    
-    try {
-      // Try to access auth context first
-      try {
-        const authContext = useAuth();
-        if (!authContext) return false;
-      } catch (authError) {
-        console.warn("Auth context not ready yet");
-        return false;
-      }
-      
-      // Then theme context
-      try {
-        const themeContext = useTheme();
-        if (!themeContext || !themeContext.isThemeLoaded) return false;
-      } catch (themeError) {
-        console.warn("Theme context not ready yet");
-        return false;
-      }
-      
-      // Then language context
-      try {
-        const langContext = useLanguage();
-        if (!langContext) return false;
-      } catch (langError) {
-        console.warn("Language context not ready yet");
-        return false;
-      }
-      
-      // If we got here, all essential contexts are available
-      return true;
-    } catch (error) {
-      console.error("Context verification failed:", error);
-      setError(error as Error);
-      return false;
-    }
-  };
-  
-  // Check if contexts are ready
-  const contextsReady = safeAccess();
-  
-  // Update loading state
+  // Check contexts after the initial delay
   useEffect(() => {
-    if (contextsReady) {
-      setIsLoading(false);
+    if (checkedContexts && mounted) {
+      try {
+        // Now we can safely check for contexts
+        const authContext = useAuth();
+        const themeContext = useTheme();
+        const langContext = useLanguage();
+        
+        // If all contexts are accessible, we can proceed
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Context verification failed:", error);
+        setError(error as Error);
+      }
     }
-  }, [contextsReady]);
+  }, [checkedContexts, mounted]);
   
   // If still loading, show spinner
   if (isLoading) {

@@ -23,6 +23,7 @@ import HowItWorksPage from "./pages/HowItWorksPage";
 import TestimonialsPage from "./pages/TestimonialsPage";
 import PricingPage from "./pages/PricingPage";
 import ContextVerifier from "./components/ContextVerifier";
+import ThemeDebugHelper from "./components/ThemeDebugHelper";
 
 const queryClient = new QueryClient();
 
@@ -31,17 +32,33 @@ const initializeTheme = () => {
   // Check if theme is saved in localStorage
   const savedTheme = localStorage.getItem("theme");
   
+  // Also check if a theme class is already set on the document
+  const hasDarkClass = document.documentElement.classList.contains("dark");
+  const hasLightClass = document.documentElement.classList.contains("light");
+  
+  // If localStorage has a theme, use it
   if (savedTheme === "light") {
     document.documentElement.classList.remove("dark");
     document.documentElement.classList.add("light");
-  } else {
-    // Default to dark theme
+  } else if (savedTheme === "dark") {
     document.documentElement.classList.add("dark");
     document.documentElement.classList.remove("light");
-    if (!savedTheme) {
-      localStorage.setItem("theme", "dark");
-    }
+  } 
+  // If no localStorage but a class is set, save to localStorage
+  else if (hasDarkClass) {
+    localStorage.setItem("theme", "dark");
+  } else if (hasLightClass) {
+    localStorage.setItem("theme", "light");
+  } 
+  // Default to dark theme if nothing is set
+  else {
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+    localStorage.setItem("theme", "dark");
   }
+  
+  console.log("App initialization: Theme set to", 
+    document.documentElement.classList.contains("dark") ? "dark" : "light");
 };
 
 // Run theme initialization immediately
@@ -245,6 +262,7 @@ const App = () => (
               <OnboardingProvider>
                 <ContextVerifier>
                   <AppRoutes />
+                  <ThemeDebugHelper />
                 </ContextVerifier>
               </OnboardingProvider>
             </ThemeProvider>
