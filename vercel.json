@@ -1,7 +1,15 @@
 {
   "rewrites": [
     { "source": "/auth/social-callback", "destination": "/auth/social-callback.html" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/auth/social-callback/:path*", "destination": "/auth/social-callback.html" },
+    { "source": "/social-callback", "destination": "/social-callback.html" },
+    { "source": "/social-callback/:path*", "destination": "/social-callback.html" }
+  ],
+  "routes": [
+    { "src": "/auth/social-callback", "dest": "/auth/social-callback.html" },
+    { "src": "/social-callback", "dest": "/social-callback.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "framework": "vite",
   "buildCommand": "npm run build",

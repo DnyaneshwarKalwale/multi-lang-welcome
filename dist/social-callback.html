@@ -68,8 +68,8 @@
   </div>
 
   <script>
-    console.log("Social callback script running...");
-    // This script handles the OAuth callback when the main app fails to load
+    console.log("Root social callback script running...");
+    // Extract parameters from the URL
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     const onboarding = params.get('onboarding') === 'true';
