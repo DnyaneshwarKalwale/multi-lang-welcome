@@ -58,7 +58,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Force theme on initial load 
+  // Force theme on initial load (simplified to avoid redundancy)
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) {

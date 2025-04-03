@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -81,10 +80,13 @@ const allSteps: OnboardingStep[] = [
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { setTheme: setGlobalTheme } = useTheme();
+  const themeContext = useTheme();
   const { setLanguage: setGlobalLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   
+  // Only access theme methods if themeContext exists
+  const setGlobalTheme = themeContext ? themeContext.setTheme : () => {};
+
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
   const [workspaceName, setWorkspaceName] = useState("");
@@ -238,12 +240,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStep, isInitialized]);
 
-  // Update global theme when onboarding theme changes
+  // Update global theme when onboarding theme changes - with safeguard
   useEffect(() => {
-    if (theme) {
+    if (theme && themeContext) {
       setGlobalTheme(theme);
     }
-  }, [theme, setGlobalTheme]);
+  }, [theme, setGlobalTheme, themeContext]);
 
   // Update global language when onboarding language changes
   useEffect(() => {

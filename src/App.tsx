@@ -148,10 +148,15 @@ function ProtectedDashboardRoute() {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
+      {/* BrowserRouter must be the outermost routing context */}
       <BrowserRouter>
+        {/* ThemeProvider needs to be accessible throughout the app */}
         <ThemeProvider>
+          {/* LanguageProvider depends on ThemeProvider */}
           <LanguageProvider>
+            {/* AuthProvider depends on ThemeProvider */}
             <AuthProvider>
+              {/* OnboardingProvider depends on ThemeProvider, LanguageProvider, and AuthProvider */}
               <OnboardingProvider>
                 <TooltipProvider>
                   <Toaster />
