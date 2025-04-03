@@ -37,7 +37,9 @@ export default function OAuthCallbackPage() {
       console.log('OAuth callback received with params:', { 
         token: token ? '(token present)' : '(no token)', 
         onboarding, 
-        error: errorParam 
+        error: errorParam,
+        fullUrl: window.location.href,
+        pathname: location.pathname
       });
       
       if (errorParam) {
