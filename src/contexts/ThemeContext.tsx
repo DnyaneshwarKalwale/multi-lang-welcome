@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { onboardingApi } from "@/services/api";
-import { useAuth } from "./AuthContext";
 
 type Theme = "light" | "dark";
 
@@ -9,6 +8,7 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   isThemeLoaded: boolean; // Added to track theme loading state
+  saveThemeToBackend: (theme: Theme) => Promise<void>; // Add method to save theme when user is authenticated
 }
 
 // Initialize with sensible defaults to avoid null/undefined errors
@@ -16,7 +16,8 @@ const initialThemeContext: ThemeContextType = {
   theme: "dark", // Default to dark theme
   setTheme: () => {},
   toggleTheme: () => {},
-  isThemeLoaded: false
+  isThemeLoaded: false,
+  saveThemeToBackend: async () => {}
 };
 
 // Create the context with default values
@@ -41,9 +42,6 @@ export function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Get the authentication context to check if user is logged in
-  const auth = useAuth();
-  
   // Initialize theme state based on document class
   const [theme, setThemeState] = useState<Theme>(() => {
     // Default to dark if window not available (SSR)
@@ -98,20 +96,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Save theme to backend when it changes and user is authenticated
-  useEffect(() => {
-    // Only attempt to save if user is authenticated and component is mounted
-    if (auth.isAuthenticated && mounted) {
-      // Call the API to update theme preference
-      onboardingApi.updateTheme(theme)
-        .then(() => {
-          console.log(`Theme preference saved to backend: ${theme}`);
-        })
-        .catch(error => {
-          console.error("Failed to save theme preference:", error);
-        });
+  // Method to save theme to backend - will be called by components that have access to auth
+  const saveThemeToBackend = async (themeToSave: Theme) => {
+    try {
+      await onboardingApi.updateTheme(themeToSave);
+      console.log(`Theme preference saved to backend: ${themeToSave}`);
+    } catch (error) {
+      console.error("Failed to save theme preference:", error);
     }
-  }, [theme, auth.isAuthenticated, mounted]);
+  };
 
   // Setter function that updates both state and DOM
   const setTheme = (newTheme: Theme) => {
@@ -137,7 +130,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     theme,
     setTheme,
     toggleTheme,
-    isThemeLoaded: mounted
+    isThemeLoaded: mounted,
+    saveThemeToBackend
   };
 
   return (

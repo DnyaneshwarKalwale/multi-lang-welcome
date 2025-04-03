@@ -6,8 +6,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
 import Index from "./pages/Index";
@@ -239,21 +238,21 @@ const AppRoutes = () => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <LanguageProvider>
-            <AuthProvider>
+      <TooltipProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ThemeProvider>
               <OnboardingProvider>
                 <ContextVerifier>
                   <AppRoutes />
                 </ContextVerifier>
               </OnboardingProvider>
-            </AuthProvider>
-          </LanguageProvider>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </ThemeProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </LanguageProvider>
+        <Toaster />
+        <Sonner />
+      </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

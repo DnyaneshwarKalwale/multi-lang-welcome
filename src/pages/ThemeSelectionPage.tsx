@@ -3,6 +3,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { SunIcon, MoonIcon, ArrowLeft, Twitter, Sparkles, Stars, CloudSun } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +12,7 @@ import { ScripeIconRounded } from "@/components/ScripeIcon";
 export default function ThemeSelectionPage() {
   const { theme: onboardingTheme, setTheme: setOnboardingTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { theme: globalTheme, setTheme: setGlobalTheme } = useTheme();
+  const { isAuthenticated, syncThemeWithBackend } = useAuth();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
@@ -48,6 +50,13 @@ export default function ThemeSelectionPage() {
     // Set both in onboarding context and global theme context
     setOnboardingTheme(newTheme);
     setGlobalTheme(newTheme);
+    
+    // If user is authenticated, sync with backend
+    if (isAuthenticated) {
+      setTimeout(() => {
+        syncThemeWithBackend();
+      }, 0);
+    }
   };
 
   // Sync onboarding theme with global theme on component mount
