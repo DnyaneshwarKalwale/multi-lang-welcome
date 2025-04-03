@@ -56,10 +56,10 @@ const CustomNavbar = () => {
             <div className="hidden lg:flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple font-semibold">
-                  {user?.name?.charAt(0) || 'U'}
+                  {user?.firstName ? user.firstName.charAt(0) : 'U'}
                 </div>
                 <span className="text-sm font-medium hidden xl:inline">
-                  {user?.name || 'User'}
+                  {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'User'}
                 </span>
               </div>
               

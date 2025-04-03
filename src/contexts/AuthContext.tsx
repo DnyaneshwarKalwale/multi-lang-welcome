@@ -35,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Fetch current user data
   const fetchUser = async () => {
     const token = localStorage.getItem('token');
     
@@ -51,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Check if user is already logged in on initial load
   useEffect(() => {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem('token');
@@ -72,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuthStatus();
   }, []);
 
-  // Register new user
   const register = async (firstName: string, lastName: string, email: string, password: string) => {
     try {
       setLoading(true);
@@ -80,10 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.register(firstName, lastName, email, password);
       
-      // For email registration, don't set token yet since email verification is required
       setUser(response.user);
       
-      // Navigate to email verification page
       navigate('/verify-email', { state: { email } });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -93,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Login user
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -104,11 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', response.token);
       setUser(response.user);
       
-      // Always set the onboarding status in localStorage
-      // Prioritize completed status to prevent issues with dashboard redirection
       localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
       
-      // Don't navigate automatically - let the component handle navigation
       return response.user;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
@@ -119,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Twitter auth (for development without OAuth)
   const twitterAuth = async (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => {
     try {
       setLoading(true);
@@ -127,14 +117,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Starting Twitter auth with data:", userData);
       
-      // Try the direct API approach first
       try {
         const response = await authApi.twitterAuth(userData);
         
         localStorage.setItem('token', response.token);
         setUser(response.user);
         
-        // Redirect based on onboarding status
         if (!response.user.onboardingCompleted) {
           navigate('/onboarding/welcome');
         } else {
@@ -144,13 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (apiErr: any) {
         console.log("API approach failed, trying browser redirect:", apiErr);
         
-        // If CORS error, try browser redirect approach instead
         if (apiErr.message && apiErr.message.includes('Network Error')) {
-          // Use environment variable or fallback to Render URL
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
           const baseUrl = baseApiUrl.replace('/api', '');
           
-          // Build URL parameters properly
           const params = new URLSearchParams();
           params.append('name', userData.name);
           params.append('twitterId', userData.twitterId);
@@ -163,12 +148,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             params.append('profileImage', userData.profileImage);
           }
           
-          // Redirect browser to the auth endpoint
           window.location.href = `${baseUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
           return;
         }
         
-        // If not a CORS error, rethrow
         throw apiErr;
       }
     } catch (err: any) {
@@ -179,14 +162,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Logout user
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
     navigate('/');
   };
 
-  // Clear error
   const clearError = () => {
     setError(null);
   };
@@ -217,4 +198,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-} 
+}
