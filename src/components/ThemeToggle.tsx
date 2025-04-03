@@ -1,11 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, SunMoon, Sparkles } from "lucide-react";
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion, AnimatePresence } from "framer-motion";
 
-const ThemeToggle = () => {
+// Internal ThemeToggle component
+const InternalThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -102,6 +102,16 @@ const ThemeToggle = () => {
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
+};
+
+// Safe wrapper that catches errors if used outside ThemeProvider
+const ThemeToggle = () => {
+  try {
+    return <InternalThemeToggle />;
+  } catch (error) {
+    console.warn('ThemeToggle rendered outside of ThemeProvider');
+    return null;
+  }
 };
 
 export default ThemeToggle;

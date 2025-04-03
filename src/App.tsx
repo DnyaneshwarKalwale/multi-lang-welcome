@@ -23,6 +23,7 @@ import FeaturesPage from "./pages/FeaturesPage";
 import HowItWorksPage from "./pages/HowItWorksPage";
 import TestimonialsPage from "./pages/TestimonialsPage";
 import PricingPage from "./pages/PricingPage";
+import ContextVerifier from "./components/ContextVerifier";
 
 const queryClient = new QueryClient();
 
@@ -179,15 +180,17 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
           <LanguageProvider>
             <AuthProvider>
               <OnboardingProvider>
-                <AppRoutes />
+                <ContextVerifier>
+                  <AppRoutes />
+                </ContextVerifier>
               </OnboardingProvider>
             </AuthProvider>
           </LanguageProvider>
+          <Toaster />
+          <Sonner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

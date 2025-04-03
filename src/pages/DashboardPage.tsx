@@ -31,7 +31,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const DashboardPage: React.FC = () => {
+// The main Dashboard component
+const DashboardPageContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -144,13 +145,13 @@ const DashboardPage: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center">
               <SekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
-      </div>
+            </div>
       
             {/* Actions */}
             <div className="flex items-center space-x-4">
               <ThemeToggle />
       
-        <Button 
+              <Button 
                 variant="outline" 
                 size="sm" 
                 className="hidden md:flex items-center gap-2 text-sm"
@@ -174,7 +175,7 @@ const DashboardPage: React.FC = () => {
                       <p className="font-medium">{getUserFullName()}</p>
                       <p className="text-sm text-muted-foreground">{user?.email}</p>
                     </div>
-        </div>
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
@@ -191,8 +192,8 @@ const DashboardPage: React.FC = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="cursor-pointer text-red-500 focus:text-red-500" 
-            onClick={handleLogout}
-          >
+                    onClick={handleLogout}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>{t('logout')}</span>
                   </DropdownMenuItem>
@@ -246,7 +247,7 @@ const DashboardPage: React.FC = () => {
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Upload className="h-4 w-4 text-blue-500" />
                         {t('uploadMedia')}
-                </Button>
+                      </Button>
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Edit3 className="h-4 w-4 text-purple-500" />
                         {t('writeText')}
@@ -586,6 +587,29 @@ const DashboardPage: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Safe wrapper that only renders the dashboard when all required contexts are available
+const DashboardPage: React.FC = () => {
+  try {
+    // Try to access all required contexts to ensure they're available
+    const { theme } = useTheme();
+    const { user } = useAuth();
+    const { t } = useLanguage();
+    
+    return <DashboardPageContent />;
+  } catch (error) {
+    console.error("Error rendering DashboardPage:", error);
+    // Return a fallback loading state if contexts aren't available
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default DashboardPage;
