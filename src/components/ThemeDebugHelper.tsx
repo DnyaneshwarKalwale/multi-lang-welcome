@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -22,7 +22,7 @@ export default function ThemeDebugHelper() {
   });
 
   // Update the theme state information
-  const updateThemeState = () => {
+  const updateThemeState = useCallback(() => {
     // Get theme directly from DOM
     const domIsDark = document.documentElement.classList.contains("dark");
     const domTheme = domIsDark ? "dark" : "light";
@@ -40,7 +40,7 @@ export default function ThemeDebugHelper() {
       localStorageTheme: storedTheme,
       isLoggedIn
     });
-  };
+  }, [themeContext?.theme, authContext?.user]);
 
   // Check if debug mode is enabled via URL and initialize
   useEffect(() => {
@@ -58,10 +58,10 @@ export default function ThemeDebugHelper() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [themeContext?.theme, authContext?.user]);
+  }, [updateThemeState]);
 
   // Helper functions to manipulate theme
-  const forceDarkTheme = () => {
+  const forceDarkTheme = useCallback(() => {
     document.documentElement.classList.add("dark");
     document.documentElement.classList.remove("light");
     localStorage.setItem("theme", "dark");
@@ -72,9 +72,9 @@ export default function ThemeDebugHelper() {
     }
     
     updateThemeState();
-  };
+  }, [themeContext, updateThemeState]);
 
-  const forceLightTheme = () => {
+  const forceLightTheme = useCallback(() => {
     document.documentElement.classList.add("light");
     document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", "light");
@@ -85,9 +85,9 @@ export default function ThemeDebugHelper() {
     }
     
     updateThemeState();
-  };
+  }, [themeContext, updateThemeState]);
   
-  const syncWithBackend = async () => {
+  const syncWithBackend = useCallback(async () => {
     try {
       if (authContext?.syncThemeWithBackend) {
         await authContext.syncThemeWithBackend();
@@ -103,7 +103,7 @@ export default function ThemeDebugHelper() {
     }
     
     updateThemeState();
-  };
+  }, [authContext, themeContext, updateThemeState]);
 
   // If not visible, don't render
   if (!isVisible) {

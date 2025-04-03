@@ -5,9 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
-import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import ThemeDebugHelper from "@/components/ThemeDebugHelper";
 import LoadingScreen from "./components/LoadingScreen";
+import ContextVerifier from "./components/ContextVerifier";
 
 // Pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -131,21 +132,6 @@ function AppRoutes() {
   );
 }
 
-// Context loading guard
-function ContextLoadingGuard() {
-  const { loading: authLoading } = useAuth();
-  const { isThemeLoaded } = useTheme();
-  
-  // Let's assume language doesn't have a loading state
-  const isLoading = authLoading || !isThemeLoaded;
-  
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-  
-  return <AppRoutes />;
-}
-
 // Initialize theme on load
 initializeTheme();
 
@@ -157,9 +143,11 @@ export default function App() {
           <AuthProvider>
             <ThemeProvider>
               <LanguageProvider>
-                <ContextLoadingGuard />
-                <Toaster />
-                <ThemeDebugHelper />
+                <ContextVerifier>
+                  <AppRoutes />
+                  <Toaster />
+                  <ThemeDebugHelper />
+                </ContextVerifier>
               </LanguageProvider>
             </ThemeProvider>
           </AuthProvider>

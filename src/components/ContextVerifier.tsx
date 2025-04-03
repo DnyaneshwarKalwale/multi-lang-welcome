@@ -17,34 +17,43 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Access all contexts directly at component level (not in useEffect or conditionals)
-  let authContext;
-  let themeContext;
-  let langContext;
+  // Try to access contexts at component level (safe location for hooks)
+  let contextError = null;
   
   try {
-    // Try to access all required contexts
-    authContext = useAuth();
-    themeContext = useTheme();
-    langContext = useLanguage();
+    // Access all required contexts at component level
+    const authContext = useAuth();
+    const themeContext = useTheme();
+    const langContext = useLanguage();
     
-    // If we got here, all contexts are available
+    // Check if contexts are loaded within useEffect
     useEffect(() => {
-      // Wait for theme to be loaded
-      if (themeContext.isThemeLoaded) {
-        // Delay slightly to ensure all contexts are fully initialized
-        const timer = setTimeout(() => {
-          setIsLoading(false);
-        }, 300);
-        
-        return () => clearTimeout(timer);
+      try {
+        // Check if theme is loaded
+        if (themeContext.isThemeLoaded) {
+          // Slightly delay showing content to ensure all contexts are ready
+          const timer = setTimeout(() => {
+            setIsLoading(false);
+          }, 300);
+          
+          return () => clearTimeout(timer);
+        }
+      } catch (innerError) {
+        console.error("Error checking contexts in useEffect:", innerError);
+        setError(innerError as Error);
       }
     }, [themeContext.isThemeLoaded]);
+    
   } catch (e) {
-    // If context access fails, set error
-    useEffect(() => {
-      console.error("Context verification failed:", e);
-      setError(e as Error);
+    // If context access fails at component level, capture the error
+    contextError = e as Error;
+  }
+  
+  // Handle errors in context access
+  useEffect(() => {
+    if (contextError) {
+      console.error("Failed to access required contexts:", contextError);
+      setError(contextError);
       
       // Force render after a timeout as failsafe
       const timer = setTimeout(() => {
@@ -52,8 +61,8 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
       }, 2000);
       
       return () => clearTimeout(timer);
-    }, []);
-  }
+    }
+  }, [contextError]);
   
   // If still loading, show spinner
   if (isLoading) {
