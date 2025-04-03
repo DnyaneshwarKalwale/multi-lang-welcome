@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0;url=/">
+  <title>Redirecting...</title>
+  <script>
+    // Store the token and redirect
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      const onboarding = params.get('onboarding') === 'true';
+      
+      if (token) {
+        localStorage.setItem('token', token);
+        
+        // Redirect to the appropriate page
+        window.location.href = onboarding ? '/onboarding/welcome' : '/dashboard';
+      } else {
+        window.location.href = '/';
+      }
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html> 

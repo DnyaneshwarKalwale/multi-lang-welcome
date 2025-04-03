@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Success</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f9ff;
+      color: #1e293b;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #0891b2;
+    }
+
+    .spinner {
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-top: 3px solid #0891b2;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .success-message {
+      margin-bottom: 24px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Login Successful</h1>
+    <div class="spinner"></div>
+    <p class="success-message">You've successfully authenticated. You're being redirected to the app...</p>
+  </div>
+
+  <script>
+    (function() {
+      // Extract token and other parameters from URL
+      const queryParams = new URLSearchParams(window.location.search);
+      const token = queryParams.get('token');
+      const onboarding = queryParams.get('onboarding') === 'true';
+      
+      if (token) {
+        // Store token in localStorage
+        localStorage.setItem('token', token);
+        
+        // Redirect to appropriate page
+        const destination = onboarding ? '/onboarding/welcome' : '/dashboard';
+        setTimeout(() => {
+          window.location.href = destination;
+        }, 1500);
+      } else {
+        // Fallback to home page if no token
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+      }
+    })();
+  </script>
+</body>
+</html> 

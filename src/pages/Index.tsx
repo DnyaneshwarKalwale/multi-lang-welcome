@@ -3,21 +3,63 @@ import { ScripeLogotype, ScripeIcon } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, ChevronRight, Star, Twitter, Users, Zap } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { LoginSheet } from "@/components/LoginSheet";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
+  // Check for OAuth callback parameters in URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const onboarding = params.get('onboarding') === 'true';
+    const auth = params.get('auth');
+    
+    if (token && auth === 'social') {
+      console.log('Social auth token detected in URL, saving token');
+      
+      // Store the token in localStorage
+      localStorage.setItem('token', token);
+      
+      // Clear URL parameters by using replaceState
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Redirect based on onboarding status after a small delay
+      setTimeout(() => {
+        if (onboarding) {
+          navigate('/onboarding/welcome');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 100);
+    }
+  }, [location, navigate]);
+  
+  // Redirect authenticated users
+  useEffect(() => {
+    if (isAuthenticated) {
+      const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+      if (onboardingCompleted) {
+        navigate('/dashboard');
+      } else {
+        navigate('/onboarding/welcome');
+      }
+    }
+  }, [isAuthenticated, navigate]);
+
   // Handle scroll events to change navbar appearance
   useEffect(() => {
     const handleScroll = () => {
