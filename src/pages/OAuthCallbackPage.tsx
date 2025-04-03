@@ -39,7 +39,8 @@ export default function OAuthCallbackPage() {
         onboarding, 
         error: errorParam,
         fullUrl: window.location.href,
-        pathname: location.pathname
+        pathname: location.pathname,
+        search: location.search
       });
       
       if (errorParam) {
@@ -58,8 +59,13 @@ export default function OAuthCallbackPage() {
         return;
       }
       
-      // Set token in localStorage
-      localStorage.setItem('token', token);
+      // Set token in localStorage immediately
+      try {
+        localStorage.setItem('token', token);
+        console.log('Token stored in localStorage');
+      } catch (err) {
+        console.error('Error storing token:', err);
+      }
       
       // Fetch user info to verify token works
       setStatus('Verifying authentication...');
