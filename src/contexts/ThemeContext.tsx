@@ -58,7 +58,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Force theme on initial load (simplified to avoid redundancy)
+  // Apply default theme immediately when component mounts
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) {
@@ -66,7 +66,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       // Set default theme to dark
       setTheme("dark");
-      // Apply dark theme to the document immediately
       document.documentElement.classList.add("dark");
     }
   }, []);
@@ -94,3 +93,5 @@ export function useTheme() {
   }
   return context;
 }
+
+export { ThemeContext }; // Export the context itself so it can be accessed directly

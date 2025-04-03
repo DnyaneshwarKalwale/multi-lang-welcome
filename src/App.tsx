@@ -145,42 +145,45 @@ function ProtectedDashboardRoute() {
   return <DashboardPage />;
 }
 
+// Define the main app content as a separate component
+// This ensures all context providers are properly ordered
+function AppContent() {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+      
+      {/* Check for invitations first, then redirect to onboarding or dashboard */}
+      <Route element={<InvitationCheckRoute />}>
+        <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+        <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+      </Route>
+      
+      <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      {/* BrowserRouter must be the outermost routing context */}
       <BrowserRouter>
-        {/* ThemeProvider needs to be accessible throughout the app */}
         <ThemeProvider>
-          {/* LanguageProvider depends on ThemeProvider */}
-          <LanguageProvider>
-            {/* AuthProvider depends on ThemeProvider */}
-            <AuthProvider>
-              {/* OnboardingProvider depends on ThemeProvider, LanguageProvider, and AuthProvider */}
-              <OnboardingProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/verify-email" element={<VerifyEmailPage />} />
-                    <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-                    <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
-                    
-                    {/* Check for invitations first, then redirect to onboarding or dashboard */}
-                    <Route element={<InvitationCheckRoute />}>
-                      <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
-                      <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
-                    </Route>
-                    
-                    <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </TooltipProvider>
-              </OnboardingProvider>
-            </AuthProvider>
-          </LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <LanguageProvider>
+              <AuthProvider>
+                <OnboardingProvider>
+                  <AppContent />
+                </OnboardingProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </TooltipProvider>
         </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
