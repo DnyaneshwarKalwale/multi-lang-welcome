@@ -144,13 +144,13 @@ const DashboardPage: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center">
               <SekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
-            </div>
+      </div>
       
             {/* Actions */}
             <div className="flex items-center space-x-4">
               <ThemeToggle />
       
-              <Button 
+        <Button 
                 variant="outline" 
                 size="sm" 
                 className="hidden md:flex items-center gap-2 text-sm"
@@ -174,7 +174,7 @@ const DashboardPage: React.FC = () => {
                       <p className="font-medium">{getUserFullName()}</p>
                       <p className="text-sm text-muted-foreground">{user?.email}</p>
                     </div>
-                  </div>
+        </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
@@ -191,8 +191,8 @@ const DashboardPage: React.FC = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="cursor-pointer text-red-500 focus:text-red-500" 
-                    onClick={handleLogout}
-                  >
+            onClick={handleLogout}
+          >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>{t('logout')}</span>
                   </DropdownMenuItem>
@@ -246,7 +246,7 @@ const DashboardPage: React.FC = () => {
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Upload className="h-4 w-4 text-blue-500" />
                         {t('uploadMedia')}
-                      </Button>
+                </Button>
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Edit3 className="h-4 w-4 text-purple-500" />
                         {t('writeText')}
@@ -266,7 +266,7 @@ const DashboardPage: React.FC = () => {
                         </Badge>
                         <span>280 {t('characters')}</span>
                       </div>
-                      <div className="flex gap-3">
+                          <div className="flex gap-3">
                         <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
                           <Calendar className="h-3 w-3" />
                           {t('schedule')}
@@ -446,7 +446,7 @@ const DashboardPage: React.FC = () => {
                         ↑ {analyticsData.impressions.increase}%
                       </span>
                     </div>
-                  </div>
+                    </div>
                 </CardContent>
               </Card>
 
@@ -478,15 +478,15 @@ const DashboardPage: React.FC = () => {
                     {analyticsData.engagement.labels.map((label, index) => (
                       <span key={index}>{label}</span>
                     ))}
-                  </div>
+              </div>
                   <div className="mt-4 pt-3 border-t flex justify-between items-center">
                     <p className="text-xs text-gray-500">{analyticsData.engagement.timeframe}</p>
                     <div className="flex items-center text-sm">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                         ↑ {analyticsData.engagement.increase}%
                       </span>
-                    </div>
-                  </div>
+            </div>
+          </div>
                 </CardContent>
               </Card>
 
@@ -502,7 +502,7 @@ const DashboardPage: React.FC = () => {
                     <div className="absolute inset-0 flex items-end">
                       {analyticsData.followers.data.map((value, index) => (
                         <div 
-                          key={index} 
+                key={index}
                           className="flex-1 mx-0.5"
                           style={{ height: `${(value / Math.max(...analyticsData.followers.data)) * 100}%` }}
                         >
@@ -510,7 +510,7 @@ const DashboardPage: React.FC = () => {
                             className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40 dark:from-teal-500/60 dark:to-emerald-400/60"
                             style={{ opacity: 0.5 + ((index + 1) / analyticsData.followers.data.length) * 0.5 }}
                           ></div>
-                        </div>
+                    </div>
                       ))}
                     </div>
                   </div>
@@ -524,12 +524,12 @@ const DashboardPage: React.FC = () => {
                     <div className="flex items-center text-sm">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                         ↑ {analyticsData.followers.increase}%
-                      </span>
+                    </span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
+                </div>
           </TabsContent>
 
           <TabsContent value="tweets">
@@ -545,7 +545,7 @@ const DashboardPage: React.FC = () => {
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                               <span className="font-semibold">{getUserFullName()}</span>
                               <span className="text-gray-500 text-sm">@{getUserFullName().toLowerCase().replace(/\s/g, '')}</span>
                               <span className="text-gray-500 text-sm">·</span>
@@ -553,29 +553,29 @@ const DashboardPage: React.FC = () => {
                             </div>
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                               <Edit3 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                  </Button>
+                </div>
                           <p className="text-sm mb-4">{tweet.content}</p>
                           <div className="flex gap-6 text-gray-500 text-sm">
                             <div className="flex items-center gap-1">
                               <MessageSquare className="h-4 w-4" />
                               <span>{tweet.stats.replies}</span>
-                            </div>
+              </div>
                             <div className="flex items-center gap-1">
                               <Share2 className="h-4 w-4" />
                               <span>{tweet.stats.retweets}</span>
-                            </div>
+                </div>
                             <div className="flex items-center gap-1">
                               <ThumbsUp className="h-4 w-4" />
                               <span>{tweet.stats.likes}</span>
-                            </div>
+              </div>
                             <div className="flex items-center gap-1">
                               <Eye className="h-4 w-4" />
                               <span>{tweet.stats.impressions}</span>
-                            </div>
-                          </div>
-                        </div>
                       </div>
+                      </div>
+                    </div>
+                  </div>
                     </CardContent>
                   </Card>
                 ))}

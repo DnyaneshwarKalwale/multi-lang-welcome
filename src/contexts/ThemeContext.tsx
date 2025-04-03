@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 type Theme = "light" | "dark";
@@ -8,31 +9,64 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
+// Create the context with undefined as default - the provider will set the actual value
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check if theme is saved in localStorage
     const savedTheme = localStorage.getItem("theme") as Theme;
-    // Default to dark theme regardless of user preference
-    return savedTheme || "dark";
+    
+    // Default to dark if no theme is set
+    if (!savedTheme) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
+    }
+    
+    return savedTheme;
   });
+  
+  const [mounted, setMounted] = useState(false);
 
+  // Handle theme class on document and save to localStorage
   useEffect(() => {
+    if (!mounted) return;
+    
+    // Add a transition class before changing theme to enable smooth transitions
+    document.documentElement.classList.add('theme-transition');
+    
     // Update class on document element
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
     } else {
+      document.documentElement.classList.add("light");
       document.documentElement.classList.remove("dark");
     }
     
     // Save to localStorage
     localStorage.setItem("theme", theme);
-  }, [theme]);
+    
+    // Remove transition class after the transition is complete
+    const transitionTimeout = setTimeout(() => {
+      document.documentElement.classList.remove('theme-transition');
+    }, 300);
+    
+    return () => clearTimeout(transitionTimeout);
+  }, [theme, mounted]);
 
-  // Force dark mode on initial load 
+  // Set mounted to true on initial render
   useEffect(() => {
-    if (theme === "dark" && !document.documentElement.classList.contains("dark")) {
+    setMounted(true);
+  }, []);
+
+  // Apply default theme immediately when component mounts
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as Theme;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      // Set default theme to dark
+      setTheme("dark");
       document.documentElement.classList.add("dark");
     }
   }, []);
@@ -40,6 +74,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
+
+  // Avoid hydration mismatch by rendering children only after mounted
+  if (!mounted) {
+    return <div style={{ visibility: 'hidden' }}>{children}</div>;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
@@ -55,3 +94,5 @@ export function useTheme() {
   }
   return context;
 }
+
+export { ThemeContext }; // Export the context itself so it can be accessed directly

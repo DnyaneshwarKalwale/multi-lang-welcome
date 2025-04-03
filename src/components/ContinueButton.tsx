@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,8 +24,8 @@ export function ContinueButton({
 }: ContinueButtonProps) {
   const isMobile = useIsMobile();
   
-  let buttonVariant = "gradient";
-  let animation = "lift";
+  let buttonVariant: "gradient" | "twitter" | "cyan" = "gradient";
+  let animation: "lift" | "pulse" | "shine" = "lift";
   
   if (variant === "twitter") {
     buttonVariant = "twitter";

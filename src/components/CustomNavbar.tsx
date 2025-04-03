@@ -1,15 +1,15 @@
 
 import { Link, useLocation } from 'react-router-dom';
-import { useContext } from 'react';
-import { AuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
 import MobileMenu from '@/components/MobileMenu';
 import { ScripeIcon } from '@/components/ScripeIcon';
-import { LogOut } from 'lucide-react';
+import { LogOut, Sparkles, Stars, MessageCircle, Bell, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const CustomNavbar = () => {
-  const { isAuthenticated, user, logout } = useContext(AuthContext);
+  const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -26,12 +26,75 @@ const CustomNavbar = () => {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <div className="container flex h-16 items-center justify-between px-4">
+    <header className="sticky top-0 z-40 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-primary-100/30 dark:border-gray-800/50 transition-colors duration-300">
+      <div className="container relative flex h-16 items-center justify-between px-4 overflow-hidden">
+        {/* Floating icons decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            className="absolute top-1 left-[20%] text-primary-400/20 dark:text-primary-400/10"
+            animate={{ 
+              y: [0, -10, 0],
+              rotate: [0, 5, 0]
+            }}
+            transition={{ 
+              duration: 4, 
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <Sparkles size={16} />
+          </motion.div>
+          <motion.div 
+            className="absolute bottom-1 left-[60%] text-violet-400/20 dark:text-violet-400/10"
+            animate={{ 
+              y: [0, 8, 0],
+              rotate: [0, -5, 0]
+            }}
+            transition={{ 
+              duration: 5, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          >
+            <Stars size={14} />
+          </motion.div>
+          <motion.div 
+            className="absolute top-3 right-[30%] text-cyan-400/10 dark:text-cyan-400/5"
+            animate={{ 
+              y: [0, -6, 0],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ 
+              duration: 6, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2
+            }}
+          >
+            <MessageCircle size={18} />
+          </motion.div>
+          <motion.div 
+            className="absolute bottom-2 right-[15%] text-amber-400/15 dark:text-amber-400/10"
+            animate={{ 
+              y: [0, 5, 0],
+              rotate: [0, 10, 0]
+            }}
+            transition={{ 
+              duration: 7, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1.5
+            }}
+          >
+            <Zap size={12} />
+          </motion.div>
+        </div>
+
         <div className="flex items-center gap-2">
-          <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <ScripeIcon className="h-8 w-8" />
-            <span className="text-xl font-bold">Scripe</span>
+          <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2 transition-transform hover:scale-[1.02]">
+            <ScripeIcon className="h-8 w-8 text-primary-500 dark:text-primary-400" />
+            <span className="text-xl font-bold text-gray-900 dark:text-white">Scripe</span>
           </Link>
           
           {isAuthenticated && (
@@ -40,7 +103,11 @@ const CustomNavbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 
+                    ${isActive(item.path) 
+                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' 
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-primary-600 dark:hover:text-primary-400'
+                    }`}
                 >
                   {item.label}
                 </Link>
@@ -54,32 +121,44 @@ const CustomNavbar = () => {
           
           {isAuthenticated ? (
             <div className="hidden lg:flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-brand-purple/20 flex items-center justify-center text-brand-purple font-semibold">
-                  {user?.name?.charAt(0) || 'U'}
-                </div>
-                <span className="text-sm font-medium hidden xl:inline">
-                  {user?.name || 'User'}
-                </span>
-              </div>
+              <motion.div className="relative">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center text-white font-semibold shadow-sm"
+                >
+                  {user?.firstName ? user.firstName.charAt(0) : 'U'}
+                </motion.div>
+                <motion.div 
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring" }}
+                >
+                  2
+                </motion.div>
+              </motion.div>
+              
+              <span className="text-sm font-medium hidden xl:inline text-gray-800 dark:text-gray-200">
+                {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'User'}
+              </span>
               
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={logout}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 group"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="h-4 w-4 mr-2 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors" />
                 Sign out
               </Button>
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-4">
               <Link to="/">
-                <Button variant="outline" size="sm">Sign in</Button>
+                <Button variant="outline" size="sm" className="border-primary-200 dark:border-gray-700 text-primary-700 dark:text-primary-400 hover:border-primary-500 dark:hover:border-primary-600">Sign in</Button>
               </Link>
               <Link to="/registration">
-                <Button size="sm">Sign up</Button>
+                <Button size="sm" variant="gradient" className="shadow-sm">Sign up</Button>
               </Link>
             </div>
           )}

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export function BackButton({
   }
   
   // Normal button with consistent styling
-  let buttonVariant = "outline";
+  let buttonVariant: "outline" | "ghost" = "outline";
   let textColorClass = "text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500/30";
   
   if (variant === "twitter") {

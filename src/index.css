@@ -6,65 +6,67 @@
 
 @layer base {
   :root {
-    --background: 210 50% 98%;
-    --foreground: 230 60% 10%;
+    /* Light theme colors */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     
     --card: 0 0% 100%;
-    --card-foreground: 230 60% 10%;
+    --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 230 60% 10%;
+    --popover-foreground: 222 47% 11%;
     
-    --primary: 250 95% 60%;
+    --primary: 252 59% 54%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 190 90% 50%;
+    --secondary: 196 80% 45%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 215 25% 94%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 46%;
     
-    --accent: 250 95% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 252 59% 96%;
+    --accent-foreground: 222 47% 11%;
     
-    --destructive: 0 84% 60%;
+    --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 215 25% 90%;
-    --input: 215 25% 90%;
-    --ring: 250 95% 60%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 252 59% 54%;
     
-    --radius: 1rem;
+    --radius: 0.6rem;
   }
  
   .dark {
-    --background: 230 25% 8%;
-    --foreground: 210 30% 98%;
+    /* Dark theme colors */
+    --background: 222 47% 5%;
+    --foreground: 210 40% 98%;
     
-    --card: 230 25% 12%;
-    --card-foreground: 210 30% 98%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
     
-    --popover: 230 25% 12%;
-    --popover-foreground: 210 30% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
     
-    --primary: 250 95% 60%;
+    --primary: 252 59% 54%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 190 90% 50%;
+    --secondary: 196 80% 45%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 230 25% 16%;
-    --muted-foreground: 210 20% 80%;
+    --muted: 222 47% 15%;
+    --muted-foreground: 210 40% 80%;
     
-    --accent: 250 80% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 252 59% 20%;
+    --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 210 40% 98%;
     
-    --border: 230 20% 20%;
-    --input: 230 20% 20%;
-    --ring: 250 80% 60%;
+    --border: 222 47% 18%;
+    --input: 222 47% 18%;
+    --ring: 252 59% 65%;
   }
 }
  
@@ -73,17 +75,21 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-semibold tracking-tight;
   }
+  
+  .theme-transition {
+    @apply transition-colors duration-300;
+  }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/90 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;
+    @apply bg-white/90 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-gray-800/50 shadow-lg;
   }
   
   .nav-link {
@@ -95,7 +101,7 @@
   }
   
   .form-container {
-    @apply w-full max-w-md mx-auto space-y-6 p-6 bg-white dark:bg-gray-900/50 rounded-xl shadow-lg dark:shadow-none border border-gray-100 dark:border-gray-800;
+    @apply w-full max-w-md mx-auto space-y-6 p-6 bg-white/80 dark:bg-gray-900/60 rounded-xl shadow-lg backdrop-blur-sm border border-gray-100/70 dark:border-gray-800/50 transition-colors;
   }
   
   .input-wrapper {
@@ -121,7 +127,7 @@
   }
   
   .card-container {
-    @apply p-5 rounded-xl bg-white dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 
+    @apply p-5 rounded-xl bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-100/70 dark:border-gray-800/50
           shadow-sm hover:shadow-lg transition-all duration-300;
   }
   
@@ -130,9 +136,9 @@
   }
   
   .onboarding-card {
-    @apply w-full max-w-md mx-auto animate-fade-in bg-white dark:bg-gray-900/70 
-          rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 
-          shadow-xl;
+    @apply w-full max-w-md mx-auto animate-fade-in bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm
+          rounded-2xl overflow-hidden border border-gray-100/70 dark:border-gray-800/50
+          shadow-xl transition-colors;
   }
   
   .onboarding-header {
@@ -144,11 +150,11 @@
   }
   
   .onboarding-footer {
-    @apply px-6 py-4 bg-gray-50 dark:bg-gray-800/30 flex items-center justify-between;
+    @apply px-6 py-4 bg-gray-50/80 dark:bg-gray-800/30 flex items-center justify-between backdrop-blur-sm;
   }
   
   .novus-card {
-    @apply rounded-lg bg-white dark:bg-gray-900/70 border border-gray-100 dark:border-gray-800 
+    @apply rounded-lg bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm border border-gray-100/70 dark:border-gray-800/50
            shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden;
   }
   
@@ -202,6 +208,22 @@
   
   .bg-dots-pattern {
     background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%237C3AED' fill-opacity='0.05'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  .frosted-glass {
+    @apply backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-800/30;
+  }
+  
+  .subtle-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark .subtle-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .bg-grid-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 }
 
@@ -275,4 +297,23 @@
 
 .animate-spin-slow {
   animation: spin-slow 4s linear infinite;
+}
+
+/* Improved Form elements */
+input::placeholder {
+  @apply text-gray-400 dark:text-gray-500 opacity-90;
+}
+
+input, textarea, select {
+  @apply text-gray-900 dark:text-white transition-colors;
+}
+
+/* Focus styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 dark:focus:border-primary-400;
+}
+
+/* Subtle divider */
+.subtle-divider {
+  @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent;
 }

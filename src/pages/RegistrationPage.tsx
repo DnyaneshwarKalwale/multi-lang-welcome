@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ArrowRight, User, UserPlus, Twitter, AtSign, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, UserPlus, Twitter, AtSign } from "lucide-react";
 import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,34 +16,17 @@ export default function RegistrationPage() {
   const { firstName, setFirstName, lastName, setLastName, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleContinue = () => {
-    // Prevent multiple submissions
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    
     // Save data to localStorage to ensure persistence
     localStorage.setItem('user_firstName', firstName);
     localStorage.setItem('user_lastName', lastName);
     
-    try {
-      nextStep();
-      navigate("/onboarding/extension-install");
-    } catch (error) {
-      console.error("Error during navigation:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    nextStep();
+    navigate("/onboarding/extension-install");
   };
   
   const handleSkipToDashboard = () => {
-    // Prevent multiple submissions
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    
     // Mark onboarding as completed in localStorage
     localStorage.setItem('onboardingCompleted', 'true');
     navigate("/dashboard");
@@ -101,7 +84,6 @@ export default function RegistrationPage() {
           rounded="full"
           className="flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-500 dark:hover:text-blue-400"
           onClick={handlePrev}
-          disabled={isLoading}
         >
           <ArrowLeft size={18} />
         </Button>
@@ -160,7 +142,6 @@ export default function RegistrationPage() {
               className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
                        focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 
                        transition-all text-gray-900 dark:text-white rounded-lg"
-              disabled={isLoading}
             />
           </motion.div>
           
@@ -177,7 +158,6 @@ export default function RegistrationPage() {
               className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
                        focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 
                        transition-all text-gray-900 dark:text-white rounded-lg"
-              disabled={isLoading}
             />
           </motion.div>
           
@@ -203,17 +183,10 @@ export default function RegistrationPage() {
             variant="twitter"
             rounded="full"
             className="w-64 py-3 text-white font-bold"
-            disabled={!firstName.trim() || !lastName.trim() || isLoading}
+            disabled={!firstName.trim() || !lastName.trim()}
             onClick={handleContinue}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('loading')}
-              </>
-            ) : (
-              t('continue')
-            )}
+            {t('continue')}
           </Button>
           
           <Button
@@ -221,7 +194,6 @@ export default function RegistrationPage() {
             rounded="full"
             className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 px-6 py-2 text-sm"
             onClick={handleSkipToDashboard}
-            disabled={isLoading}
           >
             {t('skipToDashboard')}
           </Button>

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme, ThemeContext } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
@@ -22,7 +22,7 @@ type OnboardingStep =
 
 type WorkspaceType = "team" | "personal" | null;
 type ThemeType = "light" | "dark";
-type LanguageType = "english" | "german" | null;
+type LanguageType = "english" | "german" | "spanish" | "french" | null;
 type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 
@@ -80,15 +80,21 @@ const allSteps: OnboardingStep[] = [
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { setTheme: setGlobalTheme } = useTheme();
+  
+  // Try to get theme context safely, but don't throw if it's not available
+  // This prevents circular dependency issues
+  const themeContext = useContext(ThemeContext); 
   const { setLanguage: setGlobalLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   
+  // Only access theme methods if themeContext exists
+  const setGlobalTheme = themeContext ? themeContext.setTheme : () => {};
+
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
   const [workspaceName, setWorkspaceName] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [theme, setTheme] = useState<ThemeType>("light");
+  const [theme, setTheme] = useState<ThemeType>("dark");
   const [language, setLanguage] = useState<LanguageType>("english");
   const [postFormat, setPostFormat] = useState<PostFormat>(null);
   const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
@@ -237,12 +243,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStep, isInitialized]);
 
-  // Update global theme when onboarding theme changes
+  // Update global theme when onboarding theme changes - with safeguard
   useEffect(() => {
-    if (theme) {
+    if (theme && themeContext) {
       setGlobalTheme(theme);
     }
-  }, [theme, setGlobalTheme]);
+  }, [theme, themeContext]);
 
   // Update global language when onboarding language changes
   useEffect(() => {
