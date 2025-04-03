@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -8,109 +8,98 @@ import { useAuth } from "@/contexts/AuthContext";
  * Only visible when ?debugTheme=true is in the URL
  */
 export default function ThemeDebugHelper() {
-  // Access context hooks at the component level
   const themeContext = useTheme();
   const authContext = useAuth();
   
   const [isVisible, setIsVisible] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [themeState, setThemeState] = useState({
-    contextTheme: null as string | null,
-    domTheme: null as string | null,
-    localStorageTheme: null as string | null,
+    domTheme: "",
+    localStorageTheme: "",
     isLoggedIn: false
   });
 
-  // Update the theme state information
-  const updateThemeState = useCallback(() => {
-    // Get theme directly from DOM
-    const domIsDark = document.documentElement.classList.contains("dark");
-    const domTheme = domIsDark ? "dark" : "light";
-    
-    // Get theme from localStorage
-    const storedTheme = localStorage.getItem("theme");
-    
-    // Get context values safely
-    const contextTheme = themeContext?.theme || null;
-    const isLoggedIn = !!authContext?.user;
-    
-    setThemeState({
-      contextTheme,
-      domTheme,
-      localStorageTheme: storedTheme,
-      isLoggedIn
-    });
-  }, [themeContext?.theme, authContext?.user]);
-
-  // Check if debug mode is enabled via URL and initialize
+  // Set up the component on mount
   useEffect(() => {
+    // Check if debug mode is enabled via URL
     const urlParams = new URLSearchParams(window.location.search);
     const shouldDebug = urlParams.get("debugTheme") === "true";
     setIsVisible(shouldDebug);
     
     if (shouldDebug) {
+      // Initial update
       updateThemeState();
+      
+      // Set up an interval for periodic updates
+      const intervalId = setInterval(updateThemeState, 2000);
+      return () => clearInterval(intervalId);
     }
-    
-    // Set up an interval to periodically update the theme state
-    const intervalId = setInterval(updateThemeState, 2000);
-    
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [updateThemeState]);
+  }, []);
 
-  // Helper functions to manipulate theme
-  const forceDarkTheme = useCallback(() => {
-    document.documentElement.classList.add("dark");
-    document.documentElement.classList.remove("light");
-    localStorage.setItem("theme", "dark");
+  // Update theme state (called on interval)
+  function updateThemeState() {
+    const domIsDark = document.documentElement.classList.contains("dark");
+    const domTheme = domIsDark ? "dark" : "light";
+    const storedTheme = localStorage.getItem("theme") || "not set";
+    const isLoggedIn = !!authContext?.user;
     
-    // Use context if available
+    setThemeState({
+      domTheme,
+      localStorageTheme: storedTheme,
+      isLoggedIn
+    });
+  }
+
+  // Helper for direct DOM manipulation
+  function applyThemeToDom(theme: "dark" | "light") {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }
+
+  // Theme toggle handlers
+  function handleForceDark() {
+    applyThemeToDom("dark");
+    
+    // Also update via context if available
     if (themeContext?.setTheme) {
       themeContext.setTheme("dark");
     }
     
     updateThemeState();
-  }, [themeContext, updateThemeState]);
-
-  const forceLightTheme = useCallback(() => {
-    document.documentElement.classList.add("light");
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
+  }
+  
+  function handleForceLight() {
+    applyThemeToDom("light");
     
-    // Use context if available
+    // Also update via context if available
     if (themeContext?.setTheme) {
       themeContext.setTheme("light");
     }
     
     updateThemeState();
-  }, [themeContext, updateThemeState]);
+  }
   
-  const syncWithBackend = useCallback(async () => {
-    try {
-      if (authContext?.syncThemeWithBackend) {
-        await authContext.syncThemeWithBackend();
-        console.log("Theme synced with backend via AuthContext");
-      } else if (themeContext?.saveThemeToBackend) {
-        await themeContext.saveThemeToBackend(themeContext.theme);
-        console.log("Theme saved to backend via ThemeContext");
-      } else {
-        console.log("No method available to sync theme with backend");
-      }
-    } catch (error) {
-      console.error("Failed to sync theme with backend:", error);
+  function handleSyncWithBackend() {
+    if (authContext?.syncThemeWithBackend) {
+      authContext.syncThemeWithBackend().catch(console.error);
+    } else if (themeContext?.saveThemeToBackend) {
+      themeContext.saveThemeToBackend(themeContext.theme).catch(console.error);
     }
     
     updateThemeState();
-  }, [authContext, themeContext, updateThemeState]);
+  }
 
-  // If not visible, don't render
+  // If not visible, render nothing
   if (!isVisible) {
     return null;
   }
 
-  // Display a minimal or full debug panel
   return (
     <div 
       className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 text-sm"
@@ -138,7 +127,7 @@ export default function ThemeDebugHelper() {
         <>
           <div className="space-y-2 mb-3">
             <p className="text-xs text-gray-600 dark:text-gray-300">
-              <strong>Context Theme:</strong> {themeState.contextTheme || "Not available"}
+              <strong>Theme Context:</strong> {themeContext?.theme || "Not available"}
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-300">
               <strong>DOM Theme:</strong> {themeState.domTheme || "Not detected"}
@@ -153,19 +142,19 @@ export default function ThemeDebugHelper() {
           
           <div className="flex flex-col space-y-2">
             <button 
-              onClick={forceDarkTheme}
+              onClick={handleForceDark}
               className="px-2 py-1 bg-gray-800 text-white text-xs rounded hover:bg-gray-700"
             >
               Force Dark Theme
             </button>
             <button 
-              onClick={forceLightTheme}
+              onClick={handleForceLight}
               className="px-2 py-1 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
             >
               Force Light Theme
             </button>
             <button 
-              onClick={syncWithBackend}
+              onClick={handleSyncWithBackend}
               className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
               disabled={!themeState.isLoggedIn}
             >
