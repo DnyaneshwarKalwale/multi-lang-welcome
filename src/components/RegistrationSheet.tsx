@@ -12,6 +12,7 @@ import { LoginSheet } from "./LoginSheet";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/useLanguage";
 
 interface RegistrationSheetProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   const navigate = useNavigate();
   const { register, error, clearError, loading, twitterAuth } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -114,7 +116,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-gray-200 dark:border-gray-800 p-0 w-full sm:max-w-md">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gradient-to-b from-primary-50/80 to-white dark:from-gray-900 dark:to-gray-950 border-primary-100 dark:border-gray-800 p-0 w-full sm:max-w-md">
           <motion.div 
             className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
             variants={containerVariants}
@@ -126,9 +128,9 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <ScripeIconRounded className="w-10 h-10 text-blue-500" />
+                <ScripeIconRounded className="w-10 h-10 text-primary-600" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Create your account
+                  {t('createAccount') || 'Create your account'}
                 </h2>
               </motion.div>
               <Button 
@@ -154,24 +156,24 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-gray-700 dark:text-white" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 text-gray-700 dark:text-white" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
                   <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
-                  <span>Continue with Google</span>
+                  <span>{t('continueWithGoogle') || 'Continue with Google'}</span>
                 </Button>
               </motion.div>
               
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-gray-700 dark:text-white" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 text-gray-700 dark:text-white" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
-                  <Twitter size={18} className="text-[#1DA1F2]" />
-                  <span>Continue with Twitter</span>
+                  <Twitter size={18} className="text-primary-500" />
+                  <span>{t('continueWithTwitter') || 'Continue with Twitter'}</span>
                 </Button>
               </motion.div>
             </div>
@@ -181,7 +183,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Or continue with email</span>
+                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{t('orContinueWithEmail') || 'Or continue with email'}</span>
               </div>
             </motion.div>
             
@@ -194,12 +196,14 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">First name</label>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('firstName') || 'First name'}</label>
                   <div className="relative">
                     <Input 
                       id="firstName" 
-                      placeholder="Enter your first name" 
-                      className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                      placeholder={t('enterFirstName') || 'Enter your first name'}
+                      className="bg-white/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 
+                                 focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+                                 transition-all text-gray-900 dark:text-white"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
@@ -208,12 +212,14 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Last name</label>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('lastName') || 'Last name'}</label>
                   <div className="relative">
                     <Input 
                       id="lastName" 
-                      placeholder="Enter your last name" 
-                      className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                      placeholder={t('enterLastName') || 'Enter your last name'}
+                      className="bg-white/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 
+                                 focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+                                 transition-all text-gray-900 dark:text-white"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
@@ -223,13 +229,15 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('email') || 'Email'}</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                    className="bg-white/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 
+                               focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+                               transition-all text-gray-900 dark:text-white"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -238,13 +246,15 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </motion.div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('password') || 'Password'}</label>
                 <div className="relative">
                   <Input 
                     id="password" 
                     type="password" 
-                    placeholder="Create a secure password (min. 8 characters)" 
-                    className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                    placeholder={t('createSecurePassword') || 'Create a secure password (min. 8 characters)'}
+                    className="bg-white/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 
+                               focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+                               transition-all text-gray-900 dark:text-white"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     minLength={8}
@@ -256,7 +266,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 rounded-md transition-all duration-200"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium h-12 rounded-md transition-all duration-200"
                   disabled={loading}
                 >
                   {loading ? (
@@ -265,9 +275,9 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Creating account...
+                      {t('creatingAccount') || 'Creating account...'}
                     </div>
-                  ) : 'Create account'}
+                  ) : t('createAccount') || 'Create account'}
                 </Button>
               </motion.div>
             </motion.form>
@@ -276,13 +286,13 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400"
               variants={itemVariants}
             >
-              Already have an account?{' '}
+              {t('alreadyHaveAccount') || 'Already have an account?'}{' '}
               <a 
                 href="#" 
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors font-medium" 
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors font-medium" 
                 onClick={handleLogin}
               >
-                Log in
+                {t('logIn') || 'Log in'}
               </a>
             </motion.p>
             
@@ -290,20 +300,24 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               className="text-center mt-6 text-xs text-gray-600 dark:text-gray-500"
               variants={itemVariants}
             >
-              By continuing, you agree to our{' '}
-              <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline">Terms of Service</a>
-              {' '}and{' '}
-              <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline">Privacy Policy</a>.
+              {t('byConnecting') || 'By continuing, you agree to our'}{' '}
+              <a href="#" className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 underline">
+                {t('termsService') || 'Terms of Service'}
+              </a>
+              {' '}{t('and') || 'and'}{' '}
+              <a href="#" className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 underline">
+                {t('privacyPolicy') || 'Privacy Policy'}
+              </a>.
             </motion.p>
 
             {/* Add note about Twitter integration */}
             <motion.div 
-              className="mt-8 flex items-center justify-center px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg"
+              className="mt-8 flex items-center justify-center px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/30 rounded-lg"
               variants={itemVariants}
             >
-              <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-blue-500" />
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                Connect your Twitter account to share content directly from Scripe to your audience.
+              <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-primary-500" />
+              <p className="text-sm text-primary-700 dark:text-primary-300">
+                {t('connectTwitterPrompt') || 'Connect your Twitter account to share content directly from Scripe to your audience.'}
               </p>
             </motion.div>
           </motion.div>

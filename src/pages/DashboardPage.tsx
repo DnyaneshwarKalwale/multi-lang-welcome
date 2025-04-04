@@ -33,17 +33,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import axios from "axios";
 import { toast } from "sonner";
 
-// The main Dashboard component
 const DashboardPageContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { theme } = useTheme();
   const navigate = useNavigate();
   const { t } = useLanguage();
   
-  // Get user from AuthContext instead of mock data
   const { user, logout } = useAuth();
 
-  // Sample tweets data
   const scheduledTweets = [
     {
       id: 1,
@@ -66,7 +63,6 @@ const DashboardPageContent: React.FC = () => {
     }
   ];
 
-  // Sample analytics data
   const analyticsData = {
     impressions: {
       data: [1200, 1800, 2200, 1900, 2500, 2800, 3100],
@@ -88,7 +84,6 @@ const DashboardPageContent: React.FC = () => {
     }
   };
 
-  // Sample recent tweets
   const recentTweets = [
     {
       id: 101,
@@ -114,11 +109,9 @@ const DashboardPageContent: React.FC = () => {
     }
   ];
 
-  // Add state for notifications
   const [pendingInvitations, setPendingInvitations] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Add a function to fetch invitations
   const fetchInvitations = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -130,23 +123,19 @@ const DashboardPageContent: React.FC = () => {
         console.log(`Dashboard: Fetching invitations from ${baseApiUrl}/teams/invitations`);
         const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
           headers: { Authorization: `Bearer ${token}` },
-          // Add timeout to avoid long wait if server is down
           timeout: 5000
         });
         
         const invitations = response.data.data || [];
         setPendingInvitations(invitations);
         
-        // Cache invitations for offline access
         localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
       } catch (apiError: any) {
         console.error('Dashboard: Failed to fetch invitations:', apiError);
         
-        // Check if API is unreachable or returns 404
         if (apiError.response?.status === 404 || apiError.code === 'ECONNABORTED') {
           console.log('Dashboard: Using local invitations data since API is unavailable');
           
-          // Check if we have cached invitations in localStorage
           const cachedInvitations = localStorage.getItem('cachedInvitations');
           if (cachedInvitations) {
             setPendingInvitations(JSON.parse(cachedInvitations));
@@ -158,17 +147,14 @@ const DashboardPageContent: React.FC = () => {
     }
   };
 
-  // Call the function on component mount
   useEffect(() => {
     fetchInvitations();
     
-    // Poll for new invitations every minute
     const intervalId = setInterval(fetchInvitations, 60000);
     
     return () => clearInterval(intervalId);
   }, []);
 
-  // Handle accept/decline
   const handleAcceptInvitation = async (invitationId) => {
     try {
       const token = localStorage.getItem('token');
@@ -185,18 +171,14 @@ const DashboardPageContent: React.FC = () => {
         toast.success(`You've joined ${response.data.data.teamName}`);
       } catch (apiError) {
         console.error('Dashboard: API error accepting invitation:', apiError);
-        // Handle offline/unavailable API scenario
         toast.success("Invitation accepted (offline mode)");
       }
       
-      // Remove this invitation from the list
       const updatedInvitations = pendingInvitations.filter(inv => inv.id !== invitationId);
       setPendingInvitations(updatedInvitations);
       
-      // Update local cache
       localStorage.setItem('cachedInvitations', JSON.stringify(updatedInvitations));
       
-      // Close the dropdown
       setShowNotifications(false);
     } catch (err) {
       console.error('Dashboard: Failed to accept invitation:', err);
@@ -220,15 +202,12 @@ const DashboardPageContent: React.FC = () => {
         toast.success('Invitation declined');
       } catch (apiError) {
         console.error('Dashboard: API error declining invitation:', apiError);
-        // Handle offline/unavailable API scenario
         toast.success("Invitation declined (offline mode)");
       }
       
-      // Remove this invitation from the list
       const updatedInvitations = pendingInvitations.filter(inv => inv.id !== invitationId);
       setPendingInvitations(updatedInvitations);
       
-      // Update local cache
       localStorage.setItem('cachedInvitations', JSON.stringify(updatedInvitations));
     } catch (err) {
       console.error('Dashboard: Failed to decline invitation:', err);
@@ -236,7 +215,6 @@ const DashboardPageContent: React.FC = () => {
     }
   };
 
-  // Get user initials for avatar fallback
   const getUserInitials = () => {
     if (!user) return 'U';
     if (user.firstName && user.lastName) {
@@ -245,7 +223,6 @@ const DashboardPageContent: React.FC = () => {
     return user.email?.[0]?.toUpperCase() || 'U';
   };
 
-  // Get user's full name
   const getUserFullName = () => {
     if (!user) return 'User';
     if (user.firstName && user.lastName) {
@@ -254,7 +231,6 @@ const DashboardPageContent: React.FC = () => {
     return user.email?.split('@')[0] || 'User';
   };
 
-  // Handle logout
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -262,16 +238,13 @@ const DashboardPageContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Custom Navbar */}
-      <div className="sticky top-0 w-full z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm">
+      <div className="sticky top-0 w-full z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
             <div className="flex items-center">
-              <SekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
+              <SekcionLogotype className="h-8 w-auto text-primary-600 dark:text-white" />
             </div>
       
-            {/* Actions */}
             <div className="flex items-center space-x-4">
               <ThemeToggle />
       
@@ -284,7 +257,7 @@ const DashboardPageContent: React.FC = () => {
                 >
                   <Bell className="h-5 w-5" />
                   {pendingInvitations.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    <span className="absolute -top-1 -right-1 bg-primary-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                       {pendingInvitations.length}
                     </span>
                   )}
@@ -293,24 +266,24 @@ const DashboardPageContent: React.FC = () => {
                 {showNotifications && (
                   <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
                     <div className="p-3 border-b border-gray-200 dark:border-gray-700 font-medium">
-                      Team Invitations
+                      {t('teamInvitations') || 'Team Invitations'}
                     </div>
                     
                     <div className="max-h-96 overflow-y-auto">
                       {pendingInvitations.length === 0 ? (
                         <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                          No pending invitations
+                          {t('noPendingInvitations') || 'No pending invitations'}
                         </div>
                       ) : (
                         pendingInvitations.map(invitation => (
                           <div key={invitation.id} className="p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                             <div className="flex items-center mb-2">
-                              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-md flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold mr-2">
+                              <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-md flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold mr-2">
                                 {invitation.teamName.substring(0, 1).toUpperCase()}
                               </div>
                               <div className="flex-1">
                                 <p className="font-medium">{invitation.teamName}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Role: {invitation.role}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('role') || 'Role'}: {invitation.role}</p>
                               </div>
                             </div>
                             <div className="flex justify-end space-x-2">
@@ -320,15 +293,15 @@ const DashboardPageContent: React.FC = () => {
                                 onClick={() => handleDeclineInvitation(invitation.id)}
                                 className="h-8 text-xs"
                               >
-                                Decline
+                                {t('decline') || 'Decline'}
                               </Button>
                               <Button
                                 variant="default"
                                 size="sm"
                                 onClick={() => handleAcceptInvitation(invitation.id)}
-                                className="h-8 text-xs"
+                                className="h-8 text-xs bg-primary-600 hover:bg-primary-700 text-white"
                               >
-                                Accept
+                                {t('accept') || 'Accept'}
                               </Button>
                             </div>
                           </div>
@@ -344,7 +317,7 @@ const DashboardPageContent: React.FC = () => {
                 size="sm" 
                 className="hidden md:flex items-center gap-2 text-sm"
               >
-                <Twitter className="h-4 w-4 text-blue-500" />
+                <Twitter className="h-4 w-4 text-primary-500" />
                 <span>{t('connectTwitter')}</span>
               </Button>
               
@@ -371,14 +344,14 @@ const DashboardPageContent: React.FC = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/teams')}>
                     <Users className="mr-2 h-4 w-4" />
-                    <span>Teams</span>
+                    <span>{t('teams') || 'Teams'}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>{t('settings')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
-                    <Twitter className="mr-2 h-4 w-4 text-blue-500" />
+                    <Twitter className="mr-2 h-4 w-4 text-primary-500" />
                     <span>{t('connectTwitter')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -399,15 +372,15 @@ const DashboardPageContent: React.FC = () => {
       <div className="container px-4 py-8 mx-auto">
         <Tabs defaultValue="create" className="mb-8">
           <TabsList className="grid grid-cols-4 mb-8">
-            <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-teal-50 dark:data-[state=active]:bg-teal-900/20">
+            <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-primary-50 dark:data-[state=active]:bg-primary-900/20">
               <PlusCircle className="h-4 w-4 mr-2" />
               {t('create')}
             </TabsTrigger>
-            <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-violet-50 dark:data-[state=active]:bg-violet-900/20">
+            <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-primary-50 dark:data-[state=active]:bg-primary-900/20">
               <Calendar className="h-4 w-4 mr-2" />
               {t('schedule')}
             </TabsTrigger>
-            <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-900/20">
+            <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-primary-50 dark:data-[state=active]:bg-primary-900/20">
               <BarChart3 className="h-4 w-4 mr-2" />
               {t('analytics')}
             </TabsTrigger>
@@ -639,7 +612,7 @@ const DashboardPageContent: React.FC = () => {
                         ↑ {analyticsData.impressions.increase}%
                       </span>
                     </div>
-                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -671,15 +644,15 @@ const DashboardPageContent: React.FC = () => {
                     {analyticsData.engagement.labels.map((label, index) => (
                       <span key={index}>{label}</span>
                     ))}
-              </div>
+                  </div>
                   <div className="mt-4 pt-3 border-t flex justify-between items-center">
                     <p className="text-xs text-gray-500">{analyticsData.engagement.timeframe}</p>
                     <div className="flex items-center text-sm">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                         ↑ {analyticsData.engagement.increase}%
                       </span>
-            </div>
-          </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -695,7 +668,7 @@ const DashboardPageContent: React.FC = () => {
                     <div className="absolute inset-0 flex items-end">
                       {analyticsData.followers.data.map((value, index) => (
                         <div 
-                key={index}
+                          key={index}
                           className="flex-1 mx-0.5"
                           style={{ height: `${(value / Math.max(...analyticsData.followers.data)) * 100}%` }}
                         >
@@ -703,7 +676,7 @@ const DashboardPageContent: React.FC = () => {
                             className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40 dark:from-teal-500/60 dark:to-emerald-400/60"
                             style={{ opacity: 0.5 + ((index + 1) / analyticsData.followers.data.length) * 0.5 }}
                           ></div>
-                    </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -717,12 +690,12 @@ const DashboardPageContent: React.FC = () => {
                     <div className="flex items-center text-sm">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                         ↑ {analyticsData.followers.increase}%
-                    </span>
+                      </span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-                </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="tweets">
@@ -738,7 +711,7 @@ const DashboardPageContent: React.FC = () => {
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                               <span className="font-semibold">{getUserFullName()}</span>
                               <span className="text-gray-500 text-sm">@{getUserFullName().toLowerCase().replace(/\s/g, '')}</span>
                               <span className="text-gray-500 text-sm">·</span>
@@ -746,29 +719,29 @@ const DashboardPageContent: React.FC = () => {
                             </div>
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                               <Edit3 className="h-4 w-4" />
-                  </Button>
-                </div>
+                            </Button>
+                          </div>
                           <p className="text-sm mb-4">{tweet.content}</p>
                           <div className="flex gap-6 text-gray-500 text-sm">
                             <div className="flex items-center gap-1">
                               <MessageSquare className="h-4 w-4" />
                               <span>{tweet.stats.replies}</span>
-              </div>
+                            </div>
                             <div className="flex items-center gap-1">
                               <Share2 className="h-4 w-4" />
                               <span>{tweet.stats.retweets}</span>
-                </div>
+                            </div>
                             <div className="flex items-center gap-1">
                               <ThumbsUp className="h-4 w-4" />
                               <span>{tweet.stats.likes}</span>
-              </div>
+                            </div>
                             <div className="flex items-center gap-1">
                               <Eye className="h-4 w-4" />
                               <span>{tweet.stats.impressions}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      </div>
-                    </div>
-                  </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -781,10 +754,8 @@ const DashboardPageContent: React.FC = () => {
   );
 };
 
-// Safe wrapper that only renders the dashboard when all required contexts are available
 const DashboardPage: React.FC = () => {
   try {
-    // Try to access all required contexts to ensure they're available
     const { theme } = useTheme();
     const { user } = useAuth();
     const { t } = useLanguage();
@@ -792,7 +763,6 @@ const DashboardPage: React.FC = () => {
     return <DashboardPageContent />;
   } catch (error) {
     console.error("Error rendering DashboardPage:", error);
-    // Return a fallback loading state if contexts aren't available
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="text-center">

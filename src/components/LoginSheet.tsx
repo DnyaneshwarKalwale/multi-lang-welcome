@@ -10,8 +10,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/useLanguage";
 
 interface LoginSheetProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const navigate = useNavigate();
   const { login, error, clearError, loading } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -122,7 +124,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-gray-200 dark:border-gray-800 p-0 w-full sm:max-w-md">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gradient-to-b from-primary-50/80 to-white dark:from-gray-900 dark:to-gray-950 border-primary-100 dark:border-gray-800 p-0 w-full sm:max-w-md">
           <motion.div 
             className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
             variants={containerVariants}
@@ -134,9 +136,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <ScripeIconRounded className="w-10 h-10 text-blue-500" />
+                <SekcionIconRounded className="w-10 h-10 text-primary-600" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Log in to Scripe
+                  {t('loginToScripe') || 'Log in to Scripe'}
                 </h2>
               </motion.div>
               <Button 
@@ -162,24 +164,24 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-gray-700 dark:text-white" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 text-gray-700 dark:text-white" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
                   <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
-                  <span>Continue with Google</span>
+                  <span>{t('continueWithGoogle') || 'Continue with Google'}</span>
                 </Button>
               </motion.div>
               
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-gray-700 dark:text-white" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 text-gray-700 dark:text-white" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
-                  <Twitter size={18} className="text-[#1DA1F2]" />
-                  <span>Continue with Twitter</span>
+                  <Twitter size={18} className="text-primary-500" />
+                  <span>{t('continueWithTwitter') || 'Continue with Twitter'}</span>
                 </Button>
               </motion.div>
             </div>
@@ -189,7 +191,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Or continue with email</span>
+                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">{t('orContinueWithEmail') || 'Or continue with email'}</span>
               </div>
             </motion.div>
             
@@ -201,13 +203,15 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               animate="visible"
             >
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t('email') || 'Email'}</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                    className="bg-white/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 
+                               focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+                               transition-all text-gray-900 dark:text-white"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -217,15 +221,17 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               
               <motion.div variants={itemVariants}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                  <a href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">Forgot password?</a>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('password') || 'Password'}</label>
+                  <a href="#" className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors">{t('forgotPassword') || 'Forgot password?'}</a>
                 </div>
                 <div className="relative">
                   <Input 
                     id="password" 
                     type="password" 
-                    placeholder="Enter your password" 
-                    className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
+                    placeholder={t('enterYourPassword') || 'Enter your password'}
+                    className="bg-white/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 
+                               focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+                               transition-all text-gray-900 dark:text-white"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -236,7 +242,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 rounded-md transition-all duration-200"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium h-12 rounded-md transition-all duration-200"
                   disabled={loading}
                 >
                   {loading ? (
@@ -245,9 +251,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Logging in...
+                      {t('loggingIn') || 'Logging in...'}
                     </div>
-                  ) : 'Log in'}
+                  ) : t('logIn') || 'Log in'}
                 </Button>
               </motion.div>
             </motion.form>
@@ -256,13 +262,13 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400"
               variants={itemVariants}
             >
-              Don't have an account?{' '}
+              {t('dontHaveAccount') || "Don't have an account?"}{' '}
               <a 
                 href="#" 
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors font-medium" 
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors font-medium" 
                 onClick={handleSignUp}
               >
-                Sign up for free
+                {t('signUpForFree') || 'Sign up for free'}
               </a>
             </motion.p>
           </motion.div>
