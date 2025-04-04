@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useTheme } from '@/contexts/ThemeContext';
@@ -53,4 +54,4 @@ const ThemeDebug: React.FC = () => {
   );
 };
 
-export default ThemeDebug; 
+export default ThemeDebug;

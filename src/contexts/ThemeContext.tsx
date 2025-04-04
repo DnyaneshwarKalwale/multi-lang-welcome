@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 type Theme = "light" | "dark";
@@ -6,10 +7,10 @@ interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
-  isThemeLoaded: boolean; // Added to track theme loading state
+  isThemeLoaded: boolean;
 }
 
-// Initialize with sensible defaults to avoid null/undefined errors
+// Initialize with sensible defaults
 const initialThemeContext: ThemeContextType = {
   theme: "dark", // Default to dark theme
   setTheme: () => {},
@@ -25,7 +26,6 @@ const ThemeContext = createContext<ThemeContextType>(initialThemeContext);
  * This function should be used whenever the theme needs to change
  */
 export function applyTheme(theme: Theme) {
-  // Apply theme class to document
   if (theme === "dark") {
     document.documentElement.classList.add("dark");
     document.documentElement.classList.remove("light");
@@ -36,23 +36,26 @@ export function applyTheme(theme: Theme) {
   
   // Save to localStorage
   localStorage.setItem("theme", theme);
+  
+  // Dispatch a custom event that other components can listen for
+  window.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Initialize theme state based on document class
+  // Initialize theme state
   const [theme, setThemeState] = useState<Theme>(() => {
     // Default to dark if window not available (SSR)
     if (typeof window === 'undefined') return 'dark';
     
-    // Check HTML class first (most reliable)
-    if (document.documentElement.classList.contains("dark")) return "dark";
-    if (document.documentElement.classList.contains("light")) return "light";
-    
-    // Check localStorage as fallback
+    // Check localStorage first
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme === 'light' || savedTheme === 'dark') {
       return savedTheme;
     }
+    
+    // Check HTML class as fallback
+    if (document.documentElement.classList.contains("dark")) return "dark";
+    if (document.documentElement.classList.contains("light")) return "light";
     
     // Default to dark
     return 'dark';
@@ -60,36 +63,36 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   
   const [mounted, setMounted] = useState(false);
 
-  // Set mounted when component mounts
+  // Ensure theme is applied to DOM on initial load
   useEffect(() => {
+    // Apply current theme to ensure DOM reflects state
+    applyTheme(theme);
     setMounted(true);
     
-    // Listen for manual theme changes from ThemeToggle or other sources
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "theme") {
+    // Listen for theme changes from other components
+    const handleThemeChange = (e: StorageEvent) => {
+      if (e.key === "theme" && e.newValue) {
         const newTheme = e.newValue as Theme;
-        if (newTheme === "dark" || newTheme === "light") {
+        if (newTheme === "light" || newTheme === "dark") {
           setThemeState(newTheme);
+          applyTheme(newTheme);
         }
       }
     };
     
-    // Use MutationObserver to detect changes to the HTML class
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        if (mutation.attributeName === 'class') {
-          const isDark = document.documentElement.classList.contains('dark');
-          setThemeState(isDark ? 'dark' : 'light');
-        }
-      });
-    });
+    // Listen for storage events from other tabs/windows
+    window.addEventListener("storage", handleThemeChange);
     
-    observer.observe(document.documentElement, { attributes: true });
-    window.addEventListener("storage", handleStorageChange);
+    // Listen for custom themechange events
+    const handleCustomThemeChange = (e: CustomEvent<Theme>) => {
+      setThemeState(e.detail);
+    };
+    
+    window.addEventListener('themechange', handleCustomThemeChange as EventListener);
     
     return () => {
-      observer.disconnect();
-      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("storage", handleThemeChange);
+      window.removeEventListener('themechange', handleCustomThemeChange as EventListener);
     };
   }, []);
 
@@ -97,13 +100,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     applyTheme(newTheme);
-    
-    // Manually dispatch storage event for other components
-    window.dispatchEvent(new StorageEvent("storage", {
-      key: "theme",
-      newValue: newTheme,
-      storageArea: localStorage
-    }));
   };
 
   // Toggle function
