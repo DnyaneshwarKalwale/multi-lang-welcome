@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { X, Twitter, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginSheet } from "./LoginSheet";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface RegistrationSheetProps {
   open: boolean;
@@ -21,6 +23,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { register, error, clearError, loading, twitterAuth } = useAuth();
+  const { theme } = useTheme();
   
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -111,9 +114,9 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-black border-gray-800 p-0 w-full sm:max-w-md">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-gray-200 dark:border-gray-800 p-0 w-full sm:max-w-md">
           <motion.div 
-            className="bg-gradient-to-b from-gray-900 to-black p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
+            className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -123,8 +126,8 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <ScripeIconRounded className="w-10 h-10" />
-                <h2 className="text-2xl font-bold text-white">
+                <ScripeIconRounded className="w-10 h-10 text-blue-500" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Create your account
                 </h2>
               </motion.div>
@@ -132,7 +135,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 variant="ghost" 
                 size="icon" 
                 onClick={handleClose}
-                className="text-gray-400 hover:text-white rounded-full"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-full"
               >
                 <X size={18} />
               </Button>
@@ -140,7 +143,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             
             {error && (
               <motion.div variants={itemVariants}>
-                <Alert variant="destructive" className="mb-6 bg-red-900/30 border-red-900 text-red-200">
+                <Alert variant="destructive" className="mb-6 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-900 text-red-600 dark:text-red-200">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -151,7 +154,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-gray-700 dark:text-white" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
@@ -163,7 +166,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-transparent border-gray-800 hover:bg-gray-800/40 hover:border-gray-700 transition-all duration-200 text-white" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-gray-700 dark:text-white" 
                   onClick={handleTwitterAuth}
                   disabled={loading}
                 >
@@ -175,10 +178,10 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             
             <motion.div className="relative mb-7" variants={itemVariants}>
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-800"></div>
+                <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-black text-gray-500 uppercase text-xs tracking-wider">Or continue with email</span>
+                <span className="px-2 bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Or continue with email</span>
               </div>
             </motion.div>
             
@@ -191,12 +194,12 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-white mb-1.5">First name</label>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">First name</label>
                   <div className="relative">
                     <Input 
                       id="firstName" 
                       placeholder="Enter your first name" 
-                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+                      className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
@@ -205,12 +208,12 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-white mb-1.5">Last name</label>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Last name</label>
                   <div className="relative">
                     <Input 
                       id="lastName" 
                       placeholder="Enter your last name" 
-                      className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+                      className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
@@ -220,13 +223,13 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-white mb-1.5">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+                    className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -235,13 +238,13 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </motion.div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="password" className="block text-sm font-medium text-white mb-1.5">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
                 <div className="relative">
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder="Create a secure password (min. 8 characters)" 
-                    className="bg-gray-900/50 border-gray-800 h-12 pl-4 focus:border-indigo-500 focus:ring-indigo-500 transition-all text-white"
+                    className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     minLength={8}
@@ -253,8 +256,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   type="submit" 
-                  variant="gradient"
-                  className="w-full text-white font-medium h-12 transition-all duration-200"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium h-12 rounded-md transition-all duration-200"
                   disabled={loading}
                 >
                   {loading ? (
@@ -271,13 +273,13 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             </motion.form>
             
             <motion.p 
-              className="text-center mt-8 text-sm text-gray-500"
+              className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400"
               variants={itemVariants}
             >
               Already have an account?{' '}
               <a 
                 href="#" 
-                className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium" 
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors font-medium" 
                 onClick={handleLogin}
               >
                 Log in
@@ -285,22 +287,22 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             </motion.p>
             
             <motion.p
-              className="text-center mt-6 text-xs text-gray-600"
+              className="text-center mt-6 text-xs text-gray-600 dark:text-gray-500"
               variants={itemVariants}
             >
               By continuing, you agree to our{' '}
-              <a href="#" className="text-indigo-400 hover:text-indigo-300 underline">Terms of Service</a>
+              <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline">Terms of Service</a>
               {' '}and{' '}
-              <a href="#" className="text-indigo-400 hover:text-indigo-300 underline">Privacy Policy</a>.
+              <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline">Privacy Policy</a>.
             </motion.p>
 
             {/* Add note about Twitter integration */}
             <motion.div 
-              className="mt-8 flex items-center justify-center px-4 py-3 bg-indigo-900/20 border border-indigo-800/30 rounded-lg"
+              className="mt-8 flex items-center justify-center px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg"
               variants={itemVariants}
             >
-              <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-indigo-400" />
-              <p className="text-sm text-indigo-200">
+              <Twitter className="flex-shrink-0 w-5 h-5 mr-3 text-blue-500" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
                 Connect your Twitter account to share content directly from Scripe to your audience.
               </p>
             </motion.div>

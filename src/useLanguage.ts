@@ -1,5 +1,8 @@
 
-import { useLanguage as useLanguageContext, LanguageType } from '@/contexts/LanguageContext';
+import { useLanguage as useLanguageContext } from '@/contexts/LanguageContext';
+
+// Define the LanguageType that matches what's in LanguageContext
+type LanguageType = 'en' | 'fr' | 'es' | 'de' | 'zh' | 'ja';
 
 // This is a wrapper for useLanguage that ensures type safety
 export function useLanguage() {
@@ -9,7 +12,7 @@ export function useLanguage() {
     ...languageContext,
     // Make sure the setLanguage function only accepts valid language types
     setLanguage: (language: LanguageType) => {
-      languageContext.setLanguage(language);
+      languageContext.setLanguage(language as any);
     }
   };
 }
