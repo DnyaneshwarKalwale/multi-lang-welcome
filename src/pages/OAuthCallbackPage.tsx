@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { fetchUser } = useAuth();
   
   useEffect(() => {
     const processAuth = async () => {
@@ -35,8 +37,11 @@ export default function OAuthCallbackPage() {
       // Set token in localStorage
       localStorage.setItem('token', token);
       
-      // Fetch user info to verify token works
       try {
+        // Update user state in AuthContext before redirecting
+        await fetchUser();
+        
+        // Store onboarding status in localStorage
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
         const response = await axios.get(`${baseApiUrl}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -54,31 +59,36 @@ export default function OAuthCallbackPage() {
         // Store onboarding status in localStorage for other components to use
         localStorage.setItem('onboardingCompleted', userData.onboardingCompleted ? 'true' : 'false');
         
-        // Directly redirect based on onboarding status - no more waiting
-        if (onboarding) {
-          navigate('/onboarding/welcome');
-        } else {
-          navigate('/dashboard');
-        }
+        // Add a small delay to ensure auth context is updated
+        setTimeout(() => {
+          // Directly redirect based on onboarding status
+          if (onboarding) {
+            navigate('/onboarding/welcome', { replace: true });
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
+        }, 100);
+        
         return;
       } catch (error) {
         console.error('Error verifying user data:', error);
         // Continue anyway since we have a token
-      }
-      
-      // Skip invitation check to simplify login flow
-      // Directly redirect based on onboarding status
-      console.log('Redirecting to', onboarding ? 'onboarding' : 'dashboard');
-      if (onboarding) {
-        navigate('/onboarding/welcome');
-      } else {
-        navigate('/dashboard');
+        
+        // Add a small delay to ensure auth context is updated
+        setTimeout(() => {
+          // Directly redirect based on onboarding status
+          if (onboarding) {
+            navigate('/onboarding/welcome', { replace: true });
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
+        }, 100);
       }
     };
     
     // Process auth immediately
     processAuth();
-  }, [location, navigate]);
+  }, [location, navigate, fetchUser]);
 
   // Return null to avoid showing any UI during the redirect
   return null;

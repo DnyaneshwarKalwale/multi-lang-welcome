@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const InvitationCheckRoute = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [hasInvitations, setHasInvitations] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Start with false to avoid blocking navigation
 
   useEffect(() => {
     // Skip invitation check if user has previously skipped invitations
@@ -36,41 +36,36 @@ const InvitationCheckRoute = () => {
         }
       }
 
-      setLoading(true);
-
       try {
         const token = localStorage.getItem('token');
         if (!token) {
           setHasInvitations(false);
-          setLoading(false);
           return;
         }
 
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
         
-        try {
-          const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
-            headers: { Authorization: `Bearer ${token}` },
-            timeout: 3000 // Shorter timeout to avoid slow loading
-          });
-
+        // Do this check in the background without blocking the UI
+        axios.get(`${baseApiUrl}/teams/invitations`, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 3000 // Shorter timeout to avoid slow loading
+        }).then(response => {
           const invitations = response.data.data || [];
           
           // Store invitations in localStorage for offline access
           if (invitations.length > 0) {
             localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
+            setHasInvitations(true);
+          } else {
+            setHasInvitations(false);
           }
-          
-          setHasInvitations(invitations.length > 0);
-        } catch (apiError) {
+        }).catch(() => {
           // If API call fails, assume no invitations and continue
           setHasInvitations(false);
-        }
+        });
       } catch (error) {
         console.error('Failed to check invitations:', error);
         setHasInvitations(false);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -78,8 +73,8 @@ const InvitationCheckRoute = () => {
     checkInvitations();
   }, [isAuthenticated, authLoading]);
 
-  if (loading || authLoading) {
-    // Show loading spinner
+  // Only show loading indicator if authentication is still loading
+  if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-black">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>

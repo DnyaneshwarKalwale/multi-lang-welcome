@@ -39,14 +39,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = localStorage.getItem('token');
     
     if (!token) {
+      setLoading(false);
       return;
     }
+    
+    setLoading(true);
     
     try {
       const { user } = await authApi.getCurrentUser();
       setUser(user);
+      
+      if (user) {
+        localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+      }
+      
+      return user;
     } catch (error) {
       console.error("Failed to get user data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
