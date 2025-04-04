@@ -11,7 +11,6 @@ export default function OAuthCallbackPage() {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('Authenticating...');
-  const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
   const { theme } = useTheme();
   
   // Floating animation variants
@@ -43,7 +42,6 @@ export default function OAuthCallbackPage() {
       if (errorParam) {
         console.error('OAuth error from server:', errorParam);
         setError(errorParam);
-        setIsSuccess(false);
         setTimeout(() => navigate('/'), 3000);
         return;
       }
@@ -51,7 +49,6 @@ export default function OAuthCallbackPage() {
       if (!token) {
         console.error('No authentication token received');
         setError('No authentication token received');
-        setIsSuccess(false);
         setTimeout(() => navigate('/'), 3000);
         return;
       }
@@ -60,7 +57,6 @@ export default function OAuthCallbackPage() {
       localStorage.setItem('token', token);
       
       // Fetch user info to verify token works
-      setStatus('Verifying authentication...');
       try {
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
         const response = await axios.get(`${baseApiUrl}/auth/me`, {
@@ -78,15 +74,12 @@ export default function OAuthCallbackPage() {
         
         // Store onboarding status in localStorage for other components to use
         localStorage.setItem('onboardingCompleted', userData.onboardingCompleted ? 'true' : 'false');
-        
-        setIsSuccess(true);
       } catch (error) {
         console.error('Error verifying user data:', error);
         // Continue anyway since we have a token
       }
       
       // Check for pending invitations
-      setStatus('Checking for invitations...');
       try {
         // Don't check if user has skipped invitations
         const skippedInvitations = localStorage.getItem('skippedInvitations');
@@ -172,6 +165,7 @@ export default function OAuthCallbackPage() {
     processAuth();
   }, [location, navigate]);
 
+  // Only render the error screen, otherwise show minimal loading UI
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-black to-gray-900 relative overflow-hidden">
       {/* Background decorations */}
@@ -180,24 +174,6 @@ export default function OAuthCallbackPage() {
         <div className="absolute top-0 -left-[30%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-primary-800/20 to-primary-600/5 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[30%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-violet-800/20 to-violet-600/5 blur-[120px]"></div>
       </div>
-      
-      {/* Floating decoration elements */}
-      <motion.div 
-        className="absolute top-[15%] right-[20%] text-primary-500/20 z-0"
-        variants={floatingVariants}
-        animate="animate"
-      >
-        <ShieldAlert size={64} />
-      </motion.div>
-      
-      <motion.div 
-        className="absolute bottom-[20%] left-[15%] text-violet-500/15 z-0"
-        variants={floatingVariants}
-        animate="animate"
-        transition={{ delay: 1 }}
-      >
-        <CheckCircle2 size={48} />
-      </motion.div>
       
       <motion.div
         initial={{ y: -10, opacity: 0 }}
@@ -231,38 +207,12 @@ export default function OAuthCallbackPage() {
         ) : (
           <motion.div>
             <div className="flex justify-center mb-6">
-              {isSuccess === true ? (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-                  className="w-16 h-16 flex items-center justify-center bg-green-900/30 text-green-500 rounded-full"
-                >
-                  <CheckCircle2 className="h-10 w-10" />
-                </motion.div>
-              ) : (
-                <div className="relative w-16 h-16 flex items-center justify-center">
-                  <motion.div 
-                    className="absolute inset-0 rounded-full"
-                    animate={{ 
-                      boxShadow: ["0 0 0 0px rgba(139, 92, 246, 0.3)", "0 0 0 10px rgba(139, 92, 246, 0)"]
-                    }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                  <motion.div 
-                    className="w-16 h-16 flex items-center justify-center"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Loader2 className={`h-10 w-10 ${theme === 'dark' ? 'text-primary-400' : 'text-primary-500'}`} />
-                  </motion.div>
-                </div>
-              )}
+              <div className="w-16 h-16 flex items-center justify-center">
+                <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold mb-4 text-white">Authentication Successful</h1>
-            <p className="text-gray-400">
-              {status}
-            </p>
+            <h1 className="text-2xl font-bold text-primary mb-4">Please wait</h1>
+            <p className="text-gray-400 mb-2">{status}</p>
           </motion.div>
         )}
       </motion.div>
