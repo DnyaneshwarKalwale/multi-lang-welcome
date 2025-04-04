@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ContextVerifierProps {
   children: React.ReactNode;
@@ -63,7 +61,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background transition-colors duration-300">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-16 h-16 border-4 border-t-primary-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin-slow mx-auto"></div>
           <p className="mt-4 text-sm text-muted-foreground">Loading application...</p>
         </div>
       </div>
@@ -75,12 +73,12 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     console.error("Fatal context error:", error);
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background text-center p-4 transition-colors duration-300">
-        <div>
+        <div className="p-6 glass-card rounded-xl">
           <h2 className="text-xl font-semibold text-red-500 mb-2">Application Error</h2>
-          <p className="text-sm text-gray-500 mb-4">There was a problem initializing the application.</p>
+          <p className="text-sm text-muted-foreground mb-4">There was a problem initializing the application.</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm"
+            className="px-4 py-2 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-md text-sm transition-colors"
           >
             Reload Page
           </button>

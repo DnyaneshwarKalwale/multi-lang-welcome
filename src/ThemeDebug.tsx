@@ -39,16 +39,16 @@ const ThemeDebug: React.FC = () => {
   };
   
   return (
-    <div className="fixed bottom-4 right-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-      <h3 className="text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Theme Debug</h3>
-      <p className="text-xs mb-2 text-gray-600 dark:text-gray-400">
+    <div className="fixed bottom-4 right-4 p-4 glass-card rounded-lg z-50 text-foreground">
+      <h3 className="text-sm font-medium mb-2 text-foreground">Theme Debug</h3>
+      <p className="text-xs mb-2 text-muted-foreground">
         Current theme: <strong>{theme}</strong>
       </p>
       <div className="flex flex-col gap-2">
-        <Button size="sm" onClick={forceLight} variant="outline">Force Light</Button>
-        <Button size="sm" onClick={forceDark} variant="outline">Force Dark</Button>
-        <Button size="sm" onClick={toggleManually} variant="outline">Toggle Theme</Button>
-        <Button size="sm" onClick={syncWithLocalStorage} variant="outline">Sync with localStorage</Button>
+        <Button size="sm" onClick={forceLight} variant="outline" className="text-xs">Force Light</Button>
+        <Button size="sm" onClick={forceDark} variant="outline" className="text-xs">Force Dark</Button>
+        <Button size="sm" onClick={toggleManually} variant="outline" className="text-xs">Toggle Theme</Button>
+        <Button size="sm" onClick={syncWithLocalStorage} variant="outline" className="text-xs">Sync with localStorage</Button>
       </div>
     </div>
   );
