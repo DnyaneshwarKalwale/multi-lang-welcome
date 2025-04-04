@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProgressDots } from "@/components/ProgressDots";
@@ -8,13 +9,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+// Define the type for language options to match LanguageType
+type LanguageCode = "english" | "german" | "spanish" | "french";
+
+interface LanguageOption {
+  code: LanguageCode;
+  name: string;
+  nativeName: string;
+  flag: string;
+  region: string;
+  speakers: string;
+}
+
 export default function LanguageSelectionPage() {
   const navigate = useNavigate();
   const { language: onboardingLanguage, setLanguage: setOnboardingLanguage, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { setLanguage: setAppLanguage } = useLanguage();
   const { current, total } = getStepProgress();
 
-  const languageOptions = [
+  const languageOptions: LanguageOption[] = [
     { 
       code: "english", 
       name: "English", 
