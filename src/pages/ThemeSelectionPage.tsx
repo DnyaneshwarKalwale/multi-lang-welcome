@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -10,8 +9,8 @@ import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 
 export default function ThemeSelectionPage() {
-  const { theme, setTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
-  const { setTheme: setGlobalTheme } = useTheme();
+  const { theme: onboardingTheme, setTheme: setOnboardingTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { setTheme: setGlobalTheme, theme: currentTheme } = useTheme();
   const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
@@ -46,32 +45,27 @@ export default function ThemeSelectionPage() {
 
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: "light" | "dark") => {
-    setTheme(newTheme);
-    setGlobalTheme(newTheme);
+    // Update onboarding state
+    setOnboardingTheme(newTheme);
     
-    // Apply directly to document to ensure immediate change
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
-    }
+    // Update global theme state
+    setGlobalTheme(newTheme);
   };
 
-  // Ensure theme is applied when component loads
+  // Sync onboarding theme with global theme on component mount
   useEffect(() => {
-    if (theme) {
-      handleThemeChange(theme);
-    } else {
-      // Default to dark theme if not set
-      handleThemeChange("dark");
+    if (onboardingTheme) {
+      // If onboarding has a theme preference, use it
+      setGlobalTheme(onboardingTheme);
+    } else if (currentTheme) {
+      // Otherwise, update onboarding state from current theme
+      setOnboardingTheme(currentTheme);
     }
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gradient-to-br from-white to-primary-50 dark:from-gray-900 dark:to-gray-800 text-foreground relative overflow-hidden transition-colors duration-300">
-      {/* Enhanced background decoration with floating elements */}
+      {/* Background decoration with floating elements */}
       <div className="absolute inset-0 -z-10 opacity-30 dark:opacity-20">
         <div className="absolute top-0 -left-[30%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-primary-200 to-primary-300 dark:from-primary-900/30 dark:to-primary-800/20 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[30%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-violet-200 to-violet-300 dark:from-violet-900/30 dark:to-violet-800/20 blur-[120px]"></div>
@@ -163,7 +157,7 @@ export default function ThemeSelectionPage() {
           variants={itemVariants}
         >
           <motion.div 
-            className={`${theme === "light" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
+            className={`${currentTheme === "light" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
             onClick={() => handleThemeChange("light")}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
@@ -185,15 +179,14 @@ export default function ThemeSelectionPage() {
             </div>
             
             <div className="flex items-center justify-center">
-              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${theme === "light" ? "bg-primary-500" : "bg-transparent"}`}>
-                {theme === "light" && (
+              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${currentTheme === "light" ? "bg-primary-500" : "bg-transparent"}`}>
+                {currentTheme === "light" && (
                   <div className="w-2 h-2 rounded-full bg-white"></div>
                 )}
               </div>
-              <span className={`text-lg font-medium ${theme === "light" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('light')}</span>
+              <span className={`text-lg font-medium ${currentTheme === "light" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('light')}</span>
             </div>
             
-            {/* Floating sun icon */}
             <motion.div 
               className="absolute top-2 right-2 bg-primary-100 text-primary-500 p-1.5 rounded-full z-10"
               animate={{ 
@@ -209,7 +202,6 @@ export default function ThemeSelectionPage() {
               <SunIcon size={18} />
             </motion.div>
             
-            {/* Animated light rays */}
             <motion.div 
               className="absolute -right-4 -top-4 w-20 h-20 bg-yellow-100 rounded-full opacity-20 blur-xl"
               animate={{
@@ -223,12 +215,11 @@ export default function ThemeSelectionPage() {
               }}
             />
             
-            {/* Gradient highlight on hover */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
           </motion.div>
           
           <motion.div 
-            className={`${theme === "dark" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
+            className={`${currentTheme === "dark" ? "ring-2 ring-primary-500" : ""} relative bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md cursor-pointer transition-all group overflow-hidden`}
             onClick={() => handleThemeChange("dark")}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
@@ -250,15 +241,14 @@ export default function ThemeSelectionPage() {
             </div>
             
             <div className="flex items-center justify-center">
-              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${theme === "dark" ? "bg-primary-500" : "bg-transparent"}`}>
-                {theme === "dark" && (
+              <div className={`w-5 h-5 rounded-full border-2 border-primary-500 mr-3 flex items-center justify-center ${currentTheme === "dark" ? "bg-primary-500" : "bg-transparent"}`}>
+                {currentTheme === "dark" && (
                   <div className="w-2 h-2 rounded-full bg-white"></div>
                 )}
               </div>
-              <span className={`text-lg font-medium ${theme === "dark" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('dark')}</span>
+              <span className={`text-lg font-medium ${currentTheme === "dark" ? "text-primary-500" : "text-gray-600 dark:text-gray-400"}`}>{t('dark')}</span>
             </div>
             
-            {/* Floating moon icon */}
             <motion.div 
               className="absolute top-2 right-2 bg-primary-900/50 text-primary-400 p-1.5 rounded-full z-10"
               animate={{ 
@@ -275,7 +265,6 @@ export default function ThemeSelectionPage() {
               <MoonIcon size={18} />
             </motion.div>
             
-            {/* Animated stars */}
             <motion.div 
               className="absolute -right-4 -top-4 w-20 h-20 bg-indigo-900 rounded-full opacity-20 blur-xl"
               animate={{
@@ -289,7 +278,6 @@ export default function ThemeSelectionPage() {
               }}
             />
             
-            {/* Gradient highlight on hover */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
           </motion.div>
         </motion.div>

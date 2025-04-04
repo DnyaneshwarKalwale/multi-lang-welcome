@@ -1,9 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function ThemeDebug() {
+  // Get theme from context
+  const { theme, setTheme, toggleTheme } = useTheme();
+  
   // Track component state
   const [mounted, setMounted] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState('');
   const [htmlClasses, setHtmlClasses] = useState('');
   const [localStorageTheme, setLocalStorageTheme] = useState('');
   const [debugCount, setDebugCount] = useState(0);
@@ -23,33 +27,23 @@ export default function ThemeDebug() {
 
   // Function to update all debug information
   const updateDebugInfo = () => {
-    setCurrentTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     setHtmlClasses(document.documentElement.className);
     setLocalStorageTheme(localStorage.getItem('theme') || 'not set');
   };
 
-  // Direct DOM manipulation functions
-  const setLightTheme = () => {
+  // Direct DOM manipulation functions for testing
+  const setLightThemeDirect = () => {
     document.documentElement.classList.remove('dark');
     document.documentElement.classList.add('light');
     localStorage.setItem('theme', 'light');
     updateDebugInfo();
   };
 
-  const setDarkTheme = () => {
+  const setDarkThemeDirect = () => {
     document.documentElement.classList.remove('light');
     document.documentElement.classList.add('dark');
     localStorage.setItem('theme', 'dark');
     updateDebugInfo();
-  };
-
-  const toggleTheme = () => {
-    const isDark = document.documentElement.classList.contains('dark');
-    if (isDark) {
-      setLightTheme();
-    } else {
-      setDarkTheme();
-    }
   };
 
   if (!mounted) return null;
@@ -59,32 +53,44 @@ export default function ThemeDebug() {
       <h3 className="font-bold text-sm mb-2">Theme Debug Panel</h3>
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <p><strong>Current Theme:</strong> {currentTheme}</p>
+          <p><strong>Context Theme:</strong> {theme}</p>
           <p><strong>Local Storage:</strong> {localStorageTheme}</p>
           <p><strong>HTML Classes:</strong> {htmlClasses}</p>
           <p><strong>Updates:</strong> {debugCount}</p>
         </div>
         <div className="flex flex-col gap-2">
           <button 
-            onClick={setLightTheme}
+            onClick={() => setTheme('light')}
             className="px-2 py-1 bg-yellow-100 dark:bg-yellow-800 text-black dark:text-white rounded"
           >
-            Force Light Theme
+            Set Light Theme (Context)
           </button>
           <button 
-            onClick={setDarkTheme}
+            onClick={() => setTheme('dark')}
             className="px-2 py-1 bg-blue-900 dark:bg-blue-800 text-white rounded"
           >
-            Force Dark Theme
+            Set Dark Theme (Context)
           </button>
           <button 
             onClick={toggleTheme}
             className="px-2 py-1 bg-purple-500 text-white rounded"
           >
-            Toggle Theme
+            Toggle Theme (Context)
+          </button>
+          <button 
+            onClick={setLightThemeDirect}
+            className="px-2 py-1 bg-orange-300 text-black rounded mt-2"
+          >
+            Force Light Theme (DOM)
+          </button>
+          <button 
+            onClick={setDarkThemeDirect}
+            className="px-2 py-1 bg-indigo-800 text-white rounded"
+          >
+            Force Dark Theme (DOM)
           </button>
         </div>
       </div>
     </div>
   );
-} 
+}
