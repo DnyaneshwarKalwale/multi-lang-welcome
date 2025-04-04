@@ -14,7 +14,6 @@ export default function LanguageSelectionPage() {
   const { setLanguage: setAppLanguage } = useLanguage();
   const { current, total } = getStepProgress();
 
-  // Array of available languages with additional information and flag images
   const languageOptions = [
     { 
       code: "english", 
@@ -50,7 +49,6 @@ export default function LanguageSelectionPage() {
     }
   ];
 
-  // When onboarding language changes, also update the app language
   useEffect(() => {
     if (onboardingLanguage) {
       setAppLanguage(onboardingLanguage);
@@ -67,7 +65,6 @@ export default function LanguageSelectionPage() {
     prevStep();
   };
 
-  // Get continue button text based on selected language
   const getContinueButtonText = () => {
     switch (onboardingLanguage) {
       case "german":
@@ -81,7 +78,6 @@ export default function LanguageSelectionPage() {
     }
   };
 
-  // Get page title based on selected language
   const getPageTitle = () => {
     switch (onboardingLanguage) {
       case "german":
@@ -95,7 +91,6 @@ export default function LanguageSelectionPage() {
     }
   };
 
-  // Get description based on selected language
   const getPageDescription = () => {
     switch (onboardingLanguage) {
       case "german":
@@ -109,7 +104,6 @@ export default function LanguageSelectionPage() {
     }
   };
 
-  // Get step text based on selected language
   const getStepText = () => {
     switch (onboardingLanguage) {
       case "german":
@@ -125,14 +119,12 @@ export default function LanguageSelectionPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 text-gray-900 dark:text-gray-100">
-      {/* Geometric shapes for visual interest */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-blue-50 dark:bg-blue-950/30 blur-3xl opacity-70"></div>
         <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-purple-50 dark:bg-purple-950/30 blur-3xl opacity-70"></div>
         <div className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full bg-teal-50 dark:bg-teal-950/30 blur-3xl opacity-50 animate-pulse"></div>
       </div>
 
-      {/* Back button */}
       <motion.button
         className="absolute top-8 left-8 p-3 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all flex items-center justify-center"
         onClick={handleBack}
@@ -152,7 +144,6 @@ export default function LanguageSelectionPage() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Logo and header */}
           <motion.div 
             className="flex flex-col items-center mb-10"
             initial={{ y: -50, opacity: 0 }}
@@ -179,7 +170,6 @@ export default function LanguageSelectionPage() {
             </p>
           </motion.div>
 
-          {/* Language selection cards */}
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl mb-12"
             initial={{ opacity: 0, y: 20 }}
@@ -204,14 +194,12 @@ export default function LanguageSelectionPage() {
                 `}
                 onClick={() => setOnboardingLanguage(lang.code)}
               >
-                {/* Selected indicator */}
                 {onboardingLanguage === lang.code && (
                   <div className="absolute top-3 right-3 bg-teal-500 text-white p-1 rounded-full">
                     <Check className="w-4 h-4" />
                   </div>
                 )}
                 
-                {/* Language flag and info */}
                 <div className="p-6 flex items-start gap-4">
                   <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-3xl shadow-inner">
                     {lang.flag}
@@ -239,7 +227,6 @@ export default function LanguageSelectionPage() {
                   </div>
                 </div>
                 
-                {/* Background decorative gradient */}
                 {onboardingLanguage === lang.code && (
                   <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-emerald-500"></div>
                 )}
@@ -247,7 +234,6 @@ export default function LanguageSelectionPage() {
             ))}
           </motion.div>
 
-          {/* Continue button */}
           <motion.div
             className="mb-10"
             initial={{ opacity: 0, y: 20 }}
@@ -265,7 +251,6 @@ export default function LanguageSelectionPage() {
             </Button>
           </motion.div>
 
-          {/* Progress indicators */}
           <motion.div
             className="flex flex-col items-center"
             initial={{ opacity: 0 }}
