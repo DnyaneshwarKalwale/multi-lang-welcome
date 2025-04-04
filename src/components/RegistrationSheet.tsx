@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { X, Twitter, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,6 +40,9 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
+    // Close the registration sheet immediately
+    onOpenChange(false);
+    
     // Redirect to backend Google auth endpoint with the dynamic URL
     window.location.href = `${baseUrl}/api/auth/google`;
   };
@@ -51,9 +53,11 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
+    // Close the registration sheet immediately
+    onOpenChange(false);
+    
     // Redirect to backend Twitter auth endpoint
     window.location.href = `${baseUrl}/api/auth/twitter`;
-    onOpenChange(false);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {

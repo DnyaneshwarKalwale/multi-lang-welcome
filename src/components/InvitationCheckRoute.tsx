@@ -6,23 +6,37 @@ import { useAuth } from '@/contexts/AuthContext';
 const InvitationCheckRoute = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [hasInvitations, setHasInvitations] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Skip invitation check if user has previously skipped invitations
+    const skippedInvitations = localStorage.getItem('skippedInvitations');
+    if (skippedInvitations === 'true') {
+      setHasInvitations(false);
+      return;
+    }
+
+    // Don't check if user isn't authenticated
+    if (!isAuthenticated || authLoading) {
+      return;
+    }
+
     const checkInvitations = async () => {
-      // Don't check if user isn't authenticated
-      if (!isAuthenticated || authLoading) {
-        setLoading(false);
-        return;
+      // Quick check for cached invitations first
+      const cachedInvitations = localStorage.getItem('cachedInvitations');
+      if (cachedInvitations) {
+        try {
+          const invitations = JSON.parse(cachedInvitations);
+          if (invitations.length > 0) {
+            setHasInvitations(true);
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing cached invitations');
+        }
       }
 
-      // Check if user has previously skipped invitations
-      const skippedInvitations = localStorage.getItem('skippedInvitations');
-      if (skippedInvitations === 'true') {
-        setHasInvitations(false);
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
 
       try {
         const token = localStorage.getItem('token');
@@ -32,18 +46,15 @@ const InvitationCheckRoute = () => {
           return;
         }
 
-        console.log('Checking for invitations in InvitationCheckRoute');
         const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        console.log(`Using API URL: ${baseApiUrl}`);
         
         try {
           const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
             headers: { Authorization: `Bearer ${token}` },
-            timeout: 5000 // Add timeout to avoid long waits
+            timeout: 3000 // Shorter timeout to avoid slow loading
           });
 
           const invitations = response.data.data || [];
-          console.log(`Found ${invitations.length} pending invitations:`, invitations);
           
           // Store invitations in localStorage for offline access
           if (invitations.length > 0) {
@@ -51,35 +62,8 @@ const InvitationCheckRoute = () => {
           }
           
           setHasInvitations(invitations.length > 0);
-        } catch (apiError: any) {
-          console.error('Failed to check invitations:', apiError);
-          
-          // Log detailed error information for debugging
-          if (apiError.response) {
-            console.error('Error response:', {
-              status: apiError.response.status,
-              statusText: apiError.response.statusText,
-              data: apiError.response.data
-            });
-          } else if (apiError.request) {
-            console.error('Error request:', apiError.request);
-          }
-          
-          // Check if we have cached invitations we can use
-          const cachedInvitations = localStorage.getItem('cachedInvitations');
-          if (cachedInvitations) {
-            try {
-              const invitations = JSON.parse(cachedInvitations);
-              console.log('Using cached invitations:', invitations);
-              setHasInvitations(invitations.length > 0);
-              return;
-            } catch (cacheError) {
-              console.error('Error parsing cached invitations:', cacheError);
-            }
-          }
-          
-          // If API endpoint doesn't exist or returns error, just proceed
-          console.log('Continuing without invitations after error');
+        } catch (apiError) {
+          // If API call fails, assume no invitations and continue
           setHasInvitations(false);
         }
       } catch (error) {
@@ -90,6 +74,7 @@ const InvitationCheckRoute = () => {
       }
     };
 
+    // Run invitation check without blocking
     checkInvitations();
   }, [isAuthenticated, authLoading]);
 
@@ -103,7 +88,7 @@ const InvitationCheckRoute = () => {
   }
 
   // If not authenticated, redirect to the homepage
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return <Navigate to="/" replace />;
   }
 
@@ -112,7 +97,8 @@ const InvitationCheckRoute = () => {
     return <Navigate to="/pending-invitations" replace />;
   }
 
-  // Otherwise, render the protected child route
+  // Otherwise, render the protected child route immediately
+  // while potentially checking for invitations in the background
   return <Outlet />;
 };
 

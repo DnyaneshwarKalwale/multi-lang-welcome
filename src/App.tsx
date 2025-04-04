@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -224,9 +223,11 @@ const AppRoutes = () => {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      
+      {/* OAuth callback route - kept separate to avoid invitation check */}
       <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
       
-      {/* Check for invitations first, then redirect to onboarding or dashboard */}
+      {/* Protected routes with invitation check */}
       <Route element={<InvitationCheckRoute />}>
         <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
         <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
