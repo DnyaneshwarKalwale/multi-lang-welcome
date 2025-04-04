@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,7 +19,7 @@ import DashboardPage from "./pages/DashboardPage";
 import TeamsPage from "./pages/TeamsPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import FeaturesPage from "./pages/FeaturesPage";
 import HowItWorksPage from "./pages/HowItWorksPage";
@@ -138,7 +139,7 @@ function LoadingSpinner() {
   );
 }
 
-// The AppRoutes component remained unchanged, but now without BrowserRouter wrapper
+// The AppRoutes component without BrowserRouter wrapper
 const AppRoutes = () => {
   // Protected Onboarding Route Component
   function ProtectedOnboardingRoute() {
@@ -241,21 +242,23 @@ const AppRoutes = () => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <LanguageProvider>
-            <AuthProvider>
-              <OnboardingProvider>
-                <ContextVerifier>
-                  <AppRoutes />
-                </ContextVerifier>
-              </OnboardingProvider>
-            </AuthProvider>
-          </LanguageProvider>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </ThemeProvider>
+      <AnimatePresence>
+        <ThemeProvider>
+          <TooltipProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <OnboardingProvider>
+                  <ContextVerifier>
+                    <AppRoutes />
+                  </ContextVerifier>
+                </OnboardingProvider>
+              </AuthProvider>
+            </LanguageProvider>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </ThemeProvider>
+      </AnimatePresence>
     </QueryClientProvider>
   </ErrorBoundary>
 );

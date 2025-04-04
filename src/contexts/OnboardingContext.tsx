@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme, ThemeContext } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
@@ -81,9 +82,8 @@ const allSteps: OnboardingStep[] = [
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   
-  // Try to get theme context safely, but don't throw if it's not available
-  // This prevents circular dependency issues
-  const themeContext = useContext(ThemeContext); 
+  // Access theme context directly without attempting to access it at import time
+  const themeContext = useTheme();
   const { setLanguage: setGlobalLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   
@@ -243,17 +243,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStep, isInitialized]);
 
-  // Update global theme when onboarding theme changes - with safeguard
+  // Update global theme when onboarding theme changes
   useEffect(() => {
     if (theme && themeContext) {
       setGlobalTheme(theme);
     }
-  }, [theme, themeContext]);
+  }, [theme, themeContext, setGlobalTheme]);
 
   // Update global language when onboarding language changes
   useEffect(() => {
     if (language) {
-      setGlobalLanguage(language as "english" | "german");
+      setGlobalLanguage(language as "english" | "german" | "spanish" | "french");
     }
   }, [language, setGlobalLanguage]);
 
