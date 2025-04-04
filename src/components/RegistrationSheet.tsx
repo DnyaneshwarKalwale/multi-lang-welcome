@@ -56,9 +56,19 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     clearError();
     
     if (firstName && lastName && email && password) {
-      await register(firstName, lastName, email, password);
-      if (onSuccess) onSuccess();
-      onOpenChange(false);
+      try {
+        // Register the user
+        await register(firstName, lastName, email, password);
+        
+        // Close the registration sheet
+        onOpenChange(false);
+        
+        // Navigate to email verification page
+        // The register function in AuthContext already handles redirecting to the verify-email page
+        // and storing the email in localStorage
+      } catch (error) {
+        console.error("Registration error:", error);
+      }
     }
   };
   

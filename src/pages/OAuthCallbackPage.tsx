@@ -72,7 +72,8 @@ export default function OAuthCallbackPage() {
           id: userData.id, 
           email: userData.email || '(no email)',
           onboardingCompleted: userData.onboardingCompleted,
-          authMethod: userData.authMethod
+          authMethod: userData.authMethod,
+          isEmailVerified: userData.isEmailVerified
         });
         
         // Store onboarding status in localStorage for other components to use

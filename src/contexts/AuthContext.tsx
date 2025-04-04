@@ -79,7 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setUser(response.user);
       
-      navigate('/verify-email', { state: { email } });
+      localStorage.setItem('pendingVerificationEmail', email);
+      
+      navigate('/verify-email');
+      
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
       console.error('Registration error:', err);
