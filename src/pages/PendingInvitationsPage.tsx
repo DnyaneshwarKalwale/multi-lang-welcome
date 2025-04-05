@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   Twitter, UserCheck, UserX, 
@@ -19,9 +19,11 @@ interface TeamInvitation {
 
 export default function PendingInvitationsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [processingToken, setProcessingToken] = useState(false);
 
   // Animation variants
   const fadeIn = {
@@ -46,6 +48,86 @@ export default function PendingInvitationsPage() {
       opacity: 1, 
       y: 0,
       transition: { duration: 0.5 }
+    }
+  };
+
+  // Process URL token if present
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get('token');
+    
+    if (token) {
+      processInvitationToken(token);
+    }
+  }, [location]);
+
+  // Process the invitation token from the URL
+  const processInvitationToken = async (token: string) => {
+    try {
+      setProcessingToken(true);
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      
+      // First verify the invitation token
+      const verifyResponse = await axios.post(`${baseApiUrl}/teams/invitations/verify-token`, { token });
+      const invitationData = verifyResponse.data.data;
+      
+      // Get the user token
+      const userToken = localStorage.getItem('token');
+      
+      if (!userToken) {
+        // If user is not logged in, redirect to login with returnUrl
+        // Store the invitation token in localStorage to process after login
+        localStorage.setItem('pendingInvitationToken', token);
+        navigate('/login', { state: { returnTo: `/invitations?token=${token}` } });
+        return;
+      }
+
+      // If user is authenticated, check their email
+      try {
+        const userResponse = await axios.get(`${baseApiUrl}/users/me`, {
+          headers: { Authorization: `Bearer ${userToken}` }
+        });
+        
+        const userEmail = userResponse.data.data.email;
+        
+        // If the invitation matches the user's email, add it to the invitations list
+        if (userEmail.toLowerCase() === invitationData.email.toLowerCase()) {
+          // Create a new invitation object
+          const newInvitation: TeamInvitation = {
+            id: token, // Using token as ID for now
+            teamId: invitationData.teamId,
+            teamName: invitationData.teamName,
+            role: invitationData.role,
+            createdAt: new Date().toISOString() // We don't have created date from API
+          };
+          
+          // Add to invitations if not already in the list
+          setInvitations(prev => {
+            const exists = prev.some(inv => inv.teamId === invitationData.teamId);
+            if (!exists) {
+              return [...prev, newInvitation];
+            }
+            return prev;
+          });
+          
+          setProcessingToken(false);
+          setLoading(false);
+        } else {
+          setError(`This invitation was sent to ${invitationData.email}, but you're logged in with a different email.`);
+          setProcessingToken(false);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Failed to get user information:', err);
+        setError('Failed to verify your account. Please try logging in again.');
+        setProcessingToken(false);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Failed to process invitation token:', err);
+      setError('Invalid or expired invitation link.');
+      setProcessingToken(false);
+      setLoading(false);
     }
   };
 
@@ -88,9 +170,27 @@ export default function PendingInvitationsPage() {
       }
 
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      
+      // Check if this is a token-based invitation (from URL) or a regular invitation
+      if (invitationId.length > 30) { // Token is typically longer than regular IDs
+        // Get the user email
+        const userResponse = await axios.get(`${baseApiUrl}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const userEmail = userResponse.data.data.email;
+        
+        // Accept by token
+        await axios.post(`${baseApiUrl}/teams/invitations/accept-by-token`, { 
+          token: invitationId,
+          email: userEmail 
+        });
+      } else {
+        // Regular invitation
+        await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
 
       // Navigate to team dashboard
       navigate('/dashboard');
@@ -111,9 +211,27 @@ export default function PendingInvitationsPage() {
       }
 
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      
+      // Check if this is a token-based invitation (from URL) or a regular invitation
+      if (invitationId.length > 30) { // Token is typically longer than regular IDs
+        // Get the user email
+        const userResponse = await axios.get(`${baseApiUrl}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const userEmail = userResponse.data.data.email;
+        
+        // Decline by token
+        await axios.post(`${baseApiUrl}/teams/invitations/decline-by-token`, { 
+          token: invitationId,
+          email: userEmail 
+        });
+      } else {
+        // Regular invitation
+        await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
 
       // Remove this invitation from the list
       setInvitations(invitations.filter(inv => inv.id !== invitationId));
@@ -193,10 +311,12 @@ export default function PendingInvitationsPage() {
         initial="initial"
         animate="animate"
       >
-        {loading ? (
+        {loading || processingToken ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
-            <p className="text-gray-600 dark:text-gray-300">Loading invitations...</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              {processingToken ? "Processing invitation link..." : "Loading invitations..."}
+            </p>
           </div>
         ) : error ? (
           <div className="text-center py-8">

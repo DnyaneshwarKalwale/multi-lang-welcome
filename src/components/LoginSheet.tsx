@@ -17,11 +17,9 @@ interface LoginSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  redirectTo?: string;
-  invitationToken?: string;
 }
 
-export function LoginSheet({ open, onOpenChange, onSuccess, redirectTo, invitationToken }: LoginSheetProps) {
+export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { login, error, clearError, loading } = useAuth();
@@ -43,17 +41,8 @@ export function LoginSheet({ open, onOpenChange, onSuccess, redirectTo, invitati
     // Close the login sheet immediately
     onOpenChange(false);
     
-    // Prepare redirect parameters if needed
-    let redirectParams = '';
-    if (redirectTo) {
-      redirectParams = `?redirect=${redirectTo}`;
-      if (invitationToken) {
-        redirectParams += `&token=${invitationToken}`;
-      }
-    }
-    
     // Redirect to backend Google auth endpoint with the dynamic URL
-    window.location.href = `${baseUrl}/api/auth/google${redirectParams}`;
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   // Handle Twitter auth
@@ -65,17 +54,8 @@ export function LoginSheet({ open, onOpenChange, onSuccess, redirectTo, invitati
     // Close the login sheet immediately
     onOpenChange(false);
     
-    // Prepare redirect parameters if needed
-    let redirectParams = '';
-    if (redirectTo) {
-      redirectParams = `?redirect=${redirectTo}`;
-      if (invitationToken) {
-        redirectParams += `&token=${invitationToken}`;
-      }
-    }
-    
     // Redirect to backend Twitter auth endpoint
-    window.location.href = `${baseUrl}/api/auth/twitter${redirectParams}`;
+    window.location.href = `${baseUrl}/api/auth/twitter`;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,28 +66,20 @@ export function LoginSheet({ open, onOpenChange, onSuccess, redirectTo, invitati
       try {
         const user = await login(email, password);
         
-        // After login, check for redirect preferences
-        if (redirectTo) {
-          if (redirectTo === "invitations" && invitationToken) {
-            navigate(`/invitations?token=${invitationToken}`);
-          } else if (redirectTo === "teams") {
-            navigate("/teams");
-          } else {
-            navigate("/dashboard");
-          }
+        // After login, get the saved onboarding step from localStorage
+        const savedStep = localStorage.getItem('onboardingStep');
+        const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+        
+        // If we have a saved step and onboarding is not completed, redirect to that step
+        if (savedStep && !onboardingCompleted) {
+          navigate(`/onboarding/${savedStep}`);
+        } else if (onboardingCompleted) {
+          // If onboarding is completed, navigate to dashboard
+          navigate('/dashboard');
         } else {
-          // Default behavior: check for onboarding steps
-          const savedStep = localStorage.getItem('onboardingStep');
-          const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
-          
-          if (savedStep && !onboardingCompleted) {
-            navigate(`/onboarding/${savedStep}`);
-          } else if (onboardingCompleted) {
-            navigate('/dashboard');
-          } else {
-            if (onSuccess) onSuccess();
-            else navigate("/onboarding/welcome");
-          }
+          // If no saved step, start at the beginning of onboarding or use success callback
+          if (onSuccess) onSuccess();
+          else navigate("/onboarding/welcome");
         }
         
         onOpenChange(false);

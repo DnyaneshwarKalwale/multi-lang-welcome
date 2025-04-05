@@ -18,7 +18,6 @@ import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import TeamsPage from "./pages/TeamsPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
-import InvitationPage from "./pages/InvitationPage";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -225,7 +224,9 @@ const AppRoutes = () => {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-      <Route path="/invitations" element={<InvitationPage />} />
+      
+      {/* Handle invitation token links */}
+      <Route path="/invitations" element={<PendingInvitationsPage />} />
       
       {/* OAuth callback route - kept separate to avoid invitation check */}
       <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />

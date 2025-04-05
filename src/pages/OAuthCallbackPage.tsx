@@ -15,14 +15,10 @@ export default function OAuthCallbackPage() {
       const token = params.get('token');
       const onboarding = params.get('onboarding') === 'true';
       const errorParam = params.get('error');
-      const redirect = params.get('redirect');
-      const invitationToken = params.get('invToken');
       
       console.log('OAuth callback received with params:', { 
         token: token ? '(token present)' : '(no token)', 
-        onboarding,
-        redirect,
-        invitationToken: invitationToken ? '(token present)' : '(no token)',
+        onboarding, 
         error: errorParam 
       });
       
@@ -63,27 +59,22 @@ export default function OAuthCallbackPage() {
         // Store onboarding status in localStorage for other components to use
         localStorage.setItem('onboardingCompleted', userData.onboardingCompleted ? 'true' : 'false');
         
+        // Check if there's a pending invitation token
+        const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
+        
         // Add a small delay to ensure auth context is updated
         setTimeout(() => {
-          // If there's a redirect parameter, prioritize it
-          if (redirect) {
-            if (redirect === 'invitations' && invitationToken) {
-              navigate(`/invitations?token=${invitationToken}`, { replace: true });
-            } else if (redirect === 'teams') {
-              navigate('/teams', { replace: true });
-            } else {
-              // For any other redirect value, go to that path
-              navigate(`/${redirect}`, { replace: true });
-            }
-          } 
-          // If no redirect or the redirect handling failed, use default behavior
+          // If there's a pending invitation token, redirect to the invitations page
+          if (pendingInvitationToken) {
+            navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
+            // Clear the pending invitation token from localStorage
+            localStorage.removeItem('pendingInvitationToken');
+          }
+          // Otherwise, redirect based on onboarding status
           else if (onboarding) {
             navigate('/onboarding/welcome', { replace: true });
-          } else if (userData.onboardingCompleted) {
-            navigate('/dashboard', { replace: true });
           } else {
-            // If they haven't completed onboarding, send them there
-            navigate('/onboarding/welcome', { replace: true });
+            navigate('/dashboard', { replace: true });
           }
         }, 100);
         
@@ -92,20 +83,18 @@ export default function OAuthCallbackPage() {
         console.error('Error verifying user data:', error);
         // Continue anyway since we have a token
         
+        // Check if there's a pending invitation token
+        const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
+        
         // Add a small delay to ensure auth context is updated
         setTimeout(() => {
-          // If there's a redirect parameter, prioritize it
-          if (redirect) {
-            if (redirect === 'invitations' && invitationToken) {
-              navigate(`/invitations?token=${invitationToken}`, { replace: true });
-            } else if (redirect === 'teams') {
-              navigate('/teams', { replace: true });
-            } else {
-              // For any other redirect value, go to that path
-              navigate(`/${redirect}`, { replace: true });
-            }
-          } 
-          // If no redirect, use default behavior
+          // If there's a pending invitation token, redirect to the invitations page
+          if (pendingInvitationToken) {
+            navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
+            // Clear the pending invitation token from localStorage
+            localStorage.removeItem('pendingInvitationToken');
+          }
+          // Otherwise, redirect based on onboarding status
           else if (onboarding) {
             navigate('/onboarding/welcome', { replace: true });
           } else {

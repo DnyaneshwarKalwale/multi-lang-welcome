@@ -3,25 +3,20 @@ import { ScripeLogotype, ScripeIcon } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, ChevronRight, Star, Twitter, Users, Zap } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { LoginSheet } from "@/components/LoginSheet";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
-import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [redirectAfterLogin, setRedirectAfterLogin] = useState("");
-  const [invitationToken, setInvitationToken] = useState("");
   
   // Handle scroll events to change navbar appearance
   useEffect(() => {
@@ -32,32 +27,6 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  // Check for invitation token or redirect parameters in URL
-  useEffect(() => {
-    const redirect = searchParams.get("redirect");
-    const token = searchParams.get("token");
-    
-    if (redirect) {
-      setRedirectAfterLogin(redirect);
-    }
-    
-    if (token) {
-      setInvitationToken(token);
-    }
-    
-    // If we have a token or redirect parameter, show the login sheet
-    if (redirect || token) {
-      setIsLoginOpen(true);
-      
-      // Show a message about the invitation
-      if (redirect === "invitations" && token) {
-        toast.info("Please sign in to accept the team invitation", {
-          duration: 5000,
-        });
-      }
-    }
-  }, [searchParams]);
 
   const handleContinue = () => {
     setIsRegisterOpen(true);
@@ -65,21 +34,7 @@ const Index = () => {
 
   const handleLoginSuccess = () => {
     setIsLoginOpen(false);
-    
-    if (redirectAfterLogin) {
-      if (redirectAfterLogin === "invitations" && invitationToken) {
-        // Redirect to invitation page with token
-        navigate(`/invitations?token=${invitationToken}`);
-      } else if (redirectAfterLogin === "teams") {
-        // Redirect to teams page
-        navigate("/teams");
-      } else {
-        // Default redirect to dashboard
-        navigate("/dashboard");
-      }
-    } else {
-      navigate("/onboarding/welcome");
-    }
+    navigate("/onboarding/welcome");
   };
 
   const handleRegisterSuccess = () => {
@@ -551,8 +506,6 @@ const Index = () => {
         open={isLoginOpen} 
         onOpenChange={setIsLoginOpen}
         onSuccess={handleLoginSuccess}
-        redirectTo={redirectAfterLogin}
-        invitationToken={invitationToken}
       />
       
       <RegistrationSheet 
