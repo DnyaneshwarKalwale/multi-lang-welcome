@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 
 interface TeamInvitation {
   id: string;
@@ -16,8 +17,32 @@ export default function TeamInvitationNotification() {
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
   
-  const fetchInvitations = async () => {
+  useEffect(() => {
+    // Check if we just navigated from an invitation acceptance page
+    // This helps clear the cached invitations when a user accepts from an email link
+    const checkInvitationAction = () => {
+      const prevPath = sessionStorage.getItem('prevPath');
+      const currentPath = location.pathname;
+      
+      // Save current path for next navigation
+      sessionStorage.setItem('prevPath', currentPath);
+      
+      // If coming from invitation page to a protected page, we should refresh invitations
+      if (prevPath?.includes('/invitations') && (
+        currentPath.includes('/dashboard') || 
+        currentPath.includes('/teams')
+      )) {
+        console.log('Coming from invitation page, refreshing invitations');
+        fetchInvitations(true); // force refresh
+      }
+    };
+    
+    checkInvitationAction();
+  }, [location]);
+  
+  const fetchInvitations = async (forceRefresh = false) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -25,6 +50,22 @@ export default function TeamInvitationNotification() {
       console.log('Checking for notification invitations');
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
       console.log(`Using API URL: ${baseApiUrl}`);
+      
+      // First, check if we have cached invitations and it's not a force refresh
+      if (!forceRefresh) {
+        const cachedInvitations = localStorage.getItem('cachedInvitations');
+        if (cachedInvitations) {
+          try {
+            const parsedInvitations = JSON.parse(cachedInvitations);
+            console.log('Using cached invitations for notification:', parsedInvitations);
+            setInvitations(parsedInvitations);
+            
+            // Don't return here, still try to fetch latest from server in background
+          } catch (cacheError) {
+            console.error('Error parsing cached invitations:', cacheError);
+          }
+        }
+      }
       
       try {
         const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
@@ -39,6 +80,9 @@ export default function TeamInvitationNotification() {
         // Store invitations in localStorage for offline access
         if (invitations.length > 0) {
           localStorage.setItem('cachedInvitations', JSON.stringify(invitations));
+        } else {
+          // Clear the cache if there are no invitations
+          localStorage.removeItem('cachedInvitations');
         }
       } catch (apiError: any) {
         console.error('Failed to fetch invitations for notification:', apiError);
@@ -54,21 +98,26 @@ export default function TeamInvitationNotification() {
           console.error('Error request:', apiError.request);
         }
         
-        // Check if we have cached invitations we can use
-        const cachedInvitations = localStorage.getItem('cachedInvitations');
-        if (cachedInvitations) {
-          try {
-            const parsedInvitations = JSON.parse(cachedInvitations);
-            console.log('Using cached invitations for notification:', parsedInvitations);
-            setInvitations(parsedInvitations);
-            return;
-          } catch (cacheError) {
-            console.error('Error parsing cached invitations:', cacheError);
+        // If we haven't already loaded from cache and it's not a force refresh
+        if (!invitations.length && !forceRefresh) {
+          // Check if we have cached invitations we can use
+          const cachedInvitations = localStorage.getItem('cachedInvitations');
+          if (cachedInvitations) {
+            try {
+              const parsedInvitations = JSON.parse(cachedInvitations);
+              console.log('Using cached invitations for notification:', parsedInvitations);
+              setInvitations(parsedInvitations);
+              return;
+            } catch (cacheError) {
+              console.error('Error parsing cached invitations:', cacheError);
+            }
           }
         }
         
         // Don't show anything if there's an error and no cache
-        setInvitations([]);
+        if (!invitations.length) {
+          setInvitations([]);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch invitations:', err);
@@ -82,7 +131,7 @@ export default function TeamInvitationNotification() {
     fetchInvitations();
     
     // Poll for new invitations every minute
-    const intervalId = setInterval(fetchInvitations, 60000);
+    const intervalId = setInterval(() => fetchInvitations(), 60000);
     
     return () => clearInterval(intervalId);
   }, []);

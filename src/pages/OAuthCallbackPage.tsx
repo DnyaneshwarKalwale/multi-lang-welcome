@@ -15,10 +15,14 @@ export default function OAuthCallbackPage() {
       const token = params.get('token');
       const onboarding = params.get('onboarding') === 'true';
       const errorParam = params.get('error');
+      const redirect = params.get('redirect');
+      const invitationToken = params.get('invToken');
       
       console.log('OAuth callback received with params:', { 
         token: token ? '(token present)' : '(no token)', 
-        onboarding, 
+        onboarding,
+        redirect,
+        invitationToken: invitationToken ? '(token present)' : '(no token)',
         error: errorParam 
       });
       
@@ -61,11 +65,25 @@ export default function OAuthCallbackPage() {
         
         // Add a small delay to ensure auth context is updated
         setTimeout(() => {
-          // Directly redirect based on onboarding status
-          if (onboarding) {
+          // If there's a redirect parameter, prioritize it
+          if (redirect) {
+            if (redirect === 'invitations' && invitationToken) {
+              navigate(`/invitations?token=${invitationToken}`, { replace: true });
+            } else if (redirect === 'teams') {
+              navigate('/teams', { replace: true });
+            } else {
+              // For any other redirect value, go to that path
+              navigate(`/${redirect}`, { replace: true });
+            }
+          } 
+          // If no redirect or the redirect handling failed, use default behavior
+          else if (onboarding) {
             navigate('/onboarding/welcome', { replace: true });
-          } else {
+          } else if (userData.onboardingCompleted) {
             navigate('/dashboard', { replace: true });
+          } else {
+            // If they haven't completed onboarding, send them there
+            navigate('/onboarding/welcome', { replace: true });
           }
         }, 100);
         
@@ -76,8 +94,19 @@ export default function OAuthCallbackPage() {
         
         // Add a small delay to ensure auth context is updated
         setTimeout(() => {
-          // Directly redirect based on onboarding status
-          if (onboarding) {
+          // If there's a redirect parameter, prioritize it
+          if (redirect) {
+            if (redirect === 'invitations' && invitationToken) {
+              navigate(`/invitations?token=${invitationToken}`, { replace: true });
+            } else if (redirect === 'teams') {
+              navigate('/teams', { replace: true });
+            } else {
+              // For any other redirect value, go to that path
+              navigate(`/${redirect}`, { replace: true });
+            }
+          } 
+          // If no redirect, use default behavior
+          else if (onboarding) {
             navigate('/onboarding/welcome', { replace: true });
           } else {
             navigate('/dashboard', { replace: true });
