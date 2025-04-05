@@ -188,3 +188,46 @@ export function TwitterStyleIconRounded({ className = "w-10 h-10" }: IconProps) 
     </div>
   );
 }
+
+// Icon component for Dekcion (previously Scripe)
+export const DekcionIcon = ({ className = "h-6 w-6" }) => {
+  return (
+    <svg className={className} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#0f172a"/>
+      <path d="M17.152 36L36 10.048V10H18.528L16.448 13.6L17.152 36Z" fill="#06b6d4"/>
+      <path d="M32.704 36H8L13.312 27.008L32.704 36Z" fill="#7c3aed"/>
+      <path d="M8 9.312V36L17.152 12.448L8 9.312Z" fill="#14b8a6"/>
+      <path d="M36 9.312H8L18.528 13.6L36 9.312Z" fill="#3b82f6"/>
+    </svg>
+  );
+};
+
+// Rounded icon variant for Dekcion
+export const DekcionIconRounded = ({ className = "h-6 w-6" }) => {
+  return (
+    <svg className={className} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="20" fill="#0f172a"/>
+      <path d="M17.152 36L36 10.048V10H18.528L16.448 13.6L17.152 36Z" fill="#06b6d4"/>
+      <path d="M32.704 36H8L13.312 27.008L32.704 36Z" fill="#7c3aed"/>
+      <path d="M8 9.312V36L17.152 12.448L8 9.312Z" fill="#14b8a6"/>
+      <path d="M36 9.312H8L18.528 13.6L36 9.312Z" fill="#3b82f6"/>
+    </svg>
+  );
+};
+
+// Logotype (icon + text) for Dekcion
+export const DekcionLogotype = ({ className = "h-8" }) => {
+  return (
+    <div className={`flex items-center ${className}`}>
+      <DekcionIcon className="h-full w-auto" />
+      <span className="ml-2 font-bold text-lg">Dekcion</span>
+    </div>
+  );
+};
+
+// Export the old component names for backward compatibility
+export const ScripeIcon = DekcionIcon;
+export const ScripeIconRounded = DekcionIconRounded;
+export const ScripeLogotype = DekcionLogotype;
+export const SekcionLogotype = DekcionLogotype;
+export const SekcionIconRounded = DekcionIconRounded;

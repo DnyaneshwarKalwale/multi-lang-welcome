@@ -162,51 +162,51 @@ export default function TeamInvitationNotification() {
   return (
     <div className="relative">
       <button 
-        className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-800 relative"
+        className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 relative"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={invitations.length > 0 ? `${invitations.length} team invitations` : "No team invitations"}
       >
-        <Bell className="w-5 h-5 text-gray-300" />
+        <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
         {invitations.length > 0 && (
-          <span className="absolute top-1 right-1 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">
             {invitations.length}
           </span>
         )}
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 top-12 w-80 bg-gray-900 rounded-lg shadow-lg z-50 overflow-hidden">
-          <div className="p-3 border-b border-gray-800">
+        <div className="absolute right-0 top-12 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="p-3 border-b border-gray-200 dark:border-gray-700">
             <h3 className="font-medium">Team Invitations</h3>
           </div>
           
           <div className="max-h-96 overflow-y-auto">
             {invitations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                 No pending invitations
               </div>
             ) : (
               invitations.map(invitation => (
-                <div key={invitation.id} className="p-3 border-b border-gray-800 hover:bg-gray-800">
+                <div key={invitation.id} className="p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50">
                   <div className="flex items-center mb-2">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center text-white font-semibold mr-2">
+                    <div className="w-8 h-8 bg-primary-600 dark:bg-primary-700 rounded-md flex items-center justify-center text-white font-semibold mr-2">
                       {invitation.teamName.substring(0, 1).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium">{invitation.teamName}</p>
-                      <p className="text-xs text-gray-400">Role: {invitation.role}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{invitation.teamName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Role: {invitation.role}</p>
                     </div>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <button
                       onClick={() => handleDeclineInvitation(invitation.id)}
-                      className="text-xs text-gray-400 hover:text-gray-300"
+                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                     >
                       Decline
                     </button>
                     <Button
                       onClick={() => handleAcceptInvitation(invitation.id)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-xs py-1 h-auto"
+                      className="bg-primary-600 hover:bg-primary-700 text-xs py-1 h-auto"
                       size="sm"
                     >
                       Accept

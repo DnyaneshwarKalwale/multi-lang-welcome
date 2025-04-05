@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
+import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -227,14 +228,16 @@ const AppRoutes = () => {
       {/* OAuth callback route - kept separate to avoid invitation check */}
       <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
       
-      {/* Protected routes with invitation check */}
+      {/* Protected routes with invitation check wrapped in AppLayout */}
       <Route element={<InvitationCheckRoute />}>
-        <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
-        <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
-        <Route path="/teams" element={<TeamsPage />} />
+        <Route element={<AppLayout />}>
+          <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+          <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+          <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+        </Route>
       </Route>
       
-      <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

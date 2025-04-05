@@ -1,12 +1,12 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
 import MobileMenu from '@/components/MobileMenu';
-import { ScripeIcon } from '@/components/ScripeIcon';
+import { DekcionIcon } from '@/components/ScripeIcon';
 import { LogOut, Sparkles, Stars, MessageCircle, Bell, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import TeamInvitationNotification from '@/components/TeamInvitationNotification';
 
 const CustomNavbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -93,8 +93,8 @@ const CustomNavbar = () => {
 
         <div className="flex items-center gap-2">
           <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2 transition-transform hover:scale-[1.02]">
-            <ScripeIcon className="h-8 w-8 text-primary-500 dark:text-primary-400" />
-            <span className="text-xl font-bold text-gray-900 dark:text-white">Scripe</span>
+            <DekcionIcon className="h-8 w-8 text-primary-500 dark:text-primary-400" />
+            <span className="text-xl font-bold text-gray-900 dark:text-white">Dekcion</span>
           </Link>
           
           {isAuthenticated && (
@@ -119,6 +119,8 @@ const CustomNavbar = () => {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           
+          {isAuthenticated && <TeamInvitationNotification />}
+          
           {isAuthenticated ? (
             <div className="hidden lg:flex items-center gap-4">
               <motion.div className="relative">
@@ -127,14 +129,6 @@ const CustomNavbar = () => {
                   className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center text-white font-semibold shadow-sm"
                 >
                   {user?.firstName ? user.firstName.charAt(0) : 'U'}
-                </motion.div>
-                <motion.div 
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring" }}
-                >
-                  2
                 </motion.div>
               </motion.div>
               

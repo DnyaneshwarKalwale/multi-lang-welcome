@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -97,7 +96,7 @@ const MobileMenu = () => {
             </div>
 
             <div className="flex items-center justify-between mb-8 relative z-10">
-              <h2 className="text-xl font-bold text-gradient">Scripe</h2>
+              <h2 className="text-xl font-bold text-gradient">Dekcion</h2>
               <div className="flex items-center gap-2">
                 <ThemeToggle />
                 <Button 

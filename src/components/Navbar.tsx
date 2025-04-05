@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ScripeLogotype, ScripeIconRounded } from "@/components/ScripeIcon";
+import { DekcionLogotype, DekcionIconRounded } from "@/components/ScripeIcon";
 import { Menu, X, ChevronRight, ArrowRight, Moon, Sun } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
@@ -60,7 +60,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             transition={{ duration: 0.5 }}
           >
             <a href="/" className="flex items-center">
-              <ScripeLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
+              <DekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
             </a>
           </motion.div>
           
@@ -155,7 +155,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <ScripeIconRounded className="w-16 h-16" />
+                <DekcionIconRounded className="w-16 h-16" />
               </motion.div>
               
               <div className="flex flex-col items-center space-y-8 w-full">
