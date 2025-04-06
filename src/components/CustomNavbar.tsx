@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,12 @@ const CustomNavbar = () => {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-primary-100/30 dark:border-gray-800/50 transition-colors duration-300">
+    <motion.header 
+      className="sticky top-0 z-40 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-primary-100/30 dark:border-gray-800/50 transition-colors duration-300"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <div className="container relative flex h-16 items-center justify-between px-4 overflow-hidden">
         {/* Floating icons decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -117,15 +123,14 @@ const CustomNavbar = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <ThemeToggle />
+          <ThemeToggle variant="minimal" />
           
           {isAuthenticated && <TeamInvitationNotification />}
           
           {isAuthenticated ? (
             <div className="hidden lg:flex items-center gap-4">
-              <motion.div className="relative">
+              <motion.div className="relative" whileHover={{ scale: 1.05 }}>
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
                   className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center text-white font-semibold shadow-sm"
                 >
                   {user?.firstName ? user.firstName.charAt(0) : 'U'}
@@ -152,7 +157,7 @@ const CustomNavbar = () => {
                 <Button variant="outline" size="sm" className="border-primary-200 dark:border-gray-700 text-primary-700 dark:text-primary-400 hover:border-primary-500 dark:hover:border-primary-600">Sign in</Button>
               </Link>
               <Link to="/registration">
-                <Button size="sm" variant="gradient" className="shadow-sm">Sign up</Button>
+                <Button size="sm" className="bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white shadow-sm">Sign up</Button>
               </Link>
             </div>
           )}
@@ -160,7 +165,7 @@ const CustomNavbar = () => {
           <MobileMenu />
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

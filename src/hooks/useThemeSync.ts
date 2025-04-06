@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 /**
@@ -8,11 +8,29 @@ import { useTheme } from '@/contexts/ThemeContext';
  */
 export function useThemeSync() {
   const { theme, setTheme, isThemeLoaded } = useTheme();
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark' | null>(null);
+  
+  // Detect system theme
+  useEffect(() => {
+    const detectSystemTheme = () => {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setSystemTheme('dark');
+      } else {
+        setSystemTheme('light');
+      }
+    };
+    
+    detectSystemTheme();
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => detectSystemTheme();
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
   
   useEffect(() => {
-    // We don't need to apply the theme here as it's already handled in the ThemeContext
-    // Just listen for localStorage changes from other tabs/windows
-    
+    // Listen for localStorage changes from other tabs/windows
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theme' && e.newValue && (e.newValue === 'light' || e.newValue === 'dark')) {
         if (e.newValue !== theme) {
@@ -22,9 +40,27 @@ export function useThemeSync() {
       }
     };
     
+    // Verify DOM class match
+    const verifyDomTheme = () => {
+      const hasLightClass = document.documentElement.classList.contains('light');
+      const hasDarkClass = document.documentElement.classList.contains('dark');
+      
+      if ((theme === 'light' && !hasLightClass) || (theme === 'dark' && !hasDarkClass)) {
+        console.log('useThemeSync detected DOM theme mismatch, fixing...');
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(theme);
+      }
+    };
+    
     window.addEventListener('storage', handleStorageChange);
+    
+    // Verify DOM theme alignment
+    if (isThemeLoaded) {
+      verifyDomTheme();
+    }
+    
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [theme, setTheme]);
+  }, [theme, setTheme, isThemeLoaded]);
   
-  return { theme, setTheme, isThemeLoaded };
+  return { theme, setTheme, isThemeLoaded, systemTheme };
 }
