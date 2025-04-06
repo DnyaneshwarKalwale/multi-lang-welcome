@@ -15,6 +15,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
   
   // Set mounted state on component mount
   useEffect(() => {
@@ -29,14 +30,15 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     console.log("ContextVerifier - Initial theme state:", {
       themeInLocalStorage,
       isDarkInDOM,
-      isLightInDOM
+      isLightInDOM,
+      currentThemeContext: theme
     });
     
     // Make sure DOM has at least one theme class set
     if (!isDarkInDOM && !isLightInDOM) {
-      const theme = themeInLocalStorage === 'light' ? 'light' : 'dark';
-      document.documentElement.classList.add(theme);
-      console.log(`ContextVerifier - Fixed missing theme class by adding: ${theme}`);
+      const themeToApply = themeInLocalStorage === 'light' ? 'light' : 'dark';
+      document.documentElement.classList.add(themeToApply);
+      console.log(`ContextVerifier - Fixed missing theme class by adding: ${themeToApply}`);
     }
     
     // Synchronize localStorage with DOM if needed
@@ -54,7 +56,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     }, 100);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [theme]);
   
   // If still loading, show spinner
   if (isLoading) {

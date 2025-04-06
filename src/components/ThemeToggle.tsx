@@ -10,7 +10,16 @@ export default function ThemeToggle() {
   // On mount, initialize state
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Debug
+    console.log(`ThemeToggle mounted. Current theme: ${theme}, isThemeLoaded: ${isThemeLoaded}`);
+  }, [theme, isThemeLoaded]);
+
+  // Log when toggle is clicked
+  const handleToggle = () => {
+    console.log("Theme toggle clicked");
+    toggleTheme();
+  };
 
   // Don't render until mounted to prevent hydration mismatch
   if (!mounted || !isThemeLoaded) {
@@ -27,7 +36,7 @@ export default function ThemeToggle() {
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleToggle}
       className="w-10 h-10 rounded-md bg-white/10 dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200/20 dark:border-gray-700/40 
                 hover:bg-blue-100/20 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 
                 shadow-sm transition-all duration-300 flex items-center justify-center"

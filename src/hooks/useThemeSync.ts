@@ -10,26 +10,13 @@ export function useThemeSync() {
   const { theme, setTheme, isThemeLoaded } = useTheme();
   
   useEffect(() => {
-    // Apply the theme to the DOM whenever it changes
-    if (isThemeLoaded && theme) {
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-      } else {
-        document.documentElement.classList.add('light');
-        document.documentElement.classList.remove('dark');
-      }
-      
-      // Update localStorage
-      localStorage.setItem('theme', theme);
-    }
-  }, [theme, isThemeLoaded]);
-  
-  // Listen for theme changes from other components
-  useEffect(() => {
+    // We don't need to apply the theme here as it's already handled in the ThemeContext
+    // Just listen for localStorage changes from other tabs/windows
+    
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theme' && e.newValue && (e.newValue === 'light' || e.newValue === 'dark')) {
         if (e.newValue !== theme) {
+          console.log(`useThemeSync detected theme change in another tab: ${e.newValue}`);
           setTheme(e.newValue as 'light' | 'dark');
         }
       }

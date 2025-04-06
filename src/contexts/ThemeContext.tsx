@@ -39,6 +39,9 @@ export function applyTheme(theme: Theme) {
   
   // Dispatch a custom event that other components can listen for
   window.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
+  
+  // Debug theme change
+  console.log(`Theme applied: ${theme}, DOM updated, localStorage set`);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -70,7 +73,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
     
     // Listen for theme changes from other components
-    const handleThemeChange = (e: StorageEvent) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "theme" && e.newValue) {
         const newTheme = e.newValue as Theme;
         if (newTheme === "light" || newTheme === "dark") {
@@ -81,7 +84,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
     
     // Listen for storage events from other tabs/windows
-    window.addEventListener("storage", handleThemeChange);
+    window.addEventListener("storage", handleStorageChange);
     
     // Listen for custom themechange events
     const handleCustomThemeChange = (e: CustomEvent<Theme>) => {
@@ -91,7 +94,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.addEventListener('themechange', handleCustomThemeChange as EventListener);
     
     return () => {
-      window.removeEventListener("storage", handleThemeChange);
+      window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener('themechange', handleCustomThemeChange as EventListener);
     };
   }, []);
@@ -105,6 +108,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Toggle function
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
+    console.log(`Toggling theme from ${theme} to ${newTheme}`);
     setTheme(newTheme);
   };
 
