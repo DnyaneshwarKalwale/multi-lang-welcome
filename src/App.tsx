@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -133,7 +134,7 @@ function LoadingSpinner() {
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       >
-        Loading Sekcion...
+        Loading TweetSphere...
       </motion.div>
     </div>
   );
@@ -141,19 +142,33 @@ function LoadingSpinner() {
 
 // The AppRoutes component without BrowserRouter wrapper
 const AppRoutes = () => {
-  // Protected Onboarding Route Component
+  // Protected Onboarding Route Component with optimized loading
   function ProtectedOnboardingRoute() {
     const { user, isAuthenticated, loading } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
-    const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+    const [loadingDuration, setLoadingDuration] = useState(0);
+    const [showLoader, setShowLoader] = useState(false);
     
-    // Check for saved onboarding progress when component mounts
+    // Start load timer to only show loader if loading takes more than 500ms
+    useEffect(() => {
+      if (loading) {
+        const startTime = Date.now();
+        const loaderTimeout = setTimeout(() => {
+          setShowLoader(true);
+        }, 500);
+        
+        return () => {
+          clearTimeout(loaderTimeout);
+          setLoadingDuration(Date.now() - startTime);
+        };
+      }
+    }, [loading]);
+    
+    // Check for saved onboarding progress
     useEffect(() => {
       // Only run this if the user is authenticated and hasn't completed onboarding
       if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
-        setIsLoadingProgress(true);
-        
         // Get saved step from localStorage
         const savedStep = localStorage.getItem('onboardingStep');
         
@@ -164,13 +179,11 @@ const AppRoutes = () => {
           // If no saved step, start from the beginning
           navigate('/onboarding/welcome', { replace: true });
         }
-        
-        setIsLoadingProgress(false);
       }
     }, [isAuthenticated, user, navigate, location.pathname]);
     
-    // If still loading user or onboarding progress.
-    if (loading || isLoadingProgress) {
+    // Only show loading indicator if loading takes more than 500ms
+    if (loading && showLoader) {
       return <LoadingSpinner />;
     }
     
@@ -183,11 +196,23 @@ const AppRoutes = () => {
     return <OnboardingRouter />;
   }
 
-  // Protected Dashboard Route Component
+  // Protected Dashboard Route Component with optimized loading
   function ProtectedDashboardRoute() {
     const { user, isAuthenticated, loading } = useAuth();
+    const [showLoader, setShowLoader] = useState(false);
     
-    if (loading) {
+    // Only show loader after 500ms of loading
+    useEffect(() => {
+      if (loading) {
+        const loaderTimeout = setTimeout(() => {
+          setShowLoader(true);
+        }, 500);
+        
+        return () => clearTimeout(loaderTimeout);
+      }
+    }, [loading]);
+    
+    if (loading && showLoader) {
       return <LoadingSpinner />;
     }
     
@@ -196,7 +221,6 @@ const AppRoutes = () => {
     }
     
     // Always prioritize localStorage value since it's set immediately at completion time
-    // This prevents redirection back to onboarding extension-install page
     const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
     
     if (!onboardingCompleted) {

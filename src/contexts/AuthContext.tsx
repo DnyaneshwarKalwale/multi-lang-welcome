@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authApi } from "@/services/api";
 import { useNavigate } from "react-router-dom";
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Optimized fetch user function
   const fetchUser = async () => {
     const token = localStorage.getItem('token');
     
@@ -42,8 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    
-    setLoading(true);
     
     try {
       const { user } = await authApi.getCurrentUser();
@@ -65,17 +65,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem('token');
       
-      if (token) {
-        try {
-          const { user } = await authApi.getCurrentUser();
-          setUser(user);
-        } catch (error) {
-          console.error("Failed to get user data:", error);
-          localStorage.removeItem('token');
-        }
+      if (!token) {
+        setLoading(false);
+        return;
       }
       
-      setLoading(false);
+      try {
+        const { user } = await authApi.getCurrentUser();
+        setUser(user);
+        localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+      } catch (error) {
+        console.error("Failed to get user data:", error);
+        localStorage.removeItem('token');
+      } finally {
+        setLoading(false);
+      }
     };
     
     checkAuthStatus();
@@ -129,18 +133,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      console.log("Starting Twitter auth with data:", userData);
-      
       try {
         const response = await authApi.twitterAuth(userData);
         
         localStorage.setItem('token', response.token);
         setUser(response.user);
         
+        // Immediately redirect based on onboarding status
         if (!response.user.onboardingCompleted) {
-          navigate('/onboarding/welcome');
+          navigate('/onboarding/welcome', { replace: true });
         } else {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
         return;
       } catch (apiErr: any) {
@@ -179,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const clearError = () => {

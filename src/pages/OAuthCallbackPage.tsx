@@ -1,14 +1,19 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { fetchUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
+    // Use an async function to handle the authentication process
     const processAuth = async () => {
       // Parse query parameters
       const params = new URLSearchParams(location.search);
@@ -34,80 +39,65 @@ export default function OAuthCallbackPage() {
         return;
       }
       
-      // Set token in localStorage
+      // Set token in localStorage immediately
       localStorage.setItem('token', token);
       
       try {
-        // Update user state in AuthContext before redirecting
+        // Update user state in AuthContext
         await fetchUser();
         
-        // Store onboarding status in localStorage
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const response = await axios.get(`${baseApiUrl}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const userData = response.data.user;
-        console.log('User authenticated successfully:', { 
-          id: userData.id, 
-          email: userData.email || '(no email)',
-          onboardingCompleted: userData.onboardingCompleted,
-          authMethod: userData.authMethod,
-          isEmailVerified: userData.isEmailVerified
-        });
-        
-        // Store onboarding status in localStorage for other components to use
-        localStorage.setItem('onboardingCompleted', userData.onboardingCompleted ? 'true' : 'false');
-        
-        // Check if there's a pending invitation token
+        // Check for pending invitation token
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
         
-        // Add a small delay to ensure auth context is updated
-        setTimeout(() => {
-          // If there's a pending invitation token, redirect to the invitations page
-          if (pendingInvitationToken) {
-            navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
-            // Clear the pending invitation token from localStorage
-            localStorage.removeItem('pendingInvitationToken');
-          }
-          // Otherwise, redirect based on onboarding status
-          else if (onboarding) {
+        // Determine where to redirect the user
+        if (pendingInvitationToken) {
+          navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
+          localStorage.removeItem('pendingInvitationToken');
+        } else {
+          // Get onboarding status from localStorage (set by fetchUser)
+          const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+          
+          if (onboarding || !onboardingCompleted) {
             navigate('/onboarding/welcome', { replace: true });
           } else {
             navigate('/dashboard', { replace: true });
           }
-        }, 100);
-        
-        return;
+        }
       } catch (error) {
         console.error('Error verifying user data:', error);
-        // Continue anyway since we have a token
+        // Continue with navigation anyway since we have a token
         
-        // Check if there's a pending invitation token
+        // Check for pending invitation
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
         
-        // Add a small delay to ensure auth context is updated
-        setTimeout(() => {
-          // If there's a pending invitation token, redirect to the invitations page
-          if (pendingInvitationToken) {
-            navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
-            // Clear the pending invitation token from localStorage
-            localStorage.removeItem('pendingInvitationToken');
-          }
-          // Otherwise, redirect based on onboarding status
-          else if (onboarding) {
-            navigate('/onboarding/welcome', { replace: true });
-          } else {
-            navigate('/dashboard', { replace: true });
-          }
-        }, 100);
+        if (pendingInvitationToken) {
+          navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
+          localStorage.removeItem('pendingInvitationToken');
+        } else if (onboarding) {
+          navigate('/onboarding/welcome', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       }
     };
     
-    // Process auth immediately
+    // Process authentication immediately
     processAuth();
   }, [location, navigate, fetchUser]);
 
-  // Return null to avoid showing any UI during the redirect
-  return null;
-} 
+  // Return a minimal loading indicator that matches the design system
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+      <div className="flex flex-col items-center gap-4">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative w-20 h-20"
+        >
+          <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-primary/30 animate-spin"></div>
+          <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" style={{animationDuration: '1.5s'}}></div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

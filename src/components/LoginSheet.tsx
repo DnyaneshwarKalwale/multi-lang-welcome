@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/useLanguage";
+import { toast } from "sonner";
 
 interface LoginSheetProps {
   open: boolean;
@@ -28,33 +29,25 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
-  // Add state for registration sheet navigation
   const [openRegistrationSheet, setOpenRegistrationSheet] = useState(false);
   
-  // Handle Google auth
   const handleGoogleAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Close the login sheet immediately
     onOpenChange(false);
+    toast.info("Redirecting to Google authentication...");
     
-    // Redirect to backend Google auth endpoint with the dynamic URL
     window.location.href = `${baseUrl}/api/auth/google`;
   };
   
-  // Handle Twitter auth
   const handleTwitterAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
-    // Close the login sheet immediately
     onOpenChange(false);
+    toast.info("Redirecting to Twitter authentication...");
     
-    // Redirect to backend Twitter auth endpoint
     window.location.href = `${baseUrl}/api/auth/twitter`;
   };
   
@@ -64,27 +57,25 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     
     if (email && password) {
       try {
-        const user = await login(email, password);
+        onOpenChange(false);
+        const toastId = toast.loading("Signing you in...");
         
-        // After login, get the saved onboarding step from localStorage
-        const savedStep = localStorage.getItem('onboardingStep');
+        await login(email, password);
+        
+        toast.dismiss(toastId);
+        
         const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
         
-        // If we have a saved step and onboarding is not completed, redirect to that step
-        if (savedStep && !onboardingCompleted) {
-          navigate(`/onboarding/${savedStep}`);
-        } else if (onboardingCompleted) {
-          // If onboarding is completed, navigate to dashboard
-          navigate('/dashboard');
+        if (onboardingCompleted) {
+          navigate('/dashboard', { replace: true });
+          toast.success("Welcome back!");
         } else {
-          // If no saved step, start at the beginning of onboarding or use success callback
-          if (onSuccess) onSuccess();
-          else navigate("/onboarding/welcome");
+          navigate("/onboarding/welcome", { replace: true });
         }
-        
-        onOpenChange(false);
       } catch (err) {
         console.error("Login error:", err);
+        onOpenChange(true);
+        toast.error("Login failed. Please try again.");
       }
     }
   };
@@ -96,15 +87,12 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    // Close login sheet
     onOpenChange(false);
-    // Open registration sheet with a small delay to allow for the transition
     setTimeout(() => {
       setOpenRegistrationSheet(true);
     }, 300);
   };
   
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -279,7 +267,6 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
         </SheetContent>
       </Sheet>
       
-      {/* Add the registration sheet */}
       {openRegistrationSheet && (
         <RegistrationSheet 
           open={openRegistrationSheet}
