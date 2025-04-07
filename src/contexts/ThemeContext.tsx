@@ -69,10 +69,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   
   const [mounted, setMounted] = useState(false);
 
-  // Ensure theme is applied to DOM on initial load
+  // Ensure theme is applied to DOM on initial load and reapply on dashboard if needed
   useEffect(() => {
-    // Apply current theme
+    // Make sure DOM reflects current theme initially
     applyTheme(theme);
+    
+    // Special handling for dashboard page
+    const isDashboard = window.location.pathname.includes('/dashboard');
+    if (isDashboard) {
+      console.log("ThemeContext: Dashboard page detected, ensuring theme is applied");
+      // Double-check theme application after a small delay
+      setTimeout(() => {
+        const hasCorrectClass = document.documentElement.classList.contains(theme);
+        if (!hasCorrectClass) {
+          console.log(`ThemeContext: Fixing theme on dashboard, applying ${theme}`);
+          applyTheme(theme);
+        }
+      }, 50);
+    }
     
     // Mark as mounted
     setMounted(true);
@@ -107,19 +121,38 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Add event listeners
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener('themechange', handleCustomThemeChange as EventListener);
-    mediaQuery.addEventListener("change", handleMediaChange);
+    
+    // Use the appropriate event listener based on browser support
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleMediaChange);
+    } else {
+      // @ts-ignore - For older browsers
+      mediaQuery.addListener(handleMediaChange);
+    }
     
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener('themechange', handleCustomThemeChange as EventListener);
-      mediaQuery.removeEventListener("change", handleMediaChange);
+      
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleMediaChange);
+      } else {
+        // @ts-ignore - For older browsers
+        mediaQuery.removeListener(handleMediaChange);
+      }
     };
   }, []);
+
+  // Create separate effect to handle theme changes in state
+  useEffect(() => {
+    if (mounted) {
+      applyTheme(theme);
+    }
+  }, [theme, mounted]);
 
   // Setter function that updates both state and DOM
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    applyTheme(newTheme);
   };
 
   // Toggle function with improved logging

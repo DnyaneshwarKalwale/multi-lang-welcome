@@ -25,12 +25,26 @@ export function useThemeSync() {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => detectSystemTheme();
     
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    // Use addEventListener with compatibility for older browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      // @ts-ignore - For older browsers
+      mediaQuery.addListener(handleChange);
+    }
+    
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        // @ts-ignore - For older browsers
+        mediaQuery.removeListener(handleChange);
+      }
+    };
   }, []);
   
   useEffect(() => {
-    // Listen for localStorage changes from other tabs/windows
+    // Enforce theme synchronization across tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'theme' && e.newValue && (e.newValue === 'light' || e.newValue === 'dark')) {
         if (e.newValue !== theme) {
@@ -40,7 +54,7 @@ export function useThemeSync() {
       }
     };
     
-    // Verify DOM class match
+    // Verify DOM class match and forcibly apply if needed
     const verifyDomTheme = () => {
       const hasLightClass = document.documentElement.classList.contains('light');
       const hasDarkClass = document.documentElement.classList.contains('dark');
@@ -49,17 +63,32 @@ export function useThemeSync() {
         console.log('useThemeSync detected DOM theme mismatch, fixing...');
         document.documentElement.classList.remove('light', 'dark');
         document.documentElement.classList.add(theme);
+        localStorage.setItem('theme', theme); // Ensure localStorage is also updated
       }
     };
     
     window.addEventListener('storage', handleStorageChange);
     
-    // Verify DOM theme alignment
-    if (isThemeLoaded) {
+    // Verify DOM theme alignment whenever theme changes
+    if (isThemeLoaded && theme) {
       verifyDomTheme();
     }
     
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Listen for custom theme events
+    const handleCustomThemeChange = (e: Event) => {
+      if ((e as CustomEvent).detail && ((e as CustomEvent).detail === 'light' || (e as CustomEvent).detail === 'dark')) {
+        if ((e as CustomEvent).detail !== theme) {
+          setTheme((e as CustomEvent).detail);
+        }
+      }
+    };
+    
+    window.addEventListener('themechange', handleCustomThemeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('themechange', handleCustomThemeChange as EventListener);
+    };
   }, [theme, setTheme, isThemeLoaded]);
   
   return { theme, setTheme, isThemeLoaded, systemTheme };

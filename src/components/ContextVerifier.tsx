@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, applyTheme } from '@/contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 interface ContextVerifierProps {
   children: React.ReactNode;
@@ -17,6 +18,10 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [error, setError] = useState<Error | null>(null);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+  const location = useLocation();
+  
+  // Special handling for dashboard page
+  const isDashboard = location.pathname.includes('/dashboard');
   
   // Set mounted state on component mount and verify theme
   useEffect(() => {
@@ -33,20 +38,21 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
         themeInLocalStorage,
         isDarkInDOM,
         isLightInDOM,
-        currentThemeContext: theme
+        currentThemeContext: theme,
+        path: location.pathname,
+        isDashboard
       });
       
       // Make sure DOM has at least one theme class set
       if (!isDarkInDOM && !isLightInDOM) {
         const themeToApply = themeInLocalStorage === 'light' ? 'light' : 'dark';
-        document.documentElement.classList.add(themeToApply);
+        applyTheme(themeToApply);
         console.log(`ContextVerifier - Fixed missing theme class by adding: ${themeToApply}`);
       }
       
       // Force theme class to match context if mismatch
       if ((theme === 'dark' && !isDarkInDOM) || (theme === 'light' && !isLightInDOM)) {
-        document.documentElement.classList.remove('dark', 'light');
-        document.documentElement.classList.add(theme);
+        applyTheme(theme);
         console.log(`ContextVerifier - Fixed theme class mismatch by setting: ${theme}`);
       }
       
@@ -57,6 +63,17 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
       } else if (isLightInDOM && themeInLocalStorage !== 'light') {
         localStorage.setItem('theme', 'light');
         console.log('ContextVerifier - Synchronized localStorage with light theme from DOM');
+      }
+      
+      // Additional theme verification for dashboard
+      if (isDashboard) {
+        console.log('ContextVerifier - Dashboard page detected, double checking theme');
+        // Ensure theme is applied after a short delay
+        setTimeout(() => {
+          const currentTheme = localStorage.getItem('theme') as 'light' | 'dark' || theme;
+          applyTheme(currentTheme);
+          console.log(`ContextVerifier - Reapplied theme for dashboard: ${currentTheme}`);
+        }, 100);
       }
       
       // Check contexts after a short delay to ensure they're all loaded
@@ -70,7 +87,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
       setError(e as Error);
       setIsLoading(false);
     }
-  }, [theme, setTheme]);
+  }, [theme, setTheme, location, isDashboard]);
   
   // If still loading, show spinner with animation
   if (isLoading) {

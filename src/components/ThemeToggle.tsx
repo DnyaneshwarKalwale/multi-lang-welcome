@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Moon, Sun, MonitorSmartphone } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { motion } from "framer-motion";
+import { applyTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
 
 interface ThemeToggleProps {
   variant?: "default" | "minimal" | "expanded";
@@ -21,15 +23,60 @@ export default function ThemeToggle({ variant = "default", className = "" }: The
     console.log(`ThemeToggle mounted. Current theme: ${theme}, isThemeLoaded: ${isThemeLoaded}`);
   }, [theme, isThemeLoaded]);
 
+  // Force apply theme on dashboard if needed
+  useEffect(() => {
+    if (mounted && theme && window.location.pathname.includes('/dashboard')) {
+      console.log(`ThemeToggle on dashboard forcing theme check: ${theme}`);
+      
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const hasThemeClass = document.documentElement.classList.contains(theme);
+        if (!hasThemeClass) {
+          console.log(`ThemeToggle fixing dashboard theme: ${theme}`);
+          applyTheme(theme);
+        }
+      }, 100);
+    }
+  }, [mounted, theme]);
+
   // Log when toggle is clicked
   const handleToggle = () => {
-    console.log("Theme toggle clicked");
+    console.log("Theme toggle clicked on dashboard");
+    
+    // Force the theme toggle with direct DOM manipulation to ensure it takes effect
+    const newTheme = theme === "light" ? "dark" : "light";
+    
+    // Apply the theme directly to guarantee it changes
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(newTheme);
+    localStorage.setItem("theme", newTheme);
+    
+    // Also trigger the context update
     toggleTheme();
+    
+    // Show toast for feedback
+    toast.success(`Theme changed to ${newTheme} mode`);
+    
+    // Dispatch event for other components
+    window.dispatchEvent(new CustomEvent('themechange', { detail: newTheme }));
   };
 
   const handleSelectTheme = (newTheme: 'light' | 'dark') => {
-    console.log(`Setting theme to ${newTheme}`);
+    console.log(`Setting theme to ${newTheme} from dashboard`);
+    
+    // Apply theme directly
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(newTheme);
+    localStorage.setItem("theme", newTheme);
+    
+    // Update context
     setTheme(newTheme);
+    
+    // Show toast for feedback
+    toast.success(`Theme changed to ${newTheme} mode`);
+    
+    // Dispatch event
+    window.dispatchEvent(new CustomEvent('themechange', { detail: newTheme }));
   };
 
   // Don't render until mounted to prevent hydration mismatch
