@@ -27,6 +27,17 @@ type LanguageType = "english" | "german" | "spanish" | "french" | null;
 type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 
+// New type for selected days
+export type SelectedDays = {
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+};
+
 interface TeamMember {
   email: string;
   role: "admin" | "member";
@@ -49,6 +60,8 @@ interface OnboardingContextType {
   setPostFormat: (format: PostFormat) => void;
   postFrequency: PostFrequency;
   setPostFrequency: (frequency: PostFrequency) => void;
+  selectedDays: SelectedDays; // Add this new property
+  setSelectedDays: (days: SelectedDays) => void; // Add this setter
   firstName: string;
   setFirstName: (name: string) => void;
   lastName: string;
@@ -98,6 +111,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<LanguageType>("english");
   const [postFormat, setPostFormat] = useState<PostFormat>(null);
   const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
+  
+  // Add selected days state with default values
+  const [selectedDays, setSelectedDays] = useState<SelectedDays>({
+    monday: false,
+    tuesday: false,
+    wednesday: false,
+    thursday: false,
+    friday: false,
+    saturday: false,
+    sunday: false
+  });
+  
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -133,6 +158,24 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             if (data.language) setLanguage(data.language);
             if (data.postFormat) setPostFormat(data.postFormat);
             if (data.postFrequency) setPostFrequency(data.postFrequency);
+            
+            // Load selected days if available
+            if (data.selectedDays) {
+              setSelectedDays(data.selectedDays);
+            } else if (data.postFrequency) {
+              // Fallback: initialize selected days based on postFrequency
+              const defaultSelectedDays = {
+                monday: data.postFrequency >= 1,
+                tuesday: data.postFrequency >= 2,
+                wednesday: data.postFrequency >= 3,
+                thursday: data.postFrequency >= 4,
+                friday: data.postFrequency >= 5,
+                saturday: data.postFrequency >= 6,
+                sunday: data.postFrequency >= 7
+              };
+              setSelectedDays(defaultSelectedDays);
+            }
+            
             if (data.firstName) setFirstName(data.firstName);
             if (data.lastName) setLastName(data.lastName);
             if (data.email) setEmail(data.email);
@@ -165,6 +208,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           language,
           postFormat,
           postFrequency,
+          selectedDays, // Add selected days to saved data
           firstName,
           lastName,
           email
@@ -270,6 +314,26 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [workspaceType, currentStep]);
 
+  // When postFrequency changes, update selectedDays accordingly if they aren't already set
+  useEffect(() => {
+    // Skip if we have any selected days already
+    const hasSelectedDays = Object.values(selectedDays).some(day => day);
+    
+    if (postFrequency !== null && !hasSelectedDays) {
+      // Default to selecting first N days of the week based on frequency
+      const defaultSelectedDays = {
+        monday: postFrequency >= 1,
+        tuesday: postFrequency >= 2,
+        wednesday: postFrequency >= 3,
+        thursday: postFrequency >= 4,
+        friday: postFrequency >= 5,
+        saturday: postFrequency >= 6,
+        sunday: postFrequency >= 7
+      };
+      setSelectedDays(defaultSelectedDays);
+    }
+  }, [postFrequency, selectedDays]);
+
   const value = {
     currentStep,
     setCurrentStep,
@@ -287,6 +351,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPostFormat,
     postFrequency,
     setPostFrequency,
+    selectedDays, // Add to context value
+    setSelectedDays, // Add to context value
     firstName,
     setFirstName,
     lastName,

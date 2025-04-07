@@ -1,18 +1,75 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, CheckCircle, Twitter, CalendarDays, ArrowLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Calendar, 
+  Clock, 
+  CheckCircle, 
+  Twitter, 
+  CalendarDays, 
+  ArrowLeft 
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PostFrequencyPage() {
   const { postFrequency, setPostFrequency, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
+  const { toast } = useToast();
 
-  const frequencyOptions = [1, 2, 3, 4, 5, 6, 7];
+  // Track selected days instead of just frequency
+  const [selectedDays, setSelectedDays] = useState<Record<string, boolean>>({
+    monday: postFrequency && postFrequency >= 1 ? true : false,
+    tuesday: postFrequency && postFrequency >= 2 ? true : false,
+    wednesday: postFrequency && postFrequency >= 3 ? true : false,
+    thursday: postFrequency && postFrequency >= 4 ? true : false,
+    friday: postFrequency && postFrequency >= 5 ? true : false,
+    saturday: postFrequency && postFrequency >= 6 ? true : false,
+    sunday: postFrequency && postFrequency >= 7 ? true : false,
+  });
+
+  const daysOfWeek = [
+    { id: 'monday', label: 'M', fullName: 'Monday' },
+    { id: 'tuesday', label: 'T', fullName: 'Tuesday' },
+    { id: 'wednesday', label: 'W', fullName: 'Wednesday' },
+    { id: 'thursday', label: 'T', fullName: 'Thursday' },
+    { id: 'friday', label: 'F', fullName: 'Friday' },
+    { id: 'saturday', label: 'S', fullName: 'Saturday' },
+    { id: 'sunday', label: 'S', fullName: 'Sunday' }
+  ];
+
+  // Calculate frequency based on selected days
+  const calculateFrequency = (): number => {
+    return Object.values(selectedDays).filter(Boolean).length;
+  };
+
+  // Handle day selection
+  const handleDayToggle = (dayId: string) => {
+    const updatedDays = { ...selectedDays, [dayId]: !selectedDays[dayId] };
+    setSelectedDays(updatedDays);
+    
+    // Update postFrequency in the onboarding context based on selected days count
+    const newFrequency = Object.values(updatedDays).filter(Boolean).length as 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
+    setPostFrequency(newFrequency || null);
+  };
+
+  const handleContinue = () => {
+    if (calculateFrequency() === 0) {
+      toast({
+        title: "Please select at least one day",
+        description: "You need to select at least one day to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    nextStep();
+  };
 
   // Animation variants
   const fadeIn = {
@@ -79,7 +136,7 @@ export default function PostFrequencyPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          How often do you want to tweet?
+          When do you want to tweet?
         </motion.h1>
         
         <motion.p 
@@ -87,64 +144,54 @@ export default function PostFrequencyPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          We recommend tweeting at least 3-5 times per week for optimal engagement and reach.
+          Select specific days of the week when you'd like to post. We recommend 3-5 days per week for optimal engagement.
         </motion.p>
         
         <motion.div 
-          className="flex justify-center gap-3 mb-12"
-          variants={fadeIn}
-          transition={{ delay: 0.4 }}
-        >
-          {frequencyOptions.map((frequency) => (
-            <motion.div
-              key={frequency}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              whileTap={{ scale: 0.95 }}
-              variants={itemVariants}
-            >
-              <Button
-                variant={postFrequency === frequency ? "twitter" : "outline"}
-                onClick={() => setPostFrequency(frequency as any)}
-                className={`
-                  w-14 h-14 rounded-full text-xl font-bold p-0
-                  ${postFrequency === frequency 
-                    ? 'shadow-md hover:shadow-lg' 
-                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-500 hover:text-blue-500'}
-                `}
-              >
-                {frequency}
-              </Button>
-            </motion.div>
-          ))}
-        </motion.div>
-        
-        <motion.div 
-          className="mb-24 relative"
+          className="mb-12 relative"
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
           <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md">
             <div className="flex items-center mb-6">
               <Calendar className="text-blue-500 mr-3" size={24} />
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Weekly Tweet Schedule</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Choose Your Tweet Days</h3>
             </div>
             
             <div className="grid grid-cols-7 gap-2 mb-6">
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+              {daysOfWeek.map((day, i) => (
                 <div 
-                  key={day + i} 
+                  key={day.id}
                   className={`
-                    h-12 flex items-center justify-center rounded-md transition-all
-                    ${i < (postFrequency || 0) 
-                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
-                      : 'bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700'}
+                    relative h-16 flex flex-col items-center justify-center rounded-md transition-all cursor-pointer
+                    ${selectedDays[day.id] 
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800' 
+                      : 'bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'}
                   `}
+                  onClick={() => handleDayToggle(day.id)}
                 >
-                  <span className={`text-sm font-medium ${i < (postFrequency || 0) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                    {day}
+                  <div className="absolute top-2 left-2">
+                    <Checkbox 
+                      id={day.id}
+                      checked={selectedDays[day.id]}
+                      onCheckedChange={() => handleDayToggle(day.id)}
+                      className="h-3 w-3"
+                    />
+                  </div>
+                  <span className={`text-sm font-medium ${selectedDays[day.id] ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                    {day.label}
                   </span>
-                  {i < (postFrequency || 0) && (
-                    <CheckCircle className="ml-1 text-blue-500" size={12} />
+                  <span className="text-[10px] mt-0.5 text-gray-500 dark:text-gray-400">
+                    {day.fullName.substring(0, 3)}
+                  </span>
+                  {selectedDays[day.id] && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5"
+                    >
+                      <CheckCircle className="text-white" size={14} />
+                    </motion.div>
                   )}
                 </div>
               ))}
@@ -161,15 +208,15 @@ export default function PostFrequencyPage() {
             </div>
           </div>
           
-          {postFrequency && (
+          {calculateFrequency() > 0 && (
             <motion.div 
               className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-300 text-sm shadow-md"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <strong className="mr-1">AI will suggest:</strong> 
-              {postFrequency === 1 ? 'One tweet per day' : `${postFrequency} tweets per week`}
+              <strong className="mr-1">Selected:</strong> 
+              {calculateFrequency() === 1 ? 'One day per week' : `${calculateFrequency()} days per week`}
             </motion.div>
           )}
         </motion.div>
@@ -183,8 +230,8 @@ export default function PostFrequencyPage() {
             variant="twitter"
             rounded="full"
             className="w-64 py-3 text-white font-bold"
-            disabled={!postFrequency}
-            onClick={nextStep}
+            disabled={calculateFrequency() === 0}
+            onClick={handleContinue}
           >
             Continue
           </Button>
