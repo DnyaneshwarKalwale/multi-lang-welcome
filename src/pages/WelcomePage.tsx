@@ -10,8 +10,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, Clock, LineChart, Zap, Twitter, MessageCircle, BarChart, Heart, Users } from "lucide-react";
 
 export default function WelcomePage() {
-  const { nextStep } = useOnboarding();
+  const { nextStep, setCurrentStep } = useOnboarding();
   const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    // Explicitly set the current step to ensure we go to team-selection
+    setCurrentStep("team-selection");
+    navigate("/onboarding/team-selection");
+  };
 
   const handleSkipToDashboard = () => {
     // Mark onboarding as completed in localStorage
@@ -96,7 +102,7 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.5 }}
         >
           <Button 
-            onClick={nextStep} 
+            onClick={handleGetStarted} 
             variant="twitter"
             rounded="full"
             className="w-full py-6 px-8 text-lg font-bold mb-4 flex items-center justify-center gap-2 group"

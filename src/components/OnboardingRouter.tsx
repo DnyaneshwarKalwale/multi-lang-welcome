@@ -17,10 +17,21 @@ import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
 
 export function OnboardingRouter() {
-  const { workspaceType, currentStep, saveProgress } = useOnboarding();
+  const { workspaceType, currentStep, saveProgress, setCurrentStep } = useOnboarding();
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Ensure proper step routing when URL changes
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const step = currentPath.replace('/onboarding/', '');
+    
+    // Make sure currentStep in context matches URL
+    if (step && step !== '' && step !== currentStep) {
+      setCurrentStep(step as any);
+    }
+  }, [location.pathname, currentStep, setCurrentStep]);
   
   // Redirect logic for team vs personal workspace
   useEffect(() => {

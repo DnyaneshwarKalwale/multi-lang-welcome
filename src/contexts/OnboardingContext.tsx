@@ -60,8 +60,8 @@ interface OnboardingContextType {
   setPostFormat: (format: PostFormat) => void;
   postFrequency: PostFrequency;
   setPostFrequency: (frequency: PostFrequency) => void;
-  selectedDays: SelectedDays; // Add this new property
-  setSelectedDays: (days: SelectedDays) => void; // Add this setter
+  selectedDays: SelectedDays; 
+  setSelectedDays: (days: SelectedDays) => void; 
   firstName: string;
   setFirstName: (name: string) => void;
   lastName: string;
@@ -208,7 +208,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           language,
           postFormat,
           postFrequency,
-          selectedDays, // Add selected days to saved data
+          selectedDays,
           firstName,
           lastName,
           email
@@ -263,8 +263,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
       setCurrentStep(nextStep);
-      saveProgress(); // Save progress when moving to next step
       navigate(`/onboarding/${nextStep}`);
+      saveProgress(); // Save progress when moving to next step
     }
   };
 
@@ -275,8 +275,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentIndex > 0) {
       const prevStep = steps[currentIndex - 1];
       setCurrentStep(prevStep);
-      saveProgress(); // Save progress when moving to previous step
       navigate(`/onboarding/${prevStep}`);
+      saveProgress(); // Save progress when moving to previous step
     }
   };
 
@@ -300,19 +300,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setGlobalLanguage(language as "english" | "german" | "spanish" | "french");
     }
   }, [language, setGlobalLanguage]);
-
-  // Update navigation if workspaceType changes
-  useEffect(() => {
-    if (currentStep === "team-selection" && workspaceType) {
-      // If user has selected workspace type, prepare for next step
-      const steps = getApplicableSteps();
-      const currentIndex = steps.indexOf(currentStep);
-      if (currentIndex >= 0) {
-        // Just update the navigation state but don't navigate automatically
-        setCurrentStep(currentStep);
-      }
-    }
-  }, [workspaceType, currentStep]);
 
   // When postFrequency changes, update selectedDays accordingly if they aren't already set
   useEffect(() => {
@@ -351,8 +338,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPostFormat,
     postFrequency,
     setPostFrequency,
-    selectedDays, // Add to context value
-    setSelectedDays, // Add to context value
+    selectedDays,
+    setSelectedDays,
     firstName,
     setFirstName,
     lastName,
