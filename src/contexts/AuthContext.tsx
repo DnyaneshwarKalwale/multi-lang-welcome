@@ -1,31 +1,36 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authApi } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-interface User {
+// Define the User type
+export interface User {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
+  profilePicture?: string;
   isEmailVerified: boolean;
   onboardingCompleted: boolean;
-  profilePicture?: string;
-  authMethod: 'email' | 'google' | 'twitter';
+  language: string;
+  role?: string;
+  authMethod?: string;
+  twitterId?: string;
 }
 
-interface AuthContextType {
+// Define the AuthContext type
+export interface AuthContextType {
   user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
-  isAuthenticated: boolean;
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void | User>;
   twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  fetchUser: () => Promise<void>;
+  fetchUser: () => Promise<User | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
