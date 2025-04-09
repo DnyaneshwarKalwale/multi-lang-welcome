@@ -7,6 +7,9 @@ type User = {
   email: string;
   firstName: string;
   lastName: string;
+  onboardingCompleted?: boolean; // Added this missing property
+  profilePicture?: string; // Added this missing property
+  twitterId?: string; // Added this missing property
 };
 
 // Define context type
@@ -21,6 +24,7 @@ type AuthContextType = {
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<User | null>;
+  twitterAuth?: () => Promise<void>; // Added this missing property
 };
 
 // Create context with default values
@@ -35,6 +39,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   clearError: () => {},
   fetchUser: async () => null,
+  twitterAuth: async () => {}, // Added default value
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -72,7 +77,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               id: `user-${Math.random().toString(36).substr(2, 9)}`,
               email,
               firstName,
-              lastName
+              lastName,
+              onboardingCompleted: false // Initialize as false for new users
             }
           });
         }, 1000);
@@ -106,7 +112,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               id: `user-${Math.random().toString(36).substr(2, 9)}`,
               email,
               firstName: "Demo",
-              lastName: "User"
+              lastName: "User",
+              onboardingCompleted: false // Default value
             }
           });
         }, 1000);
@@ -118,6 +125,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     } catch (err) {
       setError("Login failed. Please check your credentials.");
+      setLoading(false);
+    }
+  };
+  
+  // Twitter auth mock
+  const twitterAuth = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Simulating API call - replace with actual API call
+      const response = await new Promise<{token: string, user: User}>((resolve) => {
+        setTimeout(() => {
+          resolve({
+            token: "dummy-token-for-twitter-auth",
+            user: {
+              id: `user-${Math.random().toString(36).substr(2, 9)}`,
+              email: "twitter-user@example.com",
+              firstName: "Twitter",
+              lastName: "User",
+              twitterId: "12345678",
+              profilePicture: "https://via.placeholder.com/150",
+              onboardingCompleted: false
+            }
+          });
+        }, 1000);
+      });
+      
+      localStorage.setItem("authToken", response.token);
+      setToken(response.token);
+      setUser(response.user);
+      setLoading(false);
+    } catch (err) {
+      setError("Twitter authentication failed. Please try again.");
       setLoading(false);
     }
   };
@@ -145,7 +185,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             id: `user-${Math.random().toString(36).substr(2, 9)}`,
             email: "demo@example.com",
             firstName: "Demo",
-            lastName: "User"
+            lastName: "User",
+            onboardingCompleted: false,
+            profilePicture: "https://via.placeholder.com/150"
           });
         }, 1000);
       });
@@ -164,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        token, // Added this to fix the TypeScript error
+        token,
         loading,
         error,
         isAuthenticated: !!token,
@@ -173,6 +215,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         clearError,
         fetchUser,
+        twitterAuth,
       }}
     >
       {children}
