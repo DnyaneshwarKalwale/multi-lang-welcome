@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Star } from "lucide-react";
+import { ChevronRight, Linkedin, CheckCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
@@ -55,21 +55,21 @@ const Index = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <ScripeLogotype className="h-9 text-primary-600 dark:text-primary-400" />
+              <ScripeLogotype className="h-9 text-linkedin-blue dark:text-linkedin-blue" />
             </div>
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-linkedin-blue dark:hover:text-linkedin-blue text-sm font-medium transition-colors duration-200">
                 Features
               </a>
-              <Link to="/how-it-works" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <Link to="/how-it-works" className="text-gray-700 dark:text-gray-300 hover:text-linkedin-blue dark:hover:text-linkedin-blue text-sm font-medium transition-colors duration-200">
                 How It Works
               </Link>
-              <a href="#testimonials" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <a href="#testimonials" className="text-gray-700 dark:text-gray-300 hover:text-linkedin-blue dark:hover:text-linkedin-blue text-sm font-medium transition-colors duration-200">
                 Testimonials
               </a>
-              <Link to="/pricing" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <Link to="/pricing" className="text-gray-700 dark:text-gray-300 hover:text-linkedin-blue dark:hover:text-linkedin-blue text-sm font-medium transition-colors duration-200">
                 Pricing
               </Link>
             </nav>
@@ -79,13 +79,13 @@ const Index = () => {
               <ThemeToggle variant="minimal" />
               <Button 
                 variant="ghost" 
-                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                className="text-gray-700 dark:text-gray-300 hover:text-linkedin-blue dark:hover:text-linkedin-blue"
                 onClick={() => setIsLoginOpen(true)}
               >
                 Log in
               </Button>
               <Button 
-                className="bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white rounded-full px-6"
+                className="bg-linkedin-blue hover:bg-linkedin-darkBlue text-white rounded-full px-6"
                 onClick={() => setIsRegisterOpen(true)}
               >
                 Try for free
@@ -115,25 +115,25 @@ const Index = () => {
           <div className="container mx-auto px-6 pt-24 pb-16 h-full flex flex-col justify-between">
             <nav className="space-y-8">
               <a href="#features" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-linkedin-blue dark:hover:text-linkedin-blue"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </a>
               <Link to="/how-it-works" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-linkedin-blue dark:hover:text-linkedin-blue"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 How It Works
               </Link>
               <a href="#testimonials" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-linkedin-blue dark:hover:text-linkedin-blue"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Testimonials
               </a>
               <Link to="/pricing" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-linkedin-blue dark:hover:text-linkedin-blue"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
@@ -152,7 +152,7 @@ const Index = () => {
                 Log in
               </Button>
               <Button 
-                className="w-full justify-center bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white"
+                className="w-full justify-center bg-linkedin-blue hover:bg-linkedin-darkBlue text-white"
                 onClick={() => {
                   setIsRegisterOpen(true);
                   setMobileMenuOpen(false);
@@ -173,7 +173,7 @@ const Index = () => {
         </div>
       </header>
       
-      {/* Hero Section */}
+      {/* Hero Section - using existing component */}
       <IndexHero 
         onLogin={() => setIsLoginOpen(true)} 
         onRegister={() => setIsRegisterOpen(true)} 
@@ -182,7 +182,7 @@ const Index = () => {
       {/* Features Section */}
       <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 opacity-40 dark:opacity-20 bg-grid-pattern"></div>
+          <div className="absolute inset-0 opacity-40 dark:opacity-20 bg-linkedin-pattern"></div>
         </div>
         
         <div className="container mx-auto px-6 relative">
@@ -194,7 +194,7 @@ const Index = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Why creators choose <span className="text-primary-600 dark:text-primary-400">our platform</span>
+              Why professionals choose <span className="text-linkedin-blue dark:text-linkedin-blue">LinkedPulse</span>
             </motion.h2>
             <motion.p 
               className="text-lg text-gray-600 dark:text-gray-300"
@@ -203,7 +203,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              Tools and features designed to help you create better content, grow your audience, and save time.
+              Tools and features designed to help you create better LinkedIn content, grow your network, and advance your career.
             </motion.p>
           </div>
           
@@ -215,14 +215,14 @@ const Index = () => {
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-linkedin-blue dark:text-linkedin-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">AI-Powered Content</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Generate high-performing content based on your unique voice, style, and topics that resonate with your audience.
+                Generate high-performing LinkedIn posts based on your professional voice, industry expertise, and topics that resonate with your network.
               </p>
             </motion.div>
             
@@ -233,14 +233,14 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-linkedin-blue dark:text-linkedin-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Growth Analytics</h3>
+              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Network Analytics</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Track performance metrics and get actionable insights to optimize your content strategy and grow your audience.
+                Track engagement metrics and get actionable insights to optimize your LinkedIn strategy and expand your professional network.
               </p>
             </motion.div>
             
@@ -252,11 +252,11 @@ const Index = () => {
               viewport={{ once: true }}
             >
               <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-6">
-                <Star className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                <CheckCircle className="h-7 w-7 text-linkedin-blue dark:text-linkedin-blue" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Personalized Branding</h3>
+              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Professional Branding</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Maintain consistent voice and brand identity across all your content with smart templates and style guides.
+                Maintain consistent voice and personal brand identity across all your LinkedIn content with smart templates and style guides.
               </p>
             </motion.div>
           </div>
@@ -268,10 +268,10 @@ const Index = () => {
         <div className="container mx-auto px-6 relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-              Loved by creators worldwide
+              Trusted by professionals worldwide
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              See what our users are saying about their experience
+              See what our users are saying about their LinkedIn growth
             </p>
           </div>
           
@@ -313,8 +313,8 @@ const Index = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary-500 via-violet-500 to-indigo-500 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-pattern mix-blend-overlay opacity-10"></div>
+      <section className="py-20 md:py-28 bg-gradient-to-br from-linkedin-blue to-linkedin-darkBlue text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-linkedin-pattern mix-blend-overlay opacity-10"></div>
         
         <div className="container mx-auto px-6 relative">
           <div className="max-w-3xl mx-auto text-center">
@@ -325,7 +325,7 @@ const Index = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Ready to elevate your content strategy?
+              Ready to elevate your LinkedIn presence?
             </motion.h2>
             <motion.p 
               className="text-xl mb-10 opacity-90"
@@ -334,7 +334,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              Join thousands of creators who are already using our platform to grow their audience and save time.
+              Join thousands of professionals who are already using LinkedPulse to grow their network and advance their careers.
             </motion.p>
             
             <motion.div
@@ -345,7 +345,7 @@ const Index = () => {
             >
               <Button 
                 onClick={() => setIsRegisterOpen(true)}
-                className="bg-white text-primary-600 hover:bg-gray-100 rounded-xl py-6 px-10 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
+                className="bg-white text-linkedin-blue hover:bg-gray-100 rounded-xl py-6 px-10 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
                 size="lg"
               >
                 Get Started for Free
@@ -361,9 +361,9 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-8 md:mb-0">
-              <ScripeLogotype className="h-8 text-primary-600 dark:text-primary-400 mb-4" />
+              <ScripeLogotype className="h-8 text-linkedin-blue dark:text-linkedin-blue mb-4" />
               <p className="text-gray-500 dark:text-gray-400 text-sm">
-                © 2025 All rights reserved.
+                © 2025 LinkedPulse. All rights reserved.
               </p>
             </div>
             
