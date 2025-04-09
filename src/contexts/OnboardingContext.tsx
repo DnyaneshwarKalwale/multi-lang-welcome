@@ -19,13 +19,22 @@ type OnboardingStep =
   | "registration" 
   | "extension-install"
   | "completion"
-  | "dashboard";
+  | "dashboard"
+  // LinkedIn flow steps
+  | "user-info"
+  | "inspiration"
+  | "writing-style"
+  | "extension"
+  | "connect-account";
 
 type WorkspaceType = "team" | "personal" | null;
 type ThemeType = "light" | "dark";
 type LanguageType = "english" | "german" | "spanish" | "french" | null;
 type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
+
+// LinkedIn specific types
+type WritingStyle = "professional" | "conversational" | "thoughtLeader" | "storytelling" | "educational" | "motivational" | null;
 
 // New type for selected days
 export type SelectedDays = {
@@ -36,6 +45,14 @@ export type SelectedDays = {
   friday: boolean;
   saturday: boolean;
   sunday: boolean;
+};
+
+// LinkedIn inspiration profile type
+export type InspirationProfile = {
+  id: string;
+  name: string;
+  url: string;
+  avatar?: string;
 };
 
 interface TeamMember {
@@ -68,6 +85,18 @@ interface OnboardingContextType {
   setLastName: (name: string) => void;
   email: string;
   setEmail: (email: string) => void;
+  // LinkedIn specific fields
+  writingStyle: WritingStyle;
+  setWritingStyle: (style: WritingStyle) => void;
+  phoneNumber: string;
+  setPhoneNumber: (phone: string) => void;
+  websiteUrl: string;
+  setWebsiteUrl: (url: string) => void;
+  inspirationProfiles: InspirationProfile[];
+  setInspirationProfiles: (profiles: InspirationProfile[]) => void;
+  linkedInConnected: boolean;
+  setLinkedInConnected: (connected: boolean) => void;
+  // Navigation functions
   nextStep: () => void;
   prevStep: () => void;
   getStepProgress: () => { current: number; total: number };
@@ -91,6 +120,22 @@ const allSteps: OnboardingStep[] = [
   "completion",
   "dashboard"
 ];
+
+// Define LinkedIn flow steps
+const linkedInSteps: OnboardingStep[] = [
+  "welcome",
+  "user-info",
+  "inspiration",
+  "writing-style",
+  "post-frequency",
+  "extension",
+  "connect-account",
+  "completion",
+  "dashboard"
+];
+
+// Toggle for LinkedIn flow
+const useLinkedInFlow = true;
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -128,6 +173,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // LinkedIn specific states
+  const [writingStyle, setWritingStyle] = useState<WritingStyle>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [inspirationProfiles, setInspirationProfiles] = useState<InspirationProfile[]>([]);
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
+
   // Load saved onboarding progress when user authenticates
   useEffect(() => {
     const loadOnboardingProgress = async () => {
@@ -148,7 +200,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             // Set the last step the user was on
             if (data.currentStep) {
               setCurrentStep(data.currentStep);
-              navigate(`/onboarding/${data.currentStep}`);
+              
+              // Map old steps to new steps if using LinkedIn flow
+              if (useLinkedInFlow) {
+                const newStep = mapOldStepToNewStep(data.currentStep);
+                navigate(`/onboarding/${newStep}`);
+              } else {
+                navigate(`/onboarding/${data.currentStep}`);
+              }
             }
             
             if (data.workspaceType) setWorkspaceType(data.workspaceType);
@@ -176,9 +235,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
               setSelectedDays(defaultSelectedDays);
             }
             
+            // Load user info
             if (data.firstName) setFirstName(data.firstName);
             if (data.lastName) setLastName(data.lastName);
             if (data.email) setEmail(data.email);
+            
+            // Load LinkedIn specific fields
+            if (data.writingStyle) setWritingStyle(data.writingStyle);
+            if (data.phoneNumber) setPhoneNumber(data.phoneNumber);
+            if (data.websiteUrl) setWebsiteUrl(data.websiteUrl);
+            if (data.inspirationProfiles) setInspirationProfiles(data.inspirationProfiles);
+            if (data.linkedInConnected) setLinkedInConnected(data.linkedInConnected);
           }
           
           setIsInitialized(true);
@@ -191,6 +258,25 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     
     loadOnboardingProgress();
   }, [isAuthenticated, user, navigate, isInitialized]);
+
+  // Function to map old step names to new LinkedIn flow step names
+  const mapOldStepToNewStep = (oldStep: OnboardingStep): string => {
+    switch (oldStep) {
+      case "team-selection":
+      case "team-workspace":
+      case "team-invite":
+      case "registration":
+        return "user-info";
+      case "theme-selection":
+      case "language-selection":
+      case "post-format":
+        return "writing-style";
+      case "extension-install":
+        return "extension";
+      default:
+        return oldStep;
+    }
+  };
 
   // Save onboarding progress to backend
   const saveProgress = async () => {
@@ -211,7 +297,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           selectedDays,
           firstName,
           lastName,
-          email
+          email,
+          // LinkedIn specific data
+          writingStyle,
+          phoneNumber,
+          websiteUrl,
+          inspirationProfiles,
+          linkedInConnected
         };
         
         // Save key data to localStorage as a fallback
@@ -236,9 +328,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Get applicable steps based on workspace type
+  // Get applicable steps based on workspace type and flow
   const getApplicableSteps = (): OnboardingStep[] => {
-    if (workspaceType === "personal") {
+    if (useLinkedInFlow) {
+      return linkedInSteps;
+    } else if (workspaceType === "personal") {
       // Skip team-workspace and team-invite steps for personal accounts
       return allSteps.filter(step => 
         step !== "team-workspace" && step !== "team-invite"
@@ -346,6 +440,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setLastName,
     email,
     setEmail,
+    // LinkedIn specific fields
+    writingStyle,
+    setWritingStyle,
+    phoneNumber,
+    setPhoneNumber,
+    websiteUrl,
+    setWebsiteUrl,
+    inspirationProfiles,
+    setInspirationProfiles,
+    linkedInConnected,
+    setLinkedInConnected,
+    // Navigation functions
     nextStep,
     prevStep,
     getStepProgress,
