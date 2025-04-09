@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { toast } from "sonner";
 
 // Define user type
 type User = {
@@ -7,15 +8,15 @@ type User = {
   email: string;
   firstName: string;
   lastName: string;
-  onboardingCompleted?: boolean; // Added this missing property
-  profilePicture?: string; // Added this missing property
-  twitterId?: string; // Added this missing property
+  onboardingCompleted?: boolean;
+  profilePicture?: string;
+  linkedInId?: string; // Changed from twitterId to linkedInId
 };
 
 // Define context type
 type AuthContextType = {
   user: User | null;
-  token: string | null; // This was missing
+  token: string | null;
   loading: boolean;
   error: string;
   isAuthenticated: boolean;
@@ -24,13 +25,13 @@ type AuthContextType = {
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<User | null>;
-  twitterAuth?: () => Promise<void>; // Added this missing property
+  linkedInAuth?: () => Promise<void>; // Changed from twitterAuth to linkedInAuth
 };
 
 // Create context with default values
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  token: null, // Added default value
+  token: null,
   loading: false,
   error: "",
   isAuthenticated: false,
@@ -39,7 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   clearError: () => {},
   fetchUser: async () => null,
-  twitterAuth: async () => {}, // Added default value
+  linkedInAuth: async () => {}, // Updated default value
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -50,7 +51,7 @@ type AuthProviderProps = {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null); // Added token state
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -88,8 +89,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(response.token);
       setUser(response.user);
       setLoading(false);
+      toast.success("Registration successful!");
     } catch (err) {
       setError("Registration failed. Please try again.");
+      toast.error("Registration failed. Please try again.");
       setLoading(false);
     }
   };
@@ -123,14 +126,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(response.token);
       setUser(response.user);
       setLoading(false);
+      toast.success("Login successful!");
     } catch (err) {
       setError("Login failed. Please check your credentials.");
+      toast.error("Login failed. Please check your credentials.");
       setLoading(false);
     }
   };
   
-  // Twitter auth mock
-  const twitterAuth = async () => {
+  // LinkedIn auth mock (changed from Twitter auth)
+  const linkedInAuth = async () => {
     setLoading(true);
     setError("");
     try {
@@ -138,13 +143,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await new Promise<{token: string, user: User}>((resolve) => {
         setTimeout(() => {
           resolve({
-            token: "dummy-token-for-twitter-auth",
+            token: "dummy-token-for-linkedin-auth",
             user: {
               id: `user-${Math.random().toString(36).substr(2, 9)}`,
-              email: "twitter-user@example.com",
-              firstName: "Twitter",
+              email: "linkedin-user@example.com",
+              firstName: "LinkedIn",
               lastName: "User",
-              twitterId: "12345678",
+              linkedInId: "12345678",
               profilePicture: "https://via.placeholder.com/150",
               onboardingCompleted: false
             }
@@ -156,8 +161,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(response.token);
       setUser(response.user);
       setLoading(false);
+      toast.success("LinkedIn authentication successful!");
     } catch (err) {
-      setError("Twitter authentication failed. Please try again.");
+      setError("LinkedIn authentication failed. Please try again.");
+      toast.error("LinkedIn authentication failed. Please try again.");
       setLoading(false);
     }
   };
@@ -167,6 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("authToken");
     setToken(null);
     setUser(null);
+    toast.info("You have been logged out");
   };
 
   // Clear error
@@ -215,7 +223,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         clearError,
         fetchUser,
-        twitterAuth,
+        linkedInAuth,
       }}
     >
       {children}
