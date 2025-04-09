@@ -51,7 +51,7 @@ const writingStyles: WritingStyle[] = [
     description: "Narrative-driven content that engages through personal experiences",
     icon: <span className="text-2xl">📚</span>,
     examples: [
-      "When I started my career 15 years ago, my mentor told me something I'll never forget: "Success isn't about climbing the ladder; it's about building bridges."",
+      "When I started my career 15 years ago, my mentor told me something I'll never forget: 'Success isn't about climbing the ladder; it's about building bridges.'",
       "Yesterday I met a 19-year-old entrepreneur who built a $2M business from her dorm room. Her secret? Solving a problem no one else recognized."
     ]
   },
