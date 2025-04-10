@@ -1,56 +1,33 @@
 
-import React from "react";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 interface ContinueButtonProps {
   onClick: () => void;
   disabled?: boolean;
-  className?: string;
+  loading?: boolean;
   children?: React.ReactNode;
-  fullWidth?: boolean;
-  variant?: "default" | "twitter" | "cyan";
 }
 
-export function ContinueButton({ 
-  onClick, 
-  disabled = false, 
-  className = "",
-  children = "Continue",
-  fullWidth = false,
-  variant = "default"
-}: ContinueButtonProps) {
-  const isMobile = useIsMobile();
-  
-  let buttonVariant: "gradient" | "twitter" | "cyan" = "gradient";
-  let animation: "lift" | "pulse" | "shine" = "lift";
-  
-  if (variant === "twitter") {
-    buttonVariant = "twitter";
-    animation = "pulse";
-  } else if (variant === "cyan") {
-    buttonVariant = "cyan";
-    animation = "shine";
-  }
-  
+export const ContinueButton: React.FC<ContinueButtonProps> = ({
+  onClick,
+  disabled = false,
+  loading = false,
+  children = 'Continue',
+}) => {
   return (
     <Button
       onClick={onClick}
-      disabled={disabled}
-      variant={buttonVariant}
-      animation={animation}
-      rounded="full"
-      className={cn(
-        "group px-8 py-6 flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-xl",
-        isMobile || fullWidth ? "w-full" : "max-w-md",
-        disabled ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02]",
-        className
-      )}
+      disabled={disabled || loading}
+      className="w-full py-6 bg-linkedin-blue hover:bg-linkedin-darkBlue text-white font-medium rounded-xl transition-all duration-200"
     >
-      <span className="text-base font-medium">{children}</span>
-      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+      <span className="mr-2">{children}</span>
+      {loading ? (
+        <div className="h-5 w-5 border-2 border-t-transparent animate-spin rounded-full" />
+      ) : (
+        <ArrowRight className="h-5 w-5" />
+      )}
     </Button>
   );
-}
+};

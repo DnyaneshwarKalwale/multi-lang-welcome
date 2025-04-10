@@ -10,7 +10,7 @@ type User = {
   lastName: string;
   onboardingCompleted?: boolean;
   profilePicture?: string;
-  linkedInId?: string; // Changed from twitterId to linkedInId
+  linkedInId?: string;
 };
 
 // Define context type
@@ -25,7 +25,7 @@ type AuthContextType = {
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<User | null>;
-  linkedInAuth?: () => Promise<void>; // Changed from twitterAuth to linkedInAuth
+  linkedInAuth: () => Promise<void>;
 };
 
 // Create context with default values
@@ -40,7 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   clearError: () => {},
   fetchUser: async () => null,
-  linkedInAuth: async () => {}, // Updated default value
+  linkedInAuth: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -134,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  // LinkedIn auth mock (changed from Twitter auth)
+  // LinkedIn auth method
   const linkedInAuth = async () => {
     setLoading(true);
     setError("");
