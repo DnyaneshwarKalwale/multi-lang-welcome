@@ -49,7 +49,7 @@ export default function ThemeSelectionPage() {
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: Theme) => {
     // Update onboarding state with proper typing - this fixes the type error
-    setOnboardingTheme(newTheme as Theme);
+    setOnboardingTheme(newTheme);
     
     // Update global theme state
     setGlobalTheme(newTheme);
