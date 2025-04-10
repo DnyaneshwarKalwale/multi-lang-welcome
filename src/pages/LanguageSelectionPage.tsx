@@ -64,7 +64,7 @@ export default function LanguageSelectionPage() {
 
   useEffect(() => {
     if (onboardingLanguage) {
-      setAppLanguage(onboardingLanguage as any); // Type cast to resolve type conflict
+      setAppLanguage(onboardingLanguage);
     }
   }, [onboardingLanguage, setAppLanguage]);
 

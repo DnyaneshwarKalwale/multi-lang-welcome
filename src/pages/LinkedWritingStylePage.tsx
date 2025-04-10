@@ -22,7 +22,7 @@ const writingStyles: WritingStyle[] = [
     icon: <span className="text-2xl">👔</span>,
     examples: [
       "Excited to announce our Q3 results showing 28% growth in user engagement across all platforms.",
-      "Just published my latest industry analysis on emerging technologies in fintech. Key takeaway: AI integration is no longer optional."
+      "Just published my latest industry analysis on emerging technologies in fintech. Key takeaway: AI integration is no longer optional.",
     ]
   },
   {
@@ -32,7 +32,7 @@ const writingStyles: WritingStyle[] = [
     icon: <span className="text-2xl">💬</span>,
     examples: [
       "Hey everyone! Just got back from an amazing conference in Boston. Anyone else attend? Would love to hear your takeaways!",
-      "I've been thinking a lot about work-life balance lately. What's one small change that's made a big difference for you?"
+      "I've been thinking a lot about work-life balance lately. What's one small change that's made a big difference for you?",
     ]
   },
   {
@@ -42,7 +42,7 @@ const writingStyles: WritingStyle[] = [
     icon: <span className="text-2xl">💡</span>,
     examples: [
       "The most successful companies in 2025 won't be those with the best products, but those with the most adaptable cultures.",
-      "Three questions every leader should ask before making strategic decisions: (1) Does this align with our values? (2) Are we solving the right problem? (3) What voices aren't we hearing?"
+      "Three questions every leader should ask before making strategic decisions: (1) Does this align with our values? (2) Are we solving the right problem? (3) What voices aren't we hearing?",
     ]
   },
   {
@@ -51,8 +51,8 @@ const writingStyles: WritingStyle[] = [
     description: "Narrative-driven content that engages through personal experiences",
     icon: <span className="text-2xl">📚</span>,
     examples: [
-      "When I started my career 15 years ago, my mentor told me something I'll never forget: 'Success isn't about climbing the ladder; it's about building bridges.'",
-      "Yesterday I met a 19-year-old entrepreneur who built a $2M business from her dorm room. Her secret? Solving a problem no one else recognized."
+      "When I started my career 15 years ago, my mentor told me something I'll never forget: "Success isn't about climbing the ladder; it's about building bridges."",
+      "Yesterday I met a 19-year-old entrepreneur who built a $2M business from her dorm room. Her secret? Solving a problem no one else recognized.",
     ]
   },
   {
@@ -62,7 +62,7 @@ const writingStyles: WritingStyle[] = [
     icon: <span className="text-2xl">🎓</span>,
     examples: [
       "5 Excel formulas every data analyst should know:\n1. XLOOKUP\n2. SUMIFS\n3. INDEX/MATCH\n4. FILTER\n5. LAMBDA",
-      "A quick guide to giving feedback: Be specific, focus on behavior not personality, offer solutions, and always follow up."
+      "A quick guide to giving feedback: Be specific, focus on behavior not personality, offer solutions, and always follow up.",
     ]
   },
   {
@@ -72,7 +72,7 @@ const writingStyles: WritingStyle[] = [
     icon: <span className="text-2xl">🔥</span>,
     examples: [
       "Don't wait for the perfect opportunity. Take the opportunity and make it perfect.",
-      "Rejection is just redirection. Every 'no' I received last year led me to the biggest 'yes' of my career."
+      "Rejection is just redirection. Every 'no' I received last year led me to the biggest 'yes' of my career.",
     ]
   }
 ];

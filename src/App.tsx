@@ -1,47 +1,297 @@
 
-import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import { Toaster } from "sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { OnboardingRouter } from "@/components/OnboardingRouter";
+import InvitationCheckRoute from "@/components/InvitationCheckRoute";
+import AppLayout from "@/components/AppLayout";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import DashboardPage from "./pages/DashboardPage";
+import TeamsPage from "./pages/TeamsPage";
+import PendingInvitationsPage from "./pages/PendingInvitationsPage";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import FeaturesPage from "./pages/FeaturesPage";
+import HowItWorksPage from "./pages/HowItWorksPage";
+import TestimonialsPage from "./pages/TestimonialsPage";
+import PricingPage from "./pages/PricingPage";
+import ContextVerifier from "./components/ContextVerifier";
 
-// Pages
-import Index from "@/pages/Index";
-import DashboardPage from "@/pages/DashboardPage";
-import WelcomePage from "@/pages/WelcomePage";
-import TeamSelectionPage from "@/pages/TeamSelectionPage";
-import AnalyticsPage from "@/pages/AnalyticsPage";
-import PostingPage from "@/pages/PostingPage";
-import AIContentPage from "@/pages/AIContentPage";
-import ThemeSelectionPage from "@/pages/ThemeSelectionPage";
-import HowItWorksPage from "@/pages/HowItWorksPage";
-import PricingPage from "@/pages/PricingPage";
+const queryClient = new QueryClient();
 
-function App() {
+// Initialize theme immediately to prevent flash
+const initializeTheme = () => {
+  // Check if theme is saved in localStorage
+  const savedTheme = localStorage.getItem("theme");
+  
+  if (savedTheme === "light") {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+  } else {
+    // Default to dark theme
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
+    if (!savedTheme) {
+      localStorage.setItem("theme", "dark");
+    }
+  }
+};
+
+// Run theme initialization immediately
+initializeTheme();
+
+// Add global theme toggle functions to window object
+// @ts-ignore
+window.setLightTheme = () => {
+  applyTheme("light");
+  console.log("Manually set light theme via window function");
+};
+
+// @ts-ignore
+window.setDarkTheme = () => {
+  applyTheme("dark");
+  console.log("Manually set dark theme via window function");
+};
+
+// @ts-ignore
+window.toggleTheme = () => {
+  const isDark = document.documentElement.classList.contains("dark");
+  applyTheme(isDark ? "light" : "dark");
+  console.log("Toggled theme via window function");
+};
+
+// Add theme transition styles to prevent flicker
+const style = document.createElement('style');
+style.innerHTML = `
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+  }
+  
+  /* Add base colors that apply before React hydrates */
+  :root {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+  
+  .dark {
+    color-scheme: dark;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+`;
+document.head.appendChild(style);
+
+// Loading spinner component with our new design
+function LoadingSpinner() {
   return (
-    <AuthProvider>
-      <OnboardingProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/how-it-works" element={<HowItWorksPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          
-          {/* Protected Routes */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/posting" element={<PostingPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/ai-content" element={<AIContentPage />} />
-          
-          {/* Onboarding Routes */}
-          <Route path="/onboarding/welcome" element={<WelcomePage />} />
-          <Route path="/onboarding/team-selection" element={<TeamSelectionPage />} />
-          <Route path="/onboarding/theme-selection" element={<ThemeSelectionPage />} />
-        </Routes>
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="relative">
+        {/* Background circle with subtle pulsing effect */}
+        <motion.div 
+          className="absolute inset-0 w-28 h-28 rounded-full bg-gradient-to-r from-teal-400/10 to-cyan-500/10"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
         
-        <Toaster position="top-right" richColors closeButton />
-      </OnboardingProvider>
-    </AuthProvider>
+        {/* Spinning borders */}
+        <div className="w-20 h-20 border-t-4 border-b-4 border-transparent rounded-full animate-spin-slow"></div>
+        <div className="absolute inset-0 w-20 h-20 border-t-4 border-l-4 border-r-4 border-transparent border-t-teal-400 border-r-cyan-500 border-l-teal-400 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '3s' }}></div>
+        <div className="absolute inset-0 w-20 h-20 border-b-4 border-r-4 border-transparent border-r-cyan-500 border-b-cyan-500 rounded-full animate-spin-slow" style={{ animationDuration: '2s' }}></div>
+        
+        {/* Pulsing checkmark */}
+        <motion.div 
+          className="absolute inset-0 flex items-center justify-center text-teal-500 dark:text-teal-400"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 16L14 20L22 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
+      </div>
+      
+      {/* Loading text */}
+      <motion.div 
+        className="absolute mt-28 text-sm font-medium text-gray-600 dark:text-gray-400"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        Loading TweetSphere...
+      </motion.div>
+    </div>
   );
 }
+
+// The AppRoutes component without BrowserRouter wrapper
+const AppRoutes = () => {
+  // Protected Onboarding Route Component with optimized loading
+  function ProtectedOnboardingRoute() {
+    const { user, isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [loadingDuration, setLoadingDuration] = useState(0);
+    const [showLoader, setShowLoader] = useState(false);
+    
+    // Start load timer to only show loader if loading takes more than 500ms
+    useEffect(() => {
+      if (loading) {
+        const startTime = Date.now();
+        const loaderTimeout = setTimeout(() => {
+          setShowLoader(true);
+        }, 500);
+        
+        return () => {
+          clearTimeout(loaderTimeout);
+          setLoadingDuration(Date.now() - startTime);
+        };
+      }
+    }, [loading]);
+    
+    // Check for saved onboarding progress
+    useEffect(() => {
+      // Only run this if the user is authenticated and hasn't completed onboarding
+      if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
+        // Get saved step from localStorage
+        const savedStep = localStorage.getItem('onboardingStep');
+        
+        if (savedStep) {
+          // Redirect to the saved step
+          navigate(`/onboarding/${savedStep}`, { replace: true });
+        } else {
+          // If no saved step, start from the beginning
+          navigate('/onboarding/welcome', { replace: true });
+        }
+      }
+    }, [isAuthenticated, user, navigate, location.pathname]);
+    
+    // Only show loading indicator if loading takes more than 500ms
+    if (loading && showLoader) {
+      return <LoadingSpinner />;
+    }
+    
+    // If user is authenticated and has completed onboarding, redirect to dashboard
+    if (isAuthenticated && user?.onboardingCompleted) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    
+    // Otherwise, show the onboarding flow
+    return <OnboardingRouter />;
+  }
+
+  // Protected Dashboard Route Component with optimized loading
+  function ProtectedDashboardRoute() {
+    const { user, isAuthenticated, loading } = useAuth();
+    const [showLoader, setShowLoader] = useState(false);
+    
+    // Only show loader after 500ms of loading
+    useEffect(() => {
+      if (loading) {
+        const loaderTimeout = setTimeout(() => {
+          setShowLoader(true);
+        }, 500);
+        
+        return () => clearTimeout(loaderTimeout);
+      }
+    }, [loading]);
+    
+    if (loading && showLoader) {
+      return <LoadingSpinner />;
+    }
+    
+    if (!isAuthenticated) {
+      return <Navigate to="/" replace />;
+    }
+    
+    // Always prioritize localStorage value since it's set immediately at completion time
+    const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+    
+    if (!onboardingCompleted) {
+      // If we have a user object and it says onboarding is completed, update localStorage
+      if (user && user.onboardingCompleted) {
+        localStorage.setItem('onboardingCompleted', 'true');
+        return <DashboardPage />;
+      }
+      
+      // Otherwise redirect to onboarding
+      const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
+      return <Navigate to={`/onboarding/${savedStep}`} replace />;
+    }
+    
+    return <DashboardPage />;
+  }
+
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Index />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/testimonials" element={<TestimonialsPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      
+      {/* Handle invitation token links */}
+      <Route path="/invitations" element={<PendingInvitationsPage />} />
+      
+      {/* OAuth callback route - kept separate to avoid invitation check */}
+      <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+      
+      {/* Protected routes with invitation check wrapped in AppLayout */}
+      <Route element={<InvitationCheckRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+          <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+          <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+        </Route>
+      </Route>
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
+const App = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AnimatePresence>
+        <ThemeProvider>
+          <TooltipProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <OnboardingProvider>
+                  <ContextVerifier>
+                    <AppRoutes />
+                  </ContextVerifier>
+                </OnboardingProvider>
+              </AuthProvider>
+            </LanguageProvider>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </ThemeProvider>
+      </AnimatePresence>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
 
 export default App;

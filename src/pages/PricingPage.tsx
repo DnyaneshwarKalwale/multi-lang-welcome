@@ -1,311 +1,321 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Layout } from "@/components/Layout";
-import { Check, HelpCircle, X } from "lucide-react";
+import { ArrowRight, Check, HelpCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export default function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
-  
-  const pricingPlans = [
+const PricingPage = () => {
+  const navigate = useNavigate();
+  const [isAnnual, setIsAnnual] = useState(true);
+
+  // Define pricing tiers
+  const pricingTiers = [
     {
       name: "Free",
-      description: "For individuals just getting started",
-      price: {
-        monthly: 0,
-        annual: 0
-      },
+      description: "Get started with basic content creation",
+      monthlyPrice: 0,
+      annualPrice: 0,
       features: [
-        { name: "5 AI content generations per month", included: true },
-        { name: "Basic analytics dashboard", included: true },
-        { name: "1 social media account", included: true },
-        { name: "Standard support", included: true },
-        { name: "Scheduled publishing", included: false },
-        { name: "Advanced AI voice training", included: false },
-        { name: "Team collaboration", included: false },
+        { label: "Generate up to 20 posts per month", included: true },
+        { label: "Basic analytics", included: true },
+        { label: "Single user account", included: true },
+        { label: "Content templates", included: true },
+        { label: "Single platform publishing", included: true },
+        { label: "AI content optimization", included: false },
+        { label: "Team collaboration", included: false },
+        { label: "Multi-platform publishing", included: false },
+        { label: "Custom branding", included: false },
+        { label: "Priority support", included: false },
       ],
-      popular: false,
-      color: "from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800",
-      textColor: "text-gray-800 dark:text-gray-200",
-      buttonVariant: "outline" as const
+      buttonLabel: "Start for Free",
+      popular: false
     },
     {
       name: "Pro",
-      description: "For professional content creators",
-      price: {
-        monthly: 29,
-        annual: 19
-      },
+      description: "Perfect for content creators and small businesses",
+      monthlyPrice: 29,
+      annualPrice: 24,
       features: [
-        { name: "50 AI content generations per month", included: true },
-        { name: "Advanced analytics dashboard", included: true },
-        { name: "5 social media accounts", included: true },
-        { name: "Priority support", included: true },
-        { name: "Scheduled publishing", included: true },
-        { name: "Advanced AI voice training", included: true },
-        { name: "Team collaboration", included: false },
+        { label: "Generate up to 100 posts per month", included: true },
+        { label: "Advanced analytics", included: true },
+        { label: "Up to 3 user accounts", included: true },
+        { label: "Premium content templates", included: true },
+        { label: "Multi-platform publishing", included: true },
+        { label: "AI content optimization", included: true },
+        { label: "Basic team collaboration", included: true },
+        { label: "Content calendar", included: true },
+        { label: "Custom branding", included: false },
+        { label: "Priority support", included: false },
       ],
-      popular: true,
-      color: "from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700",
-      textColor: "text-white",
-      buttonVariant: "secondary" as const
+      buttonLabel: "Get Pro",
+      popular: true
     },
     {
       name: "Business",
-      description: "For teams and businesses",
-      price: {
-        monthly: 79,
-        annual: 59
-      },
+      description: "For teams and businesses with advanced needs",
+      monthlyPrice: 79,
+      annualPrice: 69,
       features: [
-        { name: "Unlimited AI content generations", included: true },
-        { name: "Custom analytics dashboard", included: true },
-        { name: "Unlimited social media accounts", included: true },
-        { name: "Dedicated support manager", included: true },
-        { name: "Advanced scheduling & planning", included: true },
-        { name: "Custom AI voice training", included: true },
-        { name: "Team collaboration with roles", included: true },
+        { label: "Unlimited post generation", included: true },
+        { label: "Comprehensive analytics", included: true },
+        { label: "Up to 10 user accounts", included: true },
+        { label: "All content templates", included: true },
+        { label: "Multi-platform publishing", included: true },
+        { label: "Advanced AI optimization", included: true },
+        { label: "Full team collaboration suite", included: true },
+        { label: "Content calendar & planning", included: true },
+        { label: "Custom branding", included: true },
+        { label: "Priority support", included: true },
       ],
-      popular: false,
-      color: "from-fuchsia-500 to-rose-500 dark:from-fuchsia-600 dark:to-rose-600",
-      textColor: "text-white",
-      buttonVariant: "default" as const
+      buttonLabel: "Get Business",
+      popular: false
     }
   ];
-  
-  const handlePurchase = (planName: string) => {
-    toast.info(`${planName} plan selected. Redirecting to checkout...`);
-  };
-  
-  const questions = [
+
+  // FAQs
+  const faqs = [
     {
-      question: "Can I change plans later?",
-      answer: "Yes, you can upgrade or downgrade your plan at any time. If you upgrade, the change will take effect immediately. If you downgrade, the change will take effect at the end of your current billing cycle."
-    },
-    {
-      question: "How do AI content generations work?",
-      answer: "Each generation creates a unique piece of content based on your inputs and preferences. Generations refresh at the start of each billing cycle. Unused generations don't roll over to the next cycle."
-    },
-    {
-      question: "Do you offer refunds?",
-      answer: "Yes, we offer a 14-day money-back guarantee on all paid plans. If you're not satisfied with our service, contact support within 14 days of your purchase for a full refund."
+      question: "Can I switch plans later?",
+      answer: "Yes, you can upgrade or downgrade your plan at any time. When upgrading, you'll have immediate access to the new features. When downgrading, the change will take effect at the end of your current billing period."
     },
     {
       question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards, PayPal, and in some regions, bank transfers. All payments are processed securely through our payment processor."
-    }
+      answer: "We accept all major credit cards (Visa, Mastercard, American Express), as well as PayPal. For Business plan customers, we also offer invoicing options."
+    },
+    {
+      question: "Is there a free trial?",
+      answer: "Yes! You can try any paid plan free for 14 days. No credit card required for the trial period. You'll be notified before the trial ends so you can decide if you want to continue."
+    },
+    {
+      question: "What's the refund policy?",
+      answer: "If you're not satisfied with our service, you can request a refund within the first 30 days of your paid subscription. Please contact our support team to process your refund."
+    },
+    {
+      question: "Can I use Sekcion on multiple platforms?",
+      answer: "Yes, our Pro and Business plans support publishing to multiple social media platforms including Twitter, Facebook, Instagram, LinkedIn, and more."
+    },
+    {
+      question: "Do you offer discounts for non-profits?",
+      answer: "Yes, we offer special pricing for non-profit organizations. Please contact our sales team for more information."
+    },
   ];
-  
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.2,
-        delayChildren: 0.3
-      } 
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { duration: 0.5 }
-    }
-  };
-  
+
   return (
-    <Layout>
-      <div className="bg-gradient-to-b from-white to-indigo-50 dark:from-gray-900 dark:to-indigo-950 min-h-screen">
-        <section className="pt-24 pb-16">
-          <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <motion.h1 
-                className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 dark:from-indigo-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                Simple, Transparent Pricing
-              </motion.h1>
-              
-              <motion.p 
-                className="text-xl text-gray-600 dark:text-gray-300 mb-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                Choose the perfect plan for your content creation needs
-              </motion.p>
-              
-              <motion.div 
-                className="flex justify-center mb-10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full">
-                  <div className="flex">
-                    <button
-                      onClick={() => setBillingCycle('monthly')}
-                      className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                        billingCycle === 'monthly'
-                          ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`}
-                    >
-                      Monthly
-                    </button>
-                    
-                    <button
-                      onClick={() => setBillingCycle('annual')}
-                      className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center ${
-                        billingCycle === 'annual'
-                          ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`}
-                    >
-                      Annual
-                      <span className="ml-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs py-0.5 px-2 rounded-full">
-                        Save 30%
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-            
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 pt-24 pb-16">
+      {/* Hero Section */}
+      <section className="container mx-auto px-6 pt-10 pb-16">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <motion.h1 
+            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-indigo-600 dark:from-teal-400 dark:to-indigo-400"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            Simple, Transparent Pricing
+          </motion.h1>
+          <motion.p 
+            className="text-lg text-gray-600 dark:text-gray-300 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Choose the plan that fits your needs. All plans include a 14-day free trial.
+          </motion.p>
+          
+          {/* Billing toggle */}
+          <motion.div 
+            className="flex items-center justify-center gap-3 mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <span className={`text-sm font-medium ${!isAnnual ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+              Monthly
+            </span>
+            <Switch 
+              checked={isAnnual} 
+              onCheckedChange={setIsAnnual} 
+              className="data-[state=checked]:bg-teal-600"
+            />
+            <span className={`text-sm font-medium ${isAnnual ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+              Annual <span className="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-0.5 rounded-full ml-1">Save 20%</span>
+            </span>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Pricing Cards */}
+      <section className="container mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {pricingTiers.map((tier, index) => (
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
+              key={tier.name}
+              className={`relative rounded-2xl shadow-lg overflow-hidden ${
+                tier.popular 
+                  ? 'border-2 border-teal-500 dark:border-teal-400 bg-white dark:bg-gray-800' 
+                  : 'border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              viewport={{ once: true }}
             >
-              {pricingPlans.map((plan) => (
-                <motion.div
-                  key={plan.name}
-                  variants={itemVariants}
-                  className={`relative rounded-2xl overflow-hidden ${
-                    plan.popular 
-                      ? 'shadow-xl shadow-indigo-500/10 dark:shadow-indigo-700/20 ring-2 ring-indigo-500 dark:ring-indigo-400 transform md:-translate-y-4' 
-                      : 'shadow-lg'
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute top-0 w-full text-center py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium">
-                      Most Popular
+              {tier.popular && (
+                <div className="absolute top-0 left-0 right-0 bg-teal-500 dark:bg-teal-600 text-white py-1 text-sm font-medium text-center">
+                  Most Popular
+                </div>
+              )}
+              
+              <div className={`p-8 ${tier.popular ? 'pt-10' : ''}`}>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{tier.name}</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">{tier.description}</p>
+                
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
+                    ${isAnnual ? tier.annualPrice : tier.monthlyPrice}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-1">
+                    /month
+                  </span>
+                  {isAnnual && tier.monthlyPrice > 0 && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      Billed annually (${tier.annualPrice * 12}/year)
                     </div>
                   )}
-                  
-                  <div className={`bg-gradient-to-br ${plan.color} ${plan.textColor} p-8 ${plan.popular ? 'pt-12' : ''}`}>
-                    <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
-                    <p className="opacity-90 mb-6">{plan.description}</p>
-                    
-                    <div className="flex items-baseline mb-6">
-                      <span className="text-4xl font-bold">${plan.price[billingCycle]}</span>
-                      <span className="ml-2 opacity-80">
-                        {plan.price[billingCycle] > 0 ? `/month` : ''}
+                </div>
+                
+                <Button 
+                  onClick={() => navigate("/")}
+                  className={`w-full py-6 mb-8 ${
+                    tier.popular 
+                      ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-600 hover:to-indigo-700 text-white' 
+                      : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
+                  }`}
+                  size="lg"
+                >
+                  {tier.buttonLabel}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                
+                <div className="space-y-4">
+                  {tier.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-start">
+                      {feature.included ? (
+                        <Check className="w-5 h-5 text-teal-500 mr-3 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <X className="w-5 h-5 text-gray-300 dark:text-gray-600 mr-3 mt-0.5 flex-shrink-0" />
+                      )}
+                      <span className={feature.included ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}>
+                        {feature.label}
                       </span>
                     </div>
-                    
-                    {plan.price[billingCycle] > 0 && billingCycle === 'annual' && (
-                      <p className="text-sm opacity-90 mb-6">Billed annually (${plan.price[billingCycle] * 12}/year)</p>
-                    )}
-                    
-                    <Button 
-                      variant={plan.buttonVariant} 
-                      className="w-full"
-                      onClick={() => handlePurchase(plan.name)}
-                    >
-                      {plan.price.monthly === 0 ? 'Start Free' : 'Choose Plan'}
-                    </Button>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-gray-800 p-8">
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-4">Features include:</h4>
-                    <ul className="space-y-3">
-                      {plan.features.map((feature) => (
-                        <li key={feature.name} className="flex items-start">
-                          <span className="mr-2 mt-1">
-                            {feature.included ? (
-                              <Check className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <X className="h-5 w-5 text-gray-300 dark:text-gray-600" />
-                            )}
-                          </span>
-                          <span className={feature.included ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"}>
-                            {feature.name}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
-              ))}
+                  ))}
+                </div>
+              </div>
             </motion.div>
-          </div>
-        </section>
-        
-        <section className="py-16 bg-white dark:bg-gray-900">
-          <div className="container mx-auto px-6">
-            <motion.h2 
-              className="text-3xl font-bold text-center mb-12 text-gray-900 dark:text-white"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-            >
-              Frequently Asked Questions
-            </motion.h2>
-            
-            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-              {questions.map((item, index) => (
-                <motion.div 
-                  key={index}
-                  className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="flex items-start mb-2">
-                    <HelpCircle className="h-5 w-5 text-indigo-500 mr-2 mt-1 flex-shrink-0" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.question}</h3>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300 ml-7">{item.answer}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-        
-        <section className="py-20 bg-indigo-50 dark:bg-indigo-950/30">
-          <div className="container mx-auto px-6 text-center">
-            <motion.div
-              className="max-w-3xl mx-auto"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Need a custom solution?</h2>
-              <p className="text-xl mb-8 text-gray-600 dark:text-gray-300">
-                Contact our team for enterprise plans tailored to your organization's needs
-              </p>
-              
+          ))}
+        </div>
+      </section>
+
+      {/* Enterprise Section */}
+      <section className="container mx-auto px-6 py-16">
+        <motion.div 
+          className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-10 text-white"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <div className="max-w-3xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="mb-6 md:mb-0">
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">Need a custom plan?</h2>
+                <p className="text-indigo-100 mb-0 md:pr-10">
+                  We offer tailored solutions for agencies and large organizations with specific requirements.
+                </p>
+              </div>
               <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-                onClick={() => toast.info("Contact form will open soon!")}
+                onClick={() => navigate("/")}
+                className="bg-white text-indigo-600 hover:bg-gray-100 px-6 py-3 font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
+                size="lg"
               >
                 Contact Sales
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-            </motion.div>
+            </div>
           </div>
-        </section>
-      </div>
-    </Layout>
+        </motion.div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="container mx-auto px-6 py-16">
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Find answers to common questions about our pricing and plans.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {faqs.map((faq, index) => (
+            <motion.div 
+              key={index}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              viewport={{ once: true }}
+            >
+              <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+                <HelpCircle className="w-5 h-5 text-teal-500 mr-2 flex-shrink-0" />
+                {faq.question}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                {faq.answer}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-6 py-12">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center shadow-xl border border-gray-100 dark:border-gray-700">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-block">
+                  <span className="bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 text-sm px-3 py-1 rounded-full mb-4 inline-block">
+                    Limited Time Offer
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Get 20% off your first 3 months</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Start Creating Better Content Today</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-600 dark:text-gray-300">
+            Try any plan free for 14 days. No credit card required.
+          </p>
+          <Button 
+            onClick={() => navigate("/")}
+            className="bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-600 hover:to-indigo-700 text-white text-lg font-medium py-6 px-8 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300"
+            size="lg"
+          >
+            Get Started Free
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
+        </div>
+      </section>
+    </div>
   );
-}
+};
+
+export default PricingPage;

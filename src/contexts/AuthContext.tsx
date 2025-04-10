@@ -1,270 +1,223 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { toast } from "sonner";
+import { authApi } from "@/services/api";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-// Define user type
-type User = {
+// Define the User type
+export interface User {
   id: string;
-  email: string;
   firstName: string;
   lastName: string;
-  onboardingCompleted?: boolean;
+  email: string;
   profilePicture?: string;
-  linkedInId?: string;
-  googleId?: string; // Added for Google auth
-};
+  isEmailVerified: boolean;
+  onboardingCompleted: boolean;
+  language: string;
+  role?: string;
+  authMethod?: string;
+  twitterId?: string;
+}
 
-// Define context type
-type AuthContextType = {
+// Define the AuthContext type
+export interface AuthContextType {
   user: User | null;
   token: string | null;
-  loading: boolean;
-  error: string;
   isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void | User>;
+  twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  fetchUser: () => Promise<User | null>;
-  linkedInAuth: () => Promise<void>;
-  googleAuth: () => Promise<void>; // Added Google auth method
-};
+  fetchUser: () => Promise<User | undefined>;
+}
 
-// Create context with default values
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  token: null,
-  loading: false,
-  error: "",
-  isAuthenticated: false,
-  register: async () => {},
-  login: async () => {},
-  logout: () => {},
-  clearError: () => {},
-  fetchUser: async () => null,
-  linkedInAuth: async () => {},
-  googleAuth: async () => {}, // Added default value
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => useContext(AuthContext);
-
-type AuthProviderProps = {
-  children: ReactNode;
-};
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Check for existing token on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
-    if (storedToken) {
-      setToken(storedToken);
-      fetchUser(); // Fetch user data if token exists
+  // Optimized fetch user function
+  const fetchUser = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      setLoading(false);
+      return;
     }
+    
+    try {
+      const { user } = await authApi.getCurrentUser();
+      setUser(user);
+      
+      if (user) {
+        localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+      }
+      
+      return user;
+    } catch (error) {
+      console.error("Failed to get user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const { user } = await authApi.getCurrentUser();
+        setUser(user);
+        localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+      } catch (error) {
+        console.error("Failed to get user data:", error);
+        localStorage.removeItem('token');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAuthStatus();
   }, []);
 
-  // Register new user
   const register = async (firstName: string, lastName: string, email: string, password: string) => {
-    setLoading(true);
-    setError("");
     try {
-      // Simulating API call - replace with actual API call
-      const response = await new Promise<{token: string, user: User}>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            token: "dummy-token-for-new-user",
-            user: {
-              id: `user-${Math.random().toString(36).substr(2, 9)}`,
-              email,
-              firstName,
-              lastName,
-              onboardingCompleted: false // Initialize as false for new users
-            }
-          });
-        }, 1000);
-      });
+      setLoading(true);
+      setError(null);
       
-      localStorage.setItem("authToken", response.token);
-      setToken(response.token);
+      const response = await authApi.register(firstName, lastName, email, password);
+      
       setUser(response.user);
-      setLoading(false);
-      toast.success("Registration successful!");
-    } catch (err) {
-      setError("Registration failed. Please try again.");
-      toast.error("Registration failed. Please try again.");
+      
+      localStorage.setItem('pendingVerificationEmail', email);
+      
+      navigate('/verify-email');
+      
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Registration failed');
+      console.error('Registration error:', err);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Login user
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError("");
     try {
-      // Simulating API call - replace with actual API call
-      const response = await new Promise<{token: string, user: User}>((resolve, reject) => {
-        setTimeout(() => {
-          if (email.includes("error")) {
-            reject(new Error("Invalid credentials"));
-            return;
+      setLoading(true);
+      setError(null);
+      
+      const response = await authApi.login(email, password);
+      
+      localStorage.setItem('token', response.token);
+      setUser(response.user);
+      
+      localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
+      
+      return response.user;
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Login failed');
+      console.error('Login error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const twitterAuth = async (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await authApi.twitterAuth(userData);
+        
+        localStorage.setItem('token', response.token);
+        setUser(response.user);
+        
+        // Immediately redirect based on onboarding status
+        if (!response.user.onboardingCompleted) {
+          navigate('/onboarding/welcome', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+        return;
+      } catch (apiErr: any) {
+        console.log("API approach failed, trying browser redirect:", apiErr);
+        
+        if (apiErr.message && apiErr.message.includes('Network Error')) {
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          const baseUrl = baseApiUrl.replace('/api', '');
+          
+          const params = new URLSearchParams();
+          params.append('name', userData.name);
+          params.append('twitterId', userData.twitterId);
+          
+          if (userData.email) {
+            params.append('email', userData.email);
           }
-          resolve({
-            token: "dummy-token-for-login",
-            user: {
-              id: `user-${Math.random().toString(36).substr(2, 9)}`,
-              email,
-              firstName: "Demo",
-              lastName: "User",
-              onboardingCompleted: false // Default value
-            }
-          });
-        }, 1000);
-      });
-      
-      localStorage.setItem("authToken", response.token);
-      setToken(response.token);
-      setUser(response.user);
-      setLoading(false);
-      toast.success("Login successful!");
-    } catch (err) {
-      setError("Login failed. Please check your credentials.");
-      toast.error("Login failed. Please check your credentials.");
-      setLoading(false);
-    }
-  };
-  
-  // LinkedIn auth method
-  const linkedInAuth = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      // Simulating API call - replace with actual API call
-      const response = await new Promise<{token: string, user: User}>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            token: "dummy-token-for-linkedin-auth",
-            user: {
-              id: `user-${Math.random().toString(36).substr(2, 9)}`,
-              email: "linkedin-user@example.com",
-              firstName: "LinkedIn",
-              lastName: "User",
-              linkedInId: "12345678",
-              profilePicture: "https://via.placeholder.com/150",
-              onboardingCompleted: false
-            }
-          });
-        }, 1000);
-      });
-      
-      localStorage.setItem("authToken", response.token);
-      setToken(response.token);
-      setUser(response.user);
-      setLoading(false);
-      toast.success("LinkedIn authentication successful!");
-    } catch (err) {
-      setError("LinkedIn authentication failed. Please try again.");
-      toast.error("LinkedIn authentication failed. Please try again.");
+          
+          if (userData.profileImage) {
+            params.append('profileImage', userData.profileImage);
+          }
+          
+          window.location.href = `${baseUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
+          return;
+        }
+        
+        throw apiErr;
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Twitter authentication failed');
+      console.error('Twitter auth error:', err);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Google auth method
-  const googleAuth = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      // Simulating API call - replace with actual API call
-      const response = await new Promise<{token: string, user: User}>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            token: "dummy-token-for-google-auth",
-            user: {
-              id: `user-${Math.random().toString(36).substr(2, 9)}`,
-              email: "google-user@example.com",
-              firstName: "Google",
-              lastName: "User",
-              googleId: "g-12345678",
-              profilePicture: "https://via.placeholder.com/150",
-              onboardingCompleted: false
-            }
-          });
-        }, 1000);
-      });
-      
-      localStorage.setItem("authToken", response.token);
-      setToken(response.token);
-      setUser(response.user);
-      setLoading(false);
-      toast.success("Google authentication successful!");
-    } catch (err) {
-      setError("Google authentication failed. Please try again.");
-      toast.error("Google authentication failed. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  // Logout user
   const logout = () => {
-    localStorage.removeItem("authToken");
-    setToken(null);
+    localStorage.removeItem('token');
     setUser(null);
-    toast.info("You have been logged out");
+    navigate('/', { replace: true });
   };
 
-  // Clear error
   const clearError = () => {
-    setError("");
-  };
-
-  // Fetch user data
-  const fetchUser = async () => {
-    setLoading(true);
-    try {
-      // Simulating API call - replace with actual API call
-      const userData = await new Promise<User>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            id: `user-${Math.random().toString(36).substr(2, 9)}`,
-            email: "demo@example.com",
-            firstName: "Demo",
-            lastName: "User",
-            onboardingCompleted: false,
-            profilePicture: "https://via.placeholder.com/150"
-          });
-        }, 1000);
-      });
-      
-      setUser(userData);
-      setLoading(false);
-      return userData;
-    } catch (err) {
-      setError("Failed to fetch user data.");
-      setLoading(false);
-      return null;
-    }
+    setError(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
         loading,
         error,
-        isAuthenticated: !!token,
+        isAuthenticated: !!user,
         register,
         login,
+        twitterAuth,
         logout,
         clearError,
-        fetchUser,
-        linkedInAuth,
-        googleAuth, // Added Google auth method
+        fetchUser
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
