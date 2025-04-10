@@ -46,7 +46,7 @@ export default function ThemeSelectionPage() {
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: "light" | "dark") => {
     // Update onboarding state - using a proper type cast to Theme type
-    setOnboardingTheme(newTheme as "light" | "dark");
+    setOnboardingTheme(newTheme);
     
     // Update global theme state
     setGlobalTheme(newTheme);
