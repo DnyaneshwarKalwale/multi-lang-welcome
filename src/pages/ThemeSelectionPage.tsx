@@ -59,7 +59,7 @@ export default function ThemeSelectionPage() {
       setGlobalTheme(onboardingTheme);
     } else if (currentTheme) {
       // Otherwise, update onboarding state from current theme
-      setOnboardingTheme(currentTheme as any);
+      setOnboardingTheme(currentTheme as "light" | "dark");
     }
   }, []);
 
