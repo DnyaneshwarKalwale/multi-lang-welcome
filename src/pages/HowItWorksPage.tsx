@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
@@ -6,7 +5,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Sparkles, Rocket, MessageSquare, LineChart, 
   Zap, Target, GanttChart, Users, Award, 
-  PuzzlePiece, BookOpen, Brain
+  Puzzle, BookOpen, Brain
 } from "lucide-react";
 
 export default function HowItWorksPage() {
@@ -73,7 +72,7 @@ export default function HowItWorksPage() {
     {
       title: "Integration Ecosystem",
       description: "Connect seamlessly with your favorite tools including major social platforms and CRM systems.",
-      icon: <PuzzlePiece className="h-8 w-8" />,
+      icon: <Puzzle className="h-8 w-8" />,
       color: "from-emerald-500 to-teal-500"
     }
   ];
@@ -95,7 +94,6 @@ export default function HowItWorksPage() {
     }
   };
   
-  // Floating animation for decorative elements
   const floatingAnimation = {
     y: ["-10px", "10px"],
     transition: {
@@ -111,9 +109,7 @@ export default function HowItWorksPage() {
   return (
     <Layout>
       <div className="bg-gradient-to-b from-white to-indigo-50 dark:from-gray-900 dark:to-indigo-950">
-        {/* Hero Section */}
         <section className="relative pt-24 pb-16 overflow-hidden">
-          {/* Decorative Elements */}
           <div className="absolute top-20 right-10 opacity-20">
             <motion.div 
               animate={floatingAnimation}
@@ -168,7 +164,6 @@ export default function HowItWorksPage() {
           </div>
         </section>
         
-        {/* How It Works Steps */}
         <section className="py-16 bg-white dark:bg-gray-900">
           <div className="container mx-auto px-6">
             <motion.h2 
@@ -217,7 +212,6 @@ export default function HowItWorksPage() {
           </div>
         </section>
         
-        {/* Features Section */}
         <section className="py-20">
           <div className="container mx-auto px-6">
             <motion.h2 
@@ -266,7 +260,6 @@ export default function HowItWorksPage() {
           </div>
         </section>
         
-        {/* FAQ Section */}
         <section className="py-20 bg-indigo-50 dark:bg-indigo-950/30">
           <div className="container mx-auto px-6">
             <motion.h2 
@@ -315,7 +308,6 @@ export default function HowItWorksPage() {
           </div>
         </section>
         
-        {/* CTA Section */}
         <section className="py-20 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 dark:from-indigo-900 dark:via-purple-900 dark:to-fuchsia-900 text-white">
           <div className="container mx-auto px-6 text-center">
             <motion.h2 
@@ -353,7 +345,6 @@ export default function HowItWorksPage() {
           </div>
         </section>
         
-        {/* Testimonial Section */}
         <section className="py-20">
           <div className="container mx-auto px-6">
             <motion.div 
