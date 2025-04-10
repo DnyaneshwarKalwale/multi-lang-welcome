@@ -45,8 +45,8 @@ export default function ThemeSelectionPage() {
 
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: "light" | "dark") => {
-    // Update onboarding state
-    setOnboardingTheme(newTheme as any); // Type cast to resolve type conflict
+    // Update onboarding state - using a proper type cast to Theme type
+    setOnboardingTheme(newTheme as "light" | "dark");
     
     // Update global theme state
     setGlobalTheme(newTheme);
@@ -59,7 +59,7 @@ export default function ThemeSelectionPage() {
       setGlobalTheme(onboardingTheme);
     } else if (currentTheme) {
       // Otherwise, update onboarding state from current theme
-      setOnboardingTheme(currentTheme);
+      setOnboardingTheme(currentTheme as any);
     }
   }, []);
 
