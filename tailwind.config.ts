@@ -1,13 +1,13 @@
 
-import type { Config } from "tailwindcss";
+import { type Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
   prefix: "",
   theme: {
@@ -19,10 +19,6 @@ export default {
       },
     },
     extend: {
-      fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
-        heading: ['Lexend', 'sans-serif'],
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -30,34 +26,34 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
+          '50': "#f5f3ff",
+          '100': "#ede9fe",
+          '200': "#ddd6fe",
+          '300': "#c4b5fd",
+          '400': "#a78bfa",
+          '500': "#8b5cf6",
+          '600': "#7c3aed",
+          '700': "#6d28d9",
+          '800': "#5b21b6",
+          '900': "#4c1d95",
+          '950': "#2e1065",
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#f5f3ff",  // Lightest shade
-          100: "#ede9fe",
-          200: "#ddd6fe",
-          300: "#c4b5fd",
-          400: "#a78bfa",
-          500: "#8b5cf6",
-          600: "#7c3aed", 
-          700: "#6d28d9",
-          800: "#5b21b6",
-          900: "#4c1d95",
-          950: "#2e1065",  // Darkest shade
         },
         secondary: {
+          '50': "#ecfeff",
+          '100': "#cffafe",
+          '200': "#a5f3fc",
+          '300': "#67e8f9",
+          '400': "#22d3ee",
+          '500': "#06b6d4",
+          '600': "#0891b2",
+          '700': "#0e7490",
+          '800': "#155e75",
+          '900': "#164e63",
+          '950': "#083344",
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-          50: "#ecfdf5",  // Add secondary color shades
-          100: "#d1fae5",
-          200: "#a7f3d0",
-          300: "#6ee7b7",
-          400: "#34d399",
-          500: "#10b981",
-          600: "#059669",
-          700: "#047857",
-          800: "#065f46",
-          900: "#064e3b",
-          950: "#022c22",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -79,24 +75,31 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // LinkedIn color palette
-        linkedin: {
-          blue: "#0077B5",
-          darkBlue: "#0a66c2",
-          lightBlue: "#00A0DC",
-          green: "#0A8542",
-          black: "#000000",
-          gray: "#86888A",
-          lightGray: "#F3F2EF",
+        // LinkedIn theme colors
+        'linkedin': {
+          '50': '#E8F4F9',
+          '100': '#D1E9F3',
+          '200': '#A3D4E7',
+          '300': '#74BFDC',
+          '400': '#46A9D0',
+          '500': '#0077B5',
+          '600': '#005E93',
+          '700': '#004471',
+          '800': '#002F4E',
+          '900': '#00172C',
+          '950': '#000B16',
+          'blue': '#0077B5',
+          'darkBlue': '#004471',
         },
-      },
-      backgroundImage: {
-        'linkedin-pattern': "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%230077B5' fill-opacity='0.05'%3E%3Cpath d='M3 1h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H3zm1 2h12v12H4V4zm11 3H5v1h10V7zm0 3H5v1h10v-1zm0 3H5v1h10v-1z'/%3E%3C/g%3E%3C/svg%3E\")",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+        heading: ['Lexend', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
@@ -111,6 +114,9 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      boxShadow: {
+        'soft': '0 2px 10px rgba(0, 0, 0, 0.08)',
       },
     },
   },

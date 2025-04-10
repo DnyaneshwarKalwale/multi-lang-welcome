@@ -49,6 +49,20 @@ export const ScripeIcon: React.FC<IconProps> = ({ className }) => {
   );
 };
 
+export const ScripeIconRounded: React.FC<IconProps> = ({ className }) => {
+  return (
+    <div className={`relative ${className || "h-10 w-10"}`}>
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 blur-sm"></div>
+      <div className="relative bg-white dark:bg-gray-900 rounded-full p-1.5 flex items-center justify-center">
+        <ScripeIcon className="w-full h-full" />
+      </div>
+    </div>
+  );
+};
+
+export const SekcionIconRounded = ScripeIconRounded; // Alias
+export const PrismIconRounded = ScripeIconRounded; // Alias
+
 export const DekcionIcon: React.FC<IconProps> = ({ className }) => {
   return (
     <svg
@@ -83,6 +97,28 @@ export const DekcionIcon: React.FC<IconProps> = ({ className }) => {
     </svg>
   );
 };
+
+export const DekcionIconRounded: React.FC<IconProps> = ({ className }) => {
+  return (
+    <div className={`relative ${className || "h-10 w-10"}`}>
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 blur-sm"></div>
+      <div className="relative bg-white dark:bg-gray-900 rounded-full p-1.5 flex items-center justify-center">
+        <DekcionIcon className="w-full h-full" />
+      </div>
+    </div>
+  );
+};
+
+export const DekcionLogotype: React.FC<IconProps> = ({ className }) => {
+  return (
+    <div className={`flex items-center ${className || "h-10"}`}>
+      <DekcionIcon className="h-full w-auto" />
+      <span className="ml-2 font-bold text-lg text-gray-900 dark:text-white">Dekcion</span>
+    </div>
+  );
+};
+
+export const SekcionLogotype = DekcionLogotype; // Alias
 
 export const LinkedPulseIcon: React.FC<IconProps> = ({ className }) => {
   return (
