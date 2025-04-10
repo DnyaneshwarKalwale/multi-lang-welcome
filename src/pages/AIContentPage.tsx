@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { ProgressDots } from '@/components/ProgressDots';
 
 export default function AIContentPage() {
   const [prompt, setPrompt] = useState('');
@@ -29,6 +30,7 @@ export default function AIContentPage() {
   const [generating, setGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [copied, setCopied] = useState(false);
+  const [tone, setTone] = useState('professional');
 
   const handleGenerate = () => {
     if (!prompt.trim()) {
@@ -101,7 +103,7 @@ What are your thoughts on AI-assisted content creation? Has it changed your work
       id: 'question-prompt',
       name: 'Engagement Question',
       description: 'Spark conversation with thought-provoking questions',
-      example: 'Ask your network: "What's the biggest misconception about [topic] in your experience?"'
+      example: 'Ask your network: "What\'s the biggest misconception about [topic] in your experience?"'
     }
   ];
 
@@ -184,7 +186,7 @@ What are your thoughts on AI-assisted content creation? Has it changed your work
                 {/* Tone Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tone</label>
-                  <Select>
+                  <Select value={tone} onValueChange={setTone}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select tone" />
                     </SelectTrigger>
