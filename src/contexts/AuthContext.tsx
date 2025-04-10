@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +10,7 @@ type User = {
   onboardingCompleted?: boolean;
   profilePicture?: string;
   linkedInId?: string;
+  googleId?: string; // Added for Google auth
 };
 
 // Define context type
@@ -26,6 +26,7 @@ type AuthContextType = {
   clearError: () => void;
   fetchUser: () => Promise<User | null>;
   linkedInAuth: () => Promise<void>;
+  googleAuth: () => Promise<void>; // Added Google auth method
 };
 
 // Create context with default values
@@ -41,6 +42,7 @@ const AuthContext = createContext<AuthContextType>({
   clearError: () => {},
   fetchUser: async () => null,
   linkedInAuth: async () => {},
+  googleAuth: async () => {}, // Added default value
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -169,6 +171,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Google auth method
+  const googleAuth = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Simulating API call - replace with actual API call
+      const response = await new Promise<{token: string, user: User}>((resolve) => {
+        setTimeout(() => {
+          resolve({
+            token: "dummy-token-for-google-auth",
+            user: {
+              id: `user-${Math.random().toString(36).substr(2, 9)}`,
+              email: "google-user@example.com",
+              firstName: "Google",
+              lastName: "User",
+              googleId: "g-12345678",
+              profilePicture: "https://via.placeholder.com/150",
+              onboardingCompleted: false
+            }
+          });
+        }, 1000);
+      });
+      
+      localStorage.setItem("authToken", response.token);
+      setToken(response.token);
+      setUser(response.user);
+      setLoading(false);
+      toast.success("Google authentication successful!");
+    } catch (err) {
+      setError("Google authentication failed. Please try again.");
+      toast.error("Google authentication failed. Please try again.");
+      setLoading(false);
+    }
+  };
+
   // Logout user
   const logout = () => {
     localStorage.removeItem("authToken");
@@ -224,6 +261,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearError,
         fetchUser,
         linkedInAuth,
+        googleAuth, // Added Google auth method
       }}
     >
       {children}

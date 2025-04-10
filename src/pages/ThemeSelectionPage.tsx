@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -58,7 +59,7 @@ export default function ThemeSelectionPage() {
   useEffect(() => {
     if (onboardingTheme) {
       // If onboarding has a theme preference, use it
-      setGlobalTheme(onboardingTheme);
+      setGlobalTheme(onboardingTheme as Theme);
     } else if (currentTheme) {
       // Otherwise, update onboarding state from current theme
       setOnboardingTheme(currentTheme as Theme);
