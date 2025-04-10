@@ -1,104 +1,75 @@
 
-import React from 'react';
-import { Moon, Sun, Monitor } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import React from "react";
+import { motion } from "framer-motion";
+import { SunIcon, MoonIcon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ThemeToggleProps {
-  variant?: 'minimal' | 'expanded';
+  variant?: "minimal" | "expanded";
 }
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'minimal' }) => {
-  const [theme, setThemeState] = React.useState<'light' | 'dark' | 'system'>(
-    () => {
-      if (typeof window !== 'undefined') {
-        const storedTheme = localStorage.getItem('theme');
-        if (storedTheme === 'light' || storedTheme === 'dark') {
-          return storedTheme;
-        }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      return 'light';
-    }
-  );
-
-  React.useEffect(() => {
-    const root = window.document.documentElement;
-    
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      
-      root.classList.remove('light', 'dark');
-      root.classList.add(systemTheme);
-      localStorage.removeItem('theme');
-    } else {
-      root.classList.remove('light', 'dark');
-      root.classList.add(theme);
-      localStorage.setItem('theme', theme);
-    }
-  }, [theme]);
-
-  function setTheme(newTheme: 'light' | 'dark' | 'system') {
-    setThemeState(newTheme);
-  }
-
-  if (variant === 'expanded') {
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = "minimal" }) => {
+  const { theme, toggleTheme } = useTheme();
+  
+  // Spring animation for the toggle
+  const spring = {
+    type: "spring",
+    stiffness: 700,
+    damping: 30
+  };
+  
+  if (variant === "minimal") {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-white dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`${theme === 'light' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'} px-3 gap-2`}
-          onClick={() => setTheme('light')}
+      <motion.button
+        aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+        onClick={toggleTheme}
+        whileTap={{ scale: 0.9 }}
+      >
+        <motion.div 
+          initial={false}
+          animate={{ rotate: theme === "light" ? 0 : 180 }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
         >
-          <Sun className="h-4 w-4" />
-          <span className="text-sm">Light</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`${theme === 'dark' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'} px-3 gap-2`}
-          onClick={() => setTheme('dark')}
-        >
-          <Moon className="h-4 w-4" />
-          <span className="text-sm">Dark</span>
-        </Button>
-      </div>
+          {theme === "light" ? (
+            <SunIcon className="h-5 w-5 text-amber-500" />
+          ) : (
+            <MoonIcon className="h-5 w-5 text-indigo-400" />
+          )}
+        </motion.div>
+      </motion.button>
     );
   }
-
+  
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          <Monitor className="mr-2 h-4 w-4" />
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <motion.button
+      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      onClick={toggleTheme}
+      className="bg-gray-200 dark:bg-gray-700 flex items-center px-1 py-1 rounded-full w-20 h-10 relative"
+      whileTap={{ scale: 0.95 }}
+    >
+      <motion.div
+        className="bg-white dark:bg-gray-900 w-8 h-8 rounded-full flex items-center justify-center shadow-md"
+        layout
+        transition={spring}
+        animate={{ x: theme === "light" ? 0 : 40 }}
+      >
+        {theme === "light" ? (
+          <SunIcon className="h-5 w-5 text-amber-500" />
+        ) : (
+          <MoonIcon className="h-5 w-5 text-indigo-400" />
+        )}
+      </motion.div>
+      
+      <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none text-xs font-medium">
+        <span className={`${theme === 'light' ? 'opacity-0' : 'text-gray-400'}`}>
+          Dark
+        </span>
+        <span className={`${theme === 'dark' ? 'opacity-0' : 'text-gray-600'}`}>
+          Light
+        </span>
+      </div>
+    </motion.button>
   );
 };
 

@@ -8,6 +8,8 @@ import { SunIcon, MoonIcon, ArrowLeft, Twitter, Sparkles, Stars, CloudSun } from
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
 
+type Theme = "light" | "dark";
+
 export default function ThemeSelectionPage() {
   const { theme: onboardingTheme, setTheme: setOnboardingTheme, nextStep, prevStep, getStepProgress } = useOnboarding();
   const { setTheme: setGlobalTheme, theme: currentTheme } = useTheme();
@@ -44,8 +46,8 @@ export default function ThemeSelectionPage() {
   };
 
   // Apply theme change immediately and globally
-  const handleThemeChange = (newTheme: "light" | "dark") => {
-    // Update onboarding state - using a proper type cast to Theme type
+  const handleThemeChange = (newTheme: Theme) => {
+    // Update onboarding state with proper typing
     setOnboardingTheme(newTheme);
     
     // Update global theme state
@@ -59,7 +61,7 @@ export default function ThemeSelectionPage() {
       setGlobalTheme(onboardingTheme);
     } else if (currentTheme) {
       // Otherwise, update onboarding state from current theme
-      setOnboardingTheme(currentTheme as "light" | "dark");
+      setOnboardingTheme(currentTheme as Theme);
     }
   }, []);
 

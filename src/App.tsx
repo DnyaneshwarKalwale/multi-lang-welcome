@@ -8,10 +8,13 @@ import { Toaster } from "sonner";
 import Index from "@/pages/Index";
 import DashboardPage from "@/pages/DashboardPage";
 import WelcomePage from "@/pages/WelcomePage";
-import TeamSelectionPage from "@/pages/onboarding/TeamSelectionPage";
+import TeamSelectionPage from "@/pages/TeamSelectionPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import PostingPage from "@/pages/PostingPage";
 import AIContentPage from "@/pages/AIContentPage";
+import ThemeSelectionPage from "@/pages/ThemeSelectionPage";
+import HowItWorksPage from "@/pages/HowItWorksPage";
+import PricingPage from "@/pages/PricingPage";
 
 function App() {
   return (
@@ -20,6 +23,8 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Index />} />
+          <Route path="/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           
           {/* Protected Routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -30,6 +35,7 @@ function App() {
           {/* Onboarding Routes */}
           <Route path="/onboarding/welcome" element={<WelcomePage />} />
           <Route path="/onboarding/team-selection" element={<TeamSelectionPage />} />
+          <Route path="/onboarding/theme-selection" element={<ThemeSelectionPage />} />
         </Routes>
         
         <Toaster position="top-right" richColors closeButton />
