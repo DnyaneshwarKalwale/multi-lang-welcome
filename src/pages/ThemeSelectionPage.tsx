@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -48,7 +47,7 @@ export default function ThemeSelectionPage() {
 
   // Apply theme change immediately and globally
   const handleThemeChange = (newTheme: Theme) => {
-    // Update onboarding state with proper typing - this fixes the type error
+    // Update onboarding state with proper typing
     setOnboardingTheme(newTheme);
     
     // Update global theme state
