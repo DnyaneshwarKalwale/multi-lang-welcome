@@ -16,20 +16,6 @@ import ExtensionInstallPage from "@/pages/ExtensionInstallPage";
 import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
 
-// Import LinkedIn-themed pages
-import LinkedWelcomePage from "@/pages/LinkedWelcomePage";
-import LinkedUserInfoPage from "@/pages/LinkedUserInfoPage";
-import LinkedInspirationPage from "@/pages/LinkedInspirationPage";
-import LinkedWritingStylePage from "@/pages/LinkedWritingStylePage";
-import LinkedPostFrequencyPage from "@/pages/LinkedPostFrequencyPage";
-import LinkedExtensionPage from "@/pages/LinkedExtensionPage";
-import LinkedConnectAccountPage from "@/pages/LinkedConnectAccountPage";
-import LinkedCompletionPage from "@/pages/LinkedCompletionPage";
-import { LinkedOnboardingLayout } from "@/components/LinkedOnboardingLayout";
-
-// Determine which onboarding flow to use (LinkedIn or default)
-const useLinkedInFlow = true; // Set this to toggle between flows
-
 export function OnboardingRouter() {
   const { workspaceType, currentStep, saveProgress, setCurrentStep } = useOnboarding();
   const { user } = useAuth();
@@ -74,66 +60,36 @@ export function OnboardingRouter() {
     }
   }, [location.pathname, saveProgress, user]);
 
-  if (useLinkedInFlow) {
-    return (
-      <Routes>
-        <Route element={<LinkedOnboardingLayout />}>
-          <Route path="welcome" element={<LinkedWelcomePage />} />
-          <Route path="user-info" element={<LinkedUserInfoPage />} />
-          <Route path="inspiration" element={<LinkedInspirationPage />} />
-          <Route path="writing-style" element={<LinkedWritingStylePage />} />
-          <Route path="post-frequency" element={<LinkedPostFrequencyPage />} />
-          <Route path="extension" element={<LinkedExtensionPage />} />
-          <Route path="connect-account" element={<LinkedConnectAccountPage />} />
-          <Route path="completion" element={<LinkedCompletionPage />} />
-          
-          {/* Legacy/default routes - redirect to new flow equivalents */}
-          <Route path="team-selection" element={<Navigate to="../user-info" replace />} />
-          <Route path="team-workspace" element={<Navigate to="../user-info" replace />} />
-          <Route path="team-invite" element={<Navigate to="../user-info" replace />} />
-          <Route path="theme-selection" element={<Navigate to="../writing-style" replace />} />
-          <Route path="language-selection" element={<Navigate to="../writing-style" replace />} />
-          <Route path="post-format" element={<Navigate to="../writing-style" replace />} />
-          <Route path="registration" element={<Navigate to="../user-info" replace />} />
-          <Route path="extension-install" element={<Navigate to="../extension" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="" element={<Navigate to="welcome" replace />} />
-        </Route>
-      </Routes>
-    );
-  } else {
-    // Original code for the default flow
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        {/* Progress indicator - visible on all onboarding pages */}
-        <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-800 z-50">
-          <div 
-            className="h-full bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-500 ease-in-out"
-            style={{ 
-              width: `${getProgressPercentage(currentStep, workspaceType)}%`,
-              boxShadow: '0 0 10px rgba(6, 182, 212, 0.5)'
-            }}
-          />
-        </div>
-        
-        <Routes>
-          <Route path="welcome" element={<WelcomePage />} />
-          <Route path="team-selection" element={<TeamSelectionPage />} />
-          <Route path="team-workspace" element={<TeamWorkspacePage />} />
-          <Route path="team-invite" element={<TeamInvitePage />} />
-          <Route path="theme-selection" element={<ThemeSelectionPage />} />
-          <Route path="language-selection" element={<LanguageSelectionPage />} />
-          <Route path="post-format" element={<PostFormatPage />} />
-          <Route path="post-frequency" element={<PostFrequencyPage />} />
-          <Route path="registration" element={<RegistrationPage />} />
-          <Route path="extension-install" element={<ExtensionInstallPage />} />
-          <Route path="completion" element={<CompletionPage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="" element={<Navigate to="welcome" replace />} />
-        </Routes>
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Progress indicator - visible on all onboarding pages */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-800 z-50">
+        <div 
+          className="h-full bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-500 ease-in-out"
+          style={{ 
+            width: `${getProgressPercentage(currentStep, workspaceType)}%`,
+            boxShadow: '0 0 10px rgba(6, 182, 212, 0.5)'
+          }}
+        />
       </div>
-    );
-  }
+      
+      <Routes>
+        <Route path="welcome" element={<WelcomePage />} />
+        <Route path="team-selection" element={<TeamSelectionPage />} />
+        <Route path="team-workspace" element={<TeamWorkspacePage />} />
+        <Route path="team-invite" element={<TeamInvitePage />} />
+        <Route path="theme-selection" element={<ThemeSelectionPage />} />
+        <Route path="language-selection" element={<LanguageSelectionPage />} />
+        <Route path="post-format" element={<PostFormatPage />} />
+        <Route path="post-frequency" element={<PostFrequencyPage />} />
+        <Route path="registration" element={<RegistrationPage />} />
+        <Route path="extension-install" element={<ExtensionInstallPage />} />
+        <Route path="completion" element={<CompletionPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="" element={<Navigate to="welcome" replace />} />
+      </Routes>
+    </div>
+  );
 }
 
 // Helper function to calculate progress percentage
