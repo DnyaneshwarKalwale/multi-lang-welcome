@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DekcionLogotype, DekcionIconRounded } from "@/components/ScripeIcon";
-import { Menu, X, ChevronRight, ArrowRight, Moon, Sun } from "lucide-react";
+import { Menu, X, ChevronRight, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
@@ -16,7 +17,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   
   // Track scroll position to change navbar appearance
   useEffect(() => {
@@ -47,7 +48,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
   return (
     <div 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-md" : "bg-transparent"
+        scrolled ? "bg-white/90 backdrop-blur-md shadow-md" : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-6 py-4">
@@ -60,7 +61,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             transition={{ duration: 0.5 }}
           >
             <a href="/" className="flex items-center">
-              <DekcionLogotype className="h-8 w-auto text-gray-900 dark:text-white" />
+              <DekcionLogotype className="h-8 w-auto text-gray-900" />
             </a>
           </motion.div>
           
@@ -70,7 +71,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               <motion.a
                 key={index}
                 href={item.href}
-                className="text-gray-600 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors duration-200 relative group text-sm"
+                className="text-gray-600 hover:text-cyan-600 transition-colors duration-200 relative group text-sm"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -98,7 +99,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             >
             <Button 
                 variant="ghost" 
-                className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-gray-100/80 dark:hover:bg-gray-800/50"
+                className="text-gray-700 hover:text-cyan-600 hover:bg-gray-100/80"
               onClick={onLoginClick}
             >
               Log in
@@ -129,7 +130,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 ml-2"
+              className="text-gray-700 hover:text-cyan-600 ml-2"
               onClick={toggleMenu}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -142,7 +143,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div 
-            className="md:hidden fixed inset-0 z-50 pt-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md"
+            className="md:hidden fixed inset-0 z-50 pt-20 bg-white/95 backdrop-blur-md"
             initial={{ opacity: 0, y: '-100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '-100%' }}
@@ -163,7 +164,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                   <motion.a
                     key={index}
                     href={item.href}
-                    className="text-xl text-gray-700 dark:text-gray-200 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium transition-colors"
+                    className="text-xl text-gray-700 hover:text-cyan-600 font-medium transition-colors"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -183,7 +184,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                 >
                   <Button 
                     variant="outline" 
-                    className="w-full bg-transparent border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-cyan-600 dark:hover:text-cyan-400"
+                    className="w-full bg-transparent border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-cyan-600"
                     onClick={() => {
                       onLoginClick();
                       handleClose();

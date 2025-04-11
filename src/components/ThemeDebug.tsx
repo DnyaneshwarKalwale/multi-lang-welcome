@@ -4,7 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 export default function ThemeDebug() {
   // Get theme from context
-  const { theme, setTheme, toggleTheme } = useTheme();
+  const { theme, isThemeLoaded } = useTheme();
   
   // Track component state
   const [mounted, setMounted] = useState(false);
@@ -39,17 +39,10 @@ export default function ThemeDebug() {
     updateDebugInfo();
   };
 
-  const setDarkThemeDirect = () => {
-    document.documentElement.classList.remove('light');
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-    updateDebugInfo();
-  };
-
   if (!mounted) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-100 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-800 text-xs">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-100 p-4 border-t border-gray-200 text-xs">
       <h3 className="font-bold text-sm mb-2">Theme Debug Panel</h3>
       <div className="grid grid-cols-2 gap-2">
         <div>
@@ -60,34 +53,10 @@ export default function ThemeDebug() {
         </div>
         <div className="flex flex-col gap-2">
           <button 
-            onClick={() => setTheme('light')}
-            className="px-2 py-1 bg-yellow-100 dark:bg-yellow-800 text-black dark:text-white rounded"
-          >
-            Set Light Theme (Context)
-          </button>
-          <button 
-            onClick={() => setTheme('dark')}
-            className="px-2 py-1 bg-blue-900 dark:bg-blue-800 text-white rounded"
-          >
-            Set Dark Theme (Context)
-          </button>
-          <button 
-            onClick={toggleTheme}
-            className="px-2 py-1 bg-purple-500 text-white rounded"
-          >
-            Toggle Theme (Context)
-          </button>
-          <button 
             onClick={setLightThemeDirect}
             className="px-2 py-1 bg-orange-300 text-black rounded mt-2"
           >
             Force Light Theme (DOM)
-          </button>
-          <button 
-            onClick={setDarkThemeDirect}
-            className="px-2 py-1 bg-indigo-800 text-white rounded"
-          >
-            Force Dark Theme (DOM)
           </button>
         </div>
       </div>

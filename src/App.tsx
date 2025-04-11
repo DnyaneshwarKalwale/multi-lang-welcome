@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,20 +31,10 @@ const queryClient = new QueryClient();
 
 // Initialize theme immediately to prevent flash
 const initializeTheme = () => {
-  // Check if theme is saved in localStorage
-  const savedTheme = localStorage.getItem("theme");
-  
-  if (savedTheme === "light") {
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.add("light");
-  } else {
-    // Default to dark theme
-    document.documentElement.classList.add("dark");
-    document.documentElement.classList.remove("light");
-    if (!savedTheme) {
-      localStorage.setItem("theme", "dark");
-    }
-  }
+  // Always apply light theme
+  document.documentElement.classList.remove("dark");
+  document.documentElement.classList.add("light");
+  localStorage.setItem("theme", "light");
 };
 
 // Run theme initialization immediately
@@ -54,21 +43,22 @@ initializeTheme();
 // Add global theme toggle functions to window object
 // @ts-ignore
 window.setLightTheme = () => {
-  applyTheme("light");
+  applyTheme();
   console.log("Manually set light theme via window function");
 };
 
 // @ts-ignore
 window.setDarkTheme = () => {
-  applyTheme("dark");
-  console.log("Manually set dark theme via window function");
+  // Don't allow dark mode, but keep function to avoid errors
+  applyTheme();
+  console.log("Dark theme functionality removed - applied light theme");
 };
 
 // @ts-ignore
 window.toggleTheme = () => {
-  const isDark = document.documentElement.classList.contains("dark");
-  applyTheme(isDark ? "light" : "dark");
-  console.log("Toggled theme via window function");
+  // Don't toggle, always use light theme
+  applyTheme();
+  console.log("Theme toggle functionality removed - applied light theme");
 };
 
 // Add theme transition styles to prevent flicker
@@ -83,12 +73,6 @@ style.innerHTML = `
     color-scheme: light;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-  }
-  
-  .dark {
-    color-scheme: dark;
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
   }
   
   body {
