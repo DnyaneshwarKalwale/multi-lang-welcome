@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -101,7 +100,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   
   // Only access theme methods if themeContext exists
-  const setGlobalTheme = themeContext ? themeContext.setTheme : () => {};
+  // Removed setGlobalTheme since it doesn't exist anymore in ThemeContext
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
@@ -288,11 +287,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   }, [currentStep, isInitialized]);
 
   // Update global theme when onboarding theme changes
+  // Remove the useEffect that tried to call setGlobalTheme since that function no longer exists
   useEffect(() => {
-    if (theme && themeContext) {
-      setGlobalTheme(theme);
-    }
-  }, [theme, themeContext, setGlobalTheme]);
+    // We don't need to set the theme anymore as we only have light theme now
+    // The theme is already enforced by the ThemeContext
+  }, [theme]);
 
   // Update global language when onboarding language changes
   useEffect(() => {
