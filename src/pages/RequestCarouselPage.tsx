@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, ChevronRight, Upload, CheckCircle,
-  Lightbulb, AlertCircle, Info, Calendar
+  Lightbulb, AlertCircle, Info, Calendar,
+  ArrowLeft,
+  FileText,
+  CalendarDays,
+  Check,
+  PlusCircle,
+  AlertTriangle,
+  ClipboardList
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -18,7 +25,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -37,6 +43,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 // Form schema for carousel request
 const formSchema = z.object({
@@ -195,263 +205,216 @@ const RequestCarouselPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Request Carousel Post</h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Share your requirements and our team will create a professional carousel for your LinkedIn profile
-        </p>
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 mb-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate('/dashboard/my-carousels')}
+          className="h-9 w-9"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-lg font-bold">Request New Carousel</h1>
       </div>
       
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg p-4 mb-8 flex items-start gap-3">
-        <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-        <div>
-          <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-1">About Carousel Requests</h3>
-          <p className="text-sm text-blue-700 dark:text-blue-400">
-            Our team will design a professional LinkedIn carousel based on your brief. You can expect delivery within 24 hours.
-            Each request counts as 1 carousel credit from your subscription.
-          </p>
-        </div>
-      </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Carousel Brief Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Carousel Brief</CardTitle>
-                <CardDescription>
-                  Tell us about your carousel content
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="md:col-span-2">
+          <Card>
+            <form onSubmit={onSubmit}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Carousel Details</CardTitle>
+                <CardDescription className="text-xs">
+                  Provide the details for your custom carousel request
                 </CardDescription>
               </CardHeader>
+              
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carousel Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 5 Ways to Boost Team Productivity" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="topic" className="text-sm">
+                    Topic/Title <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="topic"
+                    name="topic"
+                    placeholder="e.g., 10 Ways to Improve Team Productivity"
+                    value={form.watch('topic')}
+                    onChange={form.handleChange}
+                    required
+                    className="h-9 text-sm"
+                  />
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="topic"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Topic Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe the main topic and key points you want to cover" 
-                          className="min-h-[120px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The more details you provide, the better we can tailor your carousel
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="audience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Audience</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Marketing professionals, startup founders" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="tone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Content Tone</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tone" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="inspirational">Inspirational</SelectItem>
-                          <SelectItem value="educational">Educational</SelectItem>
-                          <SelectItem value="conversational">Conversational</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="callToAction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Call To Action (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Download our free guide, Book a consultation" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="file-upload">
-                    Upload Reference Material (Optional)
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center">
-                    <div className="flex flex-col items-center">
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        {selectedFile ? selectedFile.name : 'PDF or image files up to 10MB'}
-                      </p>
-                      <Input
-                        id="file-upload"
-                        type="file"
-                        accept=".pdf,image/*"
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('file-upload')?.click()}
-                      >
-                        {selectedFile ? 'Change File' : 'Select File'}
-                      </Button>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="audience" className="text-sm">Target Audience</Label>
+                    <Input
+                      id="audience"
+                      name="audience"
+                      placeholder="e.g., Marketing professionals, startup founders"
+                      value={form.watch('audience')}
+                      onChange={form.handleChange}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tone" className="text-sm">Content Tone</Label>
+                    <Select
+                      value={form.watch('tone')}
+                      onValueChange={(value) => form.setValue('tone', value as 'professional' | 'casual' | 'inspirational' | 'educational' | 'conversational')}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Select tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="casual">Casual</SelectItem>
+                        <SelectItem value="inspirational">Inspirational</SelectItem>
+                        <SelectItem value="educational">Educational</SelectItem>
+                        <SelectItem value="conversational">Conversational</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-            
-            {/* Template Selection Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Choose Template</CardTitle>
-                  <CardDescription>
-                    Select a design template for your carousel
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="templateId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="grid grid-cols-1 gap-4">
-                          {templates.map(template => (
-                            <div
-                              key={template.id}
-                              className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                                field.value === template.id 
-                                  ? 'border-primary bg-primary-50 dark:bg-primary-900/20' 
-                                  : 'border-gray-200 dark:border-gray-800 hover:border-primary hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                              }`}
-                              onClick={() => field.onChange(template.id)}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
-                                  {/* If you have actual images, use them here */}
-                                  <LayoutGrid className="h-8 w-8 text-gray-400" />
-                                </div>
-                                <div className="flex-1">
-                                  <h3 className="font-medium">{template.name}</h3>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-1">
-                                    {template.description}
-                                  </p>
-                                  <div className="flex items-center text-xs text-gray-500">
-                                    <LayoutGrid className="h-3 w-3 mr-1" />
-                                    {template.slideCount} slides
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="callToAction" className="text-sm">Call To Action (Optional)</Label>
+                  <Input
+                    id="callToAction"
+                    name="callToAction"
+                    placeholder="e.g., Download our free guide, Book a consultation"
+                    value={form.watch('callToAction')}
+                    onChange={form.handleChange}
+                    className="h-9 text-sm"
                   />
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Additional Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="additionalNotes" className="text-sm">Additional Notes (Optional)</Label>
+                  <Textarea
+                    id="additionalNotes"
                     name="additionalNotes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Additional Notes (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Any other requirements or preferences" 
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    placeholder="Any other requirements or preferences"
+                    value={form.watch('additionalNotes')}
+                    onChange={form.handleChange}
+                    className="resize-none h-24 text-sm"
                   />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 pt-6">
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-              <Calendar className="h-4 w-4 mr-1" />
-              Estimated delivery: 24 hours
-            </div>
+                </div>
+              </CardContent>
+              
+              <CardFooter className="flex justify-end space-x-2 border-t pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/dashboard/my-carousels')}
+                  className="h-9 text-sm"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="h-9 text-sm gap-1.5"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Submit Request
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+        
+        <div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Request Tips</CardTitle>
+              <CardDescription className="text-xs">
+                How to get the best results
+              </CardDescription>
+            </CardHeader>
             
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate('/dashboard/home')}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="min-w-[120px]"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <div className="w-7 h-7 bg-amber-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Be Specific</h3>
+                  <p className="text-xs text-gray-500">
+                    The more details you provide, the better your carousel will match your needs.
+                  </p>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex gap-2">
+                <div className="w-7 h-7 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-3.5 w-3.5 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Ideal Length</h3>
+                  <p className="text-xs text-gray-500">
+                    8-10 slides work best for LinkedIn engagement. Too many slides may lose viewer attention.
+                  </p>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex gap-2">
+                <div className="w-7 h-7 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <CalendarDays className="h-3.5 w-3.5 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Realistic Deadlines</h3>
+                  <p className="text-xs text-gray-500">
+                    Standard turnaround is 2-3 business days. Rush orders may be available for an additional fee.
+                  </p>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex gap-2">
+                <div className="w-7 h-7 bg-purple-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <ClipboardList className="h-3.5 w-3.5 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Resources</h3>
+                  <p className="text-xs text-gray-500">
+                    Include links to any references or studies you'd like incorporated in the Additional Notes.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="bg-gray-50 rounded-b-lg p-3">
+              <div className="flex gap-2 w-full">
+                <div className="w-7 h-7 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                </div>
+                <p className="text-xs text-gray-600">
+                  Need help with your request? Contact our support team at support@scripe.com
+                </p>
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

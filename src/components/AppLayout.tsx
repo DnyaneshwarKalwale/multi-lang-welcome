@@ -3,10 +3,11 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, X, Bell } from 'lucide-react';
+import { Menu, X, Bell, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSwipeable } from 'react-swipeable';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -17,79 +18,143 @@ interface AppLayoutProps {
  * This serves as a wrapper for protected routes to ensure consistent navigation
  */
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(localStorage.getItem('sidebarExpanded') !== 'false');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [initialLoad, setInitialLoad] = useState(true);
   const { user } = useAuth();
 
-  // Listen for changes to localStorage sidebarExpanded
+  // Set initial sidebar state based on screen size
   useEffect(() => {
-    const handleStorageChange = () => {
-      const isExpanded = localStorage.getItem('sidebarExpanded') !== 'false';
-      setSidebarOpen(isExpanded);
+    if (initialLoad) {
+      const isDesktop = window.innerWidth >= 1024;
+      setSidebarOpen(isDesktop);
+      setInitialLoad(false);
+    }
+  }, [initialLoad]);
+
+  // Monitor window resize to determine if mobile view
+  useEffect(() => {
+    const handleResize = () => {
+      const newIsMobile = window.innerWidth < 1024;
+      setIsMobile(newIsMobile);
+      
+      // Auto-close sidebar on mobile view
+      if (newIsMobile && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+      
+      // Auto-open sidebar when switching to desktop
+      if (!newIsMobile && !sidebarOpen) {
+        setSidebarOpen(true);
+      }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Check every 500ms in case localStorage is updated without triggering storage event
-    const interval = setInterval(handleStorageChange, 500);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidebarOpen]);
+
+  // Save sidebar state to localStorage
+  useEffect(() => {
+    if (!initialLoad) {
+      localStorage.setItem('sidebarExpanded', sidebarOpen.toString());
+    }
+  }, [sidebarOpen, initialLoad]);
 
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
   };
 
-  // Content margin changes based on sidebar state
-  const contentMargin = sidebarOpen ? 'ml-[240px]' : 'ml-[72px]';
+  // Setup swipe handlers for mobile
+  const swipeHandlers = useSwipeable({
+    onSwipedRight: () => {
+      if (isMobile && !sidebarOpen) {
+        setSidebarOpen(true);
+      }
+    },
+    onSwipedLeft: () => {
+      if (isMobile && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    },
+    trackMouse: false,
+    delta: 10,
+  });
+
+  // Content margin changes based on sidebar state and screen size
+  const contentMargin = !isMobile && sidebarOpen ? 'lg:ml-[240px]' : !isMobile ? 'lg:ml-[72px]' : 'ml-0';
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Collapsible sidebar */}
-      <CollapsibleSidebar />
+    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+      {/* Collapsible sidebar with AnimatePresence for smooth transitions */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div 
+              initial={{ x: -240 }}
+              animate={{ x: 0 }}
+              exit={{ x: -240 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-y-0 left-0 z-40 w-[240px]"
+            >
+              <CollapsibleSidebar expanded={true} />
+            </motion.div>
+            
+            {/* Overlay for mobile when sidebar is open */}
+            {isMobile && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 z-30"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+          </>
+        )}
+      </AnimatePresence>
       
-      {/* Main content area */}
-      <div className={cn("flex-1 flex flex-col min-h-screen transition-all duration-300", contentMargin)}>
+      {/* Main content area with swipe capability on mobile */}
+      <div 
+        {...swipeHandlers}
+        className={cn("flex-1 flex flex-col min-h-screen w-full transition-all duration-300", contentMargin)}
+      >
         {/* Top header bar */}
-        <header className="h-16 border-b border-gray-200 flex items-center justify-between px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
-          <div className="flex items-center gap-3">
+        <header className="h-14 sm:h-16 border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button 
               variant="ghost" 
-              size="icon" 
-              onClick={() => {
-                const newState = !sidebarOpen;
-                setSidebarOpen(newState);
-                localStorage.setItem('sidebarExpanded', newState.toString());
-              }}
-              className="rounded-full lg:hidden"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="rounded-full p-2"
             >
-              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              {sidebarOpen ? 
+                <ChevronLeft className="h-5 w-5" /> : 
+                <Menu className="h-5 w-5" />
+              }
             </Button>
             
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-sm sm:text-xl font-semibold text-gray-900 truncate max-w-[150px] sm:max-w-none">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
           </div>
           
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100">
-              <Bell size={20} className="text-blue-600" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" size="sm" className="rounded-full relative hover:bg-blue-100 p-2">
+              <Bell className="h-5 w-5 text-blue-600" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
                 3
               </span>
             </Button>
             
-            <div className="hidden md:flex">
+            <div className="flex">
               <motion.div 
                 whileHover={{ scale: 1.05 }} 
                 className="cursor-pointer"
               >
-                <Avatar className="h-9 w-9 border border-blue-200 shadow-sm">
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-blue-200 shadow-sm">
                   <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs sm:text-sm">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
@@ -98,9 +163,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        {/* Main content */}
-        <main className="flex-1 p-6 overflow-auto">
-          {children || <Outlet />}
+        {/* Main content with improved padding for mobile */}
+        <main className="flex-1 p-3 sm:p-6 overflow-auto">
+          <div className="max-w-full sm:max-w-[95%] mx-auto">
+            {children || <Outlet />}
+          </div>
         </main>
       </div>
     </div>

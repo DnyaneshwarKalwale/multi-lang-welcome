@@ -8,7 +8,8 @@ import {
   LogOut, User, Settings, ChevronDown, Users, Bell,
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
-  Layers, LayoutGrid, ArrowUp, CreditCard, Building
+  Layers, LayoutGrid, ArrowUp, CreditCard, Building,
+  MoreHorizontal, MessageCircle, Separator
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -322,43 +323,49 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full">
-      {/* Welcome message and workspace switch */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div className="max-w-full">
+      {/* Workspace Selection */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Welcome back, {user?.firstName || 'there'}!</h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            You're in <span className="font-medium">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          <h1 className="text-xl sm:text-2xl font-bold mb-1">Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Welcome back, {getUserFullName()}!
           </p>
-                    </div>
-
-        <div className="mt-4 md:mt-0">
+        </div>
+        
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Building className="h-4 w-4" />
-                Workspaces
+              <Button variant="outline" className="flex items-center gap-2 h-9">
+                {currentWorkspace.type === 'personal' ? (
+                  <User className="h-4 w-4 text-blue-500" />
+                ) : (
+                  <Users className="h-4 w-4 text-green-500" />
+                )}
+                <span className="max-w-[120px] truncate">{currentWorkspace.name}</span>
                 <ChevronDown className="h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-[220px]">
               {workspaces.map(workspace => (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   key={workspace.id}
-                  className={`flex items-center gap-2 ${workspace.id === currentWorkspace.id ? 'bg-primary/10' : ''}`}
                   onClick={() => setCurrentWorkspace(workspace)}
+                  className={`flex items-center gap-2 ${
+                    currentWorkspace.id === workspace.id ? 'bg-gray-100 dark:bg-gray-800' : ''
+                  }`}
                 >
                   {workspace.type === 'personal' ? (
                     <User className="h-4 w-4 text-blue-500" />
                   ) : (
                     <Users className="h-4 w-4 text-green-500" />
                   )}
-                  <span>{workspace.name}</span>
+                  <span className="truncate">{workspace.name}</span>
                   {workspace.type === 'team' && (
                     <Badge variant="outline" className="ml-auto text-xs">
                       {workspace.memberCount} members
-                                </Badge>
-                              )}
+                    </Badge>
+                  )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -372,19 +379,19 @@ const DashboardPage: React.FC = () => {
       </div>
       
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Posts</p>
-                <h3 className="text-2xl font-bold mt-1">{recentPosts.length || 12}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1">{recentPosts.length || 12}</h3>
               </div>
-              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                <FileText className="h-6 w-6 text-blue-500" />
+              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                <FileText className="h-5 w-5 text-blue-500" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-4 text-green-500 text-sm">
+            <div className="flex items-center gap-1 mt-3 sm:mt-4 text-green-500 text-xs sm:text-sm">
               <ArrowUp className="h-3 w-3" />
               <span>16%</span>
               <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
@@ -393,17 +400,17 @@ const DashboardPage: React.FC = () => {
         </Card>
         
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Engagement</p>
-                <h3 className="text-2xl font-bold mt-1">{analyticsData?.summary?.averageEngagement || '4.8%'}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1">{analyticsData?.summary?.averageEngagement || '4.8%'}</h3>
               </div>
-              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-purple-500" />
+              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-purple-500" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-4 text-green-500 text-sm">
+            <div className="flex items-center gap-1 mt-3 sm:mt-4 text-green-500 text-xs sm:text-sm">
               <ArrowUp className="h-3 w-3" />
               <span>3.2%</span>
               <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
@@ -412,17 +419,17 @@ const DashboardPage: React.FC = () => {
         </Card>
         
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Follower Growth</p>
-                <h3 className="text-2xl font-bold mt-1">+{analyticsData?.summary?.followerGrowth || '47'}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mt-1">+{analyticsData?.summary?.followerGrowth || '47'}</h3>
               </div>
-              <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                <Users className="h-6 w-6 text-green-500" />
+              <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <Users className="h-5 w-5 text-green-500" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-4 text-green-500 text-sm">
+            <div className="flex items-center gap-1 mt-3 sm:mt-4 text-green-500 text-xs sm:text-sm">
               <ArrowUp className="h-3 w-3" />
               <span>8.7%</span>
               <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
@@ -432,53 +439,53 @@ const DashboardPage: React.FC = () => {
       </div>
       
       {/* Main content area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left column - LinkedIn Profile & Create Post */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
           {/* LinkedIn Profile Card */}
           <Card>
-            <CardHeader className="pb-0">
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-0 pt-4 px-4">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <Linkedin className="h-5 w-5 text-primary" />
                 LinkedIn Profile
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-4">
+            <CardContent className="pt-3 sm:pt-4 px-4">
               {linkedInProfile ? (
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Avatar className="h-16 w-16 border-2 border-primary/10">
+                  <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary/10">
                       <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name} />
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h3 className="font-semibold">{linkedInProfile.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{linkedInProfile.bio || 'LinkedIn Profile'}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{linkedInProfile.bio || 'LinkedIn Profile'}</p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 mt-3 text-center">
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-xl font-bold">{linkedInProfile.connections.toLocaleString()}</p>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-2 sm:mt-3 text-center">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 rounded-lg">
+                      <p className="text-lg sm:text-xl font-bold">{linkedInProfile.connections.toLocaleString()}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Connections</p>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-xl font-bold">{linkedInProfile.followers.toLocaleString()}</p>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 rounded-lg">
+                      <p className="text-lg sm:text-xl font-bold">{linkedInProfile.followers.toLocaleString()}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Followers</p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                    <Linkedin className="h-8 w-8 text-gray-400" />
+                <div className="text-center py-4 sm:py-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-3 sm:mb-4">
+                    <Linkedin className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
                   </div>
                   <h3 className="font-medium mb-2">Connect LinkedIn Account</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">
                     Link your LinkedIn profile to enable powerful content creation features
                   </p>
-            <Button
-              variant="outline"
+                  <Button
+                    variant="outline"
                     className="w-full border-gray-300 text-gray-700 hover:text-primary hover:border-primary"
                   >
                     <Linkedin className="h-4 w-4 mr-2" />
@@ -491,49 +498,49 @@ const DashboardPage: React.FC = () => {
           
           {/* Quick Actions Card */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quick Actions</CardTitle>
+            <CardHeader className="pb-2 sm:pb-3 pt-4 px-4">
+              <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 px-4">
               <Button 
-                className="w-full justify-start bg-primary/90 hover:bg-primary"
+                className="w-full justify-start bg-primary/90 hover:bg-primary text-sm h-9 sm:h-10"
                 onClick={() => navigate('/dashboard/post')}
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Create New Post
-            </Button>
+              </Button>
             
-            <Button
-              variant="outline"
-                className="w-full justify-start"
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm h-9 sm:h-10"
                 onClick={() => navigate('/dashboard/request-carousel')}
-            >
+              >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Request Carousel
-            </Button>
+              </Button>
             
-            <Button
-              variant="outline"
-                className="w-full justify-start"
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm h-9 sm:h-10"
                 onClick={() => navigate('/dashboard/scraper')}
-            >
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 Scrape Content
-            </Button>
+              </Button>
             </CardContent>
           </Card>
           
           {/* Weekly AI Tip */}
           <Card className="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border-primary/10">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
+            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
                 <span>Weekly AI Tip</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <h4 className="font-medium mb-2">{weeklyTip.title}</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+            <CardContent className="px-4 pb-4">
+              <h4 className="font-medium mb-2 text-sm sm:text-base">{weeklyTip.title}</h4>
+              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                 {weeklyTip.content}
               </p>
             </CardContent>
@@ -541,46 +548,46 @@ const DashboardPage: React.FC = () => {
         </div>
         
         {/* Middle & Right columns - Scheduled Posts & Recent Activity */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Scheduled Posts */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 sm:pb-3 pt-4 px-4">
               <div>
-                <CardTitle>Upcoming Posts</CardTitle>
-                <CardDescription>Your scheduled content for publishing</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Upcoming Posts</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Your scheduled content for publishing</CardDescription>
               </div>
-                <Button
+              <Button
                 variant="ghost" 
-                  size="sm"
-                className="text-primary"
+                size="sm"
+                className="text-primary text-xs sm:text-sm"
                 onClick={() => navigate('/dashboard/posts')}
               >
                 View All
-                </Button>
+              </Button>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-4">
+              <div className="space-y-3 sm:space-y-4">
                 {scheduledPosts.slice(0, 3).map((post, index) => (
-                  <div key={index} className="flex gap-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+                  <div key={index} className="flex gap-3 sm:gap-4 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
                       {post.isCarousel ? (
-                        <Layers className="w-5 h-5 text-primary" />
+                        <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       ) : (
-                        <FileText className="w-5 h-5 text-primary" />
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       )}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <p className="text-xs sm:text-sm font-medium">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
                         <div className="flex items-center text-gray-500 text-xs">
                           <Clock className="h-3 w-3 mr-1" />
                           {post.scheduledTime}
                         </div>
                       </div>
-                      <p className="text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2">
+                      <p className="text-xs sm:text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2 break-words">
                         {post.content}
                       </p>
-                  </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -589,78 +596,84 @@ const DashboardPage: React.FC = () => {
           
           {/* Recent Activity */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 sm:pb-3 pt-4 px-4">
               <div>
-                <CardTitle>Recent LinkedIn Activity</CardTitle>
-                <CardDescription>Your recent posts and engagement</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Recent LinkedIn Activity</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Your recent posts and engagement</CardDescription>
               </div>
               <Button 
                 variant="ghost" 
-                size="sm" 
-                className="text-primary"
+                size="sm"
+                className="text-primary text-xs sm:text-sm"
                 onClick={() => navigate('/dashboard/analytics')}
               >
                 View Analytics
               </Button>
             </CardHeader>
-            <CardContent className="px-0">
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {recentPosts.length > 0 ? (
-                  recentPosts.slice(0, 2).map((post, index) => (
-                    <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={linkedInProfile?.profileImage || ''} alt={linkedInProfile?.name || ''} />
-                          <AvatarFallback>{getUserInitials()}</AvatarFallback>
+            <CardContent className="px-4 pb-1">
+              {recentPosts && recentPosts.length > 0 ? (
+                <div className="space-y-3 sm:space-y-4">
+                  {recentPosts.slice(0, 3).map((post, index) => (
+                    <div key={index} className="space-y-3">
+                      <div className="flex gap-3">
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border border-gray-200">
+                          <AvatarImage src={linkedInProfile?.profileImage || ''} alt={linkedInProfile?.name || 'User'} />
+                          <AvatarFallback className="bg-primary/10 text-primary">{getUserInitials()}</AvatarFallback>
                         </Avatar>
-                        
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-sm">{linkedInProfile?.name || getUserFullName()}</span>
-                            <span className="text-xs text-gray-500">• {new Date(post.created_at).toLocaleDateString()}</span>
+                          <div className="flex justify-between items-start mb-1">
+                            <div>
+                              <p className="font-medium text-sm">{linkedInProfile?.name || getUserFullName()}</p>
+                              <p className="text-gray-500 text-xs">{new Date(post.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
                           </div>
-                          
-                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{post.text.substring(0, 150)}...</p>
-                          
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <ThumbsUp className="w-4 h-4" />
-                              <span className="text-xs">{post.public_metrics.likes}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <MessageSquare className="w-4 h-4" />
-                              <span className="text-xs">{post.public_metrics.comments}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <Share2 className="w-4 h-4" />
-                              <span className="text-xs">{post.public_metrics.shares}</span>
-                            </div>
-                          </div>
+                          <p className="text-xs sm:text-sm line-clamp-2">{post.text}</p>
                         </div>
                       </div>
+                      
+                      <div className="flex items-center gap-3 pt-1 pb-3 px-2 text-xs sm:text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <ThumbsUp className="h-3.5 w-3.5" />
+                          <span>{post.public_metrics.likes}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>{post.public_metrics.comments}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Share2 className="h-3.5 w-3.5" />
+                          <span>{post.public_metrics.shares}</span>
+                        </div>
+                        <div className="flex items-center gap-1 ml-auto">
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>{post.public_metrics.impressions}</span>
+                        </div>
+                      </div>
+                      
+                      {index < recentPosts.slice(0, 3).length - 1 && (
+                        <Separator className="my-1" />
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">No recent posts</p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4 gap-2"
-                      onClick={() => navigate('/dashboard/post')}
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      Create Your First Post
-                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-3 mb-3">
+                    <Linkedin className="h-6 w-6 text-gray-400" />
                   </div>
-                )}
-              </div>
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">No Recent Activity</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-md mb-4">
+                    Connect your LinkedIn account to see your recent posts and engagement metrics
+                  </p>
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                    Connect LinkedIn
+                  </Button>
+                </div>
+              )}
             </CardContent>
-            <CardFooter className="border-t border-gray-100 dark:border-gray-800 flex justify-center py-3">
-              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate('/dashboard/posts')}>
-                See All Posts
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </CardFooter>
           </Card>
         </div>
       </div>

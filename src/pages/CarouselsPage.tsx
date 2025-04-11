@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, Download, Eye, Clock, Filter, PlusCircle,
   Check, AlertCircle, FileDown, Calendar, ChevronDown, 
-  Search, SlidersHorizontal
+  Search, SlidersHorizontal, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,9 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 // Carousel request interface
 interface CarouselRequest {
@@ -43,6 +46,8 @@ interface CarouselRequest {
   deliveryDate?: Date;
   slideCount: number;
   downloadUrl?: string;
+  tags: string[];
+  category: string;
 }
 
 const CarouselsPage: React.FC = () => {
@@ -50,6 +55,7 @@ const CarouselsPage: React.FC = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('all');
 
   // Mock data for carousel requests
   const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>([
@@ -61,7 +67,9 @@ const CarouselsPage: React.FC = () => {
       requestDate: new Date('2023-10-15T10:30:00'),
       deliveryDate: new Date('2023-10-16T14:45:00'),
       slideCount: 8,
-      downloadUrl: '/files/productivity-carousel.pdf'
+      downloadUrl: '/files/productivity-carousel.pdf',
+      tags: ['Productivity'],
+      category: 'marketing'
     },
     {
       id: 'cr-002',
