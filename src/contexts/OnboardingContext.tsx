@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -99,14 +100,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { setLanguage: setGlobalLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   
-  // Only access theme methods if themeContext exists
-  // Removed setGlobalTheme since it doesn't exist anymore in ThemeContext
+  // We're no longer using theme functionality - only light mode
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
   const [workspaceName, setWorkspaceName] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [theme, setTheme] = useState<ThemeType>("dark");
+  const [theme, setTheme] = useState<ThemeType>("light"); // Default to light theme
   const [language, setLanguage] = useState<LanguageType>("english");
   const [postFormat, setPostFormat] = useState<PostFormat>(null);
   const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
@@ -153,7 +153,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             if (data.workspaceType) setWorkspaceType(data.workspaceType);
             if (data.workspaceName) setWorkspaceName(data.workspaceName);
             if (data.teamMembers) setTeamMembers(data.teamMembers);
-            if (data.theme) setTheme(data.theme);
+            
+            // Always use light theme
+            setTheme("light");
+            
             if (data.language) setLanguage(data.language);
             if (data.postFormat) setPostFormat(data.postFormat);
             if (data.postFrequency) setPostFrequency(data.postFrequency);
@@ -286,12 +289,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStep, isInitialized]);
 
-  // Update global theme when onboarding theme changes
-  // Remove the useEffect that tried to call setGlobalTheme since that function no longer exists
+  // No need for theme toggle effects since we're using light mode only
   useEffect(() => {
-    // We don't need to set the theme anymore as we only have light theme now
-    // The theme is already enforced by the ThemeContext
-  }, [theme]);
+    // We always use light theme - no toggling needed
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+  }, []);
 
   // Update global language when onboarding language changes
   useEffect(() => {

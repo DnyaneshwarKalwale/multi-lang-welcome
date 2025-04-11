@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
-  Mic, Upload, Calendar, BarChart3, Twitter, 
+  Mic, Upload, Calendar, BarChart3, Linkedin, 
   Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
   Maximize2, MessageSquare, ThumbsUp, Share2,
   LogOut, User, Settings, ChevronDown, Users, Bell
@@ -17,8 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ThemeToggle from "@/components/ThemeToggle";
-import { useTheme } from "@/contexts/ThemeContext";
 import { SekcionIconRounded, SekcionLogotype } from "@/components/ScripeIcon";
 import { useNavigate } from "react-router-dom";
 import {
@@ -33,8 +32,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import axios from "axios";
 import { toast } from "sonner";
 
-// Interface for Twitter profile data
-interface TwitterProfile {
+// Interface for LinkedIn profile data
+interface LinkedInProfile {
   id: string;
   username: string;
   name: string;
@@ -43,27 +42,26 @@ interface TwitterProfile {
   location: string;
   url: string;
   joinedDate: string;
-  following: number;
+  connections: number;
   followers: number;
   verified: boolean;
 }
 
-// Interface for Twitter tweet data
-interface Tweet {
+// Interface for LinkedIn post data
+interface Post {
   id: string;
   text: string;
   created_at: string;
   public_metrics: {
-    retweet_count: number;
-    reply_count: number;
-    like_count: number;
-    quote_count: number;
-    impression_count: number;
+    shares: number;
+    comments: number;
+    likes: number;
+    impressions: number;
   };
 }
 
-// Interface for Twitter analytics data
-interface TwitterAnalytics {
+// Interface for LinkedIn analytics data
+interface LinkedInAnalytics {
   impressions: {
     data: number[];
     labels: string[];
@@ -86,7 +84,7 @@ interface TwitterAnalytics {
     totalImpressions: number;
     averageEngagement: number;
     followerGrowth: number;
-    bestPerformingTweet: {
+    bestPerformingPost: {
       text: string;
       impressions: number;
       engagement: number;
@@ -96,115 +94,114 @@ interface TwitterAnalytics {
 
 const DashboardPageContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState("create");
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const { t } = useLanguage();
   
   const { user, logout, token } = useAuth();
   
-  // State for Twitter data
-  const [twitterProfile, setTwitterProfile] = useState<TwitterProfile | null>(null);
-  const [recentTweets, setRecentTweets] = useState<Tweet[]>([]);
-  const [analyticsData, setAnalyticsData] = useState<TwitterAnalytics | null>(null);
+  // State for LinkedIn data
+  const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
+  const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<LinkedInAnalytics | null>(null);
   const [loading, setLoading] = useState({
     profile: false,
-    tweets: false,
+    posts: false,
     analytics: false
   });
 
   // Default fallback data
-  const fallbackScheduledTweets = [
+  const fallbackScheduledPosts = [
     {
       id: 1,
-      content: "Just released our latest feature: AI-powered tweet suggestions! Create better content in half the time. #AI #Twitter",
+      content: "Just released our latest feature: AI-powered content suggestions! Create better LinkedIn content in half the time. #AI #ContentCreation",
       scheduledTime: "Today, 3:30 PM",
-      isThread: false,
+      isCarousel: false,
     },
     {
       id: 2,
-      content: "5 ways to improve your Twitter engagement:\n\n1. Post consistently\n2. Use relevant hashtags\n3. Engage with your audience\n4. Share valuable content\n5. Analyze your performance",
+      content: "5 ways to improve your LinkedIn engagement:\n\n1. Post consistently\n2. Use relevant hashtags\n3. Engage with your network\n4. Share valuable content\n5. Analyze your performance",
       scheduledTime: "Tomorrow, 10:00 AM",
-      isThread: true,
-      threadCount: 5,
+      isCarousel: true,
+      slideCount: 5,
     },
     {
       id: 3,
-      content: "How our team increased Twitter engagement by 300% in just 30 days. The results might surprise you!",
+      content: "How our team increased LinkedIn engagement by 300% in just 30 days. The results might surprise you!",
       scheduledTime: "Apr 5, 1:15 PM",
-      isThread: false,
+      isCarousel: false,
     }
   ];
   
-  const [scheduledTweets, setScheduledTweets] = useState(fallbackScheduledTweets);
+  const [scheduledPosts, setScheduledPosts] = useState(fallbackScheduledPosts);
 
-  // Load Twitter data from extension if available
+  // Load LinkedIn data from extension if available
   useEffect(() => {
     // Check if extension API is available
-    if (window.dekcionExtension && window.dekcionExtension.getTwitterData) {
-      console.log('Dekcion extension detected, attempting to load Twitter data');
+    if (window.linkedBoostExtension && window.linkedBoostExtension.getLinkedInData) {
+      console.log('LinkedBoost extension detected, attempting to load LinkedIn data');
       
-      window.dekcionExtension.getTwitterData()
-        .then((twitterData: any) => {
-          console.log('Twitter data loaded from extension:', twitterData);
+      window.linkedBoostExtension.getLinkedInData()
+        .then((linkedInData: any) => {
+          console.log('LinkedIn data loaded from extension:', linkedInData);
           
-          // Update state with Twitter data from extension
-          if (twitterData.profile) {
-            setTwitterProfile(twitterData.profile);
+          // Update state with LinkedIn data from extension
+          if (linkedInData.profile) {
+            setLinkedInProfile(linkedInData.profile);
           }
           
-          if (twitterData.tweets) {
-            setRecentTweets(twitterData.tweets);
+          if (linkedInData.posts) {
+            setRecentPosts(linkedInData.posts);
           }
           
-          if (twitterData.analytics) {
-            setAnalyticsData(twitterData.analytics);
+          if (linkedInData.analytics) {
+            setAnalyticsData(linkedInData.analytics);
           }
         })
         .catch((error: Error) => {
-          console.error('Failed to load Twitter data from extension:', error);
+          console.error('Failed to load LinkedIn data from extension:', error);
           // Will fall back to API fetch
         });
     }
     
-    // Listen for Twitter data updates from extension
-    document.addEventListener('dekcionTwitterDataUpdate', (e: any) => {
-      console.log('Received Twitter data update from extension:', e.detail);
+    // Listen for LinkedIn data updates from extension
+    document.addEventListener('linkedBoostDataUpdate', (e: any) => {
+      console.log('Received LinkedIn data update from extension:', e.detail);
       
-      // Update state with new Twitter data
-      const twitterData = e.detail;
+      // Update state with new LinkedIn data
+      const linkedInData = e.detail;
       
-      if (twitterData.profile) {
-        setTwitterProfile(twitterData.profile);
+      if (linkedInData.profile) {
+        setLinkedInProfile(linkedInData.profile);
       }
       
-      if (twitterData.tweets) {
-        setRecentTweets(twitterData.tweets);
+      if (linkedInData.posts) {
+        setRecentPosts(linkedInData.posts);
       }
       
-      if (twitterData.analytics) {
-        setAnalyticsData(twitterData.analytics);
+      if (linkedInData.analytics) {
+        setAnalyticsData(linkedInData.analytics);
       }
     });
     
     return () => {
       // Clean up event listener
-      document.removeEventListener('dekcionTwitterDataUpdate', () => {});
+      document.removeEventListener('linkedBoostDataUpdate', () => {});
     };
   }, []);
 
-  // Fetch Twitter data when component mounts and when user is authenticated
+  // Fetch LinkedIn data when component mounts and when user is authenticated
   useEffect(() => {
-    if (user?.twitterId && token) {
-      fetchTwitterData();
+    if (user?.id && token) {
+      fetchLinkedInData();
     }
   }, [user, token]);
 
-  // Function to fetch Twitter data from our API
-  const fetchTwitterData = async () => {
+  // Function to fetch LinkedIn data from our API
+  const fetchLinkedInData = async () => {
     // Set loading states
     setLoading({
       profile: true,
-      tweets: true,
+      posts: true,
       analytics: true
     });
     
@@ -215,34 +212,34 @@ const DashboardPageContent: React.FC = () => {
     };
     
     try {
-      // Fetch Twitter profile
-      const profilePromise = axios.get(`${apiBaseUrl}/twitter/profile`, { headers });
+      // Fetch LinkedIn profile
+      const profilePromise = axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
       
-      // Fetch recent tweets
-      const tweetsPromise = axios.get(`${apiBaseUrl}/twitter/tweets`, { headers });
+      // Fetch recent posts
+      const postsPromise = axios.get(`${apiBaseUrl}/linkedin/posts`, { headers });
       
       // Fetch analytics data
-      const analyticsPromise = axios.get(`${apiBaseUrl}/twitter/analytics`, { headers });
+      const analyticsPromise = axios.get(`${apiBaseUrl}/linkedin/analytics`, { headers });
       
       // Execute all requests in parallel
-      const [profileRes, tweetsRes, analyticsRes] = await Promise.allSettled([
+      const [profileRes, postsRes, analyticsRes] = await Promise.allSettled([
         profilePromise, 
-        tweetsPromise, 
+        postsPromise, 
         analyticsPromise
       ]);
       
       // Handle profile response
       if (profileRes.status === 'fulfilled') {
-        setTwitterProfile(profileRes.value.data.data);
+        setLinkedInProfile(profileRes.value.data.data);
       } else {
-        console.error('Failed to fetch Twitter profile:', profileRes.reason);
+        console.error('Failed to fetch LinkedIn profile:', profileRes.reason);
       }
       
-      // Handle tweets response
-      if (tweetsRes.status === 'fulfilled') {
-        setRecentTweets(tweetsRes.value.data.data);
+      // Handle posts response
+      if (postsRes.status === 'fulfilled') {
+        setRecentPosts(postsRes.value.data.data);
       } else {
-        console.error('Failed to fetch tweets:', tweetsRes.reason);
+        console.error('Failed to fetch posts:', postsRes.reason);
       }
       
       // Handle analytics response
@@ -252,13 +249,13 @@ const DashboardPageContent: React.FC = () => {
         console.error('Failed to fetch analytics:', analyticsRes.reason);
       }
     } catch (error) {
-      console.error('Error fetching Twitter data:', error);
-      toast.error('Failed to fetch Twitter data');
+      console.error('Error fetching LinkedIn data:', error);
+      toast.error('Failed to fetch LinkedIn data');
     } finally {
       // Clear loading states
       setLoading({
         profile: false,
-        tweets: false,
+        posts: false,
         analytics: false
       });
     }
@@ -291,21 +288,21 @@ const DashboardPageContent: React.FC = () => {
         <div className="space-y-8">
         <Tabs defaultValue="create" className="mb-8">
           <TabsList className="grid grid-cols-4 mb-8">
-            <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-primary-50 dark:data-[state=active]:bg-primary-900/20">
+            <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-primary-50">
               <PlusCircle className="h-4 w-4 mr-2" />
               {t('create')}
             </TabsTrigger>
-            <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-primary-50 dark:data-[state=active]:bg-primary-900/20">
+            <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-primary-50">
               <Calendar className="h-4 w-4 mr-2" />
               {t('schedule')}
             </TabsTrigger>
-            <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-primary-50 dark:data-[state=active]:bg-primary-900/20">
+            <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-primary-50">
               <BarChart3 className="h-4 w-4 mr-2" />
               {t('analytics')}
             </TabsTrigger>
-            <TabsTrigger value="tweets" onClick={() => setActiveTab("tweets")} className="data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-800">
-              <Twitter className="h-4 w-4 mr-2" />
-              {t('myTweets')}
+            <TabsTrigger value="posts" onClick={() => setActiveTab("posts")} className="data-[state=active]:bg-gray-50">
+              <Linkedin className="h-4 w-4 mr-2" />
+              {t('myPosts')}
             </TabsTrigger>
           </TabsList>
 
@@ -316,49 +313,49 @@ const DashboardPageContent: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Zap className="h-5 w-5 mr-2 text-amber-500" />
-                      {t('createNewTweet')}
+                      {t('createNewPost')}
                     </CardTitle>
                     <CardDescription>
-                      {t('recordVoice')}, {t('writeText')}, {t('uploadMedia')} 
+                      Create engaging LinkedIn content to boost your professional presence
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-3 mb-4">
                       <Button variant="outline" className="gap-2 rounded-full">
-                        <Mic className="h-4 w-4 text-red-500" />
-                        {t('recordVoice')}
+                        <Edit3 className="h-4 w-4 text-purple-500" />
+                        Text Post
                       </Button>
                       <Button variant="outline" className="gap-2 rounded-full">
                         <Upload className="h-4 w-4 text-blue-500" />
-                        {t('uploadMedia')}
+                        Document
                       </Button>
                       <Button variant="outline" className="gap-2 rounded-full">
-                        <Edit3 className="h-4 w-4 text-purple-500" />
-                        {t('writeText')}
+                        <Mic className="h-4 w-4 text-red-500" />
+                        Audio to Text
                       </Button>
                     </div>
 
                     <Textarea 
-                      placeholder={t('whatsHappening')}
+                      placeholder="What would you like to share with your network?"
                       className="min-h-[150px] text-base resize-none"
                     />
 
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="gap-1 py-1 border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">
-                          <Twitter className="h-3 w-3" />
-                          Twitter
+                        <Badge variant="outline" className="gap-1 py-1 border-blue-200 bg-blue-50 text-blue-700">
+                          <Linkedin className="h-3 w-3" />
+                          LinkedIn
                         </Badge>
-                        <span>280 {t('characters')}</span>
+                        <span>3000 characters</span>
                       </div>
-                          <div className="flex gap-3">
+                      <div className="flex gap-3">
                         <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
                           <Calendar className="h-3 w-3" />
                           {t('schedule')}
                         </Button>
                         <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
                           <Maximize2 className="h-3 w-3" />
-                          Thread
+                          Carousel
                         </Button>
                       </div>
                     </div>
@@ -368,7 +365,7 @@ const DashboardPageContent: React.FC = () => {
                       <Sparkles className="h-4 w-4 text-amber-500" />
                       {t('generateWithAI')}
                     </Button>
-                    <Button size="sm" className="px-4">{t('postTweet')}</Button>
+                    <Button size="sm" className="px-4">Post to LinkedIn</Button>
                   </CardFooter>
                 </Card>
 
@@ -379,11 +376,11 @@ const DashboardPageContent: React.FC = () => {
                       {t('preview')}
                     </CardTitle>
                     <CardDescription>
-                      {t('previewDescription')}
+                      How your post will look on LinkedIn
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="border dark:border-gray-800 rounded-xl p-4">
+                    <div className="border rounded-xl p-4">
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar>
                           <AvatarImage src={user?.profilePicture} />
@@ -392,25 +389,26 @@ const DashboardPageContent: React.FC = () => {
                         <div>
                           <div className="flex items-center gap-1">
                             <span className="font-semibold text-sm">{getUserFullName()}</span>
-                            <span className="text-gray-500 text-sm">@{getUserFullName().toLowerCase().replace(/\s/g, '')}</span>
+                            <span className="text-gray-500 text-sm">• 1st</span>
                           </div>
+                          <p className="text-xs text-gray-500 mb-2">Product Marketing Manager • SaaS Technology</p>
                           <p className="text-sm mt-1">
-                            Just launched our AI Twitter Assistant! Generate tweets, schedule content, and analyze performance - all in one place. Try it today and see the difference. #TwitterAI #ContentCreation
+                            Just launched our AI LinkedIn Assistant! Generate posts, schedule content, and analyze performance - all in one platform. Try it today and see how it can elevate your LinkedIn presence. #LinkedInTips #ContentCreation #ProfessionalGrowth
                           </p>
                         </div>
                       </div>
                       <div className="flex gap-6 ml-12 text-gray-500 text-sm">
                         <div className="flex items-center gap-1">
+                          <ThumbsUp className="h-3.5 w-3.5" />
+                          <span>42</span>
+                        </div>
+                        <div className="flex items-center gap-1">
                           <MessageSquare className="h-3.5 w-3.5" />
-                          <span>12</span>
+                          <span>8</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Share2 className="h-3.5 w-3.5" />
-                          <span>24</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          <span>78</span>
+                          <span>5</span>
                         </div>
                       </div>
                     </div>
@@ -423,25 +421,25 @@ const DashboardPageContent: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Clock className="h-5 w-5 mr-2 text-violet-500" />
-                      {t('upcomingTweets')}
+                      Upcoming Posts
                     </CardTitle>
                     <CardDescription>
-                      {t('scheduledPublication')}
+                      Your scheduled LinkedIn content
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ScrollArea className="h-[300px] pr-4">
                       <div className="space-y-4">
-                        {scheduledTweets.map((tweet) => (
-                          <div key={tweet.id} className="border dark:border-gray-800 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <p className="text-sm line-clamp-2 mb-2">{tweet.content}</p>
+                        {scheduledPosts.map((post) => (
+                          <div key={post.id} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                            <p className="text-sm line-clamp-2 mb-2">{post.content}</p>
                             <div className="flex justify-between items-center text-xs">
-                              <span className="text-teal-600 dark:text-teal-400 font-medium">
-                                {tweet.scheduledTime}
+                              <span className="text-teal-600 font-medium">
+                                {post.scheduledTime}
                               </span>
-                              {tweet.isThread && (
+                              {post.isCarousel && (
                                 <Badge variant="outline" className="h-5 px-2 text-xs">
-                                  Thread ({tweet.threadCount})
+                                  Carousel ({post.slideCount})
                                 </Badge>
                               )}
                             </div>
@@ -459,15 +457,15 @@ const DashboardPageContent: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
-                      {t('aiSuggestions')}
+                      AI Suggestions
                     </CardTitle>
                     <CardDescription>
-                      {t('trendingTopics')}
+                      Trending topics for professional content
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2.5">
-                    {["#TechTrends2023", "Content Marketing Tips", "Social Media Strategy", "Twitter Algorithm Updates", "Remote Work Tools"].map((topic, i) => (
-                      <div key={i} className="flex items-center border dark:border-gray-800 rounded-lg p-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer">
+                    {["#CareerDevelopment", "Remote Work Best Practices", "Industry Insights", "Leadership Tips", "Professional Growth"].map((topic, i) => (
+                      <div key={i} className="flex items-center border rounded-lg p-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
                         <span className="text-sm">{topic}</span>
                       </div>
                     ))}
@@ -480,9 +478,9 @@ const DashboardPageContent: React.FC = () => {
           <TabsContent value="schedule">
             <Card>
               <CardHeader>
-                <CardTitle>{t('contentCalendar')}</CardTitle>
+                <CardTitle>Content Calendar</CardTitle>
                 <CardDescription>
-                  {t('manageSchedule')}
+                  Manage your LinkedIn content schedule
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -497,9 +495,9 @@ const DashboardPageContent: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{t('impressions')}</CardTitle>
+                  <CardTitle className="text-lg">Impressions</CardTitle>
                   <CardDescription>
-                    {t('totalViews')}
+                    Total views on your LinkedIn content
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -512,7 +510,7 @@ const DashboardPageContent: React.FC = () => {
                           style={{ height: `${(value / Math.max(...analyticsData.impressions.data)) * 100}%` }}
                         >
                           <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-blue-500/40 to-cyan-400/40 dark:from-blue-500/60 dark:to-cyan-400/60"
+                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-blue-500/40 to-cyan-400/40"
                             style={{ opacity: 0.5 + ((index + 1) / analyticsData.impressions.data.length) * 0.5 }}
                           ></div>
                         </div>
@@ -527,7 +525,7 @@ const DashboardPageContent: React.FC = () => {
                   <div className="mt-4 pt-3 border-t flex justify-between items-center">
                     <p className="text-xs text-gray-500">{analyticsData?.impressions.timeframe}</p>
                     <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
                         ↑ {analyticsData?.impressions.increase}%
                       </span>
                     </div>
@@ -537,9 +535,9 @@ const DashboardPageContent: React.FC = () => {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{t('engagementRate')}</CardTitle>
+                  <CardTitle className="text-lg">Engagement Rate</CardTitle>
                   <CardDescription>
-                    {t('interactions')}
+                    Interactions with your LinkedIn content
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -552,7 +550,7 @@ const DashboardPageContent: React.FC = () => {
                           style={{ height: `${(value / Math.max(...analyticsData.engagement.data)) * 100}%` }}
                         >
                           <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-violet-500/40 to-purple-400/40 dark:from-violet-500/60 dark:to-purple-400/60"
+                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-violet-500/40 to-purple-400/40"
                             style={{ opacity: 0.5 + ((index + 1) / analyticsData.engagement.data.length) * 0.5 }}
                           ></div>
                         </div>
@@ -567,7 +565,7 @@ const DashboardPageContent: React.FC = () => {
                   <div className="mt-4 pt-3 border-t flex justify-between items-center">
                     <p className="text-xs text-gray-500">{analyticsData?.engagement.timeframe}</p>
                     <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
                         ↑ {analyticsData?.engagement.increase}%
                       </span>
                     </div>
@@ -577,9 +575,9 @@ const DashboardPageContent: React.FC = () => {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{t('followersGrowth')}</CardTitle>
+                  <CardTitle className="text-lg">Connections Growth</CardTitle>
                   <CardDescription>
-                    {t('newFollowers')}
+                    New connections and followers
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -592,7 +590,7 @@ const DashboardPageContent: React.FC = () => {
                           style={{ height: `${(value / Math.max(...analyticsData.followers.data)) * 100}%` }}
                         >
                           <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40 dark:from-teal-500/60 dark:to-emerald-400/60"
+                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40"
                             style={{ opacity: 0.5 + ((index + 1) / analyticsData.followers.data.length) * 0.5 }}
                           ></div>
                         </div>
@@ -607,7 +605,7 @@ const DashboardPageContent: React.FC = () => {
                   <div className="mt-4 pt-3 border-t flex justify-between items-center">
                     <p className="text-xs text-gray-500">{analyticsData?.followers.timeframe}</p>
                     <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
                         ↑ {analyticsData?.followers.increase}%
                       </span>
                     </div>
@@ -617,11 +615,11 @@ const DashboardPageContent: React.FC = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="tweets">
+          <TabsContent value="posts">
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
-                {recentTweets.map((tweet) => (
-                  <Card key={tweet.id}>
+                {recentPosts.map((post) => (
+                  <Card key={post.id}>
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-4">
                         <Avatar>
@@ -632,31 +630,31 @@ const DashboardPageContent: React.FC = () => {
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">{getUserFullName()}</span>
-                              <span className="text-gray-500 text-sm">@{getUserFullName().toLowerCase().replace(/\s/g, '')}</span>
-                              <span className="text-gray-500 text-sm">·</span>
-                              <span className="text-gray-500 text-sm">{tweet.created_at}</span>
+                              <span className="text-gray-500 text-sm">• 1st</span>
+                              <span className="text-gray-500 text-sm">•</span>
+                              <span className="text-gray-500 text-sm">{post.created_at}</span>
                             </div>
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                               <Edit3 className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="text-sm mb-4">{tweet.text}</p>
+                          <p className="text-sm mb-4">{post.text}</p>
                           <div className="flex gap-6 text-gray-500 text-sm">
                             <div className="flex items-center gap-1">
                               <MessageSquare className="h-4 w-4" />
-                              <span>{tweet.public_metrics.reply_count}</span>
+                              <span>{post.public_metrics.comments}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Share2 className="h-4 w-4" />
-                              <span>{tweet.public_metrics.retweet_count}</span>
+                              <span>{post.public_metrics.shares}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <ThumbsUp className="h-4 w-4" />
-                              <span>{tweet.public_metrics.like_count}</span>
+                              <span>{post.public_metrics.likes}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Eye className="h-4 w-4" />
-                              <span>{tweet.public_metrics.impression_count}</span>
+                              <span>{post.public_metrics.impressions}</span>
                             </div>
                           </div>
                         </div>
@@ -676,7 +674,6 @@ const DashboardPageContent: React.FC = () => {
 
 const DashboardPage: React.FC = () => {
   try {
-    const { theme } = useTheme();
     const { user } = useAuth();
     const { t } = useLanguage();
     

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import MobileMenu from '@/components/MobileMenu';
 import { DekcionIcon } from '@/components/ScripeIcon';
-import { LogOut, Sparkles, Stars, MessageCircle, Bell, Zap } from 'lucide-react';
+import { LogOut, Sparkles, Stars, MessageCircle, Bell, Zap, Linkedin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TeamInvitationNotification from '@/components/TeamInvitationNotification';
 
@@ -17,7 +17,7 @@ const CustomNavbar = () => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/team-workspace', label: 'Workspace' },
-    { path: '/language-selection', label: 'Content' },
+    { path: '/linkedin-content', label: 'Content' },
   ];
   
   // Don't show navbar on welcome, login or registration pages
@@ -27,7 +27,7 @@ const CustomNavbar = () => {
 
   return (
     <motion.header 
-      className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-lg border-b border-primary-100/30 transition-colors duration-300"
+      className="sticky top-0 z-40 w-full bg-white shadow-sm border-b border-primary-100/30 transition-colors duration-300"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -99,7 +99,7 @@ const CustomNavbar = () => {
         <div className="flex items-center gap-2">
           <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2 transition-transform hover:scale-[1.02]">
             <DekcionIcon className="h-8 w-8 text-primary-500" />
-            <span className="text-xl font-bold text-gray-900">Dekcion</span>
+            <span className="text-xl font-bold text-gray-900">LinkedBoost</span>
           </Link>
           
           {isAuthenticated && (
