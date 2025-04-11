@@ -126,13 +126,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <img 
-                  src="/brandout-logo-new.svg" 
-                  alt="Logo" 
-                  className="w-16 h-16 object-contain" 
-                />
+                <LovableLogo variant="icon" size="sm" className="w-12 h-12 text-primary" />
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {t('loginToLovable') || 'Log in to BrandOut'}
+                  {t('loginToLovable') || 'Log in to Lovable'}
                 </h2>
               </motion.div>
               <Button 
