@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Home, FileText, BookOpen, Settings, Users, 
-  PlusCircle, BarChart3, Linkedin, ChevronLeft, 
-  LogOut, Menu, Bell, MessageSquare, Lightbulb,
+  PlusCircle, BarChart3, Linkedin, 
+  LogOut, Bell, MessageSquare, Lightbulb,
   Heart, BookMarked, CreditCard, LayoutGrid,
   Search, Upload, Headphones, Youtube, Server
 } from 'lucide-react';
@@ -150,9 +150,11 @@ export function CollapsibleSidebar() {
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar} 
-          className="rounded-full h-8 w-8 hidden lg:flex"
+          className="rounded-full h-8 w-8 hidden lg:flex text-blue-600 hover:bg-blue-100"
         >
-          {expanded ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <span className="font-bold">
+            {expanded ? "←" : "→"}
+          </span>
         </Button>
       </div>
 

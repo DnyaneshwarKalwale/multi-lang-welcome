@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, Bell } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
@@ -90,9 +90,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 setSidebarOpen(newState);
                 localStorage.setItem('sidebarExpanded', newState.toString());
               }}
-              className="rounded-full"
+              className="rounded-full text-blue-600 hover:bg-blue-100"
             >
-              <Menu size={20} />
+              <span className="w-5 h-5 flex items-center justify-center font-bold">
+                {sidebarOpen ? "←" : "→"}
+              </span>
             </Button>
             
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
