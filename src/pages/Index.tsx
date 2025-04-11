@@ -52,9 +52,7 @@ const Index = () => {
       <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : ''}`}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <BrandOutLogo variant="full" size="md" className="h-9" />
-            </div>
+            <div className="flex-1"></div>
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
@@ -88,25 +86,10 @@ const Index = () => {
                 Try for free
               </Button>
             </div>
-            
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
-              <button 
-                className="flex items-center p-2 rounded-full hover:bg-gray-100 focus:outline-none ml-2"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <span className="sr-only">Open menu</span>
-                <div className="relative w-6 h-5">
-                  <span className={`absolute block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
-                  <span className={`absolute top-2 block h-0.5 w-6 bg-gray-800 transition duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                  <span className={`absolute top-4 block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
-                </div>
-              </button>
-            </div>
           </div>
         </div>
         
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Keep this but hide the button that triggers it */}
         <div className={`md:hidden fixed inset-0 z-40 bg-white/90 backdrop-blur-md transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="container mx-auto px-6 pt-24 pb-16 h-full flex flex-col justify-between">
             <nav className="space-y-8">
