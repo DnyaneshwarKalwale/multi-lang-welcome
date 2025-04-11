@@ -26,17 +26,35 @@ interface NavItem {
 }
 
 export function CollapsibleSidebar() {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(localStorage.getItem('sidebarExpanded') !== 'false');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const { user, logout } = useAuth();
   const location = useLocation();
   
-  // Close sidebar on mobile by default
+  // Listen for changes to localStorage sidebarExpanded
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const isExpanded = localStorage.getItem('sidebarExpanded') !== 'false';
+      setExpanded(isExpanded);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check every 500ms in case localStorage is updated without triggering storage event
+    const interval = setInterval(handleStorageChange, 500);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+  
+  // Monitor window resize
   useEffect(() => {
     const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
       if (window.innerWidth < 1024) {
         setExpanded(false);
-      } else {
-        setExpanded(true);
       }
     };
     
@@ -46,11 +64,6 @@ export function CollapsibleSidebar() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Share expanded state with parent via localStorage
-  useEffect(() => {
-    localStorage.setItem('sidebarExpanded', expanded.toString());
-  }, [expanded]);
   
   const navItems: NavItem[] = [
     { title: 'Home', icon: Home, path: '/dashboard/home' },
@@ -68,7 +81,9 @@ export function CollapsibleSidebar() {
   ];
   
   const toggleSidebar = () => {
-    setExpanded(!expanded);
+    const newState = !expanded;
+    setExpanded(newState);
+    localStorage.setItem('sidebarExpanded', newState.toString());
   };
 
   const getUserInitials = () => {
@@ -96,6 +111,11 @@ export function CollapsibleSidebar() {
       }
     }
   };
+  
+  // Hide sidebar completely on mobile if not expanded
+  if (isMobile && !expanded) {
+    return null;
+  }
   
   return (
     <motion.div

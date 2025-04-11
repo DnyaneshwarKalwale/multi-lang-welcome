@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, X, Bell } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
@@ -43,6 +43,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024);
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+        localStorage.setItem('sidebarExpanded', 'false');
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -59,10 +63,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background flex overflow-hidden">
-      {/* Collapsible sidebar - only visible on larger screens or when explicitly opened on mobile */}
-      <div className={cn("fixed inset-y-0 left-0 z-40", { 'hidden lg:block': !isMobile || !sidebarOpen, 'block': isMobile && sidebarOpen })}>
-        <CollapsibleSidebar />
-      </div>
+      {/* Single Collapsible sidebar instance */}
+      <CollapsibleSidebar />
       
       {/* Overlay for mobile when sidebar is open */}
       {isMobile && sidebarOpen && (
@@ -90,7 +92,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               }}
               className="rounded-full"
             >
-              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              <Menu size={20} />
             </Button>
             
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
