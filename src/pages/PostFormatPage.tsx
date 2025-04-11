@@ -10,7 +10,8 @@ import {
   FileText, MessageSquareText, Check, 
   ArrowLeft, ChevronRight, Linkedin,
   Hash, Sparkles, Image, HeartHandshake,
-  TrendingUp, Reply, Layers, BarChart3, Users
+  TrendingUp, Reply, Layers, BarChart3, Users,
+  ThumbsUp
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { LovableLogo } from "@/components/LovableLogo";
