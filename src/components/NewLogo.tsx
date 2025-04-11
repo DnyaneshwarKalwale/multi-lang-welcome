@@ -29,7 +29,7 @@ const sizeMap = {
 export function NewLogo({ variant = 'full', size = 'md', className = '', format = 'svg' }: LogoProps) {
   const iconSize = sizeMap.icon[size];
   const textSize = sizeMap.text[size];
-  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
+  const logoSrc = format === 'svg' ? '/brandout-logo-new.svg' : '/app-logo.png';
   
   // Icon-only variant
   if (variant === 'icon') {

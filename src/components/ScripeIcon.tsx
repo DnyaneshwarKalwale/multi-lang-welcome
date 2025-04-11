@@ -12,7 +12,7 @@ interface IconProps {
 
 // Dekcion Icons (primary brand)
 export const DekcionIcon = ({ className = "h-14 w-14", format = 'svg' }) => {
-  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
+  const logoSrc = format === 'svg' ? '/brandout-logo-new.svg' : '/app-logo.png';
   return (
     <img 
       src={logoSrc} 
@@ -24,7 +24,7 @@ export const DekcionIcon = ({ className = "h-14 w-14", format = 'svg' }) => {
 
 // Rounded icon variant for Dekcion
 export const DekcionIconRounded = ({ className = "h-14 w-14", format = 'svg' }) => {
-  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
+  const logoSrc = format === 'svg' ? '/brandout-logo-new.svg' : '/app-logo.png';
   return (
     <div className="rounded-full overflow-hidden">
       <img 
@@ -38,7 +38,7 @@ export const DekcionIconRounded = ({ className = "h-14 w-14", format = 'svg' }) 
 
 // Logotype (icon + text) for Dekcion
 export const DekcionLogotype = ({ className = "h-14", format = 'svg' }) => {
-  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
+  const logoSrc = format === 'svg' ? '/brandout-logo-new.svg' : '/app-logo.png';
   return (
     <div className={`flex items-center ${className}`}>
       <img 
