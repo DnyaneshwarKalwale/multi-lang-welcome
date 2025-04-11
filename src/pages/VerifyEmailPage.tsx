@@ -237,7 +237,7 @@ export default function VerifyEmailPage() {
               </Alert>
               <Button 
                 onClick={() => navigate('/onboarding/welcome')}
-                variant="twitter"
+                variant="linkedin"
                 rounded="full"
                 className="py-3 px-8 font-bold"
               >
@@ -269,7 +269,7 @@ export default function VerifyEmailPage() {
                 </Button>
                 <Button 
                   onClick={() => navigate('/')}
-                  variant="twitter"
+                  variant="linkedin"
                   rounded="full"
                   className="flex-1 py-3 font-bold"
                 >
@@ -309,7 +309,7 @@ export default function VerifyEmailPage() {
             </Alert>
             <Button 
               onClick={() => navigate('/onboarding/welcome')}
-              variant="twitter"
+              variant="linkedin"
               rounded="full"
               className="py-3 px-8 font-bold"
             >
@@ -345,7 +345,7 @@ export default function VerifyEmailPage() {
               </Button>
               <Button 
                 onClick={resendOtp}
-                variant="twitter"
+                variant="linkedin"
                 rounded="full"
                 className="flex-1 py-3 font-bold"
                 disabled={resendDisabled}
@@ -402,7 +402,7 @@ export default function VerifyEmailPage() {
               </Button>
               <Button 
                 onClick={resendOtp}
-                variant="twitter"
+                variant="linkedin"
                 rounded="full"
                 className="flex-1 py-3 font-bold"
                 disabled={resendDisabled}

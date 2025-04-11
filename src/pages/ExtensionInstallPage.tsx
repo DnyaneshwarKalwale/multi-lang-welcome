@@ -67,15 +67,15 @@ export default function ExtensionInstallPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-white text-gray-900 relative overflow-hidden">
       {/* Animated gradient background */}
       <motion.div 
-        className="absolute inset-0 opacity-10 dark:opacity-20 -z-10"
+        className="absolute inset-0 opacity-10 -z-10"
         variants={pulseVariants}
         animate="animate"
       >
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 dark:bg-violet-900 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-violet-200 blur-[120px]"></div>
       </motion.div>
       
       {/* Background pattern */}
@@ -115,7 +115,7 @@ export default function ExtensionInstallPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400"
+          className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -123,7 +123,7 @@ export default function ExtensionInstallPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-xl text-gray-600 dark:text-gray-300 mb-12"
+          className="text-xl text-gray-600 mb-12"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
@@ -131,7 +131,7 @@ export default function ExtensionInstallPage() {
         </motion.p>
 
         <motion.div 
-          className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 rounded-xl p-8 max-w-xl mx-auto mb-12 shadow-lg"
+          className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-8 max-w-xl mx-auto mb-12 shadow-lg"
           variants={fadeIn}
           transition={{ delay: 0.4 }}
           whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
@@ -153,10 +153,10 @@ export default function ExtensionInstallPage() {
             </div>
             
             <div className="text-left">
-              <h3 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
+              <h3 className="text-2xl font-semibold mb-2 text-gray-900">
                 Browser Extension
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-gray-600 mb-6">
                 Connect your account to analyze and create content seamlessly.
               </p>
               
@@ -170,7 +170,7 @@ export default function ExtensionInstallPage() {
                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 text-white mr-3 flex-shrink-0">
                     <Check size={14} />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-gray-700">
                     One-click authentication
                   </span>
                 </motion.div>
@@ -178,7 +178,7 @@ export default function ExtensionInstallPage() {
                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 text-white mr-3 flex-shrink-0">
                     <Check size={14} />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-gray-700">
                     Content analysis for better suggestions
                   </span>
                 </motion.div>
@@ -186,7 +186,7 @@ export default function ExtensionInstallPage() {
                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 text-white mr-3 flex-shrink-0">
                     <Check size={14} />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-gray-700">
                     Post directly from Prism
                   </span>
                 </motion.div>
@@ -221,7 +221,7 @@ export default function ExtensionInstallPage() {
           
           <Button
             variant="ghost"
-            className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-full px-8 py-3 mt-4 transition-all duration-300 text-sm"
+            className="text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full px-8 py-3 mt-4 transition-all duration-300 text-sm"
             onClick={handleSkipToDashboard}
           >
             Skip to dashboard
@@ -234,7 +234,7 @@ export default function ExtensionInstallPage() {
           className="flex flex-col items-center"
         >
           <ProgressDots total={total} current={current} color="novus" />
-          <span className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+          <span className="text-sm text-gray-500 mt-3">
             Step {current + 1} of {total}
           </span>
         </motion.div>

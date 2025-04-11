@@ -50,6 +50,29 @@ export default function CompletionPage() {
     // We'll only mark onboarding complete when user clicks the dashboard button
   }, []);
 
+  // Convert post frequency from context to a valid number (1-7)
+  const getValidPostFrequency = () => {
+    if (!postFrequency || typeof postFrequency === 'string') {
+      // Default to 3 if no valid frequency is set
+      return 3;
+    }
+    // Ensure it's a valid number between 1-7
+    return Math.min(Math.max(1, postFrequency), 7);
+  };
+
+  // Get valid post format from the allowed enum values
+  const getValidPostFormat = () => {
+    // Check if current postFormat is one of the valid options
+    const validFormats = ['text', 'carousel', 'document', 'visual', 'poll'];
+    
+    if (!postFormat || !validFormats.includes(postFormat)) {
+      // Default to 'text' if not valid
+      return 'text';
+    }
+    
+    return postFormat;
+  };
+
   const markOnboardingComplete = async () => {
     if (!user) {
       return;
@@ -66,13 +89,13 @@ export default function CompletionPage() {
         throw new Error("No authentication token found");
       }
       
-      // Prepare onboarding data
+      // Prepare onboarding data with valid values
       const onboardingData = {
         onboardingCompleted: true,
         workspaceType: workspaceType || 'personal',
         workspaceName: workspaceName || `${firstName}'s Workspace`,
-        postFormat: postFormat || 'casual',
-        postFrequency: postFrequency || 'daily'
+        postFormat: getValidPostFormat(),
+        postFrequency: getValidPostFrequency()
       };
       
       console.log("Updating onboarding status with data:", onboardingData);
@@ -119,10 +142,12 @@ export default function CompletionPage() {
     if (retryCount < maxRetries) {
       setError("");
       setRetryCount(prev => prev + 1);
+      markOnboardingComplete();
     } else {
       setError("Maximum retry attempts reached. Your settings are saved locally.");
       // Still allow proceeding to dashboard
       localStorage.setItem('onboardingCompleted', 'true');
+      navigate("/dashboard");
     }
   };
   
@@ -149,11 +174,11 @@ export default function CompletionPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-white text-gray-900 relative overflow-hidden">
       {/* Animated gradient background with Twitter blue */}
-      <div className="absolute inset-0 opacity-10 dark:opacity-20 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
-        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-900 blur-[120px]"></div>
+      <div className="absolute inset-0 opacity-10 -z-10">
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 blur-[120px]"></div>
+        <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 blur-[120px]"></div>
       </div>
       
       {/* Background pattern */}
@@ -173,29 +198,29 @@ export default function CompletionPage() {
             Setup Complete!
             <span role="img" aria-label="celebration">🎉</span>
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 text-xl mt-4 max-w-xl mx-auto">
+          <p className="text-gray-600 text-xl mt-4 max-w-xl mx-auto">
             Your profile is ready! Let's make your content creation experience exceptional with Scripe.
           </p>
         </motion.div>
         
         <motion.div 
-          className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800 rounded-xl p-8 max-w-2xl mx-auto shadow-xl"
+          className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-8 max-w-2xl mx-auto shadow-xl"
           variants={itemVariants}
         >
-          <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-gray-100">Choose your next step</h2>
+          <h2 className="text-2xl font-bold mb-8 text-gray-900">Choose your next step</h2>
           
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 dark:from-blue-900/20 dark:to-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-all duration-300 hover:shadow-md group">
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 p-6 rounded-xl border border-blue-100 transition-all duration-300 hover:shadow-md group">
               <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
                 <FileEdit className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Create first content</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">Create first content</h3>
+                <p className="text-sm text-gray-600 mb-4">
                   Our AI will craft personalized content based on your preferences and style
                 </p>
                 {contentGenerated ? (
-                  <div className="flex items-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
+                  <div className="flex items-center text-blue-600 bg-blue-50 px-4 py-2 rounded-lg">
                     <CheckCircle className="w-4 h-4 mr-2" />
                     <span>Content successfully generated! You can view it in your dashboard.</span>
                   </div>
@@ -225,17 +250,17 @@ export default function CompletionPage() {
               </div>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 dark:from-blue-900/20 dark:to-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-all duration-300 hover:shadow-md group">
+            <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 p-6 rounded-xl border border-blue-100 transition-all duration-300 hover:shadow-md group">
               <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
                 <Linkedin className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect LinkedIn account</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">Connect LinkedIn account</h3>
+                <p className="text-sm text-gray-600 mb-4">
                   Link your LinkedIn to publish content with a single click
                 </p>
                 {accountsConnected ? (
-                  <div className="flex items-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
+                  <div className="flex items-center text-blue-600 bg-blue-50 px-4 py-2 rounded-lg">
                     <CheckCircle className="w-4 h-4 mr-2" />
                     <span>LinkedIn account successfully connected! You can manage it in your dashboard.</span>
                   </div>
@@ -243,7 +268,7 @@ export default function CompletionPage() {
                   <Button 
                     variant="outline"
                     rounded="full"
-                    className="w-full md:w-auto border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400 group"
+                    className="w-full md:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600 group"
                     onClick={handleUploadFiles}
                     disabled={isUploadingFiles}
                   >
@@ -255,7 +280,7 @@ export default function CompletionPage() {
                     ) : (
                       <>
                         Connect LinkedIn
-                        <Linkedin className="ml-2 w-4 h-4" />
+                        <Linkedin className="w-4 h-4 ml-2 group-hover:text-blue-600" />
                       </>
                     )}
                   </Button>
@@ -263,50 +288,48 @@ export default function CompletionPage() {
               </div>
             </div>
           </div>
+          
+          {/* Error display */}
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              <p className="mb-2 font-medium">{error}</p>
+              {retryCount < maxRetries && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-red-200 text-red-600 hover:bg-red-50"
+                  onClick={handleRetry}
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Retry
+                </Button>
+              )}
+            </div>
+          )}
+          
+          <div className="mt-8 flex justify-center">
+            <Button 
+              onClick={handleGoToDashboard}
+              variant="gradient"
+              rounded="full"
+              size="lg"
+              className="px-12 py-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-blue-300/30 shadow-lg hover:shadow-xl"
+              disabled={isMarkingComplete}
+            >
+              {isMarkingComplete ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                <>
+                  Go to Dashboard
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
         </motion.div>
-      
-        <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
-          <Button 
-            onClick={handleGoToDashboard}
-            variant="linkedin"
-            rounded="full"
-            className="px-8 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            Go to Dashboard
-            <ChevronRight className="ml-2 w-5 h-5" />
-          </Button>
-        </motion.div>
-        
-        {error && (
-          <motion.div 
-            variants={itemVariants}
-            className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4 rounded-lg text-sm"
-          >
-            <p>{error}</p>
-            {retryCount < maxRetries && (
-              <Button 
-                variant="outline"
-                size="sm"
-                rounded="full"
-                className="mt-2 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/50"
-                onClick={handleRetry}
-                disabled={isMarkingComplete}
-              >
-                {isMarkingComplete ? (
-                  <>
-                    <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                    Retrying...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-3 h-3 mr-2" />
-                    Retry Update
-                  </>
-                )}
-              </Button>
-            )}
-          </motion.div>
-        )}
       </motion.div>
     </div>
   );
