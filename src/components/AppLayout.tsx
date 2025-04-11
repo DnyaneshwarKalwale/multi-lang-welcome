@@ -120,7 +120,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         className={cn("flex-1 flex flex-col min-h-screen w-full transition-all duration-300", contentMargin)}
       >
         {/* Top header bar */}
-        <header className="h-14 sm:h-16 border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
+        <header className="h-14 sm:h-16 border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 bg-purple-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-2 sm:gap-3">
             <Button 
               variant="ghost" 
@@ -140,9 +140,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="ghost" size="sm" className="rounded-full relative hover:bg-blue-100 p-2">
-              <Bell className="h-5 w-5 text-blue-600" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
+            <Button variant="ghost" size="sm" className="rounded-full relative hover:bg-purple-100 p-2">
+              <Bell className="h-5 w-5 text-purple-600" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 rounded-full text-white text-[10px] flex items-center justify-center">
                 3
               </span>
             </Button>
@@ -152,9 +152,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 whileHover={{ scale: 1.05 }} 
                 className="cursor-pointer"
               >
-                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-blue-200 shadow-sm">
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-purple-200 shadow-sm">
                   <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs sm:text-sm">
+                  <AvatarFallback className="bg-purple-100 text-purple-600 text-xs sm:text-sm">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>

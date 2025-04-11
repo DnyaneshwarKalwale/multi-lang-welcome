@@ -190,14 +190,14 @@ const MyCarouselsPage: React.FC = () => {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           <Card 
-            className={`cursor-pointer hover:border-primary/50 transition-colors ${
-              !selectedWorkspace ? 'border-primary ring-1 ring-primary' : ''
+            className={`cursor-pointer hover:border-purple-300 transition-colors ${
+              !selectedWorkspace ? 'border-purple-600 ring-1 ring-purple-600' : ''
             }`}
             onClick={() => setSelectedWorkspace(null)}
           >
             <CardContent className="p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center">
-                <Users className="h-4 w-4 text-primary" />
+              <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center">
+                <Users className="h-4 w-4 text-purple-600" />
               </div>
               <div>
                 <p className="font-medium text-sm">All Workspaces</p>
@@ -209,8 +209,8 @@ const MyCarouselsPage: React.FC = () => {
           {workspaces.map(workspace => (
             <Card 
               key={workspace.id}
-              className={`cursor-pointer hover:border-primary/50 transition-colors ${
-                selectedWorkspace === workspace.id ? 'border-primary ring-1 ring-primary' : ''
+              className={`cursor-pointer hover:border-purple-300 transition-colors ${
+                selectedWorkspace === workspace.id ? 'border-purple-600 ring-1 ring-purple-600' : ''
               }`}
               onClick={() => setSelectedWorkspace(workspace.id)}
             >
@@ -219,7 +219,7 @@ const MyCarouselsPage: React.FC = () => {
                   {workspace.avatarUrl ? (
                     <AvatarImage src={workspace.avatarUrl} alt={workspace.name} />
                   ) : (
-                    <AvatarFallback className="bg-primary-50 text-primary text-xs">
+                    <AvatarFallback className="bg-purple-50 text-purple-600 text-xs">
                       {workspace.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   )}
@@ -371,7 +371,7 @@ const MyCarouselsPage: React.FC = () => {
                           {workspace.avatarUrl ? (
                             <AvatarImage src={workspace.avatarUrl} alt={workspace.name} />
                           ) : (
-                            <AvatarFallback className="bg-primary-50 text-primary text-[6px]">
+                            <AvatarFallback className="bg-purple-50 text-purple-600 text-[6px]">
                               {workspace.name.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           )}

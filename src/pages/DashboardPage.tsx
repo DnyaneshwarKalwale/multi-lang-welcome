@@ -338,7 +338,7 @@ const DashboardPage: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2 h-9">
                 {currentWorkspace.type === 'personal' ? (
-                  <User className="h-4 w-4 text-blue-500" />
+                  <User className="h-4 w-4 text-purple-500" />
                 ) : (
                   <Users className="h-4 w-4 text-green-500" />
                 )}
@@ -356,7 +356,7 @@ const DashboardPage: React.FC = () => {
                   }`}
                 >
                   {workspace.type === 'personal' ? (
-                    <User className="h-4 w-4 text-blue-500" />
+                    <User className="h-4 w-4 text-purple-500" />
                   ) : (
                     <Users className="h-4 w-4 text-green-500" />
                   )}
@@ -387,8 +387,8 @@ const DashboardPage: React.FC = () => {
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Posts</p>
                 <h3 className="text-xl sm:text-2xl font-bold mt-1">{recentPosts.length || 12}</h3>
               </div>
-              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                <FileText className="h-5 w-5 text-blue-500" />
+              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                <FileText className="h-5 w-5 text-purple-600" />
               </div>
             </div>
             <div className="flex items-center gap-1 mt-3 sm:mt-4 text-green-500 text-xs sm:text-sm">
@@ -407,7 +407,7 @@ const DashboardPage: React.FC = () => {
                 <h3 className="text-xl sm:text-2xl font-bold mt-1">{analyticsData?.summary?.averageEngagement || '4.8%'}</h3>
               </div>
               <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
-                <MessageSquare className="h-5 w-5 text-purple-500" />
+                <MessageSquare className="h-5 w-5 text-purple-600" />
               </div>
             </div>
             <div className="flex items-center gap-1 mt-3 sm:mt-4 text-green-500 text-xs sm:text-sm">
@@ -446,7 +446,7 @@ const DashboardPage: React.FC = () => {
           <Card>
             <CardHeader className="pb-0 pt-4 px-4">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <Linkedin className="h-5 w-5 text-primary" />
+                <Linkedin className="h-5 w-5 text-purple-600" />
                 LinkedIn Profile
               </CardTitle>
             </CardHeader>
@@ -456,7 +456,7 @@ const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-3 mb-3 sm:mb-4">
                     <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary/10">
                       <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name} />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback className="bg-purple-100 text-purple-600">{getUserInitials()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h3 className="font-semibold">{linkedInProfile.name}</h3>
@@ -531,7 +531,7 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* Weekly AI Tip */}
-          <Card className="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border-primary/10">
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/10 border-purple-200">
             <CardHeader className="pb-1 sm:pb-2 pt-4 px-4">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
@@ -559,7 +559,7 @@ const DashboardPage: React.FC = () => {
               <Button
                 variant="ghost" 
                 size="sm"
-                className="text-primary text-xs sm:text-sm"
+                className="text-purple-600 text-xs sm:text-sm"
                 onClick={() => navigate('/dashboard/posts')}
               >
                 View All
@@ -569,18 +569,18 @@ const DashboardPage: React.FC = () => {
               <div className="space-y-3 sm:space-y-4">
                 {scheduledPosts.slice(0, 3).map((post, index) => (
                   <div key={index} className="flex gap-3 sm:gap-4 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
                       {post.isCarousel ? (
-                        <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                       ) : (
-                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between flex-wrap gap-1">
                         <p className="text-xs sm:text-sm font-medium">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
                         <div className="flex items-center text-gray-500 text-xs">
-                          <Clock className="h-3 w-3 mr-1" />
+                          <Clock className="h-3 w-3 text-purple-600" />
                           {post.scheduledTime}
                         </div>
                       </div>
@@ -604,7 +604,7 @@ const DashboardPage: React.FC = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="text-primary text-xs sm:text-sm"
+                className="text-purple-600 text-xs sm:text-sm"
                 onClick={() => navigate('/dashboard/analytics')}
               >
                 View Analytics
@@ -618,7 +618,7 @@ const DashboardPage: React.FC = () => {
                       <div className="flex gap-3">
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border border-gray-200">
                           <AvatarImage src={linkedInProfile?.profileImage || ''} alt={linkedInProfile?.name || 'User'} />
-                          <AvatarFallback className="bg-primary/10 text-primary">{getUserInitials()}</AvatarFallback>
+                          <AvatarFallback className="bg-purple-100 text-purple-600">{getUserInitials()}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-1">

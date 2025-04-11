@@ -57,8 +57,8 @@ export function CollapsibleSidebar({ expanded = true }: CollapsibleSidebarProps)
       {/* Sidebar Header */}
       <div className="flex h-14 sm:h-16 items-center px-4 py-3 w-full justify-between border-b border-gray-100">
         <div className="flex items-center gap-2 overflow-hidden">
-          <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-primary" />
-          <span className="font-semibold text-gray-900">Lovable</span>
+          <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-purple-800" />
+          <span className="font-semibold text-gray-900">BRANDOUT</span>
         </div>
       </div>
 
