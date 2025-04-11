@@ -83,21 +83,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Top header bar */}
         <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-purple-50 to-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => {
-                const newState = !sidebarOpen;
-                setSidebarOpen(newState);
-                localStorage.setItem('sidebarExpanded', newState.toString());
-              }}
-              className="rounded-full"
-            >
-              <Menu size={20} />
-            </Button>
-            
             <div className="flex items-center gap-2">
-              <BrandOutLogo variant="icon" size="sm" showText={false} />
               <h1 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">
                 {user?.firstName ? `${user.firstName}'s Dashboard` : 'BrandOut Dashboard'}
               </h1>
@@ -105,31 +91,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100">
-              <Bell size={20} className="text-blue-600" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
-                3
-              </span>
-            </Button>
-            
-            <div className="md:flex">
-              <motion.div 
-                whileHover={{ scale: 1.05 }} 
-                className="cursor-pointer"
-              >
-                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-blue-200 shadow-sm">
-                  <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
-                  <AvatarFallback className="bg-gradient-to-r from-purple-100 to-blue-100 text-blue-600">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </motion.div>
-            </div>
+            <Avatar className="h-8 w-8 border border-gray-200">
+              <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {getUserInitials()}
+              </AvatarFallback>
+            </Avatar>
           </div>
         </header>
         
-        {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        {/* Content */}
+        <main className="flex-1 w-full">
           {children || <Outlet />}
         </main>
       </div>
