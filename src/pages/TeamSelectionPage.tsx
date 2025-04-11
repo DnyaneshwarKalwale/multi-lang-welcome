@@ -49,7 +49,7 @@ export default function TeamSelectionPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          {t('choosePlan')}
+          How would you like to use Lovable?
         </motion.h1>
         
         <motion.p 
@@ -57,7 +57,7 @@ export default function TeamSelectionPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          {t('setupWorkspace')}
+          We'll setup your workspace accordingly.
         </motion.p>
         
         <motion.div 
@@ -73,9 +73,9 @@ export default function TeamSelectionPage() {
             <div className={`p-5 rounded-full mb-6 ${workspaceType === "team" ? "bg-blue-100 dark:bg-blue-900/50" : "bg-gray-100 dark:bg-gray-700"}`}>
               <Users className={`w-14 h-14 ${workspaceType === "team" ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`} />
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">{t('forTeam')}</h3>
+            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">For my team</h3>
             <p className="text-gray-600 dark:text-gray-400 text-base mb-6">
-              {t('teamDescription')}
+              One place to create, review and track content for your team.
             </p>
             {workspaceType === "team" && (
               <div className="mt-2 flex items-center justify-center gap-2">
@@ -95,9 +95,9 @@ export default function TeamSelectionPage() {
             <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-blue-100 dark:bg-blue-900/50" : "bg-gray-100 dark:bg-gray-700"}`}>
               <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`} />
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">{t('forPersonal')}</h3>
+            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">For personal use</h3>
             <p className="text-gray-600 dark:text-gray-400 text-base mb-6">
-              {t('personalDescription')}
+              Create content for a single social media profile.
             </p>
             {workspaceType === "personal" && (
               <div className="mt-2 flex items-center justify-center gap-2">
@@ -122,7 +122,7 @@ export default function TeamSelectionPage() {
             disabled={!workspaceType}
             onClick={nextStep}
           >
-            {t('continue')}
+            Continue
           </Button>
         </motion.div>
         

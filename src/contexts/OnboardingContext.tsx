@@ -196,13 +196,19 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         inspirationProfiles
       };
       
+      console.log("Saving onboarding progress:", onboardingData);
+      
       // Save to backend
-      await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
+      const response = await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log("Onboarding progress saved successfully:", response.data);
+      
     } catch (error) {
       console.error("Error saving onboarding progress:", error);
+      // Don't block the UI flow if saving fails
+      // The user can still continue through the onboarding process
     }
   };
 
@@ -247,8 +253,32 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
-      setCurrentStep(nextStep);
-      navigate(`/onboarding/${nextStep}`);
+      
+      // If going to team specific pages but workspaceType is personal, skip them
+      if (
+        (nextStep === 'team-workspace' || nextStep === 'team-invite') && 
+        workspaceType === 'personal'
+      ) {
+        // Skip to post-format page for personal workspaces
+        const newIndex = steps.indexOf('post-format');
+        if (newIndex > 0) {
+          const skipToStep = steps[newIndex];
+          setCurrentStep(skipToStep);
+          navigate(`/onboarding/${skipToStep}`);
+          console.log(`Skipping to ${skipToStep} for personal workspace`);
+        } else {
+          // Fallback to directly referencing post-format
+          setCurrentStep('post-format');
+          navigate('/onboarding/post-format');
+          console.log('Skipping to post-format for personal workspace (fallback)');
+        }
+      } else {
+        // Normal flow
+        setCurrentStep(nextStep);
+        navigate(`/onboarding/${nextStep}`);
+        console.log(`Moving to next step: ${nextStep}`);
+      }
+      
       saveProgress(); // Save progress when moving to next step
     } else {
       // At the end of onboarding, mark as completed and go to dashboard
