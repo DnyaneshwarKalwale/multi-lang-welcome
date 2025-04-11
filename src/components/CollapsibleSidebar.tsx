@@ -4,7 +4,8 @@ import {
   Home, FileText, BookOpen, Settings, Users, 
   PlusCircle, BarChart3, Linkedin, ChevronLeft, 
   LogOut, Menu, Bell, MessageSquare, Lightbulb,
-  Heart, BookMarked, Calendar 
+  Heart, BookMarked, CreditCard, LayoutGrid,
+  Search, Upload, Headphones, Youtube, Server
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -45,19 +46,25 @@ export function CollapsibleSidebar() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Share expanded state with parent via localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebarExpanded', expanded.toString());
+  }, [expanded]);
   
   const navItems: NavItem[] = [
-    { title: 'Dashboard', icon: Home, path: '/dashboard' },
-    { title: 'Create Post', icon: PlusCircle, path: '/create-post' },
-    { title: 'Post Library', icon: FileText, path: '/post-library', badge: { count: 3, variant: 'primary' } },
-    { title: 'Analytics', icon: BarChart3, path: '/analytics' },
-    { title: 'Inspiration', icon: Lightbulb, path: '/inspiration' },
-    { title: 'Calendar', icon: Calendar, path: '/calendar' },
-    { title: 'Messages', icon: MessageSquare, path: '/messages', badge: { count: 2, variant: 'primary' } },
-    { title: 'Connections', icon: Users, path: '/connections' },
-    { title: 'Learning Hub', icon: BookOpen, path: '/learning-hub' },
-    { title: 'Saved Items', icon: BookMarked, path: '/saved-items' },
-    { title: 'Settings', icon: Settings, path: '/settings' },
+    { title: 'Home', icon: Home, path: '/dashboard/home' },
+    { title: 'Create Post', icon: PlusCircle, path: '/dashboard/post' },
+    { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: 3, variant: 'primary' } },
+    { title: 'Request Carousel', icon: Upload, path: '/dashboard/request-carousel' },
+    { title: 'My Carousels', icon: LayoutGrid, path: '/dashboard/carousels' },
+    { title: 'Scraper', icon: Search, path: '/dashboard/scraper' },
+    { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
+    { title: 'AI Writer', icon: MessageSquare, path: '/dashboard/ai' },
+    { title: 'Analytics', icon: BarChart3, path: '/dashboard/analytics' },
+    { title: 'Team', icon: Users, path: '/dashboard/team' },
+    { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
+    { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },
   ];
   
   const toggleSidebar = () => {

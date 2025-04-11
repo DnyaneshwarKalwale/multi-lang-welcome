@@ -8,7 +8,7 @@ import {
   LogOut, User, Settings, ChevronDown, Users, Bell,
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
-  Layers
+  Layers, LayoutGrid, ArrowUp, CreditCard, Building
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -34,7 +34,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { CarouselPreview } from "@/components/CarouselPreview";
 import axios from "axios";
 import { toast } from "sonner";
-import { CollapsibleSidebar } from "@/components/CollapsibleSidebar";
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Interface for LinkedIn profile data
 interface LinkedInProfile {
@@ -96,16 +96,14 @@ interface LinkedInAnalytics {
   };
 }
 
-// Navigation menu items
-interface NavItem {
-  title: string;
-  icon: LucideIcon;
-  href: string;
-  active?: boolean;
-  badge?: {
-    text: string | number;
-    variant: "default" | "outline" | "primary" | "secondary";
-  }
+// Interface for a workspace
+interface Workspace {
+  id: string;
+  name: string;
+  type: 'personal' | 'team';
+  owner: string;
+  memberCount?: number;
+  createdAt: string;
 }
 
 const DashboardPage: React.FC = () => {
@@ -113,7 +111,6 @@ const DashboardPage: React.FC = () => {
   const location = useLocation();
   const { t } = useLanguage();
   const { user, logout, token } = useAuth();
-  const [activePage, setActivePage] = useState('dashboard');
   
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
@@ -124,6 +121,27 @@ const DashboardPage: React.FC = () => {
     posts: false,
     analytics: false
   });
+  
+  // State for workspaces
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([
+    {
+      id: '1',
+      name: 'Personal Workspace',
+      type: 'personal',
+      owner: user?.email || '',
+      createdAt: '2023-10-15'
+    },
+    {
+      id: '2',
+      name: 'Marketing Team',
+      type: 'team',
+      owner: 'marketing@example.com',
+      memberCount: 5,
+      createdAt: '2023-11-22'
+    }
+  ]);
+  
+  const [currentWorkspace, setCurrentWorkspace] = useState(workspaces[0]);
 
   // Default fallback data
   const fallbackScheduledPosts = [
@@ -150,29 +168,11 @@ const DashboardPage: React.FC = () => {
   
   const [scheduledPosts, setScheduledPosts] = useState(fallbackScheduledPosts);
 
-  // Carousel slides for preview
-  const carouselSlides = [
-    {
-      id: 'slide-1',
-      content: '5 ways to improve your LinkedIn engagement'
-    },
-    {
-      id: 'slide-2',
-      content: '1. Post consistently at the right time'
-    },
-    {
-      id: 'slide-3',
-      content: '2. Use relevant hashtags strategically'
-    },
-    {
-      id: 'slide-4',
-      content: '3. Engage with your network regularly'
-    },
-    {
-      id: 'slide-5',
-      content: '4. Share valuable and actionable content'
-    }
-  ];
+  // Weekly AI tip
+  const [weeklyTip, setWeeklyTip] = useState({
+    title: "Boost Your Engagement This Week",
+    content: "When sharing achievements, focus on the lessons learned rather than the accolade itself. This approach creates more value for your audience and increases engagement."
+  });
 
   // Load LinkedIn data from extension if available
   useEffect(() => {
@@ -321,199 +321,348 @@ const DashboardPage: React.FC = () => {
     return `${firstName} ${lastName}`.trim();
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  // Navigation sidebar items
-  const navigationItems: NavItem[] = [
-    {
-      title: "Dashboard",
-      icon: Home,
-      href: "/dashboard",
-      active: activePage === 'dashboard'
-    },
-    {
-      title: "Create Post",
-      icon: PlusCircle,
-      href: "/create-post",
-      active: activePage === 'create-post'
-    },
-    {
-      title: "Post Library",
-      icon: BookOpen,
-      href: "/post-library",
-      active: activePage === 'post-library',
-      badge: {
-        text: 3,
-        variant: "primary"
-      }
-    },
-    {
-      title: "Analytics",
-      icon: BarChart3,
-      href: "/analytics",
-      active: activePage === 'analytics'
-    },
-    {
-      title: "Inspiration",
-      icon: Lightbulb,
-      href: "/inspiration",
-      active: activePage === 'inspiration'
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      href: "/settings",
-      active: activePage === 'settings'
-    }
-  ];
-
-  // Render nav item
-  const NavItem = ({ item }: { item: NavItem }) => (
-    <Link
-      to={item.href}
-      className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors group ${
-        item.active 
-          ? 'bg-primary-50 text-primary' 
-          : 'text-neutral-dark hover:bg-primary-50/50 hover:text-primary'
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <item.icon size={20} className={`transition-colors ${item.active ? 'text-primary' : 'text-neutral-medium group-hover:text-primary'}`} />
-        <span className="font-medium">{item.title}</span>
-                    </div>
-
-      {item.badge && (
-        <Badge 
-          variant={item.badge.variant === 'primary' ? 'default' : 'outline'} 
-          className={`${
-            item.badge.variant === 'primary' 
-              ? 'bg-primary text-white' 
-              : 'bg-primary-50 text-primary border-primary-100'
-          }`}
-        >
-          {item.badge.text}
-                                </Badge>
-                              )}
-    </Link>
-  );
-
-  // Add a toggleMenu function to the component
-  const toggleMenu = () => {
-    const mobileDrawer = document.getElementById('mobile-menu-drawer');
-    if (mobileDrawer) {
-      mobileDrawer.classList.toggle('opacity-100');
-      mobileDrawer.classList.toggle('pointer-events-auto');
-      const sidebar = mobileDrawer.querySelector('div');
-      if (sidebar) {
-        sidebar.classList.toggle('translate-x-0');
-      }
-    }
-  };
-
-  // Set active page based on current URL
-  useEffect(() => {
-    const path = location.pathname;
-    
-    // Convert path to page name
-    if (path === '/dashboard') {
-      setActivePage('dashboard');
-    } else if (path === '/create-post') {
-      setActivePage('create-post');
-    } else if (path === '/post-library') {
-      setActivePage('post-library');
-    } else if (path === '/analytics') {
-      setActivePage('analytics');
-    } else if (path === '/inspiration') {
-      setActivePage('inspiration');
-    } else if (path === '/settings') {
-      setActivePage('settings');
-    }
-  }, [location.pathname]);
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Collapsible Sidebar */}
-      <CollapsibleSidebar />
-      
-      {/* Main content */}
-      <div className="flex flex-col min-h-screen pl-[72px] md:pl-[240px] transition-all duration-300">
-        {/* Main content header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6 md:px-8">
-          <div className="flex flex-1 items-center justify-end gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden md:flex gap-1"
-              onClick={() => navigate('/content-generator')}
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Create Post</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              className="md:hidden"
-              onClick={() => navigate('/content-generator')}
-            >
-              <PlusCircle className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full"
-            >
-              <Bell className="h-4 w-4" />
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full gap-2 pr-1.5"
-                >
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={user?.profilePicture || ''} alt={getUserFullName()} />
-                    <AvatarFallback className="bg-primary/10 text-xs text-primary">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-0.5">
-                    <p className="text-sm font-medium">{getUserFullName()}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  </div>
-                  </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-                    </div>
-        </header>
+    <div className="w-full h-full">
+      {/* Welcome message and workspace switch */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Welcome back, {user?.firstName || 'there'}!</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            You're in <span className="font-medium">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
         
-        {/* Main content body */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
-          {/* Existing dashboard content... */}
-        </main>
+        <div className="mt-4 md:mt-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Building className="h-4 w-4" />
+                Workspaces
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {workspaces.map(workspace => (
+                <DropdownMenuItem 
+                  key={workspace.id}
+                  className={`flex items-center gap-2 ${workspace.id === currentWorkspace.id ? 'bg-primary/10' : ''}`}
+                  onClick={() => setCurrentWorkspace(workspace)}
+                >
+                  {workspace.type === 'personal' ? (
+                    <User className="h-4 w-4 text-blue-500" />
+                  ) : (
+                    <Users className="h-4 w-4 text-green-500" />
+                  )}
+                  <span>{workspace.name}</span>
+                  {workspace.type === 'team' && (
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      {workspace.memberCount} members
+                    </Badge>
+                  )}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 text-primary">
+                <PlusCircle className="h-4 w-4" />
+                <span>Create New Workspace</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Posts</p>
+                <h3 className="text-2xl font-bold mt-1">{recentPosts.length || 12}</h3>
+              </div>
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-blue-500" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1 mt-4 text-green-500 text-sm">
+              <ArrowUp className="h-3 w-3" />
+              <span>16%</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Engagement</p>
+                <h3 className="text-2xl font-bold mt-1">{analyticsData?.summary?.averageEngagement || '4.8%'}</h3>
+              </div>
+              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                <MessageSquare className="h-6 w-6 text-purple-500" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1 mt-4 text-green-500 text-sm">
+              <ArrowUp className="h-3 w-3" />
+              <span>3.2%</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Follower Growth</p>
+                <h3 className="text-2xl font-bold mt-1">+{analyticsData?.summary?.followerGrowth || '47'}</h3>
+              </div>
+              <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <Users className="h-6 w-6 text-green-500" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1 mt-4 text-green-500 text-sm">
+              <ArrowUp className="h-3 w-3" />
+              <span>8.7%</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Main content area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left column - LinkedIn Profile & Create Post */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* LinkedIn Profile Card */}
+          <Card>
+            <CardHeader className="pb-0">
+              <CardTitle className="flex items-center gap-2">
+                <Linkedin className="h-5 w-5 text-primary" />
+                LinkedIn Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {linkedInProfile ? (
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Avatar className="h-16 w-16 border-2 border-primary/10">
+                      <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name} />
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{linkedInProfile.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{linkedInProfile.bio || 'LinkedIn Profile'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-3 text-center">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <p className="text-xl font-bold">{linkedInProfile.connections.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Connections</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <p className="text-xl font-bold">{linkedInProfile.followers.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Followers</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                    <Linkedin className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="font-medium mb-2">Connect LinkedIn Account</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Link your LinkedIn profile to enable powerful content creation features
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-gray-300 text-gray-700 hover:text-primary hover:border-primary"
+                  >
+                    <Linkedin className="h-4 w-4 mr-2" />
+                    Connect LinkedIn
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Quick Actions Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button 
+                className="w-full justify-start bg-primary/90 hover:bg-primary"
+                onClick={() => navigate('/dashboard/post')}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Create New Post
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/dashboard/request-carousel')}
+              >
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Request Carousel
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/dashboard/scraper')}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Scrape Content
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Weekly AI Tip */}
+          <Card className="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border-primary/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-amber-500" />
+                <span>Weekly AI Tip</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <h4 className="font-medium mb-2">{weeklyTip.title}</h4>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {weeklyTip.content}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Middle & Right columns - Scheduled Posts & Recent Activity */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Scheduled Posts */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle>Upcoming Posts</CardTitle>
+                <CardDescription>Your scheduled content for publishing</CardDescription>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-primary"
+                onClick={() => navigate('/dashboard/posts')}
+              >
+                View All
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {scheduledPosts.slice(0, 3).map((post, index) => (
+                  <div key={index} className="flex gap-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+                      {post.isCarousel ? (
+                        <Layers className="w-5 h-5 text-primary" />
+                      ) : (
+                        <FileText className="w-5 h-5 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
+                        <div className="flex items-center text-gray-500 text-xs">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {post.scheduledTime}
+                        </div>
+                      </div>
+                      <p className="text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2">
+                        {post.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle>Recent LinkedIn Activity</CardTitle>
+                <CardDescription>Your recent posts and engagement</CardDescription>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-primary"
+                onClick={() => navigate('/dashboard/analytics')}
+              >
+                View Analytics
+              </Button>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {recentPosts.length > 0 ? (
+                  recentPosts.slice(0, 2).map((post, index) => (
+                    <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={linkedInProfile?.profileImage || ''} alt={linkedInProfile?.name || ''} />
+                          <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{linkedInProfile?.name || getUserFullName()}</span>
+                            <span className="text-xs text-gray-500">• {new Date(post.created_at).toLocaleDateString()}</span>
+                          </div>
+                          
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{post.text.substring(0, 150)}...</p>
+                          
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1 text-gray-500">
+                              <ThumbsUp className="w-4 h-4" />
+                              <span className="text-xs">{post.public_metrics.likes}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-500">
+                              <MessageSquare className="w-4 h-4" />
+                              <span className="text-xs">{post.public_metrics.comments}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-500">
+                              <Share2 className="w-4 h-4" />
+                              <span className="text-xs">{post.public_metrics.shares}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 dark:text-gray-400">No recent posts</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4 gap-2"
+                      onClick={() => navigate('/dashboard/post')}
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      Create Your First Post
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="border-t border-gray-100 dark:border-gray-800 flex justify-center py-3">
+              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate('/dashboard/posts')}>
+                See All Posts
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );

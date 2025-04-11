@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,26 @@ interface AppLayoutProps {
  * This serves as a wrapper for protected routes to ensure consistent navigation
  */
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(localStorage.getItem('sidebarExpanded') !== 'false');
   const { user } = useAuth();
+
+  // Listen for changes to localStorage sidebarExpanded
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const isExpanded = localStorage.getItem('sidebarExpanded') !== 'false';
+      setSidebarOpen(isExpanded);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check every 500ms in case localStorage is updated without triggering storage event
+    const interval = setInterval(handleStorageChange, 500);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -41,7 +59,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => {
+                const newState = !sidebarOpen;
+                setSidebarOpen(newState);
+                localStorage.setItem('sidebarExpanded', newState.toString());
+              }}
               className="rounded-full lg:hidden"
             >
               {sidebarOpen ? <X size={20} /> : <Menu size={20} />}

@@ -31,6 +31,11 @@ import PostLibraryPage from "./pages/PostLibraryPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import InspirationPage from "./pages/InspirationPage";
 import SettingsPage from "./pages/SettingsPage";
+import RequestCarouselPage from "./pages/RequestCarouselPage";
+import CarouselsPage from "./pages/CarouselsPage";
+import ScraperPage from "./pages/ScraperPage";
+import AIWriterPage from "./pages/AIWriterPage";
+import BillingPage from "./pages/BillingPage";
 
 const queryClient = new QueryClient();
 
@@ -210,7 +215,7 @@ const AppRoutes = () => {
       return <Navigate to={`/onboarding/${savedStep}`} replace />;
     }
     
-    return <DashboardPage />;
+    return <Navigate to="/dashboard/home" replace />;
   }
 
   return (
@@ -232,16 +237,24 @@ const AppRoutes = () => {
       
       {/* Protected routes with invitation check wrapped in AppLayout */}
       <Route element={<InvitationCheckRoute />}>
+        {/* Onboarding routes - without AppLayout */}
+        <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+        
+        {/* Dashboard and other pages - with AppLayout */}
         <Route element={<AppLayout />}>
-          <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
-          <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
-          <Route path="/create-post" element={<CreatePostPage />} />
-          <Route path="/post-library" element={<PostLibraryPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/inspiration" element={<InspirationPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/teams" element={<TeamsPage />} />
-          <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
+          <Route path="/dashboard" element={<Navigate to="/dashboard/home" replace />} />
+          <Route path="/dashboard/home" element={<DashboardPage />} />
+          <Route path="/dashboard/post" element={<CreatePostPage />} />
+          <Route path="/dashboard/posts" element={<PostLibraryPage />} />
+          <Route path="/dashboard/request-carousel" element={<RequestCarouselPage />} />
+          <Route path="/dashboard/carousels" element={<CarouselsPage />} />
+          <Route path="/dashboard/scraper" element={<ScraperPage />} />
+          <Route path="/dashboard/inspiration" element={<InspirationPage />} />
+          <Route path="/dashboard/ai" element={<AIWriterPage />} />
+          <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
+          <Route path="/dashboard/team" element={<TeamsPage />} />
+          <Route path="/dashboard/settings" element={<SettingsPage />} />
+          <Route path="/dashboard/billing" element={<BillingPage />} />
         </Route>
       </Route>
       
