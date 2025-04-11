@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { SekcionLogotype } from '@/components/ScripeIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/services/api';
-import { AlertCircle, CheckCircle2, Loader2, Linkedin, Mail, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Twitter, Mail, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -169,7 +170,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center p-6 md:p-8 relative">
-      {/* LinkedIn-inspired background */}
+      {/* Twitter-inspired background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
@@ -192,12 +193,8 @@ export default function VerifyEmailPage() {
           <ArrowLeft size={18} />
         </Button>
         <div className="relative">
-          <img 
-            src="/brandout-logo-new.svg" 
-            alt="Logo" 
-            className="w-16 h-16 object-contain" 
-          />
-          <Linkedin className="absolute -top-1 -right-2 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 shadow-sm" />
+          <SekcionLogotype className="h-8 text-blue-500" />
+          <Twitter className="absolute -top-1 -right-6 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-5 h-5 shadow-sm" />
         </div>
       </motion.div>
       

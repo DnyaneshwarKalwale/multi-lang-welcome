@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { CheckCircle, Users, ArrowLeft, Calendar, Clock, Linkedin } from "lucide-react";
+import { CheckCircle, Users, ArrowLeft, Calendar, Clock, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
+import { ScripeIconRounded } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -105,12 +106,8 @@ export default function PostFrequencyPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <img 
-              src="/brandout-logo-new.svg" 
-              alt="Logo" 
-              className="w-24 h-24 object-contain" 
-            />
-            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white p-1 rounded-full w-7 h-7 shadow-md" />
+            <ScripeIconRounded className="w-20 h-20 text-blue-500" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         
@@ -119,7 +116,7 @@ export default function PostFrequencyPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          When do you want to post?
+          When do you want to tweet?
         </motion.h1>
         
         <motion.p 
@@ -138,7 +135,7 @@ export default function PostFrequencyPage() {
           <div className="max-w-md mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-md">
             <div className="flex items-center mb-6">
               <Calendar className="text-blue-500 mr-3" size={24} />
-              <h3 className="text-xl font-bold text-gray-900">Choose Your Post Days</h3>
+              <h3 className="text-xl font-bold text-gray-900">Choose Your Tweet Days</h3>
             </div>
             
             <div className="grid grid-cols-7 gap-2 mb-6">

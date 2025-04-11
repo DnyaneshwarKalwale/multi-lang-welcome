@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
-  Linkedin, UserCheck, UserX, 
+  Twitter, UserCheck, UserX, 
   SkipForward, Loader2, Users, 
   Clock, UserPlus, Building
 } from "lucide-react";
@@ -260,7 +260,7 @@ export default function PendingInvitationsPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-6 relative overflow-hidden">
-      {/* LinkedIn-inspired background */}
+      {/* Twitter-inspired background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
@@ -283,7 +283,7 @@ export default function PendingInvitationsPage() {
           }}
           style={{ top: '15%', right: '10%' }}
         >
-          <Linkedin size={80} className="text-blue-500" />
+          <Twitter size={80} className="text-blue-500" />
         </motion.div>
         
         <motion.div 
@@ -324,7 +324,7 @@ export default function PendingInvitationsPage() {
               <p className="text-red-600 dark:text-red-400">{error}</p>
             </div>
             <Button 
-              variant="linkedin"
+              variant="twitter"
               rounded="full"
               onClick={() => navigate('/dashboard')}
               className="px-6"
@@ -340,10 +340,10 @@ export default function PendingInvitationsPage() {
                   <UserPlus size={22} />
                 </div>
                 <div className="absolute -top-1 -right-1 bg-white dark:bg-gray-900 p-0.5 rounded-full">
-                  <Linkedin className="w-4 h-4 text-primary" />
+                  <Twitter className="w-4 h-4 text-blue-500" />
                 </div>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">LinkedIn Invitations</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Twitter Invitations</h1>
             </div>
             
             {invitations.length === 0 ? (
@@ -354,7 +354,7 @@ export default function PendingInvitationsPage() {
                   <p className="text-gray-500 dark:text-gray-400 text-sm">You're all caught up!</p>
                 </div>
                 <Button 
-                  variant="linkedin"
+                  variant="twitter"
                   rounded="full"
                   onClick={() => navigate('/dashboard')}
                   className="px-8 py-2"
@@ -365,7 +365,7 @@ export default function PendingInvitationsPage() {
             ) : (
               <>
                 <p className="mb-6 text-gray-600 dark:text-gray-300 text-center">
-                  You've been invited to join these LinkedIn teams:
+                  You've been invited to join these Twitter teams:
                 </p>
                 
                 <motion.div 
@@ -411,7 +411,7 @@ export default function PendingInvitationsPage() {
                           Decline
                         </Button>
                         <Button 
-                          variant="linkedin"
+                          variant="twitter"
                           size="sm"
                           rounded="full"
                           onClick={() => handleAcceptInvitation(invitation.id)}
