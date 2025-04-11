@@ -82,21 +82,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Top header bar */}
         <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => {
-                const newState = !sidebarOpen;
-                setSidebarOpen(newState);
-                localStorage.setItem('sidebarExpanded', newState.toString());
-              }}
-              className="rounded-full text-blue-600 hover:bg-blue-100"
-            >
-              <span className="w-5 h-5 flex items-center justify-center font-bold">
-                {sidebarOpen ? "←" : "→"}
-              </span>
-            </Button>
-            
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
