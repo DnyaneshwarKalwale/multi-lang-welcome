@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { BrandOutHorizontalLogo } from "@/components/BrandOutIcon";
 import WelcomePage from "@/pages/WelcomePage";
 import PersonalInfoPage from "@/pages/PersonalInfoPage";
 import TeamSelectionPage from "@/pages/TeamSelectionPage";
@@ -70,11 +69,6 @@ export function OnboardingRouter() {
             boxShadow: '0 0 10px rgba(6, 182, 212, 0.5)'
           }}
         />
-      </div>
-      
-      {/* BrandOut Logo - visible on all onboarding pages */}
-      <div className="fixed top-4 left-4 z-50">
-        <BrandOutHorizontalLogo className="h-8" />
       </div>
       
       <Routes>
