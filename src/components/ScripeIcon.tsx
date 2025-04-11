@@ -153,10 +153,10 @@ export function SekcionLogotype({ className = "h-10", ...props }: React.SVGProps
 }
 
 // ==============================
-// Twitter-styled icons
+// LinkedIn-styled icons
 // ==============================
 
-export function TwitterStyleIcon({ className = "w-6 h-6", size }: IconProps) {
+export function LinkedInStyleIcon({ className = "w-6 h-6", size }: IconProps) {
   const sizeStyle = size ? { width: `${size}px`, height: `${size}px` } : {};
   
   return (
@@ -176,8 +176,8 @@ export function TwitterStyleIcon({ className = "w-6 h-6", size }: IconProps) {
           y2="30" 
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#06b6d4" />
-          <stop offset="1" stopColor="#7c3aed" />
+          <stop stopColor="#0077B5" />
+          <stop offset="1" stopColor="#0A66C2" />
         </linearGradient>
       </defs>
       <path 
@@ -195,17 +195,17 @@ export function TwitterStyleIcon({ className = "w-6 h-6", size }: IconProps) {
   );
 }
 
-export function TwitterStyleIconSquare({ className = "w-10 h-10" }: IconProps) {
+export function LinkedInStyleIconSquare({ className = "w-10 h-10" }: IconProps) {
   return (
     <div className={`${className} p-1.5 rounded flex items-center justify-center`}>
-      <TwitterStyleIcon className="w-full h-full" />
+      <LinkedInStyleIcon className="w-full h-full" />
     </div>
   );
 }
 
-export function TwitterStyleIconRounded({ className = "w-10 h-10" }: IconProps) {
+export function LinkedInStyleIconRounded({ className = "w-10 h-10" }: IconProps) {
   return (
-    <div className={`${className} bg-gradient-to-br from-cyan-500 to-violet-600 rounded-full flex items-center justify-center p-2`}>
+    <div className={`${className} bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center p-2`}>
       <svg 
         className="w-full h-full" 
         viewBox="0 0 24 24" 
@@ -237,3 +237,8 @@ export { DekcionLogotype as ScripeLogotype };
 export { DekcionIcon as PrismIcon };
 export { DekcionIconRounded as PrismIconRounded };  
 export { DekcionLogotype as PrismLogotype };
+
+// Twitter style aliases for backward compatibility
+export { LinkedInStyleIcon as TwitterStyleIcon };
+export { LinkedInStyleIconSquare as TwitterStyleIconSquare };
+export { LinkedInStyleIconRounded as TwitterStyleIconRounded };

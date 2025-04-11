@@ -4,7 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIcon, Globe, FileEdit } from "lucide-react";
+import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIcon, Globe, FileEdit, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
@@ -200,42 +200,44 @@ export default function CompletionPage() {
                     <span>Content successfully generated! You can view it in your dashboard.</span>
                   </div>
                 ) : (
-                  <Button 
-                    variant="twitter"
-                    rounded="full"
-                    className="w-full md:w-auto group"
-                    onClick={handleGenerateContent}
-                    disabled={isGeneratingContent}
-                  >
-                    {isGeneratingContent ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        Generate content
-                        <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </Button>
+                  <motion.div variants={itemVariants} className="flex flex-col md:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+                    <Button 
+                      onClick={handleGenerateContent}
+                      variant="linkedin"
+                      rounded="full"
+                      className="w-full md:w-auto px-8 py-6 font-medium shadow-md hover:shadow-lg"
+                      disabled={isGeneratingContent}
+                    >
+                      {isGeneratingContent ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          Generate First Post
+                          <FileEdit className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
                 )}
               </div>
             </div>
             
             <div className="flex flex-col md:flex-row gap-6 items-center bg-gradient-to-r from-blue-50/80 to-blue-50/80 dark:from-blue-900/20 dark:to-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-all duration-300 hover:shadow-md group">
               <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                <Twitter className="w-7 h-7 text-white" />
+                <Linkedin className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect Twitter account</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Connect LinkedIn account</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Link your Twitter to publish content with a single click
+                  Link your LinkedIn to publish content with a single click
                 </p>
                 {accountsConnected ? (
                   <div className="flex items-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    <span>Twitter account successfully connected! You can manage it in your dashboard.</span>
+                    <span>LinkedIn account successfully connected! You can manage it in your dashboard.</span>
                   </div>
                 ) : (
                   <Button 
@@ -252,8 +254,8 @@ export default function CompletionPage() {
                       </>
                     ) : (
                       <>
-                        Connect Twitter
-                        <Twitter className="ml-2 w-4 h-4" />
+                        Connect LinkedIn
+                        <Linkedin className="ml-2 w-4 h-4" />
                       </>
                     )}
                   </Button>
@@ -266,7 +268,7 @@ export default function CompletionPage() {
         <motion.div variants={itemVariants} className="mt-6 flex justify-center w-full max-w-md mx-auto">
           <Button 
             onClick={handleGoToDashboard}
-            variant="twitter"
+            variant="linkedin"
             rounded="full"
             className="px-8 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
           >

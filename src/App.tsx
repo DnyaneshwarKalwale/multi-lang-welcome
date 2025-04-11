@@ -6,6 +6,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
@@ -254,15 +255,17 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <ContextVerifier>
-              <OnboardingProvider>
-                <AppRoutes />
-                <Toaster />
-                <Sonner position="top-right" />
-              </OnboardingProvider>
-            </ContextVerifier>
-          </TooltipProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              <ContextVerifier>
+                <OnboardingProvider>
+                  <AppRoutes />
+                  <Toaster />
+                  <Sonner position="top-right" />
+                </OnboardingProvider>
+              </ContextVerifier>
+            </TooltipProvider>
+          </LanguageProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

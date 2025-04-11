@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -17,7 +16,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary-500 underline-offset-4 hover:underline",
         gradient: "bg-gradient-to-r from-primary-500 to-violet-600 text-white hover:bg-gradient-to-r hover:from-primary-600 hover:to-violet-700 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
-        twitter: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
+        linkedin: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
         cyan: "bg-gradient-to-br from-primary-400 to-violet-500 text-white hover:from-primary-500 hover:to-violet-600 border-none shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30",
         novus: "bg-gradient-to-br from-primary-400 to-violet-500 text-white hover:from-primary-500 hover:to-violet-600 border-none shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30",
         transparent: "bg-transparent hover:bg-gray-100/20 dark:hover:bg-gray-800/30 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400",
