@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Home, FileText, BookOpen, Settings, Users, 
-  PlusCircle, BarChart3, Linkedin, ChevronLeft, ChevronRight,
-  LogOut, Bell, MessageSquare, Lightbulb,
+  PlusCircle, BarChart3, Linkedin, ChevronLeft, 
+  LogOut, ChevronRight, Bell, MessageSquare, Lightbulb,
   Heart, BookMarked, CreditCard, LayoutGrid,
   Search, Upload, Headphones, Youtube, Server
 } from 'lucide-react';
@@ -138,9 +138,10 @@ export function CollapsibleSidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center overflow-hidden"
+              className="flex items-center gap-2 overflow-hidden"
             >
-              <BrandOutLogo variant="full" size="sm" className="w-auto" />
+              <BrandOutLogo variant="icon" size="sm" className="w-8 h-8" showText={false} />
+              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">BrandOut</span>
             </motion.div>
           )}
         </AnimatePresence>

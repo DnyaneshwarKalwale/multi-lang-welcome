@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { BrandOutLogo } from "@/components/BrandOutLogo";
+import { LovableLogo } from "@/components/LovableLogo";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -66,7 +66,10 @@ export default function WelcomePage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <BrandOutLogo variant="full" size="lg" />
+          <div className="relative">
+            <LovableLogo variant="icon" size="lg" className="w-20 h-20 text-primary" />
+            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={24} />
+          </div>
         </motion.div>
         
         <motion.h1 
@@ -75,7 +78,7 @@ export default function WelcomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          Welcome to BrandOut
+          Welcome to Lovable
         </motion.h1>
         
         <motion.div

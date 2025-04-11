@@ -5,7 +5,7 @@ import MobileMenu from '@/components/MobileMenu';
 import { LogOut, Bell, BarChart3, PlusCircle, BookOpen, Settings, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TeamInvitationNotification from '@/components/TeamInvitationNotification';
-import { BrandOutLogo } from '@/components/BrandOutLogo';
+import { LovableLogo } from '@/components/LovableLogo';
 
 const CustomNavbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -35,7 +35,7 @@ const CustomNavbar = () => {
       <div className="container relative flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link to={isAuthenticated ? "/dashboard" : "/"} className="transition-transform hover:scale-[1.02]">
-            <BrandOutLogo variant="full" size="md" />
+            <LovableLogo variant="full" size="md" />
           </Link>
           
           {isAuthenticated && (

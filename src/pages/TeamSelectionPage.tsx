@@ -4,7 +4,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Users, User, UserPlus, UserCircle, Check, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
-import { BrandOutLogo } from "@/components/BrandOutLogo";
+import { SekcionIconRounded } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
 
 export default function TeamSelectionPage() {
@@ -38,7 +38,10 @@ export default function TeamSelectionPage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <BrandOutLogo variant="full" size="lg" />
+          <div className="relative">
+            <SekcionIconRounded className="w-20 h-20 text-blue-500" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white p-1 rounded-full w-7 h-7 shadow-md" />
+          </div>
         </motion.div>
         
         <motion.h1 
@@ -46,7 +49,7 @@ export default function TeamSelectionPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          How would you like to use BrandOut?
+          How would you like to use Lovable?
         </motion.h1>
         
         <motion.p 

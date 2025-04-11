@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Home, Settings, Users, FileText, LogOut, Sparkles, Stars, Zap } from 'lucide-react';
+import { Menu, X, Home, Settings, Users, FileText, LogOut, Sparkles, Stars, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import { motion } from 'framer-motion';
-import { BrandOutLogo } from '@/components/BrandOutLogo';
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,7 +32,7 @@ const MobileMenu = () => {
         onClick={toggleMenu}
         aria-label="Menu"
       >
-        <ChevronRight className="h-6 w-6" />
+        <Menu className="h-6 w-6" />
       </Button>
 
       {isOpen && (
@@ -97,7 +96,7 @@ const MobileMenu = () => {
             </div>
 
             <div className="flex items-center justify-between mb-8 relative z-10">
-              <BrandOutLogo variant="full" size="sm" />
+              <h2 className="text-xl font-bold text-gradient">Dekcion</h2>
               <div className="flex items-center gap-2">
                 <ThemeToggle />
                 <Button 
@@ -106,7 +105,7 @@ const MobileMenu = () => {
                   className="rounded-full"
                   onClick={closeMenu}
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <X className="h-6 w-6" />
                 </Button>
               </div>
             </div>
