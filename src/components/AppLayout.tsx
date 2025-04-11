@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, Bell, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
@@ -93,13 +93,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               }}
               className="rounded-full"
             >
-              {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronLeft size={20} className="rotate-180" />}
+              {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
             </Button>
             
-            <div className="flex items-center gap-2">
-              <BrandOutLogo variant="icon" size="md" />
+            <div className="flex items-center">
               <h1 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">
-                {user?.firstName ? `${user.firstName}'s Dashboard` : 'BrandOut Dashboard'}
+                {user?.firstName ? `${user.firstName}'s Dashboard` : 'Dashboard'}
               </h1>
             </div>
           </div>

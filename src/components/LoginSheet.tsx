@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { motion } from "framer-motion";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutLogo } from "@/components/BrandOutLogo";
 import { useLanguage } from "@/useLanguage";
 import { toast } from "sonner";
 
@@ -126,9 +126,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <LovableLogo variant="icon" size="sm" className="w-12 h-12 text-primary" />
+                <BrandOutLogo variant="icon" size="sm" />
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {t('loginToLovable') || 'Log in to Lovable'}
+                  {t('loginToBrandOut') || 'Log in to BrandOut'}
                 </h2>
               </motion.div>
               <Button 

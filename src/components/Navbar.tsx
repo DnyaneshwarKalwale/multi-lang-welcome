@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ArrowRight, ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
@@ -132,7 +132,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               className="text-gray-700 hover:text-cyan-600 ml-2"
               onClick={toggleMenu}
             >
-              {isMenuOpen ? <ChevronLeft size={24} /> : <ChevronLeft size={24} className="rotate-180" />}
+              {isMenuOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
             </Button>
           </div>
         </div>

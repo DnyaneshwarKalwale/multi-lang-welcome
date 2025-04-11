@@ -14,7 +14,7 @@ import {
   ThumbsUp
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutLogo } from "@/components/BrandOutLogo";
 
 export default function PostFormatPage() {
   const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
@@ -210,10 +210,7 @@ export default function PostFormatPage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <div className="relative">
-            <LovableLogo variant="icon" className="w-14 h-14 sm:w-20 sm:h-20 text-primary" />
-            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
-          </div>
+          <BrandOutLogo variant="full" size="lg" />
         </motion.div>
         
         <motion.h1 
@@ -229,7 +226,7 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          Lovable analyzes thousands of high-performing LinkedIn posts to optimize your content strategy.
+          BrandOut analyzes thousands of high-performing LinkedIn posts to optimize your content strategy.
           Select the content type that best aligns with your professional goals.
         </motion.p>
         
