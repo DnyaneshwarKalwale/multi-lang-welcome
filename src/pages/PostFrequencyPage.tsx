@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { CheckCircle, Users, ArrowLeft, Calendar, Clock, Twitter } from "lucide-react";
+import { CheckCircle, Users, ArrowLeft, Calendar, Clock, Linkedin } from "lucide-react";
 import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -106,17 +106,17 @@ export default function PostFrequencyPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <ScripeIconRounded className="w-20 h-20 text-blue-500" />
-            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white p-1 rounded-full w-7 h-7 shadow-md" />
+            <BrandOutIcon className="w-20 h-20" />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         
         <motion.h1 
-          className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
+          className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          When do you want to tweet?
+          When do you want to post?
         </motion.h1>
         
         <motion.p 

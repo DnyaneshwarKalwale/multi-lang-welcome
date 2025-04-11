@@ -6,8 +6,8 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/useLanguage";
 import { motion } from "framer-motion";
-import { PrismIconRounded } from "@/components/ScripeIcon";
-import { Check, Chrome, Puzzle } from "lucide-react";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { Check, Chrome, Puzzle, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ExtensionInstallPage() {
@@ -100,22 +100,22 @@ export default function ExtensionInstallPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <PrismIconRounded className="w-24 h-24" />
+            <BrandOutIcon className="w-24 h-24" />
             <motion.div 
-              className="absolute -bottom-2 -right-2 text-blue-500"
+              className="absolute -bottom-2 -right-2 text-[#0077B5]"
               animate={{ 
                 rotate: [0, 10, 0],
                 scale: [1, 1.1, 1]
               }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Puzzle size={26} className="drop-shadow-md" />
+              <Linkedin size={26} className="drop-shadow-md" />
             </motion.div>
           </div>
         </motion.div>
         
         <motion.h1 
-          className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600"
+          className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -187,7 +187,7 @@ export default function ExtensionInstallPage() {
                     <Check size={14} />
                   </div>
                   <span className="text-sm text-gray-700">
-                    Post directly from Prism
+                    Post directly from BrandOut
                   </span>
                 </motion.div>
               </motion.div>
@@ -196,7 +196,7 @@ export default function ExtensionInstallPage() {
                 variant="default" 
                 rounded="full"
                 className="w-full md:w-auto py-3 px-6 shadow-lg flex items-center gap-2 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
-                onClick={() => window.open("https://chrome.google.com/webstore/detail/prism-extension/", "_blank")}
+                onClick={() => window.open("https://chrome.google.com/webstore/detail/brandout-extension/", "_blank")}
               >
                 <Chrome size={18} />
                 <span>Add to Chrome</span>

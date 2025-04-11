@@ -2,9 +2,9 @@ import React from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Users, User, UserPlus, UserCircle, Check, Twitter } from "lucide-react";
+import { Users, User, UserPlus, UserCircle, Check, Linkedin } from "lucide-react";
 import { motion } from "framer-motion";
-import { SekcionIconRounded } from "@/components/ScripeIcon";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 import { Button } from "@/components/ui/button";
 
 export default function TeamSelectionPage() {
@@ -39,8 +39,8 @@ export default function TeamSelectionPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <SekcionIconRounded className="w-20 h-20 text-blue-500" />
-            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white p-1 rounded-full w-7 h-7 shadow-md" />
+            <BrandOutIcon className="w-20 h-20" />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         

@@ -1,0 +1,18 @@
+<svg width="1000" height="600" viewBox="0 0 1000 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1000" height="600" rx="150" fill="url(#brandout-gradient)" />
+      
+  <!-- Left side horizontal lines -->
+  <rect x="120" y="200" width="280" height="50" rx="25" fill="white" />
+  <rect x="120" y="350" width="280" height="50" rx="25" fill="white" />
+      
+  <!-- Right side rounded rectangle -->
+  <rect x="600" y="150" width="280" height="300" rx="140" stroke="white" strokeWidth="50" />
+      
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="brandout-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#6C2BD9" />
+      <stop offset="100%" stopColor="#3B82F6" />
+    </linearGradient>
+  </defs>
+</svg> 
