@@ -36,6 +36,7 @@ import { CarouselPreview } from "@/components/CarouselPreview";
 import axios from "axios";
 import { toast } from "sonner";
 import { useTheme } from '@/contexts/ThemeContext';
+import { Separator } from "@/components/ui/separator";
 
 // Interface for LinkedIn profile data
 interface LinkedInProfile {
