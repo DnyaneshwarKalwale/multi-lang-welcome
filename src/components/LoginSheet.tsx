@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { X, Twitter, AlertCircle } from "lucide-react";
+import { X, Linkedin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -10,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { motion } from "framer-motion";
-import { SekcionIconRounded } from "@/components/ScripeIcon";
+import { LovableLogo } from "@/components/LovableLogo";
 import { useLanguage } from "@/useLanguage";
 import { toast } from "sonner";
 
@@ -40,14 +39,14 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     window.location.href = `${baseUrl}/api/auth/google`;
   };
   
-  const handleTwitterAuth = () => {
+  const handleLinkedInAuth = () => {
     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
     onOpenChange(false);
-    toast.info("Redirecting to Twitter authentication...");
+    toast.info("Redirecting to LinkedIn authentication...");
     
-    window.location.href = `${baseUrl}/api/auth/twitter`;
+    window.location.href = `${baseUrl}/api/auth/linkedin`;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,21 +114,21 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-gradient-to-b from-primary-50/80 to-white border-primary-100 p-0 w-full sm:max-w-md">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-white border-none p-0 w-full sm:max-w-md overflow-hidden">
           <motion.div 
-            className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden"
+            className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden bg-gradient-to-b from-blue-50 to-white"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-8">
               <motion.div 
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <SekcionIconRounded className="w-10 h-10 text-primary-600" />
+                <LovableLogo variant="icon" size="sm" className="w-12 h-12 text-primary" />
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {t('loginToScripe') || 'Log in to Scripe'}
+                  {t('loginToLovable') || 'Log in to Lovable'}
                 </h2>
               </motion.div>
               <Button 
@@ -138,7 +137,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 onClick={handleClose}
                 className="text-gray-500 hover:text-gray-700 rounded-full"
               >
-                <X size={18} />
+                <X size={20} />
               </Button>
             </div>
             
@@ -151,11 +150,11 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               </motion.div>
             )}
             
-            <div className="space-y-4 mb-7">
+            <div className="space-y-4 mb-8">
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-gray-50 transition-all duration-200 text-gray-700" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-gray-50 transition-all duration-200 text-gray-700 shadow-sm" 
                   onClick={handleGoogleAuth}
                   disabled={loading}
                 >
@@ -167,17 +166,17 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-gray-50 transition-all duration-200 text-gray-700" 
-                  onClick={handleTwitterAuth}
+                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-gray-50 transition-all duration-200 text-gray-700 shadow-sm" 
+                  onClick={handleLinkedInAuth}
                   disabled={loading}
                 >
-                  <Twitter size={18} className="text-primary-500" />
-                  <span>{t('continueWithTwitter') || 'Continue with Twitter'}</span>
+                  <Linkedin size={18} className="text-[#0077B5]" />
+                  <span>{t('continueWithLinkedIn') || 'Continue with LinkedIn'}</span>
                 </Button>
               </motion.div>
             </div>
             
-            <motion.div className="relative mb-7" variants={itemVariants}>
+            <motion.div className="relative mb-8" variants={itemVariants}>
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
@@ -200,9 +199,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                     id="email" 
                     type="email" 
                     placeholder="you@example.com" 
-                    className="bg-white/80 border-gray-200 h-12 pl-4 
-                               focus:border-primary-500 focus:ring-primary-500 
-                               transition-all text-gray-900"
+                    className="bg-white border-gray-200 h-12 pl-4 
+                               focus:border-primary focus:ring-primary 
+                               transition-all text-gray-900 shadow-sm"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -213,16 +212,16 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">{t('password') || 'Password'}</label>
-                  <a href="#" className="text-xs text-primary-600 hover:text-primary-500 transition-colors">{t('forgotPassword') || 'Forgot password?'}</a>
+                  <a href="#" className="text-xs text-primary hover:text-primary-600 transition-colors">{t('forgotPassword') || 'Forgot password?'}</a>
                 </div>
                 <div className="relative">
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder={t('enterYourPassword') || 'Enter your password'}
-                    className="bg-white/80 border-gray-200 h-12 pl-4 
-                               focus:border-primary-500 focus:ring-primary-500 
-                               transition-all text-gray-900"
+                    className="bg-white border-gray-200 h-12 pl-4 
+                               focus:border-primary focus:ring-primary 
+                               transition-all text-gray-900 shadow-sm"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -233,7 +232,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               <motion.div variants={itemVariants}>
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium h-12 rounded-md transition-all duration-200"
+                  className="w-full bg-primary hover:bg-primary-600 text-white font-medium h-12 rounded-md transition-all duration-200 shadow-md"
                   disabled={loading}
                 >
                   {loading ? (
@@ -256,7 +255,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
               {t('dontHaveAccount') || "Don't have an account?"}{' '}
               <a 
                 href="#" 
-                className="text-primary-600 hover:text-primary-500 transition-colors font-medium" 
+                className="text-primary hover:text-primary-600 transition-colors font-medium" 
                 onClick={handleSignUp}
               >
                 {t('signUpForFree') || 'Sign up for free'}

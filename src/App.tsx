@@ -26,6 +26,11 @@ import HowItWorksPage from "./pages/HowItWorksPage";
 import TestimonialsPage from "./pages/TestimonialsPage";
 import PricingPage from "./pages/PricingPage";
 import ContextVerifier from "./components/ContextVerifier";
+import CreatePostPage from "./pages/CreatePostPage";
+import PostLibraryPage from "./pages/PostLibraryPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import InspirationPage from "./pages/InspirationPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -40,25 +45,11 @@ const initializeTheme = () => {
 // Run theme initialization immediately
 initializeTheme();
 
-// Add global theme toggle functions to window object
+// Global theme functions (simplified to always use light theme)
 // @ts-ignore
 window.setLightTheme = () => {
   applyTheme();
-  console.log("Manually set light theme via window function");
-};
-
-// @ts-ignore
-window.setDarkTheme = () => {
-  // Don't allow dark mode, but keep function to avoid errors
-  applyTheme();
-  console.log("Dark theme functionality removed - applied light theme");
-};
-
-// @ts-ignore
-window.toggleTheme = () => {
-  // Don't toggle, always use light theme
-  applyTheme();
-  console.log("Theme toggle functionality removed - applied light theme");
+  console.log("Light theme applied");
 };
 
 // Add theme transition styles to prevent flicker
@@ -89,19 +80,19 @@ function LoadingSpinner() {
       <div className="relative">
         {/* Background circle with subtle pulsing effect */}
         <motion.div 
-          className="absolute inset-0 w-28 h-28 rounded-full bg-gradient-to-r from-teal-400/10 to-cyan-500/10"
+          className="absolute inset-0 w-28 h-28 rounded-full bg-gradient-to-r from-primary-light/10 to-primary/10"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
         
         {/* Spinning borders */}
         <div className="w-20 h-20 border-t-4 border-b-4 border-transparent rounded-full animate-spin-slow"></div>
-        <div className="absolute inset-0 w-20 h-20 border-t-4 border-l-4 border-r-4 border-transparent border-t-teal-400 border-r-cyan-500 border-l-teal-400 rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '3s' }}></div>
-        <div className="absolute inset-0 w-20 h-20 border-b-4 border-r-4 border-transparent border-r-cyan-500 border-b-cyan-500 rounded-full animate-spin-slow" style={{ animationDuration: '2s' }}></div>
+        <div className="absolute inset-0 w-20 h-20 border-t-4 border-l-4 border-r-4 border-transparent border-t-primary-light border-r-primary border-l-primary-light rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '3s' }}></div>
+        <div className="absolute inset-0 w-20 h-20 border-b-4 border-r-4 border-transparent border-r-primary border-b-primary rounded-full animate-spin-slow" style={{ animationDuration: '2s' }}></div>
         
         {/* Pulsing checkmark */}
         <motion.div 
-          className="absolute inset-0 flex items-center justify-center text-teal-500 dark:text-teal-400"
+          className="absolute inset-0 flex items-center justify-center text-primary"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 1, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -114,11 +105,11 @@ function LoadingSpinner() {
       
       {/* Loading text */}
       <motion.div 
-        className="absolute mt-28 text-sm font-medium text-gray-600 dark:text-gray-400"
+        className="absolute mt-28 text-sm font-medium text-gray-600"
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
       >
-        Loading TweetSphere...
+        Loading Lovable...
       </motion.div>
     </div>
   );
@@ -244,6 +235,11 @@ const AppRoutes = () => {
         <Route element={<AppLayout />}>
           <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
           <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+          <Route path="/create-post" element={<CreatePostPage />} />
+          <Route path="/post-library" element={<PostLibraryPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/inspiration" element={<InspirationPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/teams" element={<TeamsPage />} />
           <Route path="/pending-invitations" element={<PendingInvitationsPage />} />
         </Route>
@@ -257,23 +253,21 @@ const AppRoutes = () => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <AnimatePresence>
-        <ThemeProvider>
-          <TooltipProvider>
-            <LanguageProvider>
-              <AuthProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <ContextVerifier>
                 <OnboardingProvider>
-                  <ContextVerifier>
-                    <AppRoutes />
-                  </ContextVerifier>
+                  <AppRoutes />
+                  <Toaster />
+                  <Sonner position="top-right" />
                 </OnboardingProvider>
-              </AuthProvider>
-            </LanguageProvider>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
-        </ThemeProvider>
-      </AnimatePresence>
+              </ContextVerifier>
+            </TooltipProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

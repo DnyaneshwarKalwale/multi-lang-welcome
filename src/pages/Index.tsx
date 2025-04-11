@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { ScripeLogotype } from "@/components/ScripeIcon";
+import { LovableLogo } from "@/components/LovableLogo";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Star } from "lucide-react";
+import { ChevronRight, Star, Linkedin, BarChart3, PlusCircle, Lightbulb, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { LoginSheet } from "@/components/LoginSheet";
 import { Link } from "react-router-dom";
-import ThemeToggle from "@/components/ThemeToggle";
 import IndexHero from "@/components/IndexHero";
 import { motion } from "framer-motion";
 
@@ -41,50 +40,49 @@ const Index = () => {
   
   // Testimonial data
   const testimonials = [
-    { name: "Steven Hille", role: "Founder - Hill Productions", img: "https://randomuser.me/api/portraits/men/1.jpg" },
-    { name: "Laura Raggl", role: "Co-Founder - ROI Ventures", img: "https://randomuser.me/api/portraits/women/2.jpg" },
-    { name: "Marina Ziblis", role: "Senior Consultant - PwC", img: "https://randomuser.me/api/portraits/women/3.jpg" },
-    { name: "Alexander Valtingojer", role: "CSO - Altify", img: "https://randomuser.me/api/portraits/men/4.jpg" },
+    { name: "Steven Hille", role: "LinkedIn Growth Strategist", img: "https://randomuser.me/api/portraits/men/1.jpg" },
+    { name: "Laura Raggl", role: "Content Creator - LinkedIn Top Voice", img: "https://randomuser.me/api/portraits/women/2.jpg" },
+    { name: "Marina Ziblis", role: "Senior Consultant - Content Marketing", img: "https://randomuser.me/api/portraits/women/3.jpg" },
+    { name: "Alexander Valtingojer", role: "Director of Community Growth", img: "https://randomuser.me/api/portraits/men/4.jpg" },
   ];
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white text-gray-800 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white text-gray-800 overflow-x-hidden">
       {/* Navbar */}
       <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : ''}`}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <ScripeLogotype className="h-9 text-primary-600" />
+              <LovableLogo variant="full" size="md" className="h-9" />
             </div>
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              <a href="#features" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
+              <a href="#features" className="text-gray-700 hover:text-primary text-sm font-medium transition-colors duration-200">
                 Features
               </a>
-              <Link to="/how-it-works" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
+              <Link to="/how-it-works" className="text-gray-700 hover:text-primary text-sm font-medium transition-colors duration-200">
                 How It Works
               </Link>
-              <a href="#testimonials" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
+              <a href="#testimonials" className="text-gray-700 hover:text-primary text-sm font-medium transition-colors duration-200">
                 Testimonials
               </a>
-              <Link to="/pricing" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
+              <Link to="/pricing" className="text-gray-700 hover:text-primary text-sm font-medium transition-colors duration-200">
                 Pricing
               </Link>
             </nav>
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle />
               <Button 
                 variant="ghost" 
-                className="text-gray-700 hover:text-primary-600"
+                className="text-gray-700 hover:text-primary"
                 onClick={() => setIsLoginOpen(true)}
               >
                 Log in
               </Button>
               <Button 
-                className="bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white rounded-full px-6"
+                className="bg-primary hover:bg-primary-600 text-white rounded-full px-6"
                 onClick={() => setIsRegisterOpen(true)}
               >
                 Try for free
@@ -93,7 +91,6 @@ const Index = () => {
             
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
-              <ThemeToggle />
               <button 
                 className="flex items-center p-2 rounded-full hover:bg-gray-100 focus:outline-none ml-2"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -114,25 +111,25 @@ const Index = () => {
           <div className="container mx-auto px-6 pt-24 pb-16 h-full flex flex-col justify-between">
             <nav className="space-y-8">
               <a href="#features" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </a>
               <Link to="/how-it-works" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 How It Works
               </Link>
               <a href="#testimonials" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Testimonials
               </a>
               <Link to="/pricing" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
@@ -151,7 +148,7 @@ const Index = () => {
                 Log in
               </Button>
               <Button 
-                className="w-full justify-center bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white"
+                className="w-full justify-center bg-primary hover:bg-primary-600 text-white"
                 onClick={() => {
                   setIsRegisterOpen(true);
                   setMobileMenuOpen(false);
@@ -179,7 +176,7 @@ const Index = () => {
       />
       
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+      <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-blue-50/20 to-white relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 opacity-40 bg-grid-pattern"></div>
         </div>
@@ -193,7 +190,7 @@ const Index = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Why creators choose <span className="text-primary-600">our platform</span>
+              Why professionals choose <span className="text-primary">Lovable</span>
             </motion.h2>
             <motion.p 
               className="text-lg text-gray-600"
@@ -202,7 +199,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              Tools and features designed to help you create better content, grow your audience, and save time.
+              Tools and features designed to help you create better LinkedIn content, grow your professional network, and elevate your personal brand.
             </motion.p>
           </div>
           
@@ -215,13 +212,11 @@ const Index = () => {
               viewport={{ once: true }}
             >
               <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <PlusCircle className="h-7 w-7 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-900">AI-Powered Content</h3>
               <p className="text-gray-600">
-                Generate high-performing content based on your unique voice, style, and topics that resonate with your audience.
+                Generate professional LinkedIn content that reflects your authentic voice and expertise while driving meaningful engagement.
               </p>
             </motion.div>
             
@@ -232,14 +227,12 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+              <div className="w-14 h-14 rounded-full bg-secondary-100 flex items-center justify-center mb-6">
+                <BarChart3 className="h-7 w-7 text-secondary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-900">Growth Analytics</h3>
               <p className="text-gray-600">
-                Track performance metrics and get actionable insights to optimize your content strategy and grow your audience.
+                Track performance metrics and get actionable insights to optimize your LinkedIn strategy and grow your professional network.
               </p>
             </motion.div>
             
@@ -250,12 +243,64 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6">
-                <Star className="h-7 w-7 text-blue-600" />
+              <div className="w-14 h-14 rounded-full bg-accent-100 flex items-center justify-center mb-6">
+                <FileText className="h-7 w-7 text-accent-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900">Personalized Branding</h3>
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Carousel Creator</h3>
               <p className="text-gray-600">
-                Maintain consistent voice and brand identity across all your content with smart templates and style guides.
+                Create eye-catching LinkedIn carousel posts with professional templates designed to increase engagement and shares.
+              </p>
+            </motion.div>
+          </div>
+          
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div 
+              className="p-8 rounded-2xl transform transition-all duration-300 hover:translate-y-[-5px] glass-card"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+                <Lightbulb className="h-7 w-7 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Content Ideas</h3>
+              <p className="text-gray-600">
+                Get industry-specific content ideas and prompts to beat writer's block and maintain a consistent posting schedule.
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="p-8 rounded-2xl transform transition-all duration-300 hover:translate-y-[-5px] glass-card"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+                <Linkedin className="h-7 w-7 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">LinkedIn Optimization</h3>
+              <p className="text-gray-600">
+                Optimize your content with best practices for LinkedIn's algorithm to maximize reach and engagement with your network.
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="p-8 rounded-2xl transform transition-all duration-300 hover:translate-y-[-5px] glass-card"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Content Calendar</h3>
+              <p className="text-gray-600">
+                Schedule and automate your LinkedIn posts for optimal posting times, ensuring consistent engagement with your audience.
               </p>
             </motion.div>
           </div>
@@ -263,138 +308,173 @@ const Index = () => {
       </section>
       
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 md:py-28 bg-white relative">
-        <div className="container mx-auto px-6 relative">
+      <section id="testimonials" className="py-20 md:py-28 bg-white">
+        <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
-              Loved by creators worldwide
-            </h2>
-            <p className="text-lg text-gray-600">
-              See what our users are saying about their experience
-            </p>
+            <motion.span 
+              className="text-primary font-semibold"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+            >
+              TESTIMONIALS
+            </motion.span>
+            <motion.h2 
+              className="text-3xl md:text-4xl font-bold mt-2 mb-4 text-gray-900"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              Trusted by LinkedIn professionals worldwide
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-gray-600"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              See how Lovable has helped professionals grow their personal brand and create impactful content on LinkedIn.
+            </motion.p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {testimonials.map((testimonial, index) => (
-              <motion.div
+              <motion.div 
                 key={index}
-                className="glass-card p-6"
+                className="bg-blue-50/50 rounded-2xl p-8 border border-blue-100/30"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <div className="flex items-center mb-4">
-                  <img 
-                    src={testimonial.img} 
-                    alt={testimonial.name} 
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary-500" 
-                  />
-                  <div className="ml-3">
-                    <h4 className="font-medium text-gray-900">{testimonial.name}</h4>
-                    <p className="text-xs text-gray-500">{testimonial.role}</p>
+                <div className="flex gap-4 items-start mb-4">
+                  <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden">
+                    <img src={testimonial.img} alt={testimonial.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg text-gray-900">{testimonial.name}</h4>
+                    <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                    <div className="flex mt-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div className="mb-4 text-amber-400 flex">
-                  {[...Array(5)].map((_, i) => (
-                    <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-600 text-sm">
-                  "This platform has completely transformed how I create content. The AI understands my voice and generates posts that actually sound like me."
-                </p>
+                <blockquote className="text-gray-600 italic">
+                  "Lovable has completely transformed how I approach LinkedIn content. The analytics help me understand what's working, and the AI content suggestions save me hours every week. My engagement has increased by over 200% since I started using it."
+                </blockquote>
               </motion.div>
             ))}
           </div>
+          
+          <motion.div 
+            className="mt-16 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <Button 
+              className="bg-primary hover:bg-primary-600 text-white px-8 py-6 rounded-xl text-lg"
+              onClick={() => setIsRegisterOpen(true)}
+            >
+              Start your free trial
+              <ChevronRight className="ml-2 w-5 h-5" />
+            </Button>
+            <p className="text-gray-500 mt-4">No credit card required. 14-day free trial.</p>
+          </motion.div>
         </div>
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary-500 via-violet-500 to-indigo-500 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-pattern mix-blend-overlay opacity-10"></div>
-        
-        <div className="container mx-auto px-6 relative">
-          <div className="max-w-3xl mx-auto text-center">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+      <section className="py-20 bg-gradient-to-br from-primary/10 via-blue-50 to-primary/5">
+        <div className="container mx-auto px-6">
+          <motion.div 
+            className="max-w-4xl mx-auto text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
+              Ready to transform your <span className="text-primary">LinkedIn presence</span>?
+            </h2>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Join thousands of professionals already using Lovable to create better LinkedIn content and grow their professional network.
+            </p>
+            <Button 
+              className="bg-primary hover:bg-primary-600 text-white px-8 py-7 rounded-xl text-lg shadow-lg hover:shadow-primary/30"
+              onClick={() => setIsRegisterOpen(true)}
             >
-              Ready to elevate your content strategy?
-            </motion.h2>
-            <motion.p 
-              className="text-xl mb-10 opacity-90"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-            >
-              Join thousands of creators who are already using our platform to grow their audience and save time.
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <Button 
-                onClick={() => setIsRegisterOpen(true)}
-                className="bg-white text-primary-600 hover:bg-gray-100 rounded-xl py-6 px-10 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
-                size="lg"
-              >
-                Get Started for Free
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Button>
-            </motion.div>
-          </div>
+              Get started today
+              <ChevronRight className="ml-2 w-5 h-5" />
+            </Button>
+          </motion.div>
         </div>
       </section>
       
       {/* Footer */}
-      <footer className="py-16 bg-white border-t border-gray-200">
+      <footer className="bg-gray-50 py-16">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-8 md:mb-0">
-              <ScripeLogotype className="h-8 text-primary-600 mb-4" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <LovableLogo variant="full" size="md" className="h-8 mb-6" />
               <p className="text-gray-500 text-sm">
-                © 2025 All rights reserved.
+                The professional content platform for LinkedIn creators and thought leaders.
               </p>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-6">
-              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
-                Terms
-              </a>
-              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
-                Privacy
-              </a>
-              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
-                Help Center
-              </a>
-              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
-                Contact
-              </a>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Product</h4>
+              <ul className="space-y-2">
+                <li><a href="#features" className="text-gray-500 hover:text-primary text-sm">Features</a></li>
+                <li><Link to="/pricing" className="text-gray-500 hover:text-primary text-sm">Pricing</Link></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Integrations</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Roadmap</a></li>
+              </ul>
             </div>
             
-            <div className="flex items-center gap-4 mt-8 md:mt-0">
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-500 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"></path>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Resources</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Blog</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">LinkedIn Guide</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Help Center</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Content Library</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">About us</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Careers</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-500 hover:text-primary text-sm">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-500 text-sm mb-4 md:mb-0">
+              © {new Date().getFullYear()} Lovable. All rights reserved.
+            </p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-gray-400 hover:text-primary">
+                <Linkedin className="w-5 h-5" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-500 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
-                </svg>
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-500 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <a href="#" className="text-gray-400 hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
               </a>
             </div>
@@ -402,17 +482,17 @@ const Index = () => {
         </div>
       </footer>
       
-      {/* Login & Registration Sheets */}
-      <LoginSheet 
-        open={isLoginOpen} 
-        onOpenChange={setIsLoginOpen}
-        onSuccess={handleLoginSuccess}
-      />
-      
+      {/* Registration & Login Sheets */}
       <RegistrationSheet 
         open={isRegisterOpen} 
-        onOpenChange={setIsRegisterOpen}
+        onOpenChange={setIsRegisterOpen} 
         onSuccess={handleRegisterSuccess}
+      />
+      
+      <LoginSheet 
+        open={isLoginOpen} 
+        onOpenChange={setIsLoginOpen} 
+        onSuccess={handleLoginSuccess}
       />
     </div>
   );

@@ -26,7 +26,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         
-        // Primary Blues
+        // Primary Blues:
         primary: {
           DEFAULT: "#0070E0", // Main
           50: "#F0F6FF",
@@ -42,7 +42,7 @@ export default {
           light: "#1A9CFF", // Light
         },
         
-        // Secondary Purples
+        // Secondary Purples:
         secondary: {
           DEFAULT: "#635BFF", // Main
           50: "#F5F4FF",
@@ -58,7 +58,7 @@ export default {
           light: "#857DFF", // Light
         },
         
-        // Accent Greens
+        // Accent Greens:
         accent: {
           DEFAULT: "#12B76A", // Main
           50: "#ECFDF3",
@@ -74,7 +74,7 @@ export default {
           light: "#32D583", // Light
         },
         
-        // Neutral Tones
+        // Neutral Tones:
         neutral: {
           white: "#FFFFFF", // White
           lightest: "#F6F9FC", // Lightest
@@ -85,7 +85,7 @@ export default {
           black: "#0A2540", // Black
         },
         
-        // Complementary Colors
+        // Complementary Colors:
         coral: {
           DEFAULT: "#FF9E80", // Coral
         },
@@ -168,8 +168,8 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'hero-pattern': "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\"%3E%3Cg fill=\"%237C3AED\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M0 0h80v80H0V0zm20 20v40h40V20H20zm20 35a15 15 0 1 1 0-30 15 15 0 0 1 0 30z\" opacity=\"0.5\"/%3E%3C/g%3E%3C/svg%3E')",
-        'dots-pattern': "url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%237C3AED\" fill-opacity=\"0.05\"%3E%3Ccircle cx=\"3\" cy=\"3\" r=\"1\"/%3E%3C/g%3E%3C/svg%3E')",
+        'hero-pattern': "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\"%3E%3Cg fill=\"%230070E0\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M0 0h80v80H0V0zm20 20v40h40V20H20zm20 35a15 15 0 1 1 0-30 15 15 0 0 1 0 30z\" opacity=\"0.5\"/%3E%3C/g%3E%3C/svg%3E')",
+        'dots-pattern': "url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%230070E0\" fill-opacity=\"0.05\"%3E%3Ccircle cx=\"3\" cy=\"3\" r=\"1\"/%3E%3C/g%3E%3C/svg%3E')",
       },
     },
   },

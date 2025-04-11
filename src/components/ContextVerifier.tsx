@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme, applyTheme } from '@/contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,9 +19,6 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const { theme, isThemeLoaded } = useTheme();
   const location = useLocation();
   
-  // Special handling for dashboard page
-  const isDashboard = location.pathname.includes('/dashboard');
-  
   // Set mounted state on component mount and verify theme
   useEffect(() => {
     setMounted(true);
@@ -35,24 +31,13 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
       console.log("ContextVerifier - Initial theme state:", {
         isLightInDOM,
         currentThemeContext: theme,
-        path: location.pathname,
-        isDashboard
+        path: location.pathname
       });
       
       // Make sure DOM has light theme class set
       if (!isLightInDOM) {
         applyTheme();
         console.log("ContextVerifier - Fixed missing theme class by adding light theme");
-      }
-      
-      // Additional theme verification for dashboard
-      if (isDashboard) {
-        console.log('ContextVerifier - Dashboard page detected, double checking theme');
-        // Ensure theme is applied after a short delay
-        setTimeout(() => {
-          applyTheme();
-          console.log("ContextVerifier - Reapplied light theme for dashboard");
-        }, 100);
       }
       
       // Check contexts after a short delay to ensure they're all loaded
@@ -66,7 +51,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
       setError(e as Error);
       setIsLoading(false);
     }
-  }, [theme, location, isDashboard]);
+  }, [theme, location]);
   
   // If still loading, show spinner with animation
   if (isLoading) {

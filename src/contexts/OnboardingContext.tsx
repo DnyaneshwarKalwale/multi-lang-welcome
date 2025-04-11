@@ -8,6 +8,7 @@ import axios from "axios";
 // Define types for our context
 type OnboardingStep = 
   | "welcome" 
+  | "personal-info"
   | "team-selection" 
   | "team-workspace" 
   | "team-invite"
@@ -24,8 +25,7 @@ type TeamMember = {
   role: "admin" | "member";
 };
 
-// We're removing theme and language selection types but keeping for existing states
-type ThemeType = "light" | "dark";
+// Simplified types - remove theme options, only support light mode
 type LanguageType = "english" | "german";
 type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
@@ -46,7 +46,6 @@ type OnboardingContextType = {
   workspaceType: WorkspaceType;
   workspaceName: string;
   teamMembers: TeamMember[];
-  theme: ThemeType;
   language: LanguageType;
   postFormat: PostFormat;
   postFrequency: PostFrequency;
@@ -54,11 +53,12 @@ type OnboardingContextType = {
   firstName: string;
   lastName: string;
   email: string;
+  website: string;
+  mobileNumber: string;
   setCurrentStep: (step: OnboardingStep) => void;
   setWorkspaceType: (type: WorkspaceType) => void;
   setWorkspaceName: (name: string) => void;
   setTeamMembers: (members: TeamMember[]) => void;
-  setTheme: (theme: ThemeType) => void;
   setLanguage: (language: LanguageType) => void;
   setPostFormat: (format: PostFormat) => void;
   setPostFrequency: (frequency: PostFrequency) => void;
@@ -66,6 +66,8 @@ type OnboardingContextType = {
   setFirstName: (name: string) => void;
   setLastName: (name: string) => void;
   setEmail: (email: string) => void;
+  setWebsite: (website: string) => void;
+  setMobileNumber: (mobileNumber: string) => void;
   nextStep: () => void;
   prevStep: () => void;
   saveProgress: () => void;
@@ -78,6 +80,7 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 // Define all possible steps in order
 const allSteps: OnboardingStep[] = [
   "welcome",
+  "personal-info",
   "team-selection",
   "team-workspace",
   "team-invite",
@@ -96,14 +99,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const themeContext = useTheme();
   const { setLanguage: setGlobalLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
-  
-  // We're no longer using theme functionality - only light mode
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
   const [workspaceName, setWorkspaceName] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [theme, setTheme] = useState<ThemeType>("light"); // Default to light theme
   const [language, setLanguage] = useState<LanguageType>("english");
   const [postFormat, setPostFormat] = useState<PostFormat>(null);
   const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
@@ -122,6 +122,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [website, setWebsite] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load saved onboarding progress when user authenticates
@@ -150,16 +152,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             if (data.workspaceType) setWorkspaceType(data.workspaceType);
             if (data.workspaceName) setWorkspaceName(data.workspaceName);
             if (data.teamMembers) setTeamMembers(data.teamMembers);
-            
-            // Always use light theme
-            setTheme("light");
-            
             if (data.language) setLanguage(data.language);
             if (data.postFormat) setPostFormat(data.postFormat);
             if (data.postFrequency) setPostFrequency(data.postFrequency);
             if (data.firstName) setFirstName(data.firstName);
             if (data.lastName) setLastName(data.lastName);
             if (data.email) setEmail(data.email);
+            if (data.website) setWebsite(data.website);
+            if (data.mobileNumber) setMobileNumber(data.mobileNumber);
           }
           
           setIsInitialized(true);
@@ -193,14 +193,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         workspaceType,
         workspaceName,
         teamMembers,
-        // Always save as light theme
-        theme: "light",
         language,
         postFormat,
         postFrequency,
         firstName,
         lastName,
-        email
+        email,
+        website,
+        mobileNumber
       };
       
       // Save to backend
@@ -248,6 +248,29 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setCurrentStep(nextStep);
       navigate(`/onboarding/${nextStep}`);
       saveProgress(); // Save progress when moving to next step
+    } else {
+      // At the end of onboarding, mark as completed and go to dashboard
+      localStorage.setItem('onboardingCompleted', 'true');
+      
+      // Try to complete onboarding in database
+      const completeOnboarding = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+          
+          await axios.patch(`${baseApiUrl}/users/me`, { onboardingCompleted: true }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+        } catch (error) {
+          console.error("Error marking onboarding as completed:", error);
+        }
+      };
+      
+      completeOnboarding();
+      navigate('/dashboard');
     }
   };
 
@@ -263,20 +286,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Save progress when current step changes
-  useEffect(() => {
-    if (isInitialized) {
-      saveProgress();
-    }
-  }, [currentStep, isInitialized]);
-
-  // No need for theme toggle effects since we're using light mode only
-  useEffect(() => {
-    // We always use light theme - no toggling needed
-    document.documentElement.classList.remove('dark');
-    document.documentElement.classList.add('light');
-  }, []);
-
   // Update global language when onboarding language changes
   useEffect(() => {
     if (language) {
@@ -291,7 +300,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         workspaceType,
         workspaceName,
         teamMembers,
-        theme,
         language,
         postFormat,
         postFrequency,
@@ -299,11 +307,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         firstName,
         lastName,
         email,
+        website,
+        mobileNumber,
         setCurrentStep,
         setWorkspaceType,
         setWorkspaceName,
         setTeamMembers,
-        setTheme,
         setLanguage,
         setPostFormat,
         setPostFrequency,
@@ -311,6 +320,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         setFirstName,
         setLastName,
         setEmail,
+        setWebsite,
+        setMobileNumber,
         nextStep,
         prevStep,
         saveProgress,
@@ -326,7 +337,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 export const useOnboarding = () => {
   const context = useContext(OnboardingContext);
   if (context === undefined) {
-    throw new Error("useOnboarding must be used within an OnboardingProvider");
+    throw new Error("useOnboarding must be used within a OnboardingProvider");
   }
   return context;
 };

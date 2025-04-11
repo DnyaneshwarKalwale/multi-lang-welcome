@@ -1,11 +1,14 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   Mic, Upload, Calendar, BarChart3, Linkedin, 
   Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
   Maximize2, MessageSquare, ThumbsUp, Share2,
-  LogOut, User, Settings, ChevronDown, Users, Bell
+  LogOut, User, Settings, ChevronDown, Users, Bell,
+  Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
+  Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
+  Layers
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -18,8 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SekcionIconRounded, SekcionLogotype } from "@/components/ScripeIcon";
-import { useNavigate } from "react-router-dom";
+import { LovableLogo } from "@/components/LovableLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CarouselPreview } from "@/components/CarouselPreview";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -92,12 +95,24 @@ interface LinkedInAnalytics {
   };
 }
 
-const DashboardPageContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("create");
+// Navigation menu items
+interface NavItem {
+  title: string;
+  icon: LucideIcon;
+  href: string;
+  active?: boolean;
+  badge?: {
+    text: string | number;
+    variant: "default" | "outline" | "primary" | "secondary";
+  }
+}
+
+const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
-  
   const { user, logout, token } = useAuth();
+  const [activePage, setActivePage] = useState('dashboard');
   
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
@@ -132,7 +147,31 @@ const DashboardPageContent: React.FC = () => {
     }
   ];
   
-  const [scheduledTweets, setScheduledTweets] = useState(fallbackScheduledTweets);
+  const [scheduledPosts, setScheduledPosts] = useState(fallbackScheduledPosts);
+
+  // Carousel slides for preview
+  const carouselSlides = [
+    {
+      id: 'slide-1',
+      content: '5 ways to improve your LinkedIn engagement'
+    },
+    {
+      id: 'slide-2',
+      content: '1. Post consistently at the right time'
+    },
+    {
+      id: 'slide-3',
+      content: '2. Use relevant hashtags strategically'
+    },
+    {
+      id: 'slide-4',
+      content: '3. Engage with your network regularly'
+    },
+    {
+      id: 'slide-5',
+      content: '4. Share valuable and actionable content'
+    }
+  ];
 
   // Load LinkedIn data from extension if available
   useEffect(() => {
@@ -231,464 +270,588 @@ const DashboardPageContent: React.FC = () => {
       // Handle profile response
       if (profileRes.status === 'fulfilled') {
         setLinkedInProfile(profileRes.value.data.data);
+        setLoading(prev => ({ ...prev, profile: false }));
       } else {
         console.error('Failed to fetch LinkedIn profile:', profileRes.reason);
+        setLoading(prev => ({ ...prev, profile: false }));
       }
       
       // Handle posts response
       if (postsRes.status === 'fulfilled') {
         setRecentPosts(postsRes.value.data.data);
+        setLoading(prev => ({ ...prev, posts: false }));
       } else {
         console.error('Failed to fetch posts:', postsRes.reason);
+        setLoading(prev => ({ ...prev, posts: false }));
       }
       
       // Handle analytics response
       if (analyticsRes.status === 'fulfilled') {
         setAnalyticsData(analyticsRes.value.data.data);
+        setLoading(prev => ({ ...prev, analytics: false }));
       } else {
         console.error('Failed to fetch analytics:', analyticsRes.reason);
+        setLoading(prev => ({ ...prev, analytics: false }));
       }
     } catch (error) {
       console.error('Error fetching LinkedIn data:', error);
-      toast.error('Failed to fetch LinkedIn data');
-    } finally {
-      // Clear loading states
       setLoading({
         profile: false,
         posts: false,
         analytics: false
       });
+      
+      // Show error toast
+      toast.error('Failed to load LinkedIn data');
     }
   };
 
   const getUserInitials = () => {
     if (!user) return 'U';
-    if (user.firstName && user.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
-    }
-    return user.email?.[0]?.toUpperCase() || 'U';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   const getUserFullName = () => {
     if (!user) return 'User';
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
-    }
-    return user.email?.split('@')[0] || 'User';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    return `${firstName} ${lastName}`.trim();
   };
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate('/');
   };
 
+  // Navigation sidebar items
+  const navigationItems: NavItem[] = [
+    {
+      title: "Dashboard",
+      icon: Home,
+      href: "/dashboard",
+      active: activePage === 'dashboard'
+    },
+    {
+      title: "Create Post",
+      icon: PlusCircle,
+      href: "/create-post",
+      active: activePage === 'create-post'
+    },
+    {
+      title: "Post Library",
+      icon: BookOpen,
+      href: "/post-library",
+      active: activePage === 'post-library',
+      badge: {
+        text: 3,
+        variant: "primary"
+      }
+    },
+    {
+      title: "Analytics",
+      icon: BarChart3,
+      href: "/analytics",
+      active: activePage === 'analytics'
+    },
+    {
+      title: "Inspiration",
+      icon: Lightbulb,
+      href: "/inspiration",
+      active: activePage === 'inspiration'
+    },
+    {
+      title: "Settings",
+      icon: Settings,
+      href: "/settings",
+      active: activePage === 'settings'
+    }
+  ];
+
+  // Render nav item
+  const NavItem = ({ item }: { item: NavItem }) => (
+    <Link
+      to={item.href}
+      className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors group ${
+        item.active 
+          ? 'bg-primary-50 text-primary' 
+          : 'text-neutral-dark hover:bg-primary-50/50 hover:text-primary'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <item.icon size={20} className={`transition-colors ${item.active ? 'text-primary' : 'text-neutral-medium group-hover:text-primary'}`} />
+        <span className="font-medium">{item.title}</span>
+      </div>
+      
+      {item.badge && (
+        <Badge 
+          variant={item.badge.variant === 'primary' ? 'default' : 'outline'} 
+          className={`${
+            item.badge.variant === 'primary' 
+              ? 'bg-primary text-white' 
+              : 'bg-primary-50 text-primary border-primary-100'
+          }`}
+        >
+          {item.badge.text}
+        </Badge>
+      )}
+    </Link>
+  );
+
+  // Add a toggleMenu function to the component
+  const toggleMenu = () => {
+    const mobileDrawer = document.getElementById('mobile-menu-drawer');
+    if (mobileDrawer) {
+      mobileDrawer.classList.toggle('opacity-100');
+      mobileDrawer.classList.toggle('pointer-events-auto');
+      const sidebar = mobileDrawer.querySelector('div');
+      if (sidebar) {
+        sidebar.classList.toggle('translate-x-0');
+      }
+    }
+  };
+
+  // Set active page based on current URL
+  useEffect(() => {
+    const path = location.pathname;
+    
+    // Convert path to page name
+    if (path === '/dashboard') {
+      setActivePage('dashboard');
+    } else if (path === '/create-post') {
+      setActivePage('create-post');
+    } else if (path === '/post-library') {
+      setActivePage('post-library');
+    } else if (path === '/analytics') {
+      setActivePage('analytics');
+    } else if (path === '/inspiration') {
+      setActivePage('inspiration');
+    } else if (path === '/settings') {
+      setActivePage('settings');
+    }
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8">
-        <div className="space-y-8">
-        <Tabs defaultValue="create" className="mb-8">
-          <TabsList className="grid grid-cols-4 mb-8">
-            <TabsTrigger value="create" onClick={() => setActiveTab("create")} className="data-[state=active]:bg-primary-50">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              {t('create')}
-            </TabsTrigger>
-            <TabsTrigger value="schedule" onClick={() => setActiveTab("schedule")} className="data-[state=active]:bg-primary-50">
-              <Calendar className="h-4 w-4 mr-2" />
-              {t('schedule')}
-            </TabsTrigger>
-            <TabsTrigger value="analytics" onClick={() => setActiveTab("analytics")} className="data-[state=active]:bg-primary-50">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              {t('analytics')}
-            </TabsTrigger>
-            <TabsTrigger value="posts" onClick={() => setActiveTab("posts")} className="data-[state=active]:bg-gray-50">
-              <Linkedin className="h-4 w-4 mr-2" />
-              {t('myPosts')}
-            </TabsTrigger>
-          </TabsList>
+    <div className="flex min-h-screen bg-neutral-lightest">
+      {/* Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 border-r border-neutral-light bg-white">
+        <div className="p-6">
+          <LovableLogo variant="full" size="md" />
+        </div>
+        
+        <ScrollArea className="flex-1 px-3">
+          <nav className="space-y-1 py-2">
+            {navigationItems.map((item, i) => (
+              <NavItem key={i} item={item} />
+            ))}
+          </nav>
+          
+          <div className="mt-6 pt-6 border-t border-neutral-light">
+            <div className="px-3 mb-2 text-xs font-medium text-neutral-medium">
+              ACCOUNT
+            </div>
+            <Link
+              to="/settings"
+              className="flex items-center px-3 py-2 rounded-md text-neutral-dark hover:bg-primary-50/50 hover:text-primary transition-colors"
+            >
+              <UserCircle size={20} className="text-neutral-medium mr-3" />
+              <span className="font-medium">Your Profile</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-3 py-2 rounded-md text-neutral-dark hover:bg-primary-50/50 hover:text-primary transition-colors"
+            >
+              <LogOut size={20} className="text-neutral-medium mr-3" />
+              <span className="font-medium">Sign Out</span>
+            </button>
+          </div>
+        </ScrollArea>
+        
+        {/* Profile section */}
+        <div className="p-4 border-t border-neutral-light bg-neutral-lightest mt-auto">
+          <div className="flex items-center">
+            <Avatar className="h-10 w-10 mr-3 border">
+              <AvatarImage src={user?.profilePicture || ''} />
+              <AvatarFallback className="bg-primary-50 text-primary">
+                {getUserInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-neutral-dark truncate">
+                {getUserFullName()}
+              </p>
+              <p className="text-xs text-neutral-medium truncate">
+                {user?.email || ''}
+              </p>
+            </div>
+            <Button variant="ghost" size="icon" className="ml-1 text-neutral-medium hover:text-primary">
+              <Settings size={18} />
+            </Button>
+          </div>
+        </div>
+      </aside>
+      
+      {/* Main content */}
+      <main className="flex-1 overflow-auto">
+        {/* Mobile header - only visible on smaller screens */}
+        <div className="md:hidden flex items-center justify-between border-b border-neutral-light p-4 bg-white sticky top-0 z-10">
+          <LovableLogo variant="full" size="sm" />
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-neutral-medium"
+              data-menu-toggle
+              onClick={toggleMenu}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </Button>
+            
+            <Avatar className="h-8 w-8 border">
+              <AvatarImage src={user?.profilePicture || ''} />
+              <AvatarFallback className="bg-primary-50 text-primary">
+                {getUserInitials()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </div>
+        
+        {/* Mobile sidebar drawer - hidden by default */}
+        <div 
+          id="mobile-menu-drawer" 
+          className="fixed inset-0 bg-black/50 z-50 md:hidden transition-opacity duration-200 opacity-0 pointer-events-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              document.getElementById('mobile-menu-drawer')?.classList.remove('translate-x-0', 'opacity-100', 'pointer-events-auto');
+            }
+          }}
+        >
+          <div 
+            className="w-3/4 max-w-xs bg-white h-full overflow-auto transition-transform duration-300 -translate-x-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-neutral-light">
+              <LovableLogo variant="full" size="md" />
+            </div>
+            
+            <nav className="p-2">
+              {navigationItems.map((item, i) => (
+                <Link
+                  key={i}
+                  to={item.href}
+                  className={`flex items-center justify-between p-3 rounded-md mb-1 transition-colors ${
+                    item.active 
+                      ? 'bg-primary-50 text-primary' 
+                      : 'text-neutral-dark hover:bg-neutral-lightest'
+                  }`}
+                  onClick={toggleMenu}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon size={20} className={item.active ? 'text-primary' : 'text-neutral-medium'} />
+                    <span className="font-medium">{item.title}</span>
+                  </div>
+                  
+                  {item.badge && (
+                    <Badge 
+                      variant={item.badge.variant === 'primary' ? 'default' : 'outline'} 
+                      className={`${
+                        item.badge.variant === 'primary' 
+                          ? 'bg-primary text-white' 
+                          : 'bg-primary-50 text-primary border-primary-100'
+                      }`}
+                    >
+                      {item.badge.text}
+                    </Badge>
+                  )}
+                </Link>
+              ))}
+            </nav>
+            
+            <div className="mt-4 pt-4 border-t border-neutral-light p-2">
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full p-3 rounded-md text-neutral-dark hover:bg-neutral-lightest"
+              >
+                <LogOut size={20} className="text-neutral-medium mr-3" />
+                <span className="font-medium">Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
-          <TabsContent value="create" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Zap className="h-5 w-5 mr-2 text-amber-500" />
-                      {t('createNewPost')}
-                    </CardTitle>
-                    <CardDescription>
-                      Create engaging LinkedIn content to boost your professional presence
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-3 mb-4">
-                      <Button variant="outline" className="gap-2 rounded-full">
-                        <Edit3 className="h-4 w-4 text-purple-500" />
-                        Text Post
-                      </Button>
-                      <Button variant="outline" className="gap-2 rounded-full">
-                        <Upload className="h-4 w-4 text-blue-500" />
-                        Document
-                      </Button>
-                      <Button variant="outline" className="gap-2 rounded-full">
-                        <Mic className="h-4 w-4 text-red-500" />
-                        Audio to Text
-                      </Button>
-                    </div>
-
-                    <Textarea 
-                      placeholder="What would you like to share with your network?"
-                      className="min-h-[150px] text-base resize-none"
-                    />
-
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="gap-1 py-1 border-blue-200 bg-blue-50 text-blue-700">
-                          <Linkedin className="h-3 w-3" />
-                          LinkedIn
-                        </Badge>
-                        <span>3000 characters</span>
-                      </div>
-                      <div className="flex gap-3">
-                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {t('schedule')}
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
-                          <Maximize2 className="h-3 w-3" />
-                          Carousel
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between border-t pt-4">
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <Sparkles className="h-4 w-4 text-amber-500" />
-                      {t('generateWithAI')}
-                    </Button>
-                    <Button size="sm" className="px-4">Post to LinkedIn</Button>
-                  </CardFooter>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Eye className="h-5 w-5 mr-2 text-blue-500" />
-                      {t('preview')}
-                    </CardTitle>
-                    <CardDescription>
-                      How your post will look on LinkedIn
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border rounded-xl p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <Avatar>
-                          <AvatarImage src={user?.profilePicture} />
-                          <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm">{getUserFullName()}</span>
-                            <span className="text-gray-500 text-sm">• 1st</span>
-                          </div>
-                          <p className="text-xs text-gray-500 mb-2">Product Marketing Manager • SaaS Technology</p>
-                          <p className="text-sm mt-1">
-                            Just launched our AI LinkedIn Assistant! Generate posts, schedule content, and analyze performance - all in one platform. Try it today and see how it can elevate your LinkedIn presence. #LinkedInTips #ContentCreation #ProfessionalGrowth
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-6 ml-12 text-gray-500 text-sm">
-                        <div className="flex items-center gap-1">
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          <span>42</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          <span>8</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Share2 className="h-3.5 w-3.5" />
-                          <span>5</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+        <div className="container mx-auto p-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Welcome section */}
+            <section className="bg-gradient-to-r from-primary-50 to-primary-100/30 rounded-xl p-6 mb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-neutral-black">
+                    Welcome to Lovable, {user?.firstName || 'User'}! 👋
+                  </h1>
+                  <p className="mt-2 text-neutral-dark max-w-lg">
+                    Your LinkedIn content creation platform. Create impactful content, analyze performance, and grow your professional presence.
+                  </p>
+                </div>
+                
+                <div className="mt-4 md:mt-0">
+                  <Button 
+                    onClick={() => navigate('/create-post')}
+                    className="bg-primary hover:bg-primary-600 text-white"
+                  >
+                    <PlusCircle size={18} className="mr-2" />
+                    Create New Post
+                  </Button>
+                </div>
               </div>
+            </section>
+            
+            {/* Quick stats */}
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-neutral-medium">Impressions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {loading.analytics ? (
+                      <div className="h-8 w-24 bg-neutral-light/30 animate-pulse rounded"></div>
+                    ) : (
+                      analyticsData?.summary.totalImpressions.toLocaleString() || '0'
+                    )}
+                  </div>
+                  <p className="text-xs text-neutral-medium mt-1">Last 30 days</p>
+                </CardContent>
+              </Card>
               
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Clock className="h-5 w-5 mr-2 text-violet-500" />
-                      Upcoming Posts
-                    </CardTitle>
-                    <CardDescription>
-                      Your scheduled LinkedIn content
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[300px] pr-4">
-                      <div className="space-y-4">
-                        {scheduledPosts.map((post) => (
-                          <div key={post.id} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
-                            <p className="text-sm line-clamp-2 mb-2">{post.content}</p>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-teal-600 font-medium">
-                                {post.scheduledTime}
-                              </span>
-                              {post.isCarousel && (
-                                <Badge variant="outline" className="h-5 px-2 text-xs">
-                                  Carousel ({post.slideCount})
-                                </Badge>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-neutral-medium">Engagement Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {loading.analytics ? (
+                      <div className="h-8 w-24 bg-neutral-light/30 animate-pulse rounded"></div>
+                    ) : (
+                      `${analyticsData?.summary.averageEngagement.toFixed(1) || '0'}%`
+                    )}
+                  </div>
+                  <p className="text-xs text-neutral-medium mt-1">Avg per post</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-neutral-medium">Followers</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {loading.profile ? (
+                      <div className="h-8 w-24 bg-neutral-light/30 animate-pulse rounded"></div>
+                    ) : (
+                      linkedInProfile?.followers.toLocaleString() || '0'
+                    )}
+                  </div>
+                  <p className="text-xs text-neutral-medium mt-1">
+                    {analyticsData?.followers.increase ? `+${analyticsData.followers.increase}%` : ''} Last 30 days
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-neutral-medium">Next Post</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-bold text-primary">
+                    {scheduledPosts[0]?.scheduledTime || 'No scheduled posts'}
+                  </div>
+                  <p className="text-xs text-neutral-medium mt-1">
+                    {scheduledPosts.length} posts in queue
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
+            
+            {/* Content sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Create post section */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Quick Post</CardTitle>
+                  <CardDescription>
+                    Share your thoughts on LinkedIn
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea 
+                    placeholder="What do you want to share with your network?"
+                    className="min-h-[120px] mb-4"
+                  />
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Upload size={16} />
+                      Media
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Mic size={16} />
+                      Audio
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <FileText size={16} />
+                      Document
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Sparkles size={16} />
+                      AI Help
+                    </Button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.profilePicture || ''} />
+                        <AvatarFallback className="bg-primary-50 text-primary">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">
+                        {getUserFullName()}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline">Schedule</Button>
+                      <Button>Post Now</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Scheduled posts */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upcoming Posts</CardTitle>
+                  <CardDescription>
+                    View your scheduled content
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[250px]">
+                    <div className="space-y-4">
+                      {scheduledPosts.map((post) => (
+                        <div key={post.id} className="pb-4 border-b border-neutral-light last:border-0">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary">
+                              {post.isCarousel ? (
+                                <Layers size={20} />
+                              ) : (
+                                <FileText size={20} />
                               )}
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                  <CardFooter className="border-t pt-4">
-                    <Button variant="ghost" size="sm" className="w-full">{t('viewCalendar')}</Button>
-                  </CardFooter>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
-                      AI Suggestions
-                    </CardTitle>
-                    <CardDescription>
-                      Trending topics for professional content
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2.5">
-                    {["#CareerDevelopment", "Remote Work Best Practices", "Industry Insights", "Leadership Tips", "Professional Growth"].map((topic, i) => (
-                      <div key={i} className="flex items-center border rounded-lg p-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
-                        <span className="text-sm">{topic}</span>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="schedule">
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Calendar</CardTitle>
-                <CardDescription>
-                  Manage your LinkedIn content schedule
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[500px] flex items-center justify-center border border-dashed rounded-lg">
-                  <p className="text-gray-500">Calendar and scheduling interface would be implemented here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Impressions</CardTitle>
-                  <CardDescription>
-                    Total views on your LinkedIn content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px] mt-2 relative">
-                    <div className="absolute inset-0 flex items-end">
-                      {analyticsData?.impressions.data.map((value, index) => (
-                        <div 
-                          key={index} 
-                          className="flex-1 mx-0.5"
-                          style={{ height: `${(value / Math.max(...analyticsData.impressions.data)) * 100}%` }}
-                        >
-                          <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-blue-500/40 to-cyan-400/40"
-                            style={{ opacity: 0.5 + ((index + 1) / analyticsData.impressions.data.length) * 0.5 }}
-                          ></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
-                    {analyticsData?.impressions.labels.map((label, index) => (
-                      <span key={index}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                    <p className="text-xs text-gray-500">{analyticsData?.impressions.timeframe}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
-                        ↑ {analyticsData?.impressions.increase}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Engagement Rate</CardTitle>
-                  <CardDescription>
-                    Interactions with your LinkedIn content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px] mt-2 relative">
-                    <div className="absolute inset-0 flex items-end">
-                      {analyticsData?.engagement.data.map((value, index) => (
-                        <div 
-                          key={index} 
-                          className="flex-1 mx-0.5"
-                          style={{ height: `${(value / Math.max(...analyticsData.engagement.data)) * 100}%` }}
-                        >
-                          <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-violet-500/40 to-purple-400/40"
-                            style={{ opacity: 0.5 + ((index + 1) / analyticsData.engagement.data.length) * 0.5 }}
-                          ></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
-                    {analyticsData?.engagement.labels.map((label, index) => (
-                      <span key={index}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                    <p className="text-xs text-gray-500">{analyticsData?.engagement.timeframe}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
-                        ↑ {analyticsData?.engagement.increase}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Connections Growth</CardTitle>
-                  <CardDescription>
-                    New connections and followers
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px] mt-2 relative">
-                    <div className="absolute inset-0 flex items-end">
-                      {analyticsData?.followers.data.map((value, index) => (
-                        <div 
-                          key={index}
-                          className="flex-1 mx-0.5"
-                          style={{ height: `${(value / Math.max(...analyticsData.followers.data)) * 100}%` }}
-                        >
-                          <div 
-                            className="w-full h-full rounded-t-sm bg-gradient-to-t from-teal-500/40 to-emerald-400/40"
-                            style={{ opacity: 0.5 + ((index + 1) / analyticsData.followers.data.length) * 0.5 }}
-                          ></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-500">
-                    {analyticsData?.followers.labels.map((label, index) => (
-                      <span key={index}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex justify-between items-center">
-                    <p className="text-xs text-gray-500">{analyticsData?.followers.timeframe}</p>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
-                        ↑ {analyticsData?.followers.increase}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="posts">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                {recentPosts.map((post) => (
-                  <Card key={post.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <Avatar>
-                          <AvatarImage src={user?.profilePicture} />
-                          <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{getUserFullName()}</span>
-                              <span className="text-gray-500 text-sm">• 1st</span>
-                              <span className="text-gray-500 text-sm">•</span>
-                              <span className="text-gray-500 text-sm">{post.created_at}</span>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <p className="text-sm mb-4">{post.text}</p>
-                          <div className="flex gap-6 text-gray-500 text-sm">
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-4 w-4" />
-                              <span>{post.public_metrics.comments}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Share2 className="h-4 w-4" />
-                              <span>{post.public_metrics.shares}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <ThumbsUp className="h-4 w-4" />
-                              <span>{post.public_metrics.likes}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="h-4 w-4" />
-                              <span>{post.public_metrics.impressions}</span>
+                            <div className="flex-1">
+                              <p className="text-sm line-clamp-2">
+                                {post.content}
+                              </p>
+                              <div className="flex items-center mt-2">
+                                <Clock size={14} className="text-neutral-medium mr-1" />
+                                <span className="text-xs text-neutral-medium">
+                                  {post.scheduledTime}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+                <CardFooter className="border-t pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/post-library')}
+                  >
+                    View All Posts
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
-          </TabsContent>
-        </Tabs>
+            
+            {/* Featured section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Analytics preview */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Performance Overview</CardTitle>
+                  <CardDescription>
+                    Your LinkedIn engagement at a glance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[200px] flex items-center justify-center bg-neutral-lightest rounded-md text-neutral-medium">
+                    Analytics Chart Preview
+                  </div>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">87%</div>
+                      <p className="text-xs text-neutral-medium">Post Reach</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">12.4%</div>
+                      <p className="text-xs text-neutral-medium">Engagement</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">436</div>
+                      <p className="text-xs text-neutral-medium">Profile Views</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">18</div>
+                      <p className="text-xs text-neutral-medium">New Followers</p>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="border-t pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/analytics')}
+                  >
+                    View Full Analytics
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              {/* Carousel preview */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Carousel Preview</CardTitle>
+                  <CardDescription>
+                    Your latest carousel post
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CarouselPreview 
+                    slides={carouselSlides}
+                    variant="basic"
+                  />
+                </CardContent>
+                <CardFooter className="border-t pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/create-post')}
+                  >
+                    Create Carousel
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
-};
-
-const DashboardPage: React.FC = () => {
-  try {
-    const { user } = useAuth();
-    const { t } = useLanguage();
-    
-    return <DashboardPageContent />;
-  } catch (error) {
-    console.error("Error rendering DashboardPage:", error);
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 };
 
 export default DashboardPage;

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WelcomePage from "@/pages/WelcomePage";
+import PersonalInfoPage from "@/pages/PersonalInfoPage";
 import TeamSelectionPage from "@/pages/TeamSelectionPage";
 import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
 import TeamInvitePage from "@/pages/TeamInvitePage";
@@ -72,6 +73,7 @@ export function OnboardingRouter() {
       
       <Routes>
         <Route path="welcome" element={<WelcomePage />} />
+        <Route path="personal-info" element={<PersonalInfoPage />} />
         <Route path="team-selection" element={<TeamSelectionPage />} />
         <Route path="team-workspace" element={<TeamWorkspacePage />} />
         <Route path="team-invite" element={<TeamInvitePage />} />
@@ -91,6 +93,7 @@ export function OnboardingRouter() {
 function getProgressPercentage(currentStep: string, workspaceType: string | null): number {
   const allSteps = [
     "welcome",
+    "personal-info",
     "team-selection",
     "team-workspace",
     "team-invite",

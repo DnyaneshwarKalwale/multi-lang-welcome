@@ -1,24 +1,32 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type ThemeContextType = {
   theme: 'light';
+  isThemeLoaded?: boolean;
 };
+
+// Apply light theme function
+export function applyTheme() {
+  document.documentElement.classList.remove('dark');
+  document.documentElement.classList.add('light');
+  localStorage.setItem("theme", "light");
+}
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // We only support light theme now
+  // Always use light theme
   const [theme] = useState<'light'>('light');
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
 
   // Apply light theme on mount
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    document.documentElement.classList.add('light');
+    applyTheme();
+    setIsThemeLoaded(true);
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme }}>
+    <ThemeContext.Provider value={{ theme, isThemeLoaded }}>
       {children}
     </ThemeContext.Provider>
   );
