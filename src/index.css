@@ -17,57 +17,26 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
     
-    --primary: 252 59% 54%;
+    --primary: 213 100% 44%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 196 80% 45%;
+    --secondary: 252 100% 68%;
     --secondary-foreground: 0 0% 100%;
     
     --muted: 210 20% 94%;
     --muted-foreground: 215 16% 46%;
     
-    --accent: 252 59% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 152 81% 39%;
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
     
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 252 59% 54%;
+    --ring: 213 100% 44%;
     
     --radius: 0.6rem;
-  }
- 
-  .dark {
-    /* Dark theme colors */
-    --background: 222 47% 5%;
-    --foreground: 210 40% 98%;
-    
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 252 59% 54%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 196 80% 45%;
-    --secondary-foreground: 0 0% 100%;
-    
-    --muted: 222 47% 15%;
-    --muted-foreground: 210 40% 80%;
-    
-    --accent: 252 59% 20%;
-    --accent-foreground: 210 40% 98%;
-    
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 210 40% 98%;
-    
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 252 59% 65%;
   }
 }
  
@@ -90,15 +59,15 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/90 dark:bg-gray-800/80 backdrop-blur-md border border-white/20 dark:border-gray-700/40 shadow-lg transition-all duration-300;
+    @apply bg-white/90 backdrop-blur-md border border-white/20 shadow-lg transition-all duration-300;
   }
   
   .nav-link {
-    @apply px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:text-primary-600 dark:hover:text-primary-400;
+    @apply px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 hover:bg-primary-50 hover:text-primary-600;
   }
   
   .nav-link.active {
-    @apply bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400;
+    @apply bg-primary-50 text-primary-600;
   }
   
   .form-container {
@@ -116,7 +85,7 @@
   }
   
   .primary-button {
-    @apply custom-button bg-gradient-to-r from-primary-500 to-violet-500 text-white hover:shadow-md;
+    @apply custom-button bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:shadow-md;
   }
   
   .secondary-button {
@@ -124,7 +93,7 @@
   }
   
   .outline-button {
-    @apply custom-button bg-transparent border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5;
+    @apply custom-button bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50;
   }
   
   .card-container {
@@ -140,7 +109,7 @@
   }
   
   .onboarding-header {
-    @apply px-6 py-6 bg-gradient-to-br from-primary-500/10 to-violet-500/10 dark:from-primary-500/20 dark:to-violet-500/20;
+    @apply px-6 py-6 bg-gradient-to-br from-primary-500/10 to-secondary-500/10;
   }
   
   .onboarding-content {
@@ -148,7 +117,7 @@
   }
   
   .onboarding-footer {
-    @apply px-6 py-4 bg-gray-50/80 dark:bg-gray-800/30 flex items-center justify-between backdrop-blur-sm;
+    @apply px-6 py-4 bg-gray-50/80 flex items-center justify-between backdrop-blur-sm;
   }
   
   .novus-card {
@@ -156,23 +125,23 @@
   }
   
   .novus-input {
-    @apply bg-white/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 h-12 pl-4 
-           focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 
+    @apply bg-white/70 border-gray-200 h-12 pl-4 
+           focus:border-primary-500 focus:ring-primary-500
            transition-all rounded-md shadow-sm;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-500 to-violet-500 dark:from-primary-400 dark:to-violet-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent;
   }
   
   .text-gradient-blue {
-    @apply bg-gradient-to-r from-secondary-500 to-blue-500 dark:from-secondary-400 dark:to-blue-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-secondary-500 to-blue-500 bg-clip-text text-transparent;
   }
   
   .text-gradient-alt {
-    @apply bg-gradient-to-r from-violet-500 to-primary-400 dark:from-violet-400 dark:to-primary-300 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-secondary-500 to-primary-400 bg-clip-text text-transparent;
   }
   
   .animate-slide-up {
@@ -212,15 +181,11 @@
   }
   
   .frosted-glass {
-    @apply backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-800/30;
+    @apply backdrop-blur-md bg-white/70 border border-white/20;
   }
   
   .subtle-shadow {
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  }
-  
-  .dark .subtle-shadow {
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -298,21 +263,21 @@
 
 /* Improved Form elements */
 input::placeholder {
-  @apply text-gray-400 dark:text-gray-500 opacity-90;
+  @apply text-gray-400 opacity-90;
 }
 
 input, textarea, select {
-  @apply text-gray-900 dark:text-white transition-colors focus-ring;
+  @apply text-gray-900 transition-colors focus-ring;
 }
 
 /* Focus styles */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 dark:focus:border-primary-400;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500;
 }
 
 /* Subtle divider */
 .subtle-divider {
-  @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent;
+  @apply h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent;
 }
 
 /* Fix for router context initial loading */

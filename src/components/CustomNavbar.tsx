@@ -2,7 +2,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import ThemeToggle from '@/components/ThemeToggle';
 import MobileMenu from '@/components/MobileMenu';
 import { DekcionIcon } from '@/components/ScripeIcon';
 import { LogOut, Sparkles, Stars, MessageCircle, Bell, Zap } from 'lucide-react';
@@ -28,7 +27,7 @@ const CustomNavbar = () => {
 
   return (
     <motion.header 
-      className="sticky top-0 z-40 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-primary-100/30 dark:border-gray-800/50 transition-colors duration-300"
+      className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-lg border-b border-primary-100/30 transition-colors duration-300"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -37,7 +36,7 @@ const CustomNavbar = () => {
         {/* Floating icons decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
-            className="absolute top-1 left-[20%] text-primary-400/20 dark:text-primary-400/10"
+            className="absolute top-1 left-[20%] text-primary-400/20"
             animate={{ 
               y: [0, -10, 0],
               rotate: [0, 5, 0]
@@ -51,7 +50,7 @@ const CustomNavbar = () => {
             <Sparkles size={16} />
           </motion.div>
           <motion.div 
-            className="absolute bottom-1 left-[60%] text-violet-400/20 dark:text-violet-400/10"
+            className="absolute bottom-1 left-[60%] text-violet-400/20"
             animate={{ 
               y: [0, 8, 0],
               rotate: [0, -5, 0]
@@ -66,7 +65,7 @@ const CustomNavbar = () => {
             <Stars size={14} />
           </motion.div>
           <motion.div 
-            className="absolute top-3 right-[30%] text-cyan-400/10 dark:text-cyan-400/5"
+            className="absolute top-3 right-[30%] text-cyan-400/10"
             animate={{ 
               y: [0, -6, 0],
               scale: [1, 1.1, 1]
@@ -81,7 +80,7 @@ const CustomNavbar = () => {
             <MessageCircle size={18} />
           </motion.div>
           <motion.div 
-            className="absolute bottom-2 right-[15%] text-amber-400/15 dark:text-amber-400/10"
+            className="absolute bottom-2 right-[15%] text-amber-400/15"
             animate={{ 
               y: [0, 5, 0],
               rotate: [0, 10, 0]
@@ -99,8 +98,8 @@ const CustomNavbar = () => {
 
         <div className="flex items-center gap-2">
           <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2 transition-transform hover:scale-[1.02]">
-            <DekcionIcon className="h-8 w-8 text-primary-500 dark:text-primary-400" />
-            <span className="text-xl font-bold text-gray-900 dark:text-white">Dekcion</span>
+            <DekcionIcon className="h-8 w-8 text-primary-500" />
+            <span className="text-xl font-bold text-gray-900">Dekcion</span>
           </Link>
           
           {isAuthenticated && (
@@ -111,8 +110,8 @@ const CustomNavbar = () => {
                   to={item.path}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 
                     ${isActive(item.path) 
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' 
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-primary-600 dark:hover:text-primary-400'
+                      ? 'bg-primary-50 text-primary-600' 
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
                     }`}
                 >
                   {item.label}
@@ -123,8 +122,6 @@ const CustomNavbar = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <ThemeToggle variant="minimal" />
-          
           {isAuthenticated && <TeamInvitationNotification />}
           
           {isAuthenticated ? (
@@ -137,7 +134,7 @@ const CustomNavbar = () => {
                 </motion.div>
               </motion.div>
               
-              <span className="text-sm font-medium hidden xl:inline text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium hidden xl:inline text-gray-800">
                 {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'User'}
               </span>
               
@@ -145,16 +142,16 @@ const CustomNavbar = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={logout}
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 group"
+                className="text-gray-600 hover:text-gray-900 group"
               >
-                <LogOut className="h-4 w-4 mr-2 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors" />
+                <LogOut className="h-4 w-4 mr-2 group-hover:text-primary-500 transition-colors" />
                 Sign out
               </Button>
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-4">
               <Link to="/">
-                <Button variant="outline" size="sm" className="border-primary-200 dark:border-gray-700 text-primary-700 dark:text-primary-400 hover:border-primary-500 dark:hover:border-primary-600">Sign in</Button>
+                <Button variant="outline" size="sm" className="border-primary-200 text-primary-700 hover:border-primary-500">Sign in</Button>
               </Link>
               <Link to="/registration">
                 <Button size="sm" className="bg-gradient-to-r from-primary-500 to-violet-500 hover:from-primary-600 hover:to-violet-600 text-white shadow-sm">Sign up</Button>

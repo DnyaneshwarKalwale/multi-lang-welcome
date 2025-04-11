@@ -3,7 +3,6 @@ import { fontFamily } from "tailwindcss/defaultTheme";
 import animatePlugin from "tailwindcss-animate";
 
 export default {
-  darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -26,92 +25,106 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        
+        // Primary Blues
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-          50: "#f5f3ff",
-          100: "#ede9fe",
-          200: "#ddd6fe",
-          300: "#c4b5fd",
-          400: "#a78bfa",
-          500: "#8b5cf6",
-          600: "#7c3aed",
-          700: "#6d28d9",
-          800: "#5b21b6",
-          900: "#4c1d95",
-          950: "#2e1065"
+          DEFAULT: "#0070E0", // Main
+          50: "#F0F6FF",
+          100: "#E1EEFF",
+          200: "#C3DDFF",
+          300: "#9BC3FF",
+          400: "#64A6FA",
+          500: "#0070E0", // Main
+          600: "#005FD1",
+          700: "#004CAD",
+          800: "#003C8A",
+          900: "#003087", // Dark
+          light: "#1A9CFF", // Light
         },
+        
+        // Secondary Purples
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          200: "#bae6fd",
-          300: "#7dd3fc",
-          400: "#38bdf8",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          800: "#075985",
-          900: "#0c4a6e",
-          950: "#082f49"
+          DEFAULT: "#635BFF", // Main
+          50: "#F5F4FF",
+          100: "#ECEBFF",
+          200: "#D9D7FF",
+          300: "#B9B4FF",
+          400: "#9690FF", 
+          500: "#635BFF", // Main
+          600: "#564CFF",
+          700: "#4F46E5", // Dark
+          800: "#4338CA",
+          900: "#3730A3",
+          light: "#857DFF", // Light
         },
+        
+        // Accent Greens
+        accent: {
+          DEFAULT: "#12B76A", // Main
+          50: "#ECFDF3",
+          100: "#DEFAEC",
+          200: "#BBF3D9",
+          300: "#86E8BA",
+          400: "#43D58C",
+          500: "#12B76A", // Main
+          600: "#0DA15D",
+          700: "#039E74", // Dark
+          800: "#05734D",
+          900: "#064A37",
+          light: "#32D583", // Light
+        },
+        
+        // Neutral Tones
+        neutral: {
+          white: "#FFFFFF", // White
+          lightest: "#F6F9FC", // Lightest
+          light: "#E6E6E6", // Light
+          medium: "#9BA2AF", // Medium
+          dark: "#525F7F", // Dark
+          darkest: "#32325D", // Darkest
+          black: "#0A2540", // Black
+        },
+        
+        // Complementary Colors
+        coral: {
+          DEFAULT: "#FF9E80", // Coral
+        },
+        yellow: {
+          DEFAULT: "#FFD666", // Yellow
+        },
+        
+        // System states
+        success: "#12B76A",
+        warning: "#F79009", 
+        error: "#F04438",
+        info: "#0070E0",
+        
+        // Traditional shadcn-ui colors (keeping light mode only)
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "#F04438",
+          foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "#F6F9FC",
+          foreground: "#525F7F",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "#FFFFFF",
+          foreground: "#0A2540",
         },
-        // Custom brand colors
-        violet: {
-          50: "#f5f3ff",
-          100: "#ede9fe",
-          200: "#ddd6fe",
-          300: "#c4b5fd",
-          400: "#a78bfa",
-          500: "#8b5cf6",
-          600: "#7c3aed",
-          700: "#6d28d9",
-          800: "#5b21b6",
-          900: "#4c1d95",
-          950: "#2e1065"
+        popover: {
+          DEFAULT: "#FFFFFF",
+          foreground: "#0A2540",
         },
-        blue: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a",
-          950: "#172554"
-        }
+      },
+      fontFamily: {
+        sans: ["Outfit", "var(--font-sans)", ...fontFamily.sans],
+        heading: ["Lexend", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      fontFamily: {
-        sans: ["Outfit", "var(--font-sans)", ...fontFamily.sans],
-        heading: ["Lexend", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
