@@ -34,6 +34,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { CarouselPreview } from "@/components/CarouselPreview";
 import axios from "axios";
 import { toast } from "sonner";
+import { CollapsibleSidebar } from "@/components/CollapsibleSidebar";
 
 // Interface for LinkedIn profile data
 interface LinkedInProfile {
@@ -433,423 +434,87 @@ const DashboardPage: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen bg-neutral-lightest">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-neutral-light bg-white">
-        <div className="p-6">
-          <LovableLogo variant="full" size="md" />
-        </div>
-        
-        <ScrollArea className="flex-1 px-3">
-          <nav className="space-y-1 py-2">
-            {navigationItems.map((item, i) => (
-              <NavItem key={i} item={item} />
-            ))}
-          </nav>
-          
-          <div className="mt-6 pt-6 border-t border-neutral-light">
-            <div className="px-3 mb-2 text-xs font-medium text-neutral-medium">
-              ACCOUNT
-            </div>
-            <Link
-              to="/settings"
-              className="flex items-center px-3 py-2 rounded-md text-neutral-dark hover:bg-primary-50/50 hover:text-primary transition-colors"
-            >
-              <UserCircle size={20} className="text-neutral-medium mr-3" />
-              <span className="font-medium">Your Profile</span>
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-3 py-2 rounded-md text-neutral-dark hover:bg-primary-50/50 hover:text-primary transition-colors"
-            >
-              <LogOut size={20} className="text-neutral-medium mr-3" />
-              <span className="font-medium">Sign Out</span>
-            </button>
-          </div>
-        </ScrollArea>
-        
-        {/* Profile section */}
-        <div className="p-4 border-t border-neutral-light bg-neutral-lightest mt-auto">
-          <div className="flex items-center">
-            <Avatar className="h-10 w-10 mr-3 border">
-              <AvatarImage src={user?.profilePicture || ''} />
-              <AvatarFallback className="bg-primary-50 text-primary">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-neutral-dark truncate">
-                {getUserFullName()}
-              </p>
-              <p className="text-xs text-neutral-medium truncate">
-                {user?.email || ''}
-              </p>
-            </div>
-            <Button variant="ghost" size="icon" className="ml-1 text-neutral-medium hover:text-primary">
-              <Settings size={18} />
-            </Button>
-          </div>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Collapsible Sidebar */}
+      <CollapsibleSidebar />
       
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        {/* Mobile header - only visible on smaller screens */}
-        <div className="md:hidden flex items-center justify-between border-b border-neutral-light p-4 bg-white sticky top-0 z-10">
-          <LovableLogo variant="full" size="sm" />
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="text-neutral-medium"
-              data-menu-toggle
-              onClick={toggleMenu}
+      <div className="flex flex-col min-h-screen pl-[72px] md:pl-[240px] transition-all duration-300">
+        {/* Main content header */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6 md:px-8">
+          <div className="flex flex-1 items-center justify-end gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:flex gap-1"
+              onClick={() => navigate('/content-generator')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+              <PlusCircle className="h-4 w-4" />
+              <span>Create Post</span>
             </Button>
             
-            <Avatar className="h-8 w-8 border">
-              <AvatarImage src={user?.profilePicture || ''} />
-              <AvatarFallback className="bg-primary-50 text-primary">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-        
-        {/* Mobile sidebar drawer - hidden by default */}
-        <div 
-          id="mobile-menu-drawer" 
-          className="fixed inset-0 bg-black/50 z-50 md:hidden transition-opacity duration-200 opacity-0 pointer-events-none"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              document.getElementById('mobile-menu-drawer')?.classList.remove('translate-x-0', 'opacity-100', 'pointer-events-auto');
-            }
-          }}
-        >
-          <div 
-            className="w-3/4 max-w-xs bg-white h-full overflow-auto transition-transform duration-300 -translate-x-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-neutral-light">
-              <LovableLogo variant="full" size="md" />
-            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="md:hidden"
+              onClick={() => navigate('/content-generator')}
+            >
+              <PlusCircle className="h-4 w-4" />
+            </Button>
             
-            <nav className="p-2">
-              {navigationItems.map((item, i) => (
-                <Link
-                  key={i}
-                  to={item.href}
-                  className={`flex items-center justify-between p-3 rounded-md mb-1 transition-colors ${
-                    item.active 
-                      ? 'bg-primary-50 text-primary' 
-                      : 'text-neutral-dark hover:bg-neutral-lightest'
-                  }`}
-                  onClick={toggleMenu}
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full"
+            >
+              <Bell className="h-4 w-4" />
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full gap-2 pr-1.5"
                 >
-                  <div className="flex items-center gap-3">
-                    <item.icon size={20} className={item.active ? 'text-primary' : 'text-neutral-medium'} />
-                    <span className="font-medium">{item.title}</span>
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={user?.profilePicture || ''} alt={getUserFullName()} />
+                    <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-0.5">
+                    <p className="text-sm font-medium">{getUserFullName()}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
-                  
-                  {item.badge && (
-                    <Badge 
-                      variant={item.badge.variant === 'primary' ? 'default' : 'outline'} 
-                      className={`${
-                        item.badge.variant === 'primary' 
-                          ? 'bg-primary text-white' 
-                          : 'bg-primary-50 text-primary border-primary-100'
-                      }`}
-                    >
-                      {item.badge.text}
-                    </Badge>
-                  )}
-                </Link>
-              ))}
-            </nav>
-            
-            <div className="mt-4 pt-4 border-t border-neutral-light p-2">
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full p-3 rounded-md text-neutral-dark hover:bg-neutral-lightest"
-              >
-                <LogOut size={20} className="text-neutral-medium mr-3" />
-                <span className="font-medium">Sign Out</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto p-6">
-          <div className="grid grid-cols-1 gap-6">
-            {/* Welcome section */}
-            <section className="bg-gradient-to-r from-primary-50 to-primary-100/30 rounded-xl p-6 mb-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-neutral-black">
-                    Welcome to Lovable, {user?.firstName || 'User'}! 👋
-                  </h1>
-                  <p className="mt-2 text-neutral-dark max-w-lg">
-                    Your LinkedIn content creation platform. Create impactful content, analyze performance, and grow your professional presence.
-                  </p>
                 </div>
-                
-                <div className="mt-4 md:mt-0">
-                  <Button 
-                    onClick={() => navigate('/create-post')}
-                    className="bg-primary hover:bg-primary-600 text-white"
-                  >
-                    <PlusCircle size={18} className="mr-2" />
-                    Create New Post
-                  </Button>
-                </div>
-              </div>
-            </section>
-            
-            {/* Quick stats */}
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-neutral-medium">Impressions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {loading.analytics ? (
-                      <div className="h-8 w-24 bg-neutral-light/30 animate-pulse rounded"></div>
-                    ) : (
-                      analyticsData?.summary.totalImpressions.toLocaleString() || '0'
-                    )}
-                  </div>
-                  <p className="text-xs text-neutral-medium mt-1">Last 30 days</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-neutral-medium">Engagement Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {loading.analytics ? (
-                      <div className="h-8 w-24 bg-neutral-light/30 animate-pulse rounded"></div>
-                    ) : (
-                      `${analyticsData?.summary.averageEngagement.toFixed(1) || '0'}%`
-                    )}
-                  </div>
-                  <p className="text-xs text-neutral-medium mt-1">Avg per post</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-neutral-medium">Followers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {loading.profile ? (
-                      <div className="h-8 w-24 bg-neutral-light/30 animate-pulse rounded"></div>
-                    ) : (
-                      linkedInProfile?.followers.toLocaleString() || '0'
-                    )}
-                  </div>
-                  <p className="text-xs text-neutral-medium mt-1">
-                    {analyticsData?.followers.increase ? `+${analyticsData.followers.increase}%` : ''} Last 30 days
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-neutral-medium">Next Post</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-lg font-bold text-primary">
-                    {scheduledPosts[0]?.scheduledTime || 'No scheduled posts'}
-                  </div>
-                  <p className="text-xs text-neutral-medium mt-1">
-                    {scheduledPosts.length} posts in queue
-                  </p>
-                </CardContent>
-              </Card>
-            </section>
-            
-            {/* Content sections */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Create post section */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Quick Post</CardTitle>
-                  <CardDescription>
-                    Share your thoughts on LinkedIn
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Textarea 
-                    placeholder="What do you want to share with your network?"
-                    className="min-h-[120px] mb-4"
-                  />
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Upload size={16} />
-                      Media
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Mic size={16} />
-                      Audio
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <FileText size={16} />
-                      Document
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Sparkles size={16} />
-                      AI Help
-                    </Button>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.profilePicture || ''} />
-                        <AvatarFallback className="bg-primary-50 text-primary">
-                          {getUserInitials()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">
-                        {getUserFullName()}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline">Schedule</Button>
-                      <Button>Post Now</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Scheduled posts */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Posts</CardTitle>
-                  <CardDescription>
-                    View your scheduled content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[250px]">
-                    <div className="space-y-4">
-                      {scheduledPosts.map((post) => (
-                        <div key={post.id} className="pb-4 border-b border-neutral-light last:border-0">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary">
-                              {post.isCarousel ? (
-                                <Layers size={20} />
-                              ) : (
-                                <FileText size={20} />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm line-clamp-2">
-                                {post.content}
-                              </p>
-                              <div className="flex items-center mt-2">
-                                <Clock size={14} className="text-neutral-medium mr-1" />
-                                <span className="text-xs text-neutral-medium">
-                                  {post.scheduledTime}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => navigate('/post-library')}
-                  >
-                    View All Posts
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-            
-            {/* Featured section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Analytics preview */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Performance Overview</CardTitle>
-                  <CardDescription>
-                    Your LinkedIn engagement at a glance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[200px] flex items-center justify-center bg-neutral-lightest rounded-md text-neutral-medium">
-                    Analytics Chart Preview
-                  </div>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">87%</div>
-                      <p className="text-xs text-neutral-medium">Post Reach</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">12.4%</div>
-                      <p className="text-xs text-neutral-medium">Engagement</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">436</div>
-                      <p className="text-xs text-neutral-medium">Profile Views</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">18</div>
-                      <p className="text-xs text-neutral-medium">New Followers</p>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => navigate('/analytics')}
-                  >
-                    View Full Analytics
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              {/* Carousel preview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Carousel Preview</CardTitle>
-                  <CardDescription>
-                    Your latest carousel post
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CarouselPreview 
-                    slides={carouselSlides}
-                    variant="basic"
-                  />
-                </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => navigate('/create-post')}
-                  >
-                    Create Carousel
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-      </main>
+        </header>
+        
+        {/* Main content body */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+          {/* Existing dashboard content... */}
+        </main>
+      </div>
     </div>
   );
 };

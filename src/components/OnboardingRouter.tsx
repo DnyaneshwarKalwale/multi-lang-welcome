@@ -9,7 +9,7 @@ import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
 import TeamInvitePage from "@/pages/TeamInvitePage";
 import PostFormatPage from "@/pages/PostFormatPage";
 import PostFrequencyPage from "@/pages/PostFrequencyPage";
-import RegistrationPage from "@/pages/RegistrationPage";
+import InspirationProfilesPage from "@/pages/InspirationProfilesPage";
 import ExtensionInstallPage from "@/pages/ExtensionInstallPage";
 import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -79,7 +79,7 @@ export function OnboardingRouter() {
         <Route path="team-invite" element={<TeamInvitePage />} />
         <Route path="post-format" element={<PostFormatPage />} />
         <Route path="post-frequency" element={<PostFrequencyPage />} />
-        <Route path="registration" element={<RegistrationPage />} />
+        <Route path="inspiration-profiles" element={<InspirationProfilesPage />} />
         <Route path="extension-install" element={<ExtensionInstallPage />} />
         <Route path="completion" element={<CompletionPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
@@ -99,7 +99,7 @@ function getProgressPercentage(currentStep: string, workspaceType: string | null
     "team-invite",
     "post-format",
     "post-frequency",
-    "registration",
+    "inspiration-profiles",
     "extension-install",
     "completion",
     "dashboard"

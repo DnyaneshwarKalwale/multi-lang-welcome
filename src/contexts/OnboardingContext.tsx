@@ -13,8 +13,8 @@ type OnboardingStep =
   | "team-workspace" 
   | "team-invite"
   | "post-format" 
-  | "post-frequency" 
-  | "registration" 
+  | "post-frequency"
+  | "inspiration-profiles" 
   | "extension-install"
   | "completion"
   | "dashboard";
@@ -55,6 +55,7 @@ type OnboardingContextType = {
   email: string;
   website: string;
   mobileNumber: string;
+  inspirationProfiles: string[];
   setCurrentStep: (step: OnboardingStep) => void;
   setWorkspaceType: (type: WorkspaceType) => void;
   setWorkspaceName: (name: string) => void;
@@ -68,6 +69,8 @@ type OnboardingContextType = {
   setEmail: (email: string) => void;
   setWebsite: (website: string) => void;
   setMobileNumber: (mobileNumber: string) => void;
+  addInspirationProfile: (profile: string) => void;
+  removeInspirationProfile: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   saveProgress: () => void;
@@ -86,7 +89,7 @@ const allSteps: OnboardingStep[] = [
   "team-invite",
   "post-format",
   "post-frequency",
-  "registration",
+  "inspiration-profiles",
   "extension-install",
   "completion",
   "dashboard"
@@ -124,6 +127,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [inspirationProfiles, setInspirationProfiles] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load saved onboarding progress when user authenticates
@@ -160,6 +164,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             if (data.email) setEmail(data.email);
             if (data.website) setWebsite(data.website);
             if (data.mobileNumber) setMobileNumber(data.mobileNumber);
+            if (data.inspirationProfiles) setInspirationProfiles(data.inspirationProfiles);
           }
           
           setIsInitialized(true);
@@ -200,7 +205,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         lastName,
         email,
         website,
-        mobileNumber
+        mobileNumber,
+        inspirationProfiles
       };
       
       // Save to backend
@@ -293,6 +299,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [language, setGlobalLanguage]);
 
+  // Function to add an inspiration profile
+  const addInspirationProfile = (profile: string) => {
+    setInspirationProfiles(prev => [...prev, profile]);
+  };
+  
+  // Function to remove an inspiration profile
+  const removeInspirationProfile = (index: number) => {
+    setInspirationProfiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <OnboardingContext.Provider
       value={{
@@ -309,6 +325,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         email,
         website,
         mobileNumber,
+        inspirationProfiles,
         setCurrentStep,
         setWorkspaceType,
         setWorkspaceName,
@@ -322,6 +339,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         setEmail,
         setWebsite,
         setMobileNumber,
+        addInspirationProfile,
+        removeInspirationProfile,
         nextStep,
         prevStep,
         saveProgress,
