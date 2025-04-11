@@ -19,21 +19,19 @@ const daysOfWeek = [
 ];
 
 export default function PostFrequencyPage() {
-  const { nextStep, prevStep, updateOnboardingData, onboardingData, getStepProgress } = useOnboarding();
+  const { nextStep, prevStep, selectedDays: contextSelectedDays, setSelectedDays, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
   
-  // Get the saved selected days from onboarding data or initialize with all false
-  const [selectedDays, setSelectedDays] = useState<Record<string, boolean>>(
-    onboardingData.postingDays || {
-      mon: false,
-      tue: false,
-      wed: false,
-      thu: false,
-      fri: false,
-      sat: false,
-      sun: false,
-    }
-  );
+  // Convert the context selectedDays format to the format needed in this component
+  const [localSelectedDays, setLocalSelectedDays] = useState<Record<string, boolean>>({
+    mon: contextSelectedDays.monday || false,
+    tue: contextSelectedDays.tuesday || false,
+    wed: contextSelectedDays.wednesday || false,
+    thu: contextSelectedDays.thursday || false,
+    fri: contextSelectedDays.friday || false,
+    sat: contextSelectedDays.saturday || false,
+    sun: contextSelectedDays.sunday || false,
+  });
   
   // Animation variants
   const fadeIn = {
@@ -43,12 +41,12 @@ export default function PostFrequencyPage() {
   
   // Calculate the number of days selected
   const calculateFrequency = (): number => {
-    return Object.values(selectedDays).filter(Boolean).length;
+    return Object.values(localSelectedDays).filter(Boolean).length;
   };
   
   // Handle day selection toggle
   const handleDayToggle = (dayId: string) => {
-    setSelectedDays(prev => ({
+    setLocalSelectedDays(prev => ({
       ...prev,
       [dayId]: !prev[dayId]
     }));
@@ -56,8 +54,16 @@ export default function PostFrequencyPage() {
   
   // Handle continue button click
   const handleContinue = () => {
-    // Save the selected days to onboarding data
-    updateOnboardingData({ postingDays: selectedDays });
+    // Save the selected days to context using the appropriate format
+    setSelectedDays({
+      monday: localSelectedDays.mon,
+      tuesday: localSelectedDays.tue,
+      wednesday: localSelectedDays.wed,
+      thursday: localSelectedDays.thu,
+      friday: localSelectedDays.fri,
+      saturday: localSelectedDays.sat,
+      sunday: localSelectedDays.sun,
+    });
     nextStep();
   };
 
@@ -138,7 +144,7 @@ export default function PostFrequencyPage() {
                   key={day.id}
                   className={`
                     relative h-16 flex flex-col items-center justify-center rounded-md transition-all cursor-pointer
-                    ${selectedDays[day.id] 
+                    ${localSelectedDays[day.id] 
                       ? 'bg-blue-50 border border-blue-200' 
                       : 'bg-gray-50 border border-gray-200 hover:border-blue-300'}
                   `}
@@ -147,18 +153,18 @@ export default function PostFrequencyPage() {
                   <div className="absolute top-2 left-2">
                     <Checkbox 
                       id={day.id}
-                      checked={selectedDays[day.id]}
+                      checked={localSelectedDays[day.id]}
                       onCheckedChange={() => handleDayToggle(day.id)}
                       className="h-3 w-3"
                     />
                   </div>
-                  <span className={`text-sm font-medium ${selectedDays[day.id] ? 'text-blue-600' : 'text-gray-600'}`}>
+                  <span className={`text-sm font-medium ${localSelectedDays[day.id] ? 'text-blue-600' : 'text-gray-600'}`}>
                     {day.label}
                   </span>
                   <span className="text-[10px] mt-0.5 text-gray-500">
                     {day.fullName.substring(0, 3)}
                   </span>
-                  {selectedDays[day.id] && (
+                  {localSelectedDays[day.id] && (
                     <motion.div
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}

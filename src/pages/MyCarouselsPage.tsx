@@ -168,7 +168,7 @@ const MyCarouselsPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-2">My Carousels</h1>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-gray-500">
             View and manage your LinkedIn carousel designs across workspaces
           </p>
         </div>
@@ -184,7 +184,7 @@ const MyCarouselsPage: React.FC = () => {
       
       {/* Workspace selection */}
       <div className="mb-6">
-        <h3 className="text-sm font-medium mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+        <h3 className="text-sm font-medium mb-3 text-gray-500 flex items-center gap-2">
           <Building className="h-4 w-4" />
           Select Workspace
         </h3>
@@ -289,7 +289,7 @@ const MyCarouselsPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Carousels</p>
+                <p className="text-sm text-gray-500">Total Carousels</p>
                 <p className="text-2xl font-bold mt-1">
                   {filteredCarousels.length}
                 </p>
@@ -305,7 +305,7 @@ const MyCarouselsPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Delivered</p>
+                <p className="text-sm text-gray-500">Delivered</p>
                 <p className="text-2xl font-bold mt-1">
                   {filteredCarousels.filter(c => c.status === 'delivered').length}
                 </p>
@@ -321,7 +321,7 @@ const MyCarouselsPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
+                <p className="text-sm text-gray-500">In Progress</p>
                 <p className="text-2xl font-bold mt-1">
                   {filteredCarousels.filter(c => c.status === 'in_progress').length}
                 </p>

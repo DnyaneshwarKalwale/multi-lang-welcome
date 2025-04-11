@@ -114,9 +114,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-white border-none p-0 w-full sm:max-w-md overflow-hidden">
+        <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "h-[90vh] rounded-t-xl p-0" : "max-w-md p-0"}>
           <motion.div 
-            className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden bg-gradient-to-b from-blue-50 to-white"
+            className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden bg-white"
             variants={containerVariants}
             initial="hidden"
             animate="visible"

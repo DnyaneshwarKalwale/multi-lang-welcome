@@ -357,16 +357,16 @@ export default function VerifyEmailPage() {
         ) : (
           // OTP entry form
           <>
-            <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-4 mb-6">
+            <div className="bg-blue-100 rounded-full p-4 mb-6">
               <Mail className="h-12 w-12 text-blue-500" />
             </div>
-            <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Verify your email</h1>
-            <p className="text-gray-600 dark:text-gray-300 mb-8 text-center">
+            <h1 className="text-3xl font-bold mb-6 text-gray-900">Verify your email</h1>
+            <p className="text-gray-600 mb-8 text-center">
               We've sent a verification code to <span className="font-bold text-blue-500">{email || 'your email address'}</span>. 
               Enter the 6-digit code below to verify your account.
             </p>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 w-full mb-8">
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 w-full mb-8">
+              <p className="text-gray-600 text-sm mb-4">
                 <span className="font-bold">Enter the code from your email</span>
               </p>
               
@@ -376,7 +376,7 @@ export default function VerifyEmailPage() {
                   <Input
                     key={index}
                     type="text"
-                    className="w-12 h-12 text-center text-xl font-bold"
+                    className="w-12 h-12 text-center text-xl font-bold bg-white"
                     maxLength={1}
                     value={digit}
                     ref={el => inputRefs.current[index] = el}
@@ -387,7 +387,7 @@ export default function VerifyEmailPage() {
                 ))}
               </div>
               
-              <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-500 dark:text-gray-400">
+              <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
                 Didn't receive a code? Check your spam folder or request a new code.
               </div>
             </div>

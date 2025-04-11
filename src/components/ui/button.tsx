@@ -19,9 +19,9 @@ const buttonVariants = cva(
         linkedin: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-sm hover:shadow-md active:scale-[0.98] hover:translate-y-[-1px]",
         cyan: "bg-gradient-to-br from-primary-400 to-violet-500 text-white hover:from-primary-500 hover:to-violet-600 border-none shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30",
         novus: "bg-gradient-to-br from-primary-400 to-violet-500 text-white hover:from-primary-500 hover:to-violet-600 border-none shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30",
-        transparent: "bg-transparent hover:bg-gray-100/20 dark:hover:bg-gray-800/30 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400",
-        glass: "bg-white/20 dark:bg-gray-900/20 backdrop-blur-sm border border-white/10 dark:border-gray-800/30 text-gray-900 dark:text-white hover:bg-white/30 dark:hover:bg-gray-800/30",
-        minimal: "bg-transparent text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400",
+        transparent: "bg-transparent hover:bg-gray-100/20 text-gray-700 hover:text-primary-600",
+        glass: "bg-white/20 backdrop-blur-sm border border-white/10 text-gray-900 hover:bg-white/30",
+        minimal: "bg-transparent text-gray-700 hover:text-primary-600",
       },
       size: {
         default: "h-10 px-4 py-2",

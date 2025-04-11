@@ -103,7 +103,7 @@ export function CollapsibleSidebar() {
       initial={expanded ? 'expanded' : 'collapsed'}
       animate={expanded ? 'expanded' : 'collapsed'}
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800',
+        'fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-gray-200 bg-white',
         expanded ? 'items-start' : 'items-center'
       )}
     >
@@ -121,7 +121,7 @@ export function CollapsibleSidebar() {
               className="flex items-center gap-2 overflow-hidden"
             >
               <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-primary" />
-              <span className="font-semibold text-gray-900 dark:text-white">Lovable</span>
+              <span className="font-semibold text-gray-900">Lovable</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -149,8 +149,8 @@ export function CollapsibleSidebar() {
               className={({ isActive }) => cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
                 isActive 
-                  ? 'bg-primary-50 text-primary dark:bg-primary-900/20 dark:text-primary-400' 
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
+                  ? 'bg-primary-50 text-primary' 
+                  : 'text-gray-600 hover:bg-gray-100',
                 !expanded && 'justify-center px-2',
                 expanded ? 'w-full' : 'w-auto'
               )}
@@ -189,10 +189,10 @@ export function CollapsibleSidebar() {
       
       {/* User Profile Section */}
       <div className={cn(
-        'mt-auto border-t border-gray-200 dark:border-gray-800 p-3 w-full',
+        'mt-auto border-t border-gray-200 p-3 w-full',
         expanded ? 'flex items-center gap-3' : 'flex flex-col items-center gap-3'
       )}>
-        <Avatar className="h-9 w-9 border border-gray-200 dark:border-gray-700">
+        <Avatar className="h-9 w-9 border border-gray-200">
           <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
           <AvatarFallback className="bg-primary/10 text-primary">
             {getUserInitials()}
@@ -207,10 +207,10 @@ export function CollapsibleSidebar() {
               exit={{ opacity: 0, width: 0 }}
               className="flex-1 overflow-hidden"
             >
-              <div className="truncate text-sm font-medium text-gray-900 dark:text-white">
+              <div className="truncate text-sm font-medium text-gray-900">
                 {user?.firstName} {user?.lastName}
               </div>
-              <div className="truncate text-xs text-gray-500 dark:text-gray-400">
+              <div className="truncate text-xs text-gray-500">
                 {user?.email}
               </div>
             </motion.div>
@@ -221,7 +221,7 @@ export function CollapsibleSidebar() {
           variant="ghost"
           size="icon"
           className={cn(
-            'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full',
+            'text-gray-500 hover:text-gray-700 rounded-full',
             expanded ? 'ml-auto' : 'mt-3'
           )}
           onClick={logout}
