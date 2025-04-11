@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -67,18 +67,18 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.2 }}
         >
           <div className="relative">
-            <LovableLogo variant="icon" size="lg" className="w-20 h-20 text-primary" />
+            <BrandOutIcon className="w-20 h-20" />
             <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={24} />
           </div>
         </motion.div>
         
         <motion.h1 
-          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          Welcome to Lovable
+          Welcome to BrandOut
         </motion.h1>
         
         <motion.div
@@ -143,7 +143,7 @@ export default function WelcomePage() {
               </div>
             </div>
             <p className="text-gray-800 dark:text-gray-200 mb-3">
-              Just discovered an incredible platform for LinkedIn content creation! AI-powered posts that sound authentic and professional. Perfect for busy professionals looking to grow their personal brand. Engagement rates up 65% in just 2 weeks. #LinkedInTips #PersonalBranding
+              Just discovered an incredible platform for content creation! AI-powered posts that sound authentic and professional. Perfect for busy professionals looking to grow their brand. Engagement rates up 65% in just 2 weeks. #ContentTips #BrandGrowth
             </p>
             <div className="flex justify-between text-gray-500 text-sm">
               <span className="flex items-center gap-1"><MessageCircle size={14} /> 32</span>
@@ -163,7 +163,7 @@ export default function WelcomePage() {
                 <p className="text-gray-500 text-sm">Senior Product Manager • SaaS Technology</p>
               </div>
               <div className="mb-4">
-                <p className="text-gray-800 dark:text-gray-200 font-medium mb-2">5 ways Lovable transformed my LinkedIn strategy:</p>
+                <p className="text-gray-800 dark:text-gray-200 font-medium mb-2">5 ways BrandOut transformed my content strategy:</p>
                 <div className="border rounded-lg overflow-hidden">
                   <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b flex items-center justify-between">
                     <span className="text-gray-600 dark:text-gray-300 text-sm">Professional Carousel Post</span>

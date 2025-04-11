@@ -45,11 +45,11 @@ export default function TeamSelectionPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600"
+          className="text-3xl md:text-4xl font-bold text-gray-900"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          How would you like to use Lovable?
+          How would you like to use BrandOut?
         </motion.h1>
         
         <motion.p 

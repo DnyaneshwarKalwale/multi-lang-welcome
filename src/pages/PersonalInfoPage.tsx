@@ -5,7 +5,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Globe, Phone, Linkedin, ArrowRight } from "lucide-react";
@@ -140,7 +140,7 @@ export default function PersonalInfoPage() {
       >
         <div className="mb-10 flex justify-center">
           <div className="relative">
-            <LovableLogo variant="icon" size="lg" className="w-20 h-20 text-primary" />
+            <BrandOutIcon className="w-20 h-20" />
             <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={26} />
           </div>
         </div>

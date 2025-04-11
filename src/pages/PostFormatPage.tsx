@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
@@ -14,7 +15,7 @@ import {
   ThumbsUp
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 
 export default function PostFormatPage() {
   const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
@@ -205,14 +206,14 @@ export default function PostFormatPage() {
         animate="animate"
       >
         <motion.div 
-          className="mb-4 sm:mb-8 flex justify-center"
+          className="mb-8 flex justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <LovableLogo variant="icon" className="w-14 h-14 sm:w-20 sm:h-20 text-primary" />
-            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
+            <BrandOutIcon className="w-14 h-14 sm:w-20 sm:h-20" />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={26} />
           </div>
         </motion.div>
         
@@ -225,11 +226,12 @@ export default function PostFormatPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-sm sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-10 text-center max-w-2xl mx-auto"
-          variants={fadeIn}
-          transition={{ delay: 0.3 }}
+          className="text-gray-600 mb-8 text-center max-w-md mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
-          Lovable analyzes thousands of high-performing LinkedIn posts to optimize your content strategy.
+          BrandOut analyzes thousands of high-performing posts to optimize your content strategy.
           Select the content type that best aligns with your professional goals.
         </motion.p>
         
@@ -317,7 +319,7 @@ export default function PostFormatPage() {
                     <MessageSquareText size={14} /> 8
                         </span>
                       </div>
-                <span>Content powered by Lovable AI</span>
+                <span>Content powered by BrandOut AI</span>
               </div>
             </motion.div>
           )}

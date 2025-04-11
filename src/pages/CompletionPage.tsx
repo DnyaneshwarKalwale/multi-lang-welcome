@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
-import { ScripeIconRounded } from "@/components/ScripeIcon";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIcon, Globe, FileEdit, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
@@ -191,10 +191,10 @@ export default function CompletionPage() {
         animate="visible"
       >
         <motion.div className="flex flex-col items-center" variants={itemVariants}>
-          <div className="p-4 mb-6 rounded-full bg-gradient-to-r from-blue-400/20 to-blue-500/20 border border-blue-400/30 shadow-lg">
-            <CheckCircle className="w-16 h-16 text-blue-500" strokeWidth={1.5} />
+          <div className="p-4 mb-6 rounded-full bg-gradient-to-r from-purple-600/20 to-blue-500/20 border border-purple-400/30 shadow-lg">
+            <CheckCircle className="w-16 h-16 text-purple-600" strokeWidth={1.5} />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center gap-2">
+          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center gap-2">
             Setup Complete!
             <span role="img" aria-label="celebration">🎉</span>
           </h1>

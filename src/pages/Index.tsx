@@ -191,7 +191,7 @@ const Index = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Why professionals choose <span className="text-primary">Lovable</span>
+              Why professionals choose <span className="text-primary">BrandOut</span>
             </motion.h2>
             <motion.p 
               className="text-lg text-gray-600"
@@ -337,7 +337,7 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              See how Lovable has helped professionals grow their personal brand and create impactful content on LinkedIn.
+              See how BrandOut has helped professionals grow their personal brand and create impactful content on LinkedIn.
             </motion.p>
           </div>
           
@@ -366,7 +366,7 @@ const Index = () => {
                   </div>
                 </div>
                 <blockquote className="text-gray-600 italic">
-                  "Lovable has completely transformed how I approach LinkedIn content. The analytics help me understand what's working, and the AI content suggestions save me hours every week. My engagement has increased by over 200% since I started using it."
+                  "BrandOut has completely transformed how I approach content creation. The analytics help me understand what's working, and the AI content suggestions save me hours every week. My engagement has increased by over 200% since I started using it."
                 </blockquote>
               </motion.div>
             ))}

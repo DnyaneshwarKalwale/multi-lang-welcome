@@ -6,7 +6,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { motion } from "framer-motion";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 
 export default function InspirationProfilesPage() {
   const { 
@@ -75,7 +75,7 @@ export default function InspirationProfilesPage() {
       >
         <div className="mb-10 flex justify-center">
           <div className="relative">
-            <LovableLogo variant="icon" size="lg" className="w-20 h-20 text-primary" />
+            <BrandOutIcon className="w-20 h-20" />
             <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={26} />
           </div>
         </div>
