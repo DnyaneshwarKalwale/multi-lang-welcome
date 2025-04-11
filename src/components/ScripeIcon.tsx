@@ -3,6 +3,7 @@ import React from "react";
 interface IconProps {
   className?: string;
   size?: number;
+  format?: 'png' | 'svg';
 }
 
 // ==============================
@@ -10,10 +11,11 @@ interface IconProps {
 // ==============================
 
 // Dekcion Icons (primary brand)
-export const DekcionIcon = ({ className = "h-6 w-6" }) => {
+export const DekcionIcon = ({ className = "h-14 w-14", format = 'svg' }) => {
+  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
   return (
     <img 
-      src="/app-logo.png" 
+      src={logoSrc} 
       alt="Logo" 
       className={className}
     />
@@ -21,11 +23,12 @@ export const DekcionIcon = ({ className = "h-6 w-6" }) => {
 };
 
 // Rounded icon variant for Dekcion
-export const DekcionIconRounded = ({ className = "h-6 w-6" }) => {
+export const DekcionIconRounded = ({ className = "h-14 w-14", format = 'svg' }) => {
+  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
   return (
     <div className="rounded-full overflow-hidden">
       <img 
-        src="/app-logo.png" 
+        src={logoSrc} 
         alt="Logo" 
         className={className}
       />
@@ -34,15 +37,16 @@ export const DekcionIconRounded = ({ className = "h-6 w-6" }) => {
 };
 
 // Logotype (icon + text) for Dekcion
-export const DekcionLogotype = ({ className = "h-8" }) => {
+export const DekcionLogotype = ({ className = "h-14", format = 'svg' }) => {
+  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
   return (
     <div className={`flex items-center ${className}`}>
       <img 
-        src="/app-logo.png" 
+        src={logoSrc} 
         alt="Logo" 
         className="h-full w-auto object-contain" 
       />
-      <span className="ml-2 font-bold text-lg">Dekcion</span>
+      <span className="ml-3 font-bold text-xl">Dekcion</span>
     </div>
   );
 };

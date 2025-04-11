@@ -127,9 +127,9 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
                 variants={itemVariants}
               >
                 <img 
-                  src="/app-logo.png" 
+                  src="/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg" 
                   alt="Logo" 
-                  className="w-12 h-12 object-contain" 
+                  className="w-16 h-16 object-contain" 
                 />
                 <h2 className="text-2xl font-bold text-gray-900">
                   {t('loginToLovable') || 'Log in to BrandOut'}

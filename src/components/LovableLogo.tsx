@@ -2,19 +2,21 @@ import React from 'react';
 
 type LogoVariant = 'icon' | 'full' | 'horizontal';
 type LogoSize = 'sm' | 'md' | 'lg' | 'xl';
+type LogoFormat = 'png' | 'svg';
 
 interface LogoProps {
   variant?: LogoVariant;
   size?: LogoSize;
   className?: string;
+  format?: LogoFormat;
 }
 
 const sizeMap = {
   icon: {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8',
-    lg: 'w-10 h-10',
-    xl: 'w-12 h-12',
+    sm: 'w-10 h-10',
+    md: 'w-14 h-14',
+    lg: 'w-20 h-20',
+    xl: 'w-24 h-24',
   },
   text: {
     sm: 'text-sm',
@@ -24,16 +26,17 @@ const sizeMap = {
   }
 };
 
-export function BrandOutLogo({ variant = 'full', size = 'md', className = '' }: LogoProps) {
+export function BrandOutLogo({ variant = 'full', size = 'md', className = '', format = 'svg' }: LogoProps) {
   const iconSize = sizeMap.icon[size];
   const textSize = sizeMap.text[size];
+  const logoSrc = format === 'svg' ? '/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg' : '/app-logo.png';
   
   // Icon-only variant
   if (variant === 'icon') {
     return (
       <div className={`flex items-center justify-center ${iconSize} ${className}`}>
         <img 
-          src="/app-logo.png" 
+          src={logoSrc} 
           alt="Logo" 
           className="w-full h-full object-contain" 
         />
@@ -44,10 +47,10 @@ export function BrandOutLogo({ variant = 'full', size = 'md', className = '' }: 
   // Full logo (icon + text)
   if (variant === 'full') {
     return (
-      <div className={`flex items-center gap-2 ${className}`}>
+      <div className={`flex items-center gap-3 ${className}`}>
         <div className={`flex items-center justify-center ${iconSize}`}>
           <img 
-            src="/app-logo.png" 
+            src={logoSrc} 
             alt="Logo" 
             className="w-full h-full object-contain" 
           />
@@ -59,10 +62,10 @@ export function BrandOutLogo({ variant = 'full', size = 'md', className = '' }: 
   
   // Horizontal logo (icon + text side by side)
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       <div className={`flex items-center justify-center ${iconSize}`}>
         <img 
-          src="/app-logo.png" 
+          src={logoSrc} 
           alt="Logo" 
           className="w-full h-full object-contain" 
         />

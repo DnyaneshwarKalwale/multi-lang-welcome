@@ -212,9 +212,9 @@ export default function PostFormatPage() {
         >
           <div className="relative">
             <img 
-              src="/app-logo.png" 
+              src="/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg" 
               alt="Logo" 
-              className="w-14 h-14 sm:w-20 sm:h-20 object-contain mx-auto mb-6" 
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain mx-auto mb-6" 
             />
             <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
           </div>

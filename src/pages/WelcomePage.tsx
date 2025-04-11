@@ -68,11 +68,11 @@ export default function WelcomePage() {
         >
           <div className="relative">
             <img 
-              src="/app-logo.png" 
+              src="/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg" 
               alt="Logo" 
-              className="w-20 h-20 object-contain" 
+              className="w-32 h-32 object-contain" 
             />
-            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={24} />
+            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={32} />
           </div>
         </motion.div>
         
