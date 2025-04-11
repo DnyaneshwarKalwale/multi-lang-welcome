@@ -1,18 +1,11 @@
+// Simple mock of language functionality since we've removed the language feature
+export type LanguageType = 'english';
 
-import { useLanguage as useLanguageContext } from '@/contexts/LanguageContext';
-
-// Define the LanguageType that matches what's in LanguageContext
-export type LanguageType = 'english' | 'german' | 'spanish' | 'french';
-
-// This is a wrapper for useLanguage that ensures type safety
+// This provides a simplified version with only English
 export function useLanguage() {
-  const languageContext = useLanguageContext();
-  
   return {
-    ...languageContext,
-    // Make sure the setLanguage function only accepts valid language types
-    setLanguage: (language: LanguageType) => {
-      languageContext.setLanguage(language);
-    }
+    language: 'english' as LanguageType,
+    setLanguage: () => {}, // No-op function
+    t: (key: string) => key, // Just returns the key as is
   };
 }

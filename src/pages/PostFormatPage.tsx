@@ -301,7 +301,7 @@ export default function PostFormatPage() {
                   </div>
                 </div>
                 <Linkedin size={18} className="text-primary" />
-              </div>
+                  </div>
               <div className="p-4">
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
                   {formatOptions.find(f => f.id === postFormat)?.example || ""}
@@ -311,11 +311,11 @@ export default function PostFormatPage() {
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1">
                     <ThumbsUp size={14} /> 42
-                  </span>
+                        </span>
                   <span className="flex items-center gap-1">
                     <MessageSquareText size={14} /> 8
-                  </span>
-                </div>
+                        </span>
+                      </div>
                 <span>Content powered by Lovable AI</span>
               </div>
             </motion.div>
@@ -351,7 +351,7 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.8 }}
         >
-          <Button 
+          <Button
             onClick={nextStep} 
             disabled={!postFormat}
             className="w-full sm:w-auto bg-primary hover:bg-primary-600 text-white px-8"
@@ -361,7 +361,7 @@ export default function PostFormatPage() {
           </Button>
         </motion.div>
         
-        <motion.div 
+        <motion.div
           className="mt-8 flex justify-center" 
           variants={fadeIn}
           transition={{ delay: 0.9 }}

@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 
@@ -25,9 +23,7 @@ type TeamMember = {
   role: "admin" | "member";
 };
 
-// Simplified types - remove theme options, only support light mode
-type LanguageType = "english" | "german";
-type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
+type PostFormat = "text" | "carousel" | "document" | "visual" | "poll" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 
 type SelectedDays = {
@@ -46,7 +42,6 @@ type OnboardingContextType = {
   workspaceType: WorkspaceType;
   workspaceName: string;
   teamMembers: TeamMember[];
-  language: LanguageType;
   postFormat: PostFormat;
   postFrequency: PostFrequency;
   selectedDays: SelectedDays;
@@ -60,7 +55,6 @@ type OnboardingContextType = {
   setWorkspaceType: (type: WorkspaceType) => void;
   setWorkspaceName: (name: string) => void;
   setTeamMembers: (members: TeamMember[]) => void;
-  setLanguage: (language: LanguageType) => void;
   setPostFormat: (format: PostFormat) => void;
   setPostFrequency: (frequency: PostFrequency) => void;
   setSelectedDays: (days: SelectedDays) => void;
@@ -97,17 +91,12 @@ const allSteps: OnboardingStep[] = [
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  
-  // Access theme context directly without attempting to access it at import time
-  const themeContext = useTheme();
-  const { setLanguage: setGlobalLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>(null);
   const [workspaceName, setWorkspaceName] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [language, setLanguage] = useState<LanguageType>("english");
   const [postFormat, setPostFormat] = useState<PostFormat>(null);
   const [postFrequency, setPostFrequency] = useState<PostFrequency>(null);
   
@@ -156,7 +145,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             if (data.workspaceType) setWorkspaceType(data.workspaceType);
             if (data.workspaceName) setWorkspaceName(data.workspaceName);
             if (data.teamMembers) setTeamMembers(data.teamMembers);
-            if (data.language) setLanguage(data.language);
             if (data.postFormat) setPostFormat(data.postFormat);
             if (data.postFrequency) setPostFrequency(data.postFrequency);
             if (data.firstName) setFirstName(data.firstName);
@@ -198,7 +186,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         workspaceType,
         workspaceName,
         teamMembers,
-        language,
         postFormat,
         postFrequency,
         firstName,
@@ -301,13 +288,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Update global language when onboarding language changes
-  useEffect(() => {
-    if (language) {
-      setGlobalLanguage(language as "english" | "german" | "spanish" | "french");
-    }
-  }, [language, setGlobalLanguage]);
-
   // Function to add an inspiration profile
   const addInspirationProfile = (profile: string) => {
     setInspirationProfiles(prev => [...prev, profile]);
@@ -325,7 +305,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         workspaceType,
         workspaceName,
         teamMembers,
-        language,
         postFormat,
         postFrequency,
         selectedDays,
@@ -339,7 +318,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         setWorkspaceType,
         setWorkspaceName,
         setTeamMembers,
-        setLanguage,
         setPostFormat,
         setPostFrequency,
         setSelectedDays,

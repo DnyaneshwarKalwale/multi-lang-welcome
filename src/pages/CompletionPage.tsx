@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function CompletionPage() {
   const navigate = useNavigate();
-  const { nextStep, workspaceType, workspaceName, firstName, language, theme, postFormat, postFrequency } = useOnboarding();
+  const { nextStep, workspaceType, workspaceName, firstName, postFormat, postFrequency } = useOnboarding();
   const { user, fetchUser } = useAuth();
   
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
@@ -71,8 +71,6 @@ export default function CompletionPage() {
         onboardingCompleted: true,
         workspaceType: workspaceType || 'personal',
         workspaceName: workspaceName || `${firstName}'s Workspace`,
-        language: language || 'english',
-        theme: theme || 'dark',
         postFormat: postFormat || 'casual',
         postFrequency: postFrequency || 'daily'
       };
@@ -101,7 +99,7 @@ export default function CompletionPage() {
       // Set onboarding as completed and navigate to dashboard
       localStorage.setItem('onboardingCompleted', 'true');
       navigate("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error marking onboarding as complete:", err);
       
       // More detailed error message with retry info

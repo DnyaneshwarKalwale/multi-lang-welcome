@@ -8,12 +8,10 @@ import { motion } from "framer-motion";
 import { PrismIconRounded } from "@/components/ScripeIcon";
 import { Check, Chrome, Puzzle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ExtensionInstallPage() {
   const navigate = useNavigate();
   const { prevStep, nextStep, getStepProgress } = useOnboarding();
-  const { language } = useLanguage();
 
   const { current, total } = getStepProgress();
   

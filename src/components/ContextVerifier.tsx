@@ -8,15 +8,15 @@ interface ContextVerifierProps {
 }
 
 /**
- * ContextVerifier ensures all required contexts are available
- * It renders a loading spinner until all contexts are verified,
+ * ContextVerifier ensures the theme context is available
+ * It renders a loading spinner until the context is verified,
  * then renders the children components.
  */
 const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [mounted, setMounted] = useState(false);
-  const { theme, isThemeLoaded } = useTheme();
+  const { theme } = useTheme();
   const location = useLocation();
   
   // Set mounted state on component mount and verify theme
@@ -43,7 +43,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
       // Check contexts after a short delay to ensure they're all loaded
       const timer = setTimeout(() => {
         setIsLoading(false);
-      }, 500);
+      }, 300);
       
       return () => clearTimeout(timer);
     } catch (e) {
@@ -122,7 +122,7 @@ const ContextVerifier: React.FC<ContextVerifierProps> = ({ children }) => {
     );
   }
   
-  // All contexts verified, render children with fade-in animation
+  // Theme context verified, render children with fade-in animation
   return (
     <AnimatePresence>
       <motion.div

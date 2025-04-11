@@ -2,7 +2,6 @@ import React from "react";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { Users, User, UserPlus, UserCircle, Check, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
 import { SekcionIconRounded } from "@/components/ScripeIcon";
@@ -10,7 +9,6 @@ import { Button } from "@/components/ui/button";
 
 export default function TeamSelectionPage() {
   const { workspaceType, setWorkspaceType, nextStep, getStepProgress } = useOnboarding();
-  const { t } = useLanguage();
   const { current, total } = getStepProgress();
 
   // Animation variants

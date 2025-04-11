@@ -1,41 +1,33 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode } from "react";
 
-export type ThemeContextType = {
+// Theme is now fixed as 'light' with no switching functionality
+type ThemeContextType = {
   theme: 'light';
-  isThemeLoaded?: boolean;
+  isThemeLoaded: boolean;
 };
 
-// Apply light theme function
+// Always use light theme
 export function applyTheme() {
   document.documentElement.classList.remove('dark');
   document.documentElement.classList.add('light');
-  localStorage.setItem("theme", "light");
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType>({
+  theme: 'light',
+  isThemeLoaded: true
+});
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Always use light theme
-  const [theme] = useState<'light'>('light');
-  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
-
-  // Apply light theme on mount
-  useEffect(() => {
-    applyTheme();
-    setIsThemeLoaded(true);
-  }, []);
+  // Apply light theme
+  applyTheme();
 
   return (
-    <ThemeContext.Provider value={{ theme, isThemeLoaded }}>
+    <ThemeContext.Provider value={{ theme: 'light', isThemeLoaded: true }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  return useContext(ThemeContext);
 }
