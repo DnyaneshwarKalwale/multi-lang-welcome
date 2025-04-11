@@ -92,19 +92,7 @@ export const onboardingApi = {
   getOnboarding: async () => {
     const response = await api.get('/onboarding');
     return response.data;
-  },
-
-  // Update theme preference
-  updateTheme: async (theme: 'light' | 'dark') => {
-    const response = await api.put('/onboarding/theme', { theme });
-    return response.data;
-  },
-
-  // Update language preference
-  updateLanguage: async (language: 'english' | 'german') => {
-    const response = await api.put('/onboarding/language', { language });
-    return response.data;
-  },
+  }
 };
 
 export default api; 

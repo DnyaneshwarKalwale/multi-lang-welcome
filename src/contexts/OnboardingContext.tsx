@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -12,8 +11,6 @@ type OnboardingStep =
   | "team-selection" 
   | "team-workspace" 
   | "team-invite"
-  | "theme-selection" 
-  | "language-selection" 
   | "post-format" 
   | "post-frequency" 
   | "registration" 
@@ -22,13 +19,18 @@ type OnboardingStep =
   | "dashboard";
 
 type WorkspaceType = "team" | "personal" | null;
+type TeamMember = {
+  email: string;
+  role: "admin" | "member";
+};
+
+// We're removing theme and language selection types but keeping for existing states
 type ThemeType = "light" | "dark";
-type LanguageType = "english" | "german" | "spanish" | "french" | null;
+type LanguageType = "english" | "german";
 type PostFormat = "thread" | "concise" | "hashtag" | "visual" | "viral" | null;
 type PostFrequency = 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 
-// New type for selected days
-export type SelectedDays = {
+type SelectedDays = {
   monday: boolean;
   tuesday: boolean;
   wednesday: boolean;
@@ -38,41 +40,38 @@ export type SelectedDays = {
   sunday: boolean;
 };
 
-interface TeamMember {
-  email: string;
-  role: "admin" | "member";
-}
-
-interface OnboardingContextType {
+// Update the context type to match our component structure
+type OnboardingContextType = {
   currentStep: OnboardingStep;
-  setCurrentStep: (step: OnboardingStep) => void;
   workspaceType: WorkspaceType;
-  setWorkspaceType: (type: WorkspaceType) => void;
   workspaceName: string;
-  setWorkspaceName: (name: string) => void;
   teamMembers: TeamMember[];
-  setTeamMembers: (members: TeamMember[]) => void;
   theme: ThemeType;
-  setTheme: (theme: ThemeType) => void;
   language: LanguageType;
-  setLanguage: (language: LanguageType) => void;
   postFormat: PostFormat;
-  setPostFormat: (format: PostFormat) => void;
   postFrequency: PostFrequency;
-  setPostFrequency: (frequency: PostFrequency) => void;
-  selectedDays: SelectedDays; 
-  setSelectedDays: (days: SelectedDays) => void; 
+  selectedDays: SelectedDays;
   firstName: string;
-  setFirstName: (name: string) => void;
   lastName: string;
-  setLastName: (name: string) => void;
   email: string;
+  setCurrentStep: (step: OnboardingStep) => void;
+  setWorkspaceType: (type: WorkspaceType) => void;
+  setWorkspaceName: (name: string) => void;
+  setTeamMembers: (members: TeamMember[]) => void;
+  setTheme: (theme: ThemeType) => void;
+  setLanguage: (language: LanguageType) => void;
+  setPostFormat: (format: PostFormat) => void;
+  setPostFrequency: (frequency: PostFrequency) => void;
+  setSelectedDays: (days: SelectedDays) => void;
+  setFirstName: (name: string) => void;
+  setLastName: (name: string) => void;
   setEmail: (email: string) => void;
   nextStep: () => void;
   prevStep: () => void;
+  saveProgress: () => void;
   getStepProgress: () => { current: number; total: number };
-  saveProgress: () => Promise<void>;
-}
+  getApplicableSteps: () => OnboardingStep[];
+};
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
@@ -82,8 +81,6 @@ const allSteps: OnboardingStep[] = [
   "team-selection",
   "team-workspace",
   "team-invite",
-  "theme-selection",
-  "language-selection",
   "post-format",
   "post-frequency",
   "registration",
@@ -160,24 +157,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             if (data.language) setLanguage(data.language);
             if (data.postFormat) setPostFormat(data.postFormat);
             if (data.postFrequency) setPostFrequency(data.postFrequency);
-            
-            // Load selected days if available
-            if (data.selectedDays) {
-              setSelectedDays(data.selectedDays);
-            } else if (data.postFrequency) {
-              // Fallback: initialize selected days based on postFrequency
-              const defaultSelectedDays = {
-                monday: data.postFrequency >= 1,
-                tuesday: data.postFrequency >= 2,
-                wednesday: data.postFrequency >= 3,
-                thursday: data.postFrequency >= 4,
-                friday: data.postFrequency >= 5,
-                saturday: data.postFrequency >= 6,
-                sunday: data.postFrequency >= 7
-              };
-              setSelectedDays(defaultSelectedDays);
-            }
-            
             if (data.firstName) setFirstName(data.firstName);
             if (data.lastName) setLastName(data.lastName);
             if (data.email) setEmail(data.email);
@@ -185,68 +164,70 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           
           setIsInitialized(true);
         } catch (error) {
-          console.error('Failed to load onboarding progress:', error);
+          console.error("Error loading onboarding progress:", error);
           setIsInitialized(true);
         }
+      } else if (!isAuthenticated || !user) {
+        // Mark as initialized if not authenticated
+        setIsInitialized(true);
       }
     };
     
     loadOnboardingProgress();
   }, [isAuthenticated, user, navigate, isInitialized]);
 
-  // Save onboarding progress to backend
+  // Function to save current onboarding progress
   const saveProgress = async () => {
-    if (isAuthenticated && user && !user.onboardingCompleted) {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        
-        const onboardingData = {
-          currentStep,
-          workspaceType,
-          workspaceName,
-          teamMembers,
-          theme,
-          language,
-          postFormat,
-          postFrequency,
-          selectedDays,
-          firstName,
-          lastName,
-          email
-        };
-        
-        // Save key data to localStorage as a fallback
-        localStorage.setItem('onboardingStep', currentStep);
-        if (workspaceType) localStorage.setItem('workspaceType', workspaceType);
-        if (theme) localStorage.setItem('theme', theme);
-        if (language) localStorage.setItem('language', language);
-        
-        try {
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-        } catch (apiError) {
-          console.error('Failed to save onboarding progress to API:', apiError);
-          // We'll continue with the local storage backup we created above
-        }
-        
-      } catch (error) {
-        console.error('Failed to save onboarding progress:', error);
-      }
+    // Only save if user is authenticated
+    if (!isAuthenticated || !user) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      
+      // Build the onboarding data object
+      const onboardingData = {
+        currentStep,
+        workspaceType,
+        workspaceName,
+        teamMembers,
+        // Always save as light theme
+        theme: "light",
+        language,
+        postFormat,
+        postFrequency,
+        firstName,
+        lastName,
+        email
+      };
+      
+      // Save to backend
+      await axios.post(`${baseApiUrl}/onboarding`, onboardingData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+    } catch (error) {
+      console.error("Error saving onboarding progress:", error);
     }
   };
 
-  // Get applicable steps based on workspace type
-  const getApplicableSteps = (): OnboardingStep[] => {
-    if (workspaceType === "personal") {
-      // Skip team-workspace and team-invite steps for personal accounts
+  // Function to get only the steps that apply to current workspace type
+  const getApplicableSteps = () => {
+    if (workspaceType === 'team') {
+      // Include team-specific steps
+      return allSteps;
+    } else if (workspaceType === 'personal') {
+      // Skip team-workspace and team-invite for personal workspaces
       return allSteps.filter(step => 
-        step !== "team-workspace" && step !== "team-invite"
+        step !== 'team-workspace' && step !== 'team-invite'
       );
     }
-    return allSteps;
+    // Default - only show steps before workspace type selection
+    return allSteps.filter(step => 
+      step === 'welcome' || step === 'team-selection'
+    );
   };
 
   const getStepProgress = () => {
@@ -303,68 +284,49 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [language, setGlobalLanguage]);
 
-  // When postFrequency changes, update selectedDays accordingly if they aren't already set
-  useEffect(() => {
-    // Skip if we have any selected days already
-    const hasSelectedDays = Object.values(selectedDays).some(day => day);
-    
-    if (postFrequency !== null && !hasSelectedDays) {
-      // Default to selecting first N days of the week based on frequency
-      const defaultSelectedDays = {
-        monday: postFrequency >= 1,
-        tuesday: postFrequency >= 2,
-        wednesday: postFrequency >= 3,
-        thursday: postFrequency >= 4,
-        friday: postFrequency >= 5,
-        saturday: postFrequency >= 6,
-        sunday: postFrequency >= 7
-      };
-      setSelectedDays(defaultSelectedDays);
-    }
-  }, [postFrequency, selectedDays]);
-
-  const value = {
-    currentStep,
-    setCurrentStep,
-    workspaceType,
-    setWorkspaceType,
-    workspaceName,
-    setWorkspaceName,
-    teamMembers,
-    setTeamMembers,
-    theme,
-    setTheme,
-    language,
-    setLanguage,
-    postFormat,
-    setPostFormat,
-    postFrequency,
-    setPostFrequency,
-    selectedDays,
-    setSelectedDays,
-    firstName,
-    setFirstName,
-    lastName,
-    setLastName,
-    email,
-    setEmail,
-    nextStep,
-    prevStep,
-    getStepProgress,
-    saveProgress
-  };
-
   return (
-    <OnboardingContext.Provider value={value}>
+    <OnboardingContext.Provider
+      value={{
+        currentStep,
+        workspaceType,
+        workspaceName,
+        teamMembers,
+        theme,
+        language,
+        postFormat,
+        postFrequency,
+        selectedDays,
+        firstName,
+        lastName,
+        email,
+        setCurrentStep,
+        setWorkspaceType,
+        setWorkspaceName,
+        setTeamMembers,
+        setTheme,
+        setLanguage,
+        setPostFormat,
+        setPostFrequency,
+        setSelectedDays,
+        setFirstName,
+        setLastName,
+        setEmail,
+        nextStep,
+        prevStep,
+        saveProgress,
+        getStepProgress,
+        getApplicableSteps
+      }}
+    >
       {children}
     </OnboardingContext.Provider>
   );
 }
 
-export function useOnboarding() {
+export const useOnboarding = () => {
   const context = useContext(OnboardingContext);
   if (context === undefined) {
     throw new Error("useOnboarding must be used within an OnboardingProvider");
   }
   return context;
-}
+};

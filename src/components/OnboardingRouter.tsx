@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -7,8 +6,6 @@ import WelcomePage from "@/pages/WelcomePage";
 import TeamSelectionPage from "@/pages/TeamSelectionPage";
 import TeamWorkspacePage from "@/pages/TeamWorkspacePage";
 import TeamInvitePage from "@/pages/TeamInvitePage";
-import ThemeSelectionPage from "@/pages/ThemeSelectionPage";
-import LanguageSelectionPage from "@/pages/LanguageSelectionPage";
 import PostFormatPage from "@/pages/PostFormatPage";
 import PostFrequencyPage from "@/pages/PostFrequencyPage";
 import RegistrationPage from "@/pages/RegistrationPage";
@@ -39,7 +36,7 @@ export function OnboardingRouter() {
     if (workspaceType === "personal") {
       if (location.pathname.includes("team-workspace") || 
           location.pathname.includes("team-invite")) {
-        navigate("/onboarding/theme-selection");
+        navigate("/onboarding/post-format");
       }
     }
   }, [workspaceType, location.pathname, navigate]);
@@ -78,8 +75,6 @@ export function OnboardingRouter() {
         <Route path="team-selection" element={<TeamSelectionPage />} />
         <Route path="team-workspace" element={<TeamWorkspacePage />} />
         <Route path="team-invite" element={<TeamInvitePage />} />
-        <Route path="theme-selection" element={<ThemeSelectionPage />} />
-        <Route path="language-selection" element={<LanguageSelectionPage />} />
         <Route path="post-format" element={<PostFormatPage />} />
         <Route path="post-frequency" element={<PostFrequencyPage />} />
         <Route path="registration" element={<RegistrationPage />} />
@@ -99,8 +94,6 @@ function getProgressPercentage(currentStep: string, workspaceType: string | null
     "team-selection",
     "team-workspace",
     "team-invite",
-    "theme-selection",
-    "language-selection",
     "post-format",
     "post-frequency",
     "registration",
