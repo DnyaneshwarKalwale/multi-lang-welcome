@@ -342,7 +342,7 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {testimonials.map((testimonial, index) => (
-              <motion.div 
+              <motion.div
                 key={index}
                 className="bg-blue-50/50 rounded-2xl p-8 border border-blue-100/30"
                 initial={{ opacity: 0, y: 20 }}
@@ -358,9 +358,9 @@ const Index = () => {
                     <h4 className="font-semibold text-lg text-gray-900">{testimonial.name}</h4>
                     <p className="text-gray-600 text-sm">{testimonial.role}</p>
                     <div className="flex mt-1">
-                      {[...Array(5)].map((_, i) => (
+                  {[...Array(5)].map((_, i) => (
                         <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                      ))}
+                  ))}
                     </div>
                   </div>
                 </div>
@@ -393,27 +393,27 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-br from-primary/10 via-blue-50 to-primary/5">
         <div className="container mx-auto px-6">
-          <motion.div 
+            <motion.div
             className="max-w-4xl mx-auto text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-          >
+              viewport={{ once: true }}
+            >
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
               Ready to transform your <span className="text-primary">LinkedIn presence</span>?
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               Join thousands of professionals already using Lovable to create better LinkedIn content and grow their professional network.
             </p>
-            <Button 
+              <Button 
               className="bg-primary hover:bg-primary-600 text-white px-8 py-7 rounded-xl text-lg shadow-lg hover:shadow-primary/30"
-              onClick={() => setIsRegisterOpen(true)}
-            >
+                onClick={() => setIsRegisterOpen(true)}
+              >
               Get started today
-              <ChevronRight className="ml-2 w-5 h-5" />
-            </Button>
-          </motion.div>
+                <ChevronRight className="ml-2 w-5 h-5" />
+              </Button>
+            </motion.div>
         </div>
       </section>
       
@@ -485,7 +485,7 @@ const Index = () => {
       {/* Registration & Login Sheets */}
       <RegistrationSheet 
         open={isRegisterOpen} 
-        onOpenChange={setIsRegisterOpen} 
+        onOpenChange={setIsRegisterOpen}
         onSuccess={handleRegisterSuccess}
       />
       

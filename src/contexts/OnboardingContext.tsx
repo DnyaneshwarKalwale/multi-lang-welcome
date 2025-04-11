@@ -230,9 +230,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         step !== 'team-workspace' && step !== 'team-invite'
       );
     }
-    // Default - only show steps before workspace type selection
+    // Default - include welcome, personal-info, and other essential steps
+    // This ensures users can flow through the onboarding without selecting workspace type
     return allSteps.filter(step => 
-      step === 'welcome' || step === 'team-selection'
+      step === 'welcome' || 
+      step === 'personal-info' || 
+      step === 'team-selection' ||
+      step === 'post-format' ||
+      step === 'post-frequency' ||
+      step === 'inspiration-profiles' ||
+      step === 'extension-install' ||
+      step === 'completion' ||
+      step === 'dashboard'
     );
   };
 

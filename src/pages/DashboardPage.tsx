@@ -383,8 +383,8 @@ const DashboardPage: React.FC = () => {
       <div className="flex items-center gap-3">
         <item.icon size={20} className={`transition-colors ${item.active ? 'text-primary' : 'text-neutral-medium group-hover:text-primary'}`} />
         <span className="font-medium">{item.title}</span>
-      </div>
-      
+                    </div>
+
       {item.badge && (
         <Badge 
           variant={item.badge.variant === 'primary' ? 'default' : 'outline'} 
@@ -395,8 +395,8 @@ const DashboardPage: React.FC = () => {
           }`}
         >
           {item.badge.text}
-        </Badge>
-      )}
+                                </Badge>
+                              )}
     </Link>
   );
 
@@ -492,7 +492,7 @@ const DashboardPage: React.FC = () => {
                     <p className="text-sm font-medium">{getUserFullName()}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
-                </div>
+                  </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/settings">
@@ -507,7 +507,7 @@ const DashboardPage: React.FC = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+                    </div>
         </header>
         
         {/* Main content body */}
