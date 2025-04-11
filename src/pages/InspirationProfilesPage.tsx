@@ -34,6 +34,7 @@ export default function InspirationProfilesPage() {
       addInspirationProfile(inputValue.trim());
       setInputValue("");
     }
+    // Save progress first to ensure data is stored
     nextStep();
   };
   

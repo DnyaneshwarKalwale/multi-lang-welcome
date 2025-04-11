@@ -4,6 +4,7 @@ import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useLanguage } from "@/useLanguage";
 import { motion } from "framer-motion";
 import { PrismIconRounded } from "@/components/ScripeIcon";
 import { Check, Chrome, Puzzle } from "lucide-react";
@@ -12,7 +13,7 @@ import { Button } from "@/components/ui/button";
 export default function ExtensionInstallPage() {
   const navigate = useNavigate();
   const { prevStep, nextStep, getStepProgress } = useOnboarding();
-
+  const { language } = useLanguage();
   const { current, total } = getStepProgress();
   
   const handleContinue = () => {
@@ -118,7 +119,7 @@ export default function ExtensionInstallPage() {
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          {language === "german" ? "Installiere die Erweiterung" : "Install the Browser Extension"}
+          Install the Browser Extension
         </motion.h1>
         
         <motion.p 
@@ -126,9 +127,7 @@ export default function ExtensionInstallPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          {language === "german" 
-            ? "Unsere Erweiterung hilft dir, deine Inhalte zu erstellen und zu verwalten." 
-            : "Our browser extension helps you create and manage your content."}
+          Our browser extension helps you create and manage your content.
         </motion.p>
 
         <motion.div 
@@ -155,12 +154,10 @@ export default function ExtensionInstallPage() {
             
             <div className="text-left">
               <h3 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
-                {language === "german" ? "Browser-Erweiterung" : "Browser Extension"}
+                Browser Extension
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                {language === "german"
-                  ? "Verbinde dein Konto, um Inhalte nahtlos zu analysieren und zu erstellen."
-                  : "Connect your account to analyze and create content seamlessly."}
+                Connect your account to analyze and create content seamlessly.
               </p>
               
               <motion.div 
@@ -174,7 +171,7 @@ export default function ExtensionInstallPage() {
                     <Check size={14} />
                   </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {language === "german" ? "Ein-Klick-Authentifizierung" : "One-click authentication"}
+                    One-click authentication
                   </span>
                 </motion.div>
                 <motion.div variants={itemVariants} className="flex items-center">
@@ -182,7 +179,7 @@ export default function ExtensionInstallPage() {
                     <Check size={14} />
                   </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {language === "german" ? "Inhaltsanalyse für bessere Vorschläge" : "Content analysis for better suggestions"}
+                    Content analysis for better suggestions
                   </span>
                 </motion.div>
                 <motion.div variants={itemVariants} className="flex items-center">
@@ -190,7 +187,7 @@ export default function ExtensionInstallPage() {
                     <Check size={14} />
                   </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {language === "german" ? "Direkt von Prism aus veröffentlichen" : "Post directly from Prism"}
+                    Post directly from Prism
                   </span>
                 </motion.div>
               </motion.div>
@@ -202,7 +199,7 @@ export default function ExtensionInstallPage() {
                 onClick={() => window.open("https://chrome.google.com/webstore/detail/prism-extension/", "_blank")}
               >
                 <Chrome size={18} />
-                <span>{language === "german" ? "Zu Chrome hinzufügen" : "Add to Chrome"}</span>
+                <span>Add to Chrome</span>
               </Button>
             </div>
           </div>
@@ -219,7 +216,7 @@ export default function ExtensionInstallPage() {
             className="py-6 px-8 gap-2 w-full sm:w-auto font-medium bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
             onClick={handleContinue}
           >
-            {language === "german" ? "Ohne Installation fortfahren" : "Continue without installing"}
+            Continue without installing
           </Button>
           
           <Button
@@ -227,7 +224,7 @@ export default function ExtensionInstallPage() {
             className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-full px-8 py-3 mt-4 transition-all duration-300 text-sm"
             onClick={handleSkipToDashboard}
           >
-            {language === "german" ? "Zum Dashboard springen" : "Skip to dashboard"}
+            Skip to dashboard
           </Button>
         </motion.div>
         
@@ -238,9 +235,7 @@ export default function ExtensionInstallPage() {
         >
           <ProgressDots total={total} current={current} color="novus" />
           <span className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-            {language === "german" 
-              ? `Schritt ${current + 1} von ${total}` 
-              : `Step ${current + 1} of ${total}`}
+            Step {current + 1} of {total}
           </span>
         </motion.div>
       </motion.div>
