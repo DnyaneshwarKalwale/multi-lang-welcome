@@ -130,8 +130,8 @@ const CarouselsPage: React.FC = () => {
         </div>
         
         <Select 
-          value={statusFilter || ''} 
-          onValueChange={(value) => setStatusFilter(value || null)}
+          value={statusFilter || 'all'} 
+          onValueChange={(value) => setStatusFilter(value === 'all' ? null : value)}
         >
           <SelectTrigger className="w-full sm:w-44">
             <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ const CarouselsPage: React.FC = () => {
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All statuses</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="in_progress">In Progress</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
           </SelectContent>

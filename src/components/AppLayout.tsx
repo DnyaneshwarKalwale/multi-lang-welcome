@@ -54,7 +54,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main content area */}
       <div className={cn("flex-1 flex flex-col min-h-screen transition-all duration-300", contentMargin)}>
         {/* Top header bar */}
-        <header className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 bg-white dark:bg-gray-900 sticky top-0 z-30">
+        <header className="h-16 border-b border-gray-200 flex items-center justify-between px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
@@ -69,15 +69,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </Button>
             
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-semibold text-gray-900">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="rounded-full relative">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-white text-[10px] flex items-center justify-center">
+            <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100">
+              <Bell size={20} className="text-blue-600" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
                 3
               </span>
             </Button>
@@ -87,9 +87,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 whileHover={{ scale: 1.05 }} 
                 className="cursor-pointer"
               >
-                <Avatar className="h-9 w-9 border border-gray-200 dark:border-gray-700">
+                <Avatar className="h-9 w-9 border border-blue-200 shadow-sm">
                   <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
