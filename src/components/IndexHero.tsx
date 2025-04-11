@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ChevronRight, Check, Star, Linkedin, Users, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutIcon } from "@/components/BrandOutIcon";
 
 interface IndexHeroProps {
   onLogin: () => void;
@@ -76,8 +76,8 @@ export default function IndexHero({ onLogin, onRegister }: IndexHeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight bg-clip-text text-transparent bg-gradient-to-br from-primary to-secondary">
-              Elevate Your LinkedIn Presence
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight bg-clip-text text-transparent bg-gradient-to-br from-purple-600 to-blue-500">
+              Elevate Your Brand Presence
             </h1>
             
             <p className="text-gray-600 text-lg mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
@@ -147,7 +147,7 @@ export default function IndexHero({ onLogin, onRegister }: IndexHeroProps) {
                   <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
                 <div className="text-xs font-medium text-gray-500">LinkedIn Content Creator</div>
-                <LovableLogo variant="icon" size="sm" className="w-5 h-5 text-primary" />
+                <BrandOutIcon className="w-5 h-5" />
               </div>
               
               <div className="p-6">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { LovableLogo } from "@/components/LovableLogo";
+// import { LovableLogo } from "@/components/LovableLogo";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Star, Linkedin, BarChart3, PlusCircle, Lightbulb, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -9,6 +9,7 @@ import { LoginSheet } from "@/components/LoginSheet";
 import { Link } from "react-router-dom";
 import IndexHero from "@/components/IndexHero";
 import { motion } from "framer-motion";
+import { BrandOutHorizontalLogo } from "@/components/BrandOutIcon";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ const Index = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <LovableLogo variant="full" size="md" className="h-9" />
+              <BrandOutHorizontalLogo className="h-9" />
             </div>
             
             {/* Desktop Navigation */}
@@ -401,10 +402,10 @@ const Index = () => {
               viewport={{ once: true }}
             >
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
-              Ready to transform your <span className="text-primary">LinkedIn presence</span>?
+              Ready to transform your <span className="text-primary">brand presence</span>?
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of professionals already using Lovable to create better LinkedIn content and grow their professional network.
+              Join thousands of professionals already using BrandOut to create better content and grow their professional network.
             </p>
               <Button 
               className="bg-primary hover:bg-primary-600 text-white px-8 py-7 rounded-xl text-lg shadow-lg hover:shadow-primary/30"
@@ -422,9 +423,9 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <LovableLogo variant="full" size="md" className="h-8 mb-6" />
+              <BrandOutHorizontalLogo className="h-8 mb-6" />
               <p className="text-gray-500 text-sm">
-                The professional content platform for LinkedIn creators and thought leaders.
+                The professional content platform for creators and thought leaders.
               </p>
             </div>
             
@@ -461,7 +462,7 @@ const Index = () => {
           
           <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Lovable. All rights reserved.
+              © {new Date().getFullYear()} BrandOut. All rights reserved.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-primary">
