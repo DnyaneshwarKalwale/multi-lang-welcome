@@ -133,17 +133,16 @@ export function CollapsibleSidebar() {
         expanded ? 'justify-between' : 'justify-center'
       )}>
         <AnimatePresence>
-          {expanded ? (
+          {expanded && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center"
+              className="flex items-center gap-2 overflow-hidden"
             >
-              <BrandOutLogo variant="icon" size="lg" className="w-12 h-12" />
+              <BrandOutLogo variant="icon" size="sm" className="w-8 h-8" showText={false} />
+              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">BrandOut</span>
             </motion.div>
-          ) : (
-            <BrandOutLogo variant="icon" size="sm" className="w-8 h-8" showText={false} />
           )}
         </AnimatePresence>
         
@@ -153,7 +152,7 @@ export function CollapsibleSidebar() {
           onClick={toggleSidebar} 
           className="rounded-full h-8 w-8 hidden lg:flex"
         >
-          {expanded ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {expanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5 rotate-180" />}
         </Button>
       </div>
 

@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { DekcionLogotype, DekcionIconRounded } from "@/components/ScripeIcon";
-import { Menu, X, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronRight, ArrowRight, ChevronLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
 import { useTheme } from "@/contexts/ThemeContext";
+import { BrandOutLogo } from "./BrandOutLogo";
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -61,7 +60,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
             transition={{ duration: 0.5 }}
           >
             <a href="/" className="flex items-center">
-              <DekcionLogotype className="h-8 w-auto text-gray-900" />
+              <BrandOutLogo variant="full" size="md" />
             </a>
           </motion.div>
           
@@ -133,7 +132,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
               className="text-gray-700 hover:text-cyan-600 ml-2"
               onClick={toggleMenu}
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ? <ChevronLeft size={24} /> : <ChevronLeft size={24} className="rotate-180" />}
             </Button>
           </div>
         </div>
@@ -156,7 +155,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <DekcionIconRounded className="w-16 h-16" />
+                <BrandOutLogo variant="full" size="lg" />
               </motion.div>
               
               <div className="flex flex-col items-center space-y-8 w-full">
