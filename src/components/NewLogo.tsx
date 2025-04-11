@@ -24,7 +24,7 @@ const sizeMap = {
   }
 };
 
-export function BrandOutLogo({ variant = 'full', size = 'md', className = '' }: LogoProps) {
+export function NewLogo({ variant = 'full', size = 'md', className = '' }: LogoProps) {
   const iconSize = sizeMap.icon[size];
   const textSize = sizeMap.text[size];
   
@@ -70,7 +70,4 @@ export function BrandOutLogo({ variant = 'full', size = 'md', className = '' }: 
       <span className={`font-bold ${textSize} text-black dark:text-white`}>BRANDOUT</span>
     </div>
   );
-}
-
-// For backward compatibility
-export const LovableLogo = BrandOutLogo; 
+} 

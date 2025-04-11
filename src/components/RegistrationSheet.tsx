@@ -132,7 +132,11 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 className="flex items-center gap-3"
                 variants={itemVariants}
               >
-                <LovableLogo variant="icon" size="sm" className="w-12 h-12 text-primary" />
+                <img 
+                  src="/app-logo.png" 
+                  alt="Logo" 
+                  className="w-12 h-12 object-contain" 
+                />
                 <h2 className="text-2xl font-bold text-gray-900">
                   {t('createAccount') || 'Create your account'}
                 </h2>
@@ -320,7 +324,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             >
               <Linkedin className="flex-shrink-0 w-5 h-5 mr-3 text-[#0077B5]" />
               <p className="text-sm text-gray-700">
-                {t('connectLinkedInPrompt') || 'Connect your LinkedIn account to share content directly from Lovable to your professional network.'}
+                {t('connectLinkedInPrompt') || 'Connect your LinkedIn account to share content directly from BrandOut to your professional network.'}
               </p>
             </motion.div>
           </motion.div>

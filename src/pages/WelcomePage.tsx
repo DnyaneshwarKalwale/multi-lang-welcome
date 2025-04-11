@@ -67,7 +67,11 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.2 }}
         >
           <div className="relative">
-            <LovableLogo variant="icon" size="lg" className="w-20 h-20 text-primary" />
+            <img 
+              src="/app-logo.png" 
+              alt="Logo" 
+              className="w-20 h-20 object-contain" 
+            />
             <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={24} />
           </div>
         </motion.div>
@@ -78,7 +82,7 @@ export default function WelcomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          Welcome to Lovable
+          Welcome to BrandOut
         </motion.h1>
         
         <motion.div
@@ -163,7 +167,7 @@ export default function WelcomePage() {
                 <p className="text-gray-500 text-sm">Senior Product Manager • SaaS Technology</p>
               </div>
               <div className="mb-4">
-                <p className="text-gray-800 dark:text-gray-200 font-medium mb-2">5 ways Lovable transformed my LinkedIn strategy:</p>
+                <p className="text-gray-800 dark:text-gray-200 font-medium mb-2">5 ways BrandOut transformed my LinkedIn strategy:</p>
                 <div className="border rounded-lg overflow-hidden">
                   <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b flex items-center justify-between">
                     <span className="text-gray-600 dark:text-gray-300 text-sm">Professional Carousel Post</span>

@@ -11,7 +11,7 @@ import {
   ArrowLeft, ChevronRight, Linkedin,
   Hash, Sparkles, Image, HeartHandshake,
   TrendingUp, Reply, Layers, BarChart3, Users,
-  ThumbsUp
+  ThumbsUp, Star
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { LovableLogo } from "@/components/LovableLogo";
@@ -211,7 +211,11 @@ export default function PostFormatPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <LovableLogo variant="icon" className="w-14 h-14 sm:w-20 sm:h-20 text-primary" />
+            <img 
+              src="/app-logo.png" 
+              alt="Logo" 
+              className="w-14 h-14 sm:w-20 sm:h-20 object-contain mx-auto mb-6" 
+            />
             <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
           </div>
         </motion.div>
@@ -229,7 +233,7 @@ export default function PostFormatPage() {
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
-          Lovable analyzes thousands of high-performing LinkedIn posts to optimize your content strategy.
+          BrandOut analyzes thousands of high-performing LinkedIn posts to optimize your content strategy.
           Select the content type that best aligns with your professional goals.
         </motion.p>
         
@@ -317,7 +321,10 @@ export default function PostFormatPage() {
                     <MessageSquareText size={14} /> 8
                         </span>
                       </div>
-                <span>Content powered by Lovable AI</span>
+                <span className="text-xs text-gray-500 flex items-center gap-1 mt-2">
+                  <Star size={12} className="text-primary" />
+                  <span>Content powered by BrandOut AI</span>
+                </span>
               </div>
             </motion.div>
           )}
