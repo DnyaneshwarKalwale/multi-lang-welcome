@@ -6,8 +6,8 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
-  ArrowLeft, Twitter, 
-  Building2, User, Users, Hash 
+  ArrowLeft, Linkedin, 
+  Building2, User, Users, Hash, UserPlus, Globe, Users2 
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
@@ -24,7 +24,7 @@ export default function TeamWorkspacePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
-      {/* Twitter-inspired background */}
+      {/* LinkedIn-inspired background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
@@ -47,7 +47,7 @@ export default function TeamWorkspacePage() {
           }}
           style={{ top: '15%', right: '10%' }}
         >
-          <Twitter size={80} className="text-blue-500" />
+          <Linkedin size={80} className="text-blue-500" />
         </motion.div>
         
         <motion.div 
@@ -119,7 +119,7 @@ export default function TeamWorkspacePage() {
         >
           <div className="relative">
             <ScripeIconRounded className="w-14 h-14 sm:w-20 sm:h-20 text-blue-500" />
-            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
+            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
           </div>
         </motion.div>
         
@@ -156,7 +156,7 @@ export default function TeamWorkspacePage() {
             id="workspace-name" 
             value={workspaceName}
             onChange={(e) => setWorkspaceName(e.target.value)}
-            placeholder="My Twitter Team"
+            placeholder="My LinkedIn Team"
             className="bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 rounded-full h-12 pl-4 focus:border-blue-500 focus:ring-blue-500 transition-all text-gray-900 dark:text-white mb-4"
           />
           
@@ -181,7 +181,7 @@ export default function TeamWorkspacePage() {
           transition={{ delay: 0.5 }}
         >
           <Button 
-            variant="twitter"
+            variant="linkedin"
             rounded="full"
             className="w-64 py-3 text-white font-bold"
             onClick={nextStep}

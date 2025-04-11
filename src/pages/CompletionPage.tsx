@@ -175,7 +175,7 @@ export default function CompletionPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-white text-gray-900 relative overflow-hidden">
-      {/* Animated gradient background with Twitter blue */}
+      {/* Animated gradient background with LinkedIn blue */}
       <div className="absolute inset-0 opacity-10 -z-10">
         <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 blur-[120px]"></div>
         <div className="absolute -bottom-10 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 blur-[120px]"></div>

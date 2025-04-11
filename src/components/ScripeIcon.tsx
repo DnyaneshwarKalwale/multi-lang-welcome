@@ -243,8 +243,3 @@ export { DekcionLogotype as ScripeLogotype };
 export { DekcionIcon as PrismIcon };
 export { DekcionIconRounded as PrismIconRounded };  
 export { DekcionLogotype as PrismLogotype };
-
-// Twitter style aliases for backward compatibility
-export { LinkedInStyleIcon as TwitterStyleIcon };
-export { LinkedInStyleIconSquare as TwitterStyleIconSquare };
-export { LinkedInStyleIconRounded as TwitterStyleIconRounded };

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Users, X, UserPlus, Mail, 
   UserCircle2, UserCog, UserCircle,
-  Loader2, ArrowLeft, Twitter,
+  Loader2, ArrowLeft, Linkedin,
   AtSign, BadgeCheck, UserMinus
 } from "lucide-react";
 import axios from "axios";
@@ -192,32 +192,24 @@ export default function TeamInvitePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background text-foreground relative overflow-hidden">
-      {/* Twitter-inspired background */}
+      {/* LinkedIn-inspired background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
         <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
         <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        <motion.div 
+          className="absolute z-0 animate-pulse text-opacity-20"
+          initial={{ opacity: 0.3 }}
+          animate={{ opacity: [0.3, 0.5, 0.3], y: [0, -15, 0] }}
+          transition={{ duration: 8, repeat: Infinity }}
+          style={{ top: '15%', right: '10%' }}
+        >
+          <Linkedin size={80} className="text-blue-500" />
+        </motion.div>
       </div>
       
       {/* Social media floating elements for decoration - hidden on smallest screens */}
       <div className="hidden sm:block">
-        <motion.div 
-          className="absolute opacity-10 pointer-events-none"
-          animate={{ 
-            y: [0, -15, 0],
-            x: [0, 10, 0],
-            rotate: [0, 5, 0],
-          }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 8, 
-            ease: "easeInOut" 
-          }}
-          style={{ top: '15%', right: '10%' }}
-        >
-          <Twitter size={80} className="text-blue-500" />
-        </motion.div>
-        
         <motion.div 
           className="absolute opacity-10 pointer-events-none"
           animate={{ 
@@ -280,14 +272,18 @@ export default function TeamInvitePage() {
         animate="animate"
       >
         <motion.div 
-          className="mb-6 sm:mb-8 flex justify-center"
+          className="mb-8 flex justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <ScripeIconRounded className="w-14 h-14 sm:w-20 sm:h-20 text-blue-500" />
-            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
+            <img 
+              src="/brandout-logo-new.svg" 
+              alt="Logo" 
+              className="w-24 h-24 object-contain" 
+            />
+            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full w-6 h-6 sm:w-7 sm:h-7 shadow-md" />
           </div>
         </motion.div>
         
@@ -334,11 +330,12 @@ export default function TeamInvitePage() {
               }}
             />
             <Button 
+              variant="linkedin"
+              rounded="full"
+              className="px-4 sm:px-6 h-10 ml-1"
               onClick={addTeamMember}
-              variant="twitter"
-              className="rounded-l-none rounded-r-full h-12"
+              disabled={!newMemberEmail.trim() || !!emailError}
             >
-              <UserPlus className="mr-2" size={18} />
               Add
             </Button>
           </div>

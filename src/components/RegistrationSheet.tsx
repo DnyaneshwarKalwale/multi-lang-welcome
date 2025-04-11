@@ -133,7 +133,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 variants={itemVariants}
               >
                 <img 
-                  src="/ChatGPT Image Apr 11, 2025, 10_43_22 PM.svg" 
+                  src="/brandout-logo-new.svg" 
                   alt="Logo" 
                   className="w-16 h-16 object-contain" 
                 />

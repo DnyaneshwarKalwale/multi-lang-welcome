@@ -53,18 +53,18 @@ export function CollapsibleSidebar({ expanded = true }: CollapsibleSidebarProps)
   };
   
   return (
-    <div className="h-full w-full flex flex-col bg-white border-r border-gray-200">
+    <div className="h-full flex flex-col bg-white border-r border-gray-200 overflow-hidden">
       {/* Sidebar Header */}
-      <div className="flex h-14 sm:h-16 items-center px-4 py-3 w-full justify-between border-b border-gray-100">
+      <div className="flex h-14 sm:h-16 items-center px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-2 overflow-hidden">
-          <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-purple-800" />
-          <span className="font-semibold text-gray-900">BRANDOUT</span>
+          <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-purple-800 flex-shrink-0" />
+          <span className="font-semibold text-gray-900 truncate">BRANDOUT</span>
         </div>
       </div>
 
-      {/* Navigation Menu */}
-      <div className="flex-1 w-full overflow-y-auto py-2">
-        <div className="flex flex-col gap-1 w-full px-2">
+      {/* Navigation Menu - with proper overflow handling */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 flex flex-col">
+        <nav className="flex-1 px-2 space-y-1">
           {navItems.map((item, index) => (
             <NavLink
               key={index}
@@ -74,37 +74,37 @@ export function CollapsibleSidebar({ expanded = true }: CollapsibleSidebarProps)
                 isActive 
                   ? 'bg-primary-50 text-primary' 
                   : 'text-gray-600 hover:bg-gray-100',
-                'w-full'
+                'w-full truncate'
               )}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span className="font-medium flex-1 whitespace-nowrap text-sm">
+              <span className="font-medium whitespace-nowrap text-sm truncate">
                 {item.title}
               </span>
               {item.badge && (
                 <Badge 
                   variant="outline" 
-                  className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
+                  className="ml-auto flex-shrink-0 bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
                 >
                   {item.badge.count}
                 </Badge>
               )}
             </NavLink>
           ))}
-        </div>
+        </nav>
       </div>
       
       {/* User Profile Section */}
-      <div className="border-t border-gray-200 p-3 w-full">
+      <div className="border-t border-gray-200 p-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9 border border-gray-200">
+          <Avatar className="h-9 w-9 border border-gray-200 flex-shrink-0">
             <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
             <AvatarFallback className="bg-primary/10 text-primary">
               {getUserInitials()}
             </AvatarFallback>
           </Avatar>
           
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-w-0">
             <div className="truncate text-sm font-medium text-gray-900">
               {user?.firstName} {user?.lastName}
             </div>
@@ -116,7 +116,7 @@ export function CollapsibleSidebar({ expanded = true }: CollapsibleSidebarProps)
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-500 hover:text-gray-700 rounded-full ml-auto"
+            className="text-gray-500 hover:text-gray-700 rounded-full ml-auto flex-shrink-0"
             onClick={logout}
             title="Logout"
           >

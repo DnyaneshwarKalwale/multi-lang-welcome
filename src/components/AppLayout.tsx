@@ -81,43 +81,65 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     delta: 10,
   });
 
-  // Content margin changes based on sidebar state and screen size
-  const contentMargin = !isMobile && sidebarOpen ? 'lg:ml-[240px]' : !isMobile ? 'lg:ml-[72px]' : 'ml-0';
+  // Calculate sidebar width based on expanded state
+  const sidebarWidth = 240;
+  
+  // Calculate content margin/width
+  const contentMarginClass = !isMobile && sidebarOpen
+    ? `lg:ml-[${sidebarWidth}px]` 
+    : !isMobile 
+      ? 'lg:ml-[72px]' 
+      : '';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
-      {/* Collapsible sidebar with AnimatePresence for smooth transitions */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div 
-              initial={{ x: -240 }}
-              animate={{ x: 0 }}
-              exit={{ x: -240 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-y-0 left-0 z-40 w-[240px]"
-            >
-              <CollapsibleSidebar expanded={true} />
-            </motion.div>
-            
-            {/* Overlay for mobile when sidebar is open */}
-            {isMobile && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 z-30"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-          </>
+    <div className="h-screen w-screen flex overflow-hidden bg-background">
+      {/* Fixed sidebar container */}
+      <div 
+        className={cn(
+          "fixed inset-y-0 left-0 z-40",
+          isMobile ? "w-0" : "w-[72px]",
+          sidebarOpen && !isMobile && "w-[240px]"
         )}
-      </AnimatePresence>
+      >
+        <AnimatePresence>
+          {sidebarOpen && (
+            <>
+              <motion.div 
+                initial={{ x: isMobile ? -sidebarWidth : 0 }}
+                animate={{ x: 0 }}
+                exit={{ x: isMobile ? -sidebarWidth : 0 }}
+                transition={{ duration: 0.2 }}
+                className="h-full w-[240px]"
+              >
+                <CollapsibleSidebar expanded={true} />
+              </motion.div>
+              
+              {/* Overlay for mobile when sidebar is open */}
+              {isMobile && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="fixed inset-0 bg-black/50 z-30"
+                  onClick={() => setSidebarOpen(false)}
+                />
+              )}
+            </>
+          )}
+        </AnimatePresence>
+      </div>
       
-      {/* Main content area with swipe capability on mobile */}
+      {/* Main content area with automatic width adjustment */}
       <div 
         {...swipeHandlers}
-        className={cn("flex-1 flex flex-col min-h-screen w-full transition-all duration-300", contentMargin)}
+        className={cn(
+          "flex flex-col min-h-screen w-full transition-all duration-300",
+          contentMarginClass
+        )}
+        style={{
+          width: isMobile ? '100%' : sidebarOpen ? `calc(100% - ${sidebarWidth}px)` : 'calc(100% - 72px)'
+        }}
       >
         {/* Top header bar */}
         <header className="h-14 sm:h-16 border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 bg-purple-50 sticky top-0 z-30 shadow-sm">
@@ -163,9 +185,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        {/* Main content with improved padding for mobile */}
+        {/* Main content with improved padding and overflow handling */}
         <main className="flex-1 p-3 sm:p-6 overflow-auto">
-          <div className="max-w-full sm:max-w-[95%] mx-auto">
+          <div className="w-full mx-auto pb-6">
             {children || <Outlet />}
           </div>
         </main>

@@ -94,7 +94,7 @@ const PricingPage = () => {
     },
     {
       question: "Can I use Sekcion on multiple platforms?",
-      answer: "Yes, our Pro and Business plans support publishing to multiple social media platforms including Twitter, Facebook, Instagram, LinkedIn, and more."
+      answer: "Yes, our Pro and Business plans support publishing to multiple social media platforms including LinkedIn, Facebook, Instagram, and more."
     },
     {
       question: "Do you offer discounts for non-profits?",

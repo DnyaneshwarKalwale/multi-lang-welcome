@@ -9,7 +9,7 @@ import {
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
   Layers, LayoutGrid, ArrowUp, CreditCard, Building,
-  MoreHorizontal, MessageCircle
+  MoreHorizontal, MessageCircle, CheckCircle
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -324,55 +324,59 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-full">
-      {/* Workspace Selection */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+    <div className="w-full overflow-hidden">
+      {/* Dashboard Header and Workspace Selector */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold mb-1">Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Welcome back, {getUserFullName()}!
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {t('dashboardWelcome', {username: getUserFullName()}) || `Welcome back, ${getUserFullName()}!`}
           </p>
-                    </div>
-
-        <div className="flex items-center gap-2">
+        </div>
+        
+        <div className="flex items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2 h-9">
-                {currentWorkspace.type === 'personal' ? (
-                  <User className="h-4 w-4 text-purple-500" />
-                ) : (
-                  <Users className="h-4 w-4 text-green-500" />
-                )}
-                <span className="max-w-[120px] truncate">{currentWorkspace.name}</span>
-                <ChevronDown className="h-4 w-4 opacity-50" />
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 bg-white dark:bg-gray-800"
+              >
+                <Building className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium truncate max-w-[150px]">
+                  {currentWorkspace.name}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[220px]">
+            <DropdownMenuContent align="end" className="w-60">
               {workspaces.map(workspace => (
                 <DropdownMenuItem 
                   key={workspace.id}
                   onClick={() => setCurrentWorkspace(workspace)}
-                  className={`flex items-center gap-2 ${
-                    currentWorkspace.id === workspace.id ? 'bg-gray-100 dark:bg-gray-800' : ''
-                  }`}
+                  className="flex items-center gap-2 py-2"
                 >
                   {workspace.type === 'personal' ? (
-                    <User className="h-4 w-4 text-purple-500" />
+                    <UserCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   ) : (
-                    <Users className="h-4 w-4 text-green-500" />
+                    <Users className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   )}
-                  <span className="truncate">{workspace.name}</span>
-                  {workspace.type === 'team' && (
-                    <Badge variant="outline" className="ml-auto text-xs">
-                      {workspace.memberCount} members
-                                </Badge>
-                              )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{workspace.name}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {workspace.type === 'personal' ? 'Personal workspace' : `${workspace.memberCount} members`}
+                    </p>
+                  </div>
+                  {currentWorkspace.id === workspace.id && (
+                    <CheckCircle className="h-4 w-4 text-teal-600" />
+                  )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 text-primary">
-                <PlusCircle className="h-4 w-4" />
-                <span>Create New Workspace</span>
+              <DropdownMenuItem onClick={() => navigate('/dashboard/teams/create')}>
+                <PlusCircle className="h-4 w-4 mr-2 text-teal-600" />
+                <span>Create new workspace</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
