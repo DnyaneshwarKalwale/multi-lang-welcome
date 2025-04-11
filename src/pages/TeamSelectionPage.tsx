@@ -18,11 +18,11 @@ export default function TeamSelectionPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
-      {/* Twitter-inspired background */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-white text-gray-900 relative overflow-hidden">
+      {/* Light background with subtle pattern */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px]"></div>
         <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
       </div>
       
@@ -40,7 +40,7 @@ export default function TeamSelectionPage() {
         >
           <div className="relative">
             <SekcionIconRounded className="w-20 h-20 text-blue-500" />
-            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-7 h-7 shadow-md" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         
@@ -53,7 +53,7 @@ export default function TeamSelectionPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-xl text-gray-600 dark:text-gray-300 mb-10"
+          className="text-xl text-gray-600 mb-10"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
@@ -66,15 +66,15 @@ export default function TeamSelectionPage() {
           transition={{ delay: 0.4 }}
         >
           <motion.div 
-            className={`bg-white dark:bg-gray-800 border ${workspaceType === "team" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 dark:border-gray-700"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
+            className={`bg-white border ${workspaceType === "team" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
             onClick={() => setWorkspaceType("team")}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
-            <div className={`p-5 rounded-full mb-6 ${workspaceType === "team" ? "bg-blue-100 dark:bg-blue-900/50" : "bg-gray-100 dark:bg-gray-700"}`}>
-              <Users className={`w-14 h-14 ${workspaceType === "team" ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`} />
+            <div className={`p-5 rounded-full mb-6 ${workspaceType === "team" ? "bg-blue-100" : "bg-gray-100"}`}>
+              <Users className={`w-14 h-14 ${workspaceType === "team" ? "text-blue-500" : "text-gray-500"}`} />
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">For my team</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-base mb-6">
+            <h3 className="text-xl font-bold mb-3 text-gray-900">For my team</h3>
+            <p className="text-gray-600 text-base mb-6">
               One place to create, review and track content for your team.
             </p>
             {workspaceType === "team" && (
@@ -88,15 +88,15 @@ export default function TeamSelectionPage() {
           </motion.div>
           
           <motion.div 
-            className={`bg-white dark:bg-gray-800 border ${workspaceType === "personal" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 dark:border-gray-700"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
+            className={`bg-white border ${workspaceType === "personal" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
             onClick={() => setWorkspaceType("personal")}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
-            <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-blue-100 dark:bg-blue-900/50" : "bg-gray-100 dark:bg-gray-700"}`}>
-              <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`} />
+            <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-blue-100" : "bg-gray-100"}`}>
+              <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-blue-500" : "text-gray-500"}`} />
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">For personal use</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-base mb-6">
+            <h3 className="text-xl font-bold mb-3 text-gray-900">For personal use</h3>
+            <p className="text-gray-600 text-base mb-6">
               Create content for a single social media profile.
             </p>
             {workspaceType === "personal" && (
@@ -116,9 +116,8 @@ export default function TeamSelectionPage() {
           transition={{ delay: 0.5 }}
         >
           <Button
-            variant="twitter"
-            rounded="full"
-            className="w-64 py-3 text-white font-bold"
+            variant="default"
+            className="w-64 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-full shadow-lg hover:shadow-xl"
             disabled={!workspaceType}
             onClick={nextStep}
           >

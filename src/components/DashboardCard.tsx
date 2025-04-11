@@ -282,7 +282,7 @@ export function DashboardProfileCard({ user, stats }: DashboardProfileCardProps)
         <p className="text-xs font-medium text-teal-600 dark:text-teal-400">85%</p>
       </div>
       
-      <div className="mt-2 h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="mt-2 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
         <div className="h-full bg-gradient-to-r from-teal-400 to-cyan-500 rounded-full" style={{ width: '85%' }}></div>
       </div>
     </div>

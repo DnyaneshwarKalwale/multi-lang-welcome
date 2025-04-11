@@ -1,102 +1,77 @@
-
 import React, { useState } from "react";
 import { ContinueButton } from "@/components/ContinueButton";
-import { BackButton } from "@/components/BackButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  Twitter, 
-  CalendarDays, 
-  ArrowLeft 
-} from "lucide-react";
+import { CheckCircle, Users, ArrowLeft, Calendar, Clock, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScripeIconRounded } from "@/components/ScripeIcon";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const daysOfWeek = [
+  { id: 'mon', label: 'M', fullName: 'Monday' },
+  { id: 'tue', label: 'T', fullName: 'Tuesday' },
+  { id: 'wed', label: 'W', fullName: 'Wednesday' },
+  { id: 'thu', label: 'T', fullName: 'Thursday' },
+  { id: 'fri', label: 'F', fullName: 'Friday' },
+  { id: 'sat', label: 'S', fullName: 'Saturday' },
+  { id: 'sun', label: 'S', fullName: 'Sunday' },
+];
 
 export default function PostFrequencyPage() {
-  const { postFrequency, setPostFrequency, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { nextStep, prevStep, updateOnboardingData, onboardingData, getStepProgress } = useOnboarding();
   const { current, total } = getStepProgress();
-  const { toast } = useToast();
-
-  // Track selected days instead of just frequency
-  const [selectedDays, setSelectedDays] = useState<Record<string, boolean>>({
-    monday: postFrequency && postFrequency >= 1 ? true : false,
-    tuesday: postFrequency && postFrequency >= 2 ? true : false,
-    wednesday: postFrequency && postFrequency >= 3 ? true : false,
-    thursday: postFrequency && postFrequency >= 4 ? true : false,
-    friday: postFrequency && postFrequency >= 5 ? true : false,
-    saturday: postFrequency && postFrequency >= 6 ? true : false,
-    sunday: postFrequency && postFrequency >= 7 ? true : false,
-  });
-
-  const daysOfWeek = [
-    { id: 'monday', label: 'M', fullName: 'Monday' },
-    { id: 'tuesday', label: 'T', fullName: 'Tuesday' },
-    { id: 'wednesday', label: 'W', fullName: 'Wednesday' },
-    { id: 'thursday', label: 'T', fullName: 'Thursday' },
-    { id: 'friday', label: 'F', fullName: 'Friday' },
-    { id: 'saturday', label: 'S', fullName: 'Saturday' },
-    { id: 'sunday', label: 'S', fullName: 'Sunday' }
-  ];
-
-  // Calculate frequency based on selected days
-  const calculateFrequency = (): number => {
-    return Object.values(selectedDays).filter(Boolean).length;
-  };
-
-  // Handle day selection
-  const handleDayToggle = (dayId: string) => {
-    const updatedDays = { ...selectedDays, [dayId]: !selectedDays[dayId] };
-    setSelectedDays(updatedDays);
-    
-    // Update postFrequency in the onboarding context based on selected days count
-    const newFrequency = Object.values(updatedDays).filter(Boolean).length as 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
-    setPostFrequency(newFrequency || null);
-  };
-
-  const handleContinue = () => {
-    if (calculateFrequency() === 0) {
-      toast({
-        title: "Please select at least one day",
-        description: "You need to select at least one day to continue.",
-        variant: "destructive",
-      });
-      return;
+  
+  // Get the saved selected days from onboarding data or initialize with all false
+  const [selectedDays, setSelectedDays] = useState<Record<string, boolean>>(
+    onboardingData.postingDays || {
+      mon: false,
+      tue: false,
+      wed: false,
+      thu: false,
+      fri: false,
+      sat: false,
+      sun: false,
     }
-    nextStep();
-  };
-
+  );
+  
   // Animation variants
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
-
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
+  
+  // Calculate the number of days selected
+  const calculateFrequency = (): number => {
+    return Object.values(selectedDays).filter(Boolean).length;
+  };
+  
+  // Handle day selection toggle
+  const handleDayToggle = (dayId: string) => {
+    setSelectedDays(prev => ({
+      ...prev,
+      [dayId]: !prev[dayId]
+    }));
+  };
+  
+  // Handle continue button click
+  const handleContinue = () => {
+    // Save the selected days to onboarding data
+    updateOnboardingData({ postingDays: selectedDays });
+    nextStep();
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
-      {/* Twitter-inspired background */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-white text-gray-900 relative overflow-hidden">
+      {/* Light background with subtle pattern */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 dark:bg-blue-900/30 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px]"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px]"></div>
         <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
       </div>
       
       {/* Back button */}
-      <motion.div
+      <motion.div 
         className="absolute top-6 left-6 z-10"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
@@ -105,8 +80,7 @@ export default function PostFrequencyPage() {
         <Button
           variant="ghost"
           size="icon"
-          rounded="full"
-          className="flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-500 dark:hover:text-blue-400"
+          className="flex items-center justify-center w-10 h-10 text-gray-700 hover:bg-blue-50 hover:text-blue-500 rounded-full"
           onClick={prevStep}
         >
           <ArrowLeft size={18} />
@@ -127,7 +101,7 @@ export default function PostFrequencyPage() {
         >
           <div className="relative">
             <ScripeIconRounded className="w-20 h-20 text-blue-500" />
-            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white dark:bg-gray-900 p-1 rounded-full w-7 h-7 shadow-md" />
+            <Twitter className="absolute bottom-0 right-0 text-blue-500 bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         
@@ -140,7 +114,7 @@ export default function PostFrequencyPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-lg text-gray-600 dark:text-gray-300 mb-10"
+          className="text-lg text-gray-600 mb-10"
           variants={fadeIn}
           transition={{ delay: 0.3 }}
         >
@@ -152,10 +126,10 @@ export default function PostFrequencyPage() {
           variants={fadeIn}
           transition={{ delay: 0.5 }}
         >
-          <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md">
+          <div className="max-w-md mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-md">
             <div className="flex items-center mb-6">
               <Calendar className="text-blue-500 mr-3" size={24} />
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Choose Your Tweet Days</h3>
+              <h3 className="text-xl font-bold text-gray-900">Choose Your Tweet Days</h3>
             </div>
             
             <div className="grid grid-cols-7 gap-2 mb-6">
@@ -165,8 +139,8 @@ export default function PostFrequencyPage() {
                   className={`
                     relative h-16 flex flex-col items-center justify-center rounded-md transition-all cursor-pointer
                     ${selectedDays[day.id] 
-                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800' 
-                      : 'bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'}
+                      ? 'bg-blue-50 border border-blue-200' 
+                      : 'bg-gray-50 border border-gray-200 hover:border-blue-300'}
                   `}
                   onClick={() => handleDayToggle(day.id)}
                 >
@@ -178,10 +152,10 @@ export default function PostFrequencyPage() {
                       className="h-3 w-3"
                     />
                   </div>
-                  <span className={`text-sm font-medium ${selectedDays[day.id] ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                  <span className={`text-sm font-medium ${selectedDays[day.id] ? 'text-blue-600' : 'text-gray-600'}`}>
                     {day.label}
                   </span>
-                  <span className="text-[10px] mt-0.5 text-gray-500 dark:text-gray-400">
+                  <span className="text-[10px] mt-0.5 text-gray-500">
                     {day.fullName.substring(0, 3)}
                   </span>
                   {selectedDays[day.id] && (
@@ -197,12 +171,12 @@ export default function PostFrequencyPage() {
               ))}
             </div>
             
-            <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-              <div className="flex items-center text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+              <div className="flex items-center text-gray-600">
                 <Clock size={16} className="mr-2" />
                 <span className="text-sm">Optimal posting time</span>
               </div>
-              <span className="text-sm text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-100 dark:border-blue-800/50 font-medium">
+              <span className="text-sm text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 font-medium">
                 9:00 - 11:00 AM
               </span>
             </div>
@@ -210,7 +184,7 @@ export default function PostFrequencyPage() {
           
           {calculateFrequency() > 0 && (
             <motion.div 
-              className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-300 text-sm shadow-md"
+              className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-8 py-3 px-5 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm shadow-md"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -227,9 +201,8 @@ export default function PostFrequencyPage() {
           transition={{ delay: 0.6 }}
         >
           <Button
-            variant="twitter"
-            rounded="full"
-            className="w-64 py-3 text-white font-bold"
+            variant="default"
+            className="w-64 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-full shadow-lg hover:shadow-xl"
             disabled={calculateFrequency() === 0}
             onClick={handleContinue}
           >

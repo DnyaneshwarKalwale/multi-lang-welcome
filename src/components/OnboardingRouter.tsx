@@ -59,9 +59,9 @@ export function OnboardingRouter() {
   }, [location.pathname, saveProgress, user]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Progress indicator - visible on all onboarding pages */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-800 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100 z-50">
         <div 
           className="h-full bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-500 ease-in-out"
           style={{ 

@@ -33,6 +33,7 @@ import InspirationPage from "./pages/InspirationPage";
 import SettingsPage from "./pages/SettingsPage";
 import RequestCarouselPage from "./pages/RequestCarouselPage";
 import CarouselsPage from "./pages/CarouselsPage";
+import MyCarouselsPage from "./pages/MyCarouselsPage";
 import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
@@ -248,6 +249,7 @@ const AppRoutes = () => {
           <Route path="/dashboard/posts" element={<PostLibraryPage />} />
           <Route path="/dashboard/request-carousel" element={<RequestCarouselPage />} />
           <Route path="/dashboard/carousels" element={<CarouselsPage />} />
+          <Route path="/dashboard/my-carousels" element={<MyCarouselsPage />} />
           <Route path="/dashboard/scraper" element={<ScraperPage />} />
           <Route path="/dashboard/inspiration" element={<InspirationPage />} />
           <Route path="/dashboard/ai" element={<AIWriterPage />} />

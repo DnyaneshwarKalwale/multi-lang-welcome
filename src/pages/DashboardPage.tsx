@@ -330,8 +330,8 @@ const DashboardPage: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400">
             You're in <span className="font-medium">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
-        </div>
-        
+                    </div>
+
         <div className="mt-4 md:mt-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -357,8 +357,8 @@ const DashboardPage: React.FC = () => {
                   {workspace.type === 'team' && (
                     <Badge variant="outline" className="ml-auto text-xs">
                       {workspace.memberCount} members
-                    </Badge>
-                  )}
+                                </Badge>
+                              )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -477,8 +477,8 @@ const DashboardPage: React.FC = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Link your LinkedIn profile to enable powerful content creation features
                   </p>
-                  <Button 
-                    variant="outline" 
+            <Button
+              variant="outline"
                     className="w-full border-gray-300 text-gray-700 hover:text-primary hover:border-primary"
                   >
                     <Linkedin className="h-4 w-4 mr-2" />
@@ -501,25 +501,25 @@ const DashboardPage: React.FC = () => {
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Create New Post
-              </Button>
-              
-              <Button 
-                variant="outline" 
+            </Button>
+            
+            <Button
+              variant="outline"
                 className="w-full justify-start"
                 onClick={() => navigate('/dashboard/request-carousel')}
-              >
+            >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Request Carousel
-              </Button>
-              
-              <Button 
-                variant="outline" 
+            </Button>
+            
+            <Button
+              variant="outline"
                 className="w-full justify-start"
                 onClick={() => navigate('/dashboard/scraper')}
-              >
+            >
                 <FileText className="h-4 w-4 mr-2" />
                 Scrape Content
-              </Button>
+            </Button>
             </CardContent>
           </Card>
           
@@ -549,14 +549,14 @@ const DashboardPage: React.FC = () => {
                 <CardTitle>Upcoming Posts</CardTitle>
                 <CardDescription>Your scheduled content for publishing</CardDescription>
               </div>
-              <Button 
+                <Button
                 variant="ghost" 
-                size="sm" 
+                  size="sm"
                 className="text-primary"
                 onClick={() => navigate('/dashboard/posts')}
               >
                 View All
-              </Button>
+                </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -580,7 +580,7 @@ const DashboardPage: React.FC = () => {
                       <p className="text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2">
                         {post.content}
                       </p>
-                    </div>
+                  </div>
                   </div>
                 ))}
               </div>
