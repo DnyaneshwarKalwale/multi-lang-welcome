@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Home, FileText, BookOpen, Settings, Users, 
   PlusCircle, BarChart3, Linkedin, ChevronLeft, 
-  LogOut, ChevronRight, Bell, MessageSquare, Lightbulb,
+  LogOut, Menu, Bell, MessageSquare, Lightbulb,
   Heart, BookMarked, CreditCard, LayoutGrid,
   Search, Upload, Headphones, Youtube, Server
 } from 'lucide-react';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { BrandOutLogo } from './BrandOutLogo';
+import { LovableLogo } from './LovableLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 
@@ -140,8 +140,8 @@ export function CollapsibleSidebar() {
               exit={{ opacity: 0 }}
               className="flex items-center gap-2 overflow-hidden"
             >
-              <BrandOutLogo variant="icon" size="sm" className="w-8 h-8" showText={false} />
-              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">BrandOut</span>
+              <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-primary" />
+              <span className="font-semibold text-gray-900">Lovable</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -152,7 +152,7 @@ export function CollapsibleSidebar() {
           onClick={toggleSidebar} 
           className="rounded-full h-8 w-8 hidden lg:flex"
         >
-          {expanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          {expanded ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 

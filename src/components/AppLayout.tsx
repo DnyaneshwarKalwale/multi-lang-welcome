@@ -3,11 +3,10 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
-import { BrandOutLogo } from './BrandOutLogo';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -81,7 +80,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main content area */}
       <div className={cn("flex-1 flex flex-col min-h-screen w-full transition-all duration-300", contentMargin)}>
         {/* Top header bar */}
-        <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-purple-50 to-blue-50 sticky top-0 z-30 shadow-sm">
+        <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
@@ -93,21 +92,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               }}
               className="rounded-full"
             >
-              {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+              <Menu size={20} />
             </Button>
             
-            <div className="flex items-center gap-2">
-              <BrandOutLogo variant="icon" size="sm" showText={false} />
-              <h1 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">
-                {user?.firstName ? `${user.firstName}'s Dashboard` : 'BrandOut Dashboard'}
-              </h1>
-            </div>
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
+              {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
+            </h1>
           </div>
           
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100">
               <Bell size={20} className="text-blue-600" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
                 3
               </span>
             </Button>
@@ -119,7 +115,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               >
                 <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-blue-200 shadow-sm">
                   <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
-                  <AvatarFallback className="bg-gradient-to-r from-purple-100 to-blue-100 text-blue-600">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
