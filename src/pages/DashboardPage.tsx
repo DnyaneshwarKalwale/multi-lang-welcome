@@ -331,8 +331,8 @@ const DashboardPage: React.FC = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Welcome back, {getUserFullName()}!
           </p>
-        </div>
-        
+                    </div>
+
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -348,7 +348,7 @@ const DashboardPage: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[220px]">
               {workspaces.map(workspace => (
-                <DropdownMenuItem
+                <DropdownMenuItem 
                   key={workspace.id}
                   onClick={() => setCurrentWorkspace(workspace)}
                   className={`flex items-center gap-2 ${
@@ -364,8 +364,8 @@ const DashboardPage: React.FC = () => {
                   {workspace.type === 'team' && (
                     <Badge variant="outline" className="ml-auto text-xs">
                       {workspace.memberCount} members
-                    </Badge>
-                  )}
+                                </Badge>
+                              )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -484,8 +484,8 @@ const DashboardPage: React.FC = () => {
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">
                     Link your LinkedIn profile to enable powerful content creation features
                   </p>
-                  <Button
-                    variant="outline"
+            <Button
+              variant="outline"
                     className="w-full border-gray-300 text-gray-700 hover:text-primary hover:border-primary"
                   >
                     <Linkedin className="h-4 w-4 mr-2" />
@@ -508,25 +508,25 @@ const DashboardPage: React.FC = () => {
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Create New Post
-              </Button>
+            </Button>
             
-              <Button
-                variant="outline"
+            <Button
+              variant="outline"
                 className="w-full justify-start text-sm h-9 sm:h-10"
                 onClick={() => navigate('/dashboard/request-carousel')}
-              >
+            >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Request Carousel
-              </Button>
+            </Button>
             
-              <Button
-                variant="outline"
+            <Button
+              variant="outline"
                 className="w-full justify-start text-sm h-9 sm:h-10"
                 onClick={() => navigate('/dashboard/scraper')}
-              >
+            >
                 <FileText className="h-4 w-4 mr-2" />
                 Scrape Content
-              </Button>
+            </Button>
             </CardContent>
           </Card>
           
@@ -556,14 +556,14 @@ const DashboardPage: React.FC = () => {
                 <CardTitle className="text-base sm:text-lg">Upcoming Posts</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Your scheduled content for publishing</CardDescription>
               </div>
-              <Button
+                <Button
                 variant="ghost" 
-                size="sm"
+                  size="sm"
                 className="text-purple-600 text-xs sm:text-sm"
                 onClick={() => navigate('/dashboard/posts')}
               >
                 View All
-              </Button>
+                </Button>
             </CardHeader>
             <CardContent className="px-4">
               <div className="space-y-3 sm:space-y-4">
@@ -587,7 +587,7 @@ const DashboardPage: React.FC = () => {
                       <p className="text-xs sm:text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2 break-words">
                         {post.content}
                       </p>
-                    </div>
+                  </div>
                   </div>
                 ))}
               </div>
@@ -603,7 +603,7 @@ const DashboardPage: React.FC = () => {
               </div>
               <Button 
                 variant="ghost" 
-                size="sm"
+                size="sm" 
                 className="text-purple-600 text-xs sm:text-sm"
                 onClick={() => navigate('/dashboard/analytics')}
               >
@@ -671,8 +671,8 @@ const DashboardPage: React.FC = () => {
                   <Button variant="outline" size="sm" className="text-xs sm:text-sm">
                     Connect LinkedIn
                   </Button>
-                </div>
-              )}
+                  </div>
+                )}
             </CardContent>
           </Card>
         </div>
