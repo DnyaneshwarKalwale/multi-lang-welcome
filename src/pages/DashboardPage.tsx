@@ -9,7 +9,7 @@ import {
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
   Layers, LayoutGrid, ArrowUp, CreditCard, Building,
-  MoreHorizontal, MessageCircle, Separator
+  MoreHorizontal, MessageCircle
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
