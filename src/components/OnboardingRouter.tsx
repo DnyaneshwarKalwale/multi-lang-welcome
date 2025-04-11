@@ -13,6 +13,7 @@ import InspirationProfilesPage from "@/pages/InspirationProfilesPage";
 import ExtensionInstallPage from "@/pages/ExtensionInstallPage";
 import CompletionPage from "@/pages/CompletionPage";
 import DashboardPage from "@/pages/DashboardPage";
+import { BrandOutLogo } from "@/components/BrandOutLogo";
 
 export function OnboardingRouter() {
   const { workspaceType, currentStep, saveProgress, setCurrentStep } = useOnboarding();
@@ -63,12 +64,17 @@ export function OnboardingRouter() {
       {/* Progress indicator - visible on all onboarding pages */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100 z-50">
         <div 
-          className="h-full bg-gradient-to-r from-cyan-500 to-violet-600 transition-all duration-500 ease-in-out"
+          className="h-full bg-gradient-to-r from-purple-600 to-blue-500 transition-all duration-500 ease-in-out"
           style={{ 
             width: `${getProgressPercentage(currentStep, workspaceType)}%`,
-            boxShadow: '0 0 10px rgba(6, 182, 212, 0.5)'
+            boxShadow: '0 0 10px rgba(124, 58, 237, 0.5)'
           }}
         />
+      </div>
+
+      {/* BrandOut logo header - visible on all onboarding pages */}
+      <div className="fixed top-4 left-0 right-0 flex justify-center z-40 pointer-events-none">
+        <BrandOutLogo variant="full" size="md" className="h-10" />
       </div>
       
       <Routes>

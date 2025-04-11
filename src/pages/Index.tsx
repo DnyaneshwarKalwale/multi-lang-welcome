@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutLogo } from "@/components/BrandOutLogo";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Star, Linkedin, BarChart3, PlusCircle, Lightbulb, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -53,7 +53,7 @@ const Index = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <LovableLogo variant="full" size="md" className="h-9" />
+              <BrandOutLogo variant="full" size="md" className="h-9" />
             </div>
             
             {/* Desktop Navigation */}
@@ -190,7 +190,7 @@ const Index = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Why professionals choose <span className="text-primary">Lovable</span>
+              Why professionals choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">BrandOut</span>
             </motion.h2>
             <motion.p 
               className="text-lg text-gray-600"
@@ -336,7 +336,7 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              See how Lovable has helped professionals grow their personal brand and create impactful content on LinkedIn.
+              See how BrandOut has helped professionals grow their personal brand and create impactful content on LinkedIn.
             </motion.p>
           </div>
           
@@ -365,7 +365,7 @@ const Index = () => {
                   </div>
                 </div>
                 <blockquote className="text-gray-600 italic">
-                  "Lovable has completely transformed how I approach LinkedIn content. The analytics help me understand what's working, and the AI content suggestions save me hours every week. My engagement has increased by over 200% since I started using it."
+                  "BrandOut has completely transformed how I approach LinkedIn content. The analytics help me understand what's working, and the AI content suggestions save me hours every week. My engagement has increased by over 200% since I started using it."
                 </blockquote>
               </motion.div>
             ))}
@@ -404,7 +404,7 @@ const Index = () => {
               Ready to transform your <span className="text-primary">LinkedIn presence</span>?
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of professionals already using Lovable to create better LinkedIn content and grow their professional network.
+              Join thousands of professionals already using BrandOut to create better LinkedIn content and grow their professional network.
             </p>
               <Button 
               className="bg-primary hover:bg-primary-600 text-white px-8 py-7 rounded-xl text-lg shadow-lg hover:shadow-primary/30"
@@ -422,7 +422,7 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <LovableLogo variant="full" size="md" className="h-8 mb-6" />
+              <BrandOutLogo variant="full" size="md" className="h-8 mb-6" />
               <p className="text-gray-500 text-sm">
                 The professional content platform for LinkedIn creators and thought leaders.
               </p>
@@ -461,7 +461,7 @@ const Index = () => {
           
           <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Lovable. All rights reserved.
+              © {new Date().getFullYear()} BrandOut. All rights reserved.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-primary">

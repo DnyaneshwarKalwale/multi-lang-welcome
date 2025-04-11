@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ChevronRight, Check, Star, Linkedin, Users, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { LovableLogo } from "@/components/LovableLogo";
+import { BrandOutLogo } from "@/components/BrandOutLogo";
 
 interface IndexHeroProps {
   onLogin: () => void;
@@ -76,7 +76,7 @@ export default function IndexHero({ onLogin, onRegister }: IndexHeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight bg-clip-text text-transparent bg-gradient-to-br from-primary to-secondary">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
               Elevate Your LinkedIn Presence
             </h1>
             
@@ -147,7 +147,7 @@ export default function IndexHero({ onLogin, onRegister }: IndexHeroProps) {
                   <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
                 <div className="text-xs font-medium text-gray-500">LinkedIn Content Creator</div>
-                <LovableLogo variant="icon" size="sm" className="w-5 h-5 text-primary" />
+                <BrandOutLogo variant="icon" size="sm" className="w-5 h-5" />
               </div>
               
               <div className="p-6">
@@ -164,7 +164,7 @@ export default function IndexHero({ onLogin, onRegister }: IndexHeroProps) {
                   <div className="space-y-4">
                     <div className="bg-gray-50/70 rounded-xl p-5 border border-gray-100/50">
                       <div className="flex items-start mb-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-sm mr-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center text-white shadow-sm mr-3">
                           <Users size={16} />
                         </div>
                         <div className="flex-1">

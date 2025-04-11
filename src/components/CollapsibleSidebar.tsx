@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { LovableLogo } from './LovableLogo';
+import { BrandOutLogo } from './BrandOutLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 
@@ -140,8 +140,8 @@ export function CollapsibleSidebar() {
               exit={{ opacity: 0 }}
               className="flex items-center gap-2 overflow-hidden"
             >
-              <LovableLogo variant="icon" size="sm" className="w-8 h-8 text-primary" />
-              <span className="font-semibold text-gray-900">Lovable</span>
+              <BrandOutLogo variant="icon" size="sm" className="w-8 h-8" showText={false} />
+              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">BrandOut</span>
             </motion.div>
           )}
         </AnimatePresence>
