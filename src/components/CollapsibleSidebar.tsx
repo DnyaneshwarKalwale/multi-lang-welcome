@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  Home, User, Settings, FileText, BookOpen, Users, 
-  Zap, Calendar, BarChart3, Linkedin, ChevronLeft, 
-  Menu, LogOut
+  Home, FileText, BookOpen, Settings, Users, 
+  PlusCircle, BarChart3, Linkedin, ChevronLeft, 
+  LogOut, Menu, Bell, MessageSquare, Lightbulb,
+  Heart, BookMarked, Calendar 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,13 +12,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { LovableLogo } from './LovableLogo';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
 
 interface NavItem {
   title: string;
   icon: React.ElementType;
   path: string;
   badge?: {
-    text: string | number;
+    count: number;
     variant: 'default' | 'outline' | 'primary' | 'secondary';
   };
 }
@@ -25,15 +27,36 @@ interface NavItem {
 export function CollapsibleSidebar() {
   const [expanded, setExpanded] = useState(true);
   const { user, logout } = useAuth();
+  const location = useLocation();
+  
+  // Close sidebar on mobile by default
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setExpanded(false);
+      } else {
+        setExpanded(true);
+      }
+    };
+    
+    // Set initial state
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const navItems: NavItem[] = [
     { title: 'Dashboard', icon: Home, path: '/dashboard' },
-    { title: 'Content Generator', icon: Zap, path: '/content-generator' },
-    { title: 'My Posts', icon: FileText, path: '/my-posts' },
-    { title: 'Calendar', icon: Calendar, path: '/calendar' },
+    { title: 'Create Post', icon: PlusCircle, path: '/create-post' },
+    { title: 'Post Library', icon: FileText, path: '/post-library', badge: { count: 3, variant: 'primary' } },
     { title: 'Analytics', icon: BarChart3, path: '/analytics' },
+    { title: 'Inspiration', icon: Lightbulb, path: '/inspiration' },
+    { title: 'Calendar', icon: Calendar, path: '/calendar' },
+    { title: 'Messages', icon: MessageSquare, path: '/messages', badge: { count: 2, variant: 'primary' } },
     { title: 'Connections', icon: Users, path: '/connections' },
     { title: 'Learning Hub', icon: BookOpen, path: '/learning-hub' },
+    { title: 'Saved Items', icon: BookMarked, path: '/saved-items' },
     { title: 'Settings', icon: Settings, path: '/settings' },
   ];
   
@@ -96,62 +119,65 @@ export function CollapsibleSidebar() {
           )}
         </AnimatePresence>
         
-        {expanded && (
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="rounded-full h-8 w-8">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-        )}
-        
-        {!expanded && (
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="rounded-full h-8 w-8">
-            <Menu className="h-5 w-5" />
-          </Button>
-        )}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar} 
+          className="rounded-full h-8 w-8 hidden lg:flex"
+        >
+          {expanded ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
       </div>
 
       {/* Navigation Menu */}
-      <div className={cn(
-        'mt-2 flex flex-col gap-1 w-full px-3 py-2 overflow-hidden',
-        !expanded && 'items-center'
-      )}>
-        {navItems.map((item, index) => (
-          <NavLink
-            key={index}
-            to={item.path}
-            className={({ isActive }) => cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
-              isActive 
-                ? 'bg-primary text-white hover:bg-primary/90' 
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
-              !expanded && 'justify-center px-2'
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <AnimatePresence>
-              {expanded && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="font-medium"
-                >
-                  {item.title}
-                </motion.span>
+      <div className="flex-1 w-full overflow-y-auto">
+        <div className={cn(
+          'mt-2 flex flex-col gap-1 w-full px-3 py-2',
+          !expanded && 'items-center'
+        )}>
+          {navItems.map((item, index) => (
+            <NavLink
+              key={index}
+              to={item.path}
+              className={({ isActive }) => cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
+                isActive 
+                  ? 'bg-primary-50 text-primary dark:bg-primary-900/20 dark:text-primary-400' 
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
+                !expanded && 'justify-center px-2',
+                expanded ? 'w-full' : 'w-auto'
               )}
-            </AnimatePresence>
-            {expanded && item.badge && (
-              <span className={cn(
-                'ml-auto rounded-full px-2 py-0.5 text-xs font-medium',
-                item.badge.variant === 'primary' && 'bg-primary/10 text-primary',
-                item.badge.variant === 'secondary' && 'bg-secondary/10 text-secondary',
-                item.badge.variant === 'default' && 'bg-gray-100 text-gray-600',
-                item.badge.variant === 'outline' && 'border border-gray-200 text-gray-600'
-              )}>
-                {item.badge.text}
-              </span>
-            )}
-          </NavLink>
-        ))}
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <AnimatePresence>
+                {expanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="font-medium flex-1 whitespace-nowrap"
+                  >
+                    {item.title}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              {item.badge && (
+                expanded ? (
+                  <Badge 
+                    variant="outline" 
+                    className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
+                  >
+                    {item.badge.count}
+                  </Badge>
+                ) : (
+                  <span className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full text-white text-[10px] flex items-center justify-center">
+                    {item.badge.count}
+                  </span>
+                )
+              )}
+            </NavLink>
+          ))}
+        </div>
       </div>
       
       {/* User Profile Section */}
@@ -192,6 +218,7 @@ export function CollapsibleSidebar() {
             expanded ? 'ml-auto' : 'mt-3'
           )}
           onClick={logout}
+          title="Logout"
         >
           <LogOut className="h-5 w-5" />
         </Button>
