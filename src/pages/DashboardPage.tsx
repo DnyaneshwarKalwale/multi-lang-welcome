@@ -134,7 +134,7 @@ const DashboardPageContent: React.FC = () => {
       isThread: false,
     }
   ];
-  
+
   const [scheduledTweets, setScheduledTweets] = useState(fallbackScheduledTweets);
 
   // Load Twitter data from extension if available
