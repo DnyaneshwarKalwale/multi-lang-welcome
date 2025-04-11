@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+// Define the theme context type with only light theme
 interface ThemeContextType {
   theme: "light";
   isThemeLoaded: boolean;

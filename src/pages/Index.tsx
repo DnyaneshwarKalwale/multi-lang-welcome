@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ScripeLogotype } from "@/components/ScripeIcon";
 import { Button } from "@/components/ui/button";
@@ -49,37 +48,37 @@ const Index = () => {
   ];
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-800 dark:text-gray-200 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white text-gray-800 overflow-x-hidden">
       {/* Navbar */}
-      <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm' : ''}`}>
+      <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : ''}`}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <ScripeLogotype className="h-9 text-primary-600 dark:text-primary-400" />
+              <ScripeLogotype className="h-9 text-primary-600" />
             </div>
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <a href="#features" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
                 Features
               </a>
-              <Link to="/how-it-works" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <Link to="/how-it-works" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
                 How It Works
               </Link>
-              <a href="#testimonials" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <a href="#testimonials" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
                 Testimonials
               </a>
-              <Link to="/pricing" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium transition-colors duration-200">
+              <Link to="/pricing" className="text-gray-700 hover:text-primary-600 text-sm font-medium transition-colors duration-200">
                 Pricing
               </Link>
             </nav>
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle variant="minimal" />
+              <ThemeToggle />
               <Button 
                 variant="ghost" 
-                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+                className="text-gray-700 hover:text-primary-600"
                 onClick={() => setIsLoginOpen(true)}
               >
                 Log in
@@ -94,16 +93,16 @@ const Index = () => {
             
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
-              <ThemeToggle variant="minimal" />
+              <ThemeToggle />
               <button 
-                className="flex items-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none ml-2"
+                className="flex items-center p-2 rounded-full hover:bg-gray-100 focus:outline-none ml-2"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 <span className="sr-only">Open menu</span>
                 <div className="relative w-6 h-5">
-                  <span className={`absolute block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transform transition duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
-                  <span className={`absolute top-2 block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transition duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                  <span className={`absolute top-4 block h-0.5 w-6 bg-gray-800 dark:bg-gray-200 transform transition duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
+                  <span className={`absolute block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
+                  <span className={`absolute top-2 block h-0.5 w-6 bg-gray-800 transition duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
+                  <span className={`absolute top-4 block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
                 </div>
               </button>
             </div>
@@ -111,29 +110,29 @@ const Index = () => {
         </div>
         
         {/* Mobile Menu */}
-        <div className={`md:hidden fixed inset-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`md:hidden fixed inset-0 z-40 bg-white/90 backdrop-blur-md transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="container mx-auto px-6 pt-24 pb-16 h-full flex flex-col justify-between">
             <nav className="space-y-8">
               <a href="#features" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </a>
               <Link to="/how-it-works" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 How It Works
               </Link>
               <a href="#testimonials" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Testimonials
               </a>
               <Link to="/pricing" 
-                className="block text-2xl font-medium text-gray-800 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400"
+                className="block text-2xl font-medium text-gray-800 hover:text-primary-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
@@ -143,7 +142,7 @@ const Index = () => {
             <div className="space-y-4">
               <Button 
                 variant="outline" 
-                className="w-full justify-center text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
+                className="w-full justify-center text-gray-700 border-gray-300"
                 onClick={() => {
                   setIsLoginOpen(true);
                   setMobileMenuOpen(false);
@@ -163,7 +162,7 @@ const Index = () => {
             </div>
           </div>
           <button 
-            className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+            className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 text-gray-600"
             onClick={() => setMobileMenuOpen(false)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -180,24 +179,24 @@ const Index = () => {
       />
       
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-gray-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
+      <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 opacity-40 dark:opacity-20 bg-grid-pattern"></div>
+          <div className="absolute inset-0 opacity-40 bg-grid-pattern"></div>
         </div>
         
         <div className="container mx-auto px-6 relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <motion.h2 
-              className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
+              className="text-3xl md:text-4xl font-bold mb-4 text-gray-900"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Why creators choose <span className="text-primary-600 dark:text-primary-400">our platform</span>
+              Why creators choose <span className="text-primary-600">our platform</span>
             </motion.h2>
             <motion.p 
-              className="text-lg text-gray-600 dark:text-gray-300"
+              className="text-lg text-gray-600"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
@@ -215,13 +214,13 @@ const Index = () => {
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">AI-Powered Content</h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">AI-Powered Content</h3>
+              <p className="text-gray-600">
                 Generate high-performing content based on your unique voice, style, and topics that resonate with your audience.
               </p>
             </motion.div>
@@ -233,13 +232,13 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Growth Analytics</h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Growth Analytics</h3>
+              <p className="text-gray-600">
                 Track performance metrics and get actionable insights to optimize your content strategy and grow your audience.
               </p>
             </motion.div>
@@ -251,11 +250,11 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-6">
-                <Star className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+                <Star className="h-7 w-7 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Personalized Branding</h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Personalized Branding</h3>
+              <p className="text-gray-600">
                 Maintain consistent voice and brand identity across all your content with smart templates and style guides.
               </p>
             </motion.div>
@@ -264,13 +263,13 @@ const Index = () => {
       </section>
       
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 md:py-28 bg-white dark:bg-gray-900 relative">
+      <section id="testimonials" className="py-20 md:py-28 bg-white relative">
         <div className="container mx-auto px-6 relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
               Loved by creators worldwide
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
+            <p className="text-lg text-gray-600">
               See what our users are saying about their experience
             </p>
           </div>
@@ -292,8 +291,8 @@ const Index = () => {
                     className="w-12 h-12 rounded-full object-cover border-2 border-primary-500" 
                   />
                   <div className="ml-3">
-                    <h4 className="font-medium text-gray-900 dark:text-white">{testimonial.name}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{testimonial.role}</p>
+                    <h4 className="font-medium text-gray-900">{testimonial.name}</h4>
+                    <p className="text-xs text-gray-500">{testimonial.role}</p>
                   </div>
                 </div>
                 <div className="mb-4 text-amber-400 flex">
@@ -303,7 +302,7 @@ const Index = () => {
                     </svg>
                   ))}
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                <p className="text-gray-600 text-sm">
                   "This platform has completely transformed how I create content. The AI understands my voice and generates posts that actually sound like me."
                 </p>
               </motion.div>
@@ -357,43 +356,43 @@ const Index = () => {
       </section>
       
       {/* Footer */}
-      <footer className="py-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+      <footer className="py-16 bg-white border-t border-gray-200">
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-8 md:mb-0">
-              <ScripeLogotype className="h-8 text-primary-600 dark:text-primary-400 mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
+              <ScripeLogotype className="h-8 text-primary-600 mb-4" />
+              <p className="text-gray-500 text-sm">
                 © 2025 All rights reserved.
               </p>
             </div>
             
             <div className="flex flex-wrap justify-center gap-6">
-              <a href="#" className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors text-sm">
+              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
                 Terms
               </a>
-              <a href="#" className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors text-sm">
+              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
                 Privacy
               </a>
-              <a href="#" className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors text-sm">
+              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
                 Help Center
               </a>
-              <a href="#" className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors text-sm">
+              <a href="#" className="text-gray-500 hover:text-primary-600 transition-colors text-sm">
                 Contact
               </a>
             </div>
             
             <div className="flex items-center gap-4 mt-8 md:mt-0">
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-500 dark:hover:bg-primary-500 hover:text-white transition-colors">
+              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-500 hover:text-white transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"></path>
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-500 dark:hover:bg-primary-500 hover:text-white transition-colors">
+              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-500 hover:text-white transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary-500 dark:hover:bg-primary-500 hover:text-white transition-colors">
+              <a href="#" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-500 hover:text-white transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
