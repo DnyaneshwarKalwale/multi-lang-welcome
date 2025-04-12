@@ -29,7 +29,9 @@ export default function PostFormatPage() {
       title: "Text",
       icon: <AlignLeft size={28} className="text-primary" />,
       description: "Professional text posts with clear value",
-      example: "Just launched our new product feature that increased customer engagement by 47%. Here are the 3 key insights we learned:",
+      shortExample: "Just launched our new product feature that increased customer engagement by 47%.",
+      mediumExample: "Just launched our new product feature that increased customer engagement by 47%. Here are the 3 key insights we learned:",
+      longExample: "Just launched our new product feature that increased customer engagement by 47%. Here are the 3 key insights we learned:\n\n1. Customer feedback is crucial during development stages\n2. Regular A/B testing helps refine the solution\n3. Small incremental changes have a compound effect\n\nWe're excited to continue building and improving. Follow along for more updates on our journey!",
       stats: { engagement: 70, reach: 65, effort: 30 }
     },
     {
@@ -37,7 +39,9 @@ export default function PostFormatPage() {
       title: "Carousel",
       icon: <Layers size={28} className="text-primary" />,
       description: "Multi-slide posts telling a complete story",
-      example: "5 Proven Strategies to Grow Your Professional Network\n1. Consistent engagement\n2. Value-first approach\n3. Strategic content sharing\n4. Industry events\n5. Thoughtful outreach",
+      shortExample: "5 Proven Strategies to Grow Your Professional Network",
+      mediumExample: "5 Proven Strategies to Grow Your Professional Network\n1. Consistent engagement\n2. Value-first approach\n3. Strategic content sharing",
+      longExample: "5 Proven Strategies to Grow Your Professional Network\n\n1. Consistent engagement: Be active daily, comment thoughtfully on industry posts\n\n2. Value-first approach: Share insights before asking for anything in return\n\n3. Strategic content sharing: Post original content that demonstrates your expertise\n\n4. Industry events: Attend both virtual and in-person networking opportunities\n\n5. Thoughtful outreach: Connect with personalized messages explaining why you'd like to connect",
       stats: { engagement: 85, reach: 78, effort: 70 }
     },
     {
@@ -45,7 +49,9 @@ export default function PostFormatPage() {
       title: "Document",
       icon: <FileText size={28} className="text-primary" />,
       description: "PDF documents for in-depth content",
-      example: "I've compiled our research findings into a 5-page guide on effective leadership strategies. Download to learn the key insights from our study of 500+ executives.",
+      shortExample: "I've compiled our research findings into a guide on effective leadership strategies.",
+      mediumExample: "I've compiled our research findings into a 5-page guide on effective leadership strategies. Download to learn the key insights from our study.",
+      longExample: "I've compiled our research findings into a 5-page guide on effective leadership strategies. Download to learn the key insights from our study of 500+ executives.\n\nIn this document, you'll discover:\n• The top 3 traits of high-performing leaders\n• Communication frameworks that drive team engagement\n• Decision-making processes that improve outcomes by 27%\n• Practical tools for immediate implementation\n\nComment 'interested' below and I'll send you a copy directly.",
       stats: { engagement: 75, reach: 80, effort: 65 }
     },
     {
@@ -53,7 +59,9 @@ export default function PostFormatPage() {
       title: "Visual",
       icon: <Image size={28} className="text-primary" />,
       description: "Image-focused posts for better engagement",
-      example: "[Image] + Caption: The data speaks for itself. Our latest research shows a 32% increase in productivity when implementing these three strategies.",
+      shortExample: "[Image] + Caption: The data speaks for itself.",
+      mediumExample: "[Image] + Caption: The data speaks for itself. Our latest research shows a 32% increase in productivity.",
+      longExample: "[Image] + Caption: The data speaks for itself. Our latest research shows a 32% increase in productivity when implementing these three strategies.\n\nWhat we found surprising was how simple changes in daily routines led to such significant improvements. The key factors were:\n\n1. Structured deep work sessions\n2. Cross-functional collaboration\n3. Purpose-driven goal setting\n\nI'd love to hear which of these you've tried and what your experience has been. Share in the comments below!",
       stats: { engagement: 88, reach: 75, effort: 55 }
     },
     {
@@ -61,7 +69,9 @@ export default function PostFormatPage() {
       title: "Poll",
       icon: <BarChart3 size={28} className="text-primary" />,
       description: "Interactive polls to drive engagement",
-      example: "What's the most effective strategy you've used to grow your professional network?\n• Creating valuable content\n• Engaging with others' posts\n• Direct outreach\n• Attending events",
+      shortExample: "What's the most effective strategy you've used to grow your professional network?",
+      mediumExample: "What's the most effective strategy you've used to grow your professional network?\n• Creating valuable content\n• Engaging with others' posts",
+      longExample: "What's the most effective strategy you've used to grow your professional network?\n\n• Creating valuable content\n• Engaging with others' posts\n• Direct outreach\n• Attending events\n\nI'm conducting research for my upcoming article on networking strategies in the digital age. Would love to hear your experiences in the comments as well!",
       stats: { engagement: 90, reach: 60, effort: 40 }
     }
   ];
@@ -97,6 +107,19 @@ export default function PostFormatPage() {
     if (postLength < 30) return "~300 characters";
     if (postLength < 70) return "~1,000 characters";
     return "3,000+ characters";
+  };
+
+  // Function to get the appropriate example text based on post length
+  const getExampleText = (format: any) => {
+    if (!format) return "";
+    
+    if (postLength < 30) {
+      return format.shortExample || "";
+    } else if (postLength < 70) {
+      return format.mediumExample || "";
+    } else {
+      return format.longExample || "";
+    }
   };
 
   return (
@@ -304,21 +327,21 @@ export default function PostFormatPage() {
                   </div>
                 </div>
                 <Linkedin size={18} className="text-primary" />
-                  </div>
+              </div>
               <div className="p-4">
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {formatOptions.find(f => f.id === postFormat)?.example || ""}
+                  {getExampleText(formatOptions.find(f => f.id === postFormat))}
                 </p>
               </div>
               <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1">
-                    <ThumbsUp size={14} /> 42
-                        </span>
+                    <ThumbsUp size={14} /> {postLength > 50 ? "87" : "42"}
+                  </span>
                   <span className="flex items-center gap-1">
-                    <MessageSquareText size={14} /> 8
-                        </span>
-                      </div>
+                    <MessageSquareText size={14} /> {postLength > 50 ? "16" : "8"}
+                  </span>
+                </div>
                 <span>Content powered by BrandOut AI</span>
               </div>
             </motion.div>
@@ -345,6 +368,15 @@ export default function PostFormatPage() {
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-500">
               <span>Concise</span>
               <span>Detailed</span>
+            </div>
+            <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+              {postLength < 30 ? (
+                "Short posts are quick to read and focus on a single point"
+              ) : postLength < 70 ? (
+                "Medium-length posts balance detail with readability"
+              ) : (
+                "Detailed posts are comprehensive and establish your expertise"
+              )}
             </div>
           </motion.div>
         </motion.div>
