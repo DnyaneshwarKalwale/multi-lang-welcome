@@ -47,19 +47,6 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     window.location.href = `${baseUrl}/api/auth/google`;
   };
   
-  // Handle LinkedIn auth
-  const handleLinkedInAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
-    
-    // Close the registration sheet immediately
-    onOpenChange(false);
-    
-    // Redirect to backend LinkedIn auth endpoint
-    window.location.href = `${baseUrl}/api/auth/linkedin`;
-  };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();

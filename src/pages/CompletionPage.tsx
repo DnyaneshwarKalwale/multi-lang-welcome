@@ -173,7 +173,7 @@ export default function CompletionPage() {
     localStorage.setItem('redirectAfterAuth', '/dashboard');
     
     // Redirect to LinkedIn OAuth endpoint
-    window.location.href = `${baseUrl}/api/auth/linkedin`;
+    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
   };
 
   return (
