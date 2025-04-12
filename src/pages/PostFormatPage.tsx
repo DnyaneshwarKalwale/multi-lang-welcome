@@ -241,66 +241,66 @@ export default function PostFormatPage() {
           
           {/* Options column - right side on desktop */}
           <div className="lg:w-1/2 order-1 lg:order-2">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-            >
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
               {/* Format options */}
-              <motion.div 
+          <motion.div 
                 className="grid grid-cols-5 gap-3 mb-8"
-                variants={fadeIn}
-                transition={{ delay: 0.4 }}
-              >
-                {formatOptions.map((format, index) => (
-                  <motion.div 
-                    key={format.id}
-                    className={`
+            variants={fadeIn}
+            transition={{ delay: 0.4 }}
+          >
+            {formatOptions.map((format, index) => (
+              <motion.div 
+                key={format.id}
+                className={`
                       flex flex-col items-center justify-between p-3 rounded-xl border 
-                      transition-all duration-300 cursor-pointer h-full
-                      ${postFormat === format.id 
+                  transition-all duration-300 cursor-pointer h-full
+                  ${postFormat === format.id 
                         ? 'border-[#0077B5] bg-blue-50' 
                         : 'border-gray-200 hover:border-[#0077B5] hover:bg-blue-50/40'
-                      }
-                    `}
-                    variants={itemVariants}
-                    onClick={() => setPostFormat(format.id as any)}
-                  >
+                  }
+                `}
+                variants={itemVariants}
+                onClick={() => setPostFormat(format.id as any)}
+              >
                     <div className="flex flex-col items-center text-center mb-2">
-                      <div className={`
+                  <div className={`
                         w-12 h-12 flex items-center justify-center rounded-xl 
-                        ${postFormat === format.id 
+                    ${postFormat === format.id 
                           ? 'bg-white shadow-sm' 
                           : 'bg-gray-50'
                         } mb-2
-                      `}>
-                        {format.icon}
-                      </div>
+                  `}>
+                    {format.icon}
+                  </div>
                       <h3 className="font-medium text-sm mb-0">{format.title}</h3>
-                    </div>
-                  </motion.div>
-                ))}
+                </div>
               </motion.div>
-              
+            ))}
+          </motion.div>
+          
               {/* Post length slider with 3 checkpoints */}
-              <motion.div 
+            <motion.div 
                 className="mb-10"
-                variants={fadeIn}
-                transition={{ delay: 0.7 }}
-              >
+            variants={fadeIn}
+            transition={{ delay: 0.7 }}
+          >
                 <div className="flex justify-between mb-2 text-sm text-gray-600">
                   <span>Post length</span>
-                  <span>{calculateCharacterCount()}</span>
-                </div>
+              <span>{calculateCharacterCount()}</span>
+            </div>
                 
                 {/* Custom slider with checkpoint marks */}
                 <div className="relative mb-6">
-                  <Slider
-                    value={[postLength]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => setPostLength(value[0])}
+            <Slider
+              value={[postLength]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={(value) => setPostLength(value[0])}
                     className="mb-3"
                   />
                   
@@ -343,23 +343,23 @@ export default function PostFormatPage() {
                 
                 <div className="text-center text-xs text-gray-400">
                   Scripe will learn your individual preferences over time.
-                </div>
-              </motion.div>
-              
-              <motion.div 
+            </div>
+        </motion.div>
+        
+        <motion.div 
                 className="flex justify-center"
-                variants={fadeIn}
-                transition={{ delay: 0.8 }}
-              >
-                <Button
-                  onClick={nextStep} 
-                  disabled={!postFormat}
+          variants={fadeIn}
+          transition={{ delay: 0.8 }}
+        >
+          <Button
+            onClick={nextStep} 
+            disabled={!postFormat}
                   className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
-                >
-                  <span>Continue</span>
-                  <ChevronRight size={16} className="ml-2" />
-                </Button>
-              </motion.div>
+          >
+            <span>Continue</span>
+            <ChevronRight size={16} className="ml-2" />
+          </Button>
+        </motion.div>
             </motion.div>
           </div>
         </div>
