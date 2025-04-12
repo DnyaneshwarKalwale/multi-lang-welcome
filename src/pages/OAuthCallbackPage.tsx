@@ -61,11 +61,17 @@ export default function OAuthCallbackPage() {
           localStorage.removeItem('redirectAfterAuth');
         } else {
           // Get onboarding status from localStorage (set by fetchUser)
-          const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+          const onboardingCompleted = localStorage.getItem('onboardingCompleted');
           
-          if (onboarding || !onboardingCompleted) {
+          console.log('OAuthCallback - Onboarding param:', onboarding);
+          console.log('OAuthCallback - onboardingCompleted from localStorage:', onboardingCompleted);
+          
+          // If onboarding is true in query params OR onboardingCompleted is not 'true', go to onboarding
+          if (onboarding === true || onboardingCompleted !== 'true') {
+            console.log('OAuthCallback - Redirecting to onboarding');
             navigate('/onboarding/welcome', { replace: true });
           } else {
+            console.log('OAuthCallback - Redirecting to dashboard');
             navigate('/dashboard', { replace: true });
           }
         }

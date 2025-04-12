@@ -56,7 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(user);
       
       if (user) {
-        localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+        // Make sure localStorage accurately reflects the user's onboarding status from server
+        localStorage.setItem('onboardingCompleted', user.onboardingCompleted.toString());
+        console.log(`Setting onboardingCompleted to ${user.onboardingCompleted}`);
       }
       
       return user;
