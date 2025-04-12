@@ -126,9 +126,28 @@ const AnalyticsPage: React.FC = () => {
       if (analyticsResponse.data.usingRealData === false) {
         console.warn('Using sample LinkedIn analytics data:', analyticsResponse.data.error);
         setUsingSampleData(true);
-        toast.warning('Using sample LinkedIn analytics data', {
-          description: analyticsResponse.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.',
+        
+        let errorMessage = 'Using sample LinkedIn analytics data';
+        let errorDescription = analyticsResponse.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.';
+        
+        // Customize message based on error type
+        if (analyticsResponse.data.errorType === 'token_expired') {
+          errorMessage = 'LinkedIn access token expired';
+          errorDescription = 'Please reconnect your LinkedIn account to refresh your access.';
+        } else if (analyticsResponse.data.errorType === 'permission_denied') {
+          errorMessage = 'LinkedIn permission denied';
+          errorDescription = 'Analytics features require additional permissions. Try reconnecting.';
+        }
+        
+        toast.warning(errorMessage, {
+          description: errorDescription,
           duration: 5000
+        });
+      } else if (analyticsResponse.data.usingRealData === true) {
+        setUsingSampleData(false);
+        toast.success('Successfully loaded LinkedIn analytics', {
+          description: 'Displaying your real LinkedIn data.',
+          duration: 3000
         });
       }
       
@@ -284,10 +303,32 @@ const AnalyticsPage: React.FC = () => {
       {/* Sample data notice */}
       {usingSampleData && !loading && !error && (
         <Alert variant="warning" className="mb-6 bg-amber-50 border-amber-200">
-          <AlertCircle className="h-4 w-4 mr-2 text-amber-600" />
-          <AlertDescription className="text-amber-600">
-            Displaying sample LinkedIn analytics data. Some LinkedIn API features may require additional permissions.
-          </AlertDescription>
+          <div className="flex flex-col w-full">
+            <div className="flex items-start">
+              <AlertCircle className="h-4 w-4 mr-2 text-amber-600 mt-0.5" />
+              <AlertDescription className="text-amber-600">
+                Displaying sample LinkedIn analytics data. Your LinkedIn access token may have expired.
+              </AlertDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 ml-6 self-start text-xs border-amber-200 text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-300"
+              onClick={() => {
+                // Get the backend URL from environment variable or fallback to Render deployed URL
+                const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+                const baseUrl = baseApiUrl.replace('/api', '');
+                
+                // Store current URL in localStorage to redirect back after LinkedIn connection
+                localStorage.setItem('redirectAfterAuth', '/analytics');
+                
+                // Redirect to LinkedIn OAuth endpoint
+                window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+              }}
+            >
+              Reconnect LinkedIn
+            </Button>
+          </div>
         </Alert>
       )}
       

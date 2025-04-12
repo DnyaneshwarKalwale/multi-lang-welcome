@@ -277,8 +277,21 @@ const DashboardPage: React.FC = () => {
         // Show toast if using sample data
         if (profileRes.value.data.usingRealData === false) {
           console.warn('Using sample LinkedIn profile data:', profileRes.value.data.error);
-          toast.warning('Using sample LinkedIn profile data. Some features may be limited.', {
-            description: profileRes.value.data.errorDetails || 'Try reconnecting your LinkedIn account.',
+          
+          let errorMessage = 'Some LinkedIn data could not be fetched.';
+          let errorDescription = profileRes.value.data.errorDetails || 'Try reconnecting your LinkedIn account.';
+          
+          // Customize message based on error type
+          if (profileRes.value.data.errorType === 'token_expired') {
+            errorMessage = 'LinkedIn access token expired';
+            errorDescription = 'Please reconnect your LinkedIn account to refresh your access.';
+          } else if (profileRes.value.data.errorType === 'permission_denied') {
+            errorMessage = 'LinkedIn permission denied';
+            errorDescription = 'Your account may need additional permissions. Try reconnecting.';
+          }
+          
+          toast.warning(errorMessage, {
+            description: errorDescription,
             duration: 5000
           });
         } else if (profileRes.value.data.usingRealData === true) {
@@ -305,11 +318,15 @@ const DashboardPage: React.FC = () => {
         // Show toast if using sample data
         if (postsRes.value.data.usingRealData === false && !toast.isVisible('sample-posts')) {
           console.warn('Using sample LinkedIn posts data:', postsRes.value.data.error);
-          toast.warning('Using sample LinkedIn posts data.', {
-            id: 'sample-posts',
-            description: postsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading your real posts.',
-            duration: 5000
-          });
+          
+          // Don't show another toast if we already showed one for the profile
+          if (!profileRes.value?.data?.usingRealData === false) {
+            toast.warning('Using sample LinkedIn posts data', {
+              id: 'sample-posts',
+              description: postsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading your real posts.',
+              duration: 5000
+            });
+          }
         }
       } else {
         console.error('Failed to fetch posts:', postsRes.reason);
@@ -324,11 +341,15 @@ const DashboardPage: React.FC = () => {
         // Show toast if using sample data
         if (analyticsRes.value.data.usingRealData === false && !toast.isVisible('sample-analytics')) {
           console.warn('Using sample LinkedIn analytics data:', analyticsRes.value.data.error);
-          toast.warning('Using sample LinkedIn analytics data.', {
-            id: 'sample-analytics',
-            description: analyticsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.',
-            duration: 5000
-          });
+          
+          // Don't show another toast if we already showed one for the profile or posts
+          if (!profileRes.value?.data?.usingRealData === false && !postsRes.value?.data?.usingRealData === false) {
+            toast.warning('Using sample LinkedIn analytics data', {
+              id: 'sample-analytics',
+              description: analyticsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.',
+              duration: 5000
+            });
+          }
         }
       } else {
         console.error('Failed to fetch analytics:', analyticsRes.reason);
@@ -536,8 +557,16 @@ const DashboardPage: React.FC = () => {
                     <div className="mt-4 p-2 bg-amber-50 border border-amber-200 rounded-md">
                       <p className="text-xs text-amber-600 flex items-center">
                         <AlertCircle className="h-3 w-3 mr-1" />
-                        Sample data displayed. Reconnect LinkedIn for real data.
+                        Sample data displayed. API token may be expired.
                       </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2 w-full text-xs border-amber-200 text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-300"
+                        onClick={handleConnectLinkedIn}
+                      >
+                        Reconnect LinkedIn
+                      </Button>
                     </div>
                   )}
                 </div>
