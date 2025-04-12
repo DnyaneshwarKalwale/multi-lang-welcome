@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
-  FileText, ArrowRight, PlusCircle
+  FileText, ArrowRight, PlusCircle, Twitter
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 // Scraper result interface
 interface ScraperResult {
@@ -41,6 +42,42 @@ interface ScraperResult {
   wordCount: number;
 }
 
+// Tweet interface
+interface Tweet {
+  id: string;
+  text: string;
+  full_text?: string;
+  created_at: string;
+  public_metrics: {
+    retweet_count: number;
+    reply_count: number;
+    like_count: number;
+    quote_count: number;
+  };
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    profile_image_url: string;
+  };
+  media?: {
+    media_key: string;
+    type: string;
+    url: string;
+    preview_image_url?: string;
+    alt_text?: string;
+    width?: number;
+    height?: number;
+  }[];
+}
+
+// Twitter result interface
+interface TwitterResult {
+  tweets: Tweet[];
+  username: string;
+  profileImageUrl?: string;
+}
+
 const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -48,6 +85,8 @@ const ScraperPage: React.FC = () => {
   const [inputUrl, setInputUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ScraperResult | null>(null);
+  const [twitterResult, setTwitterResult] = useState<TwitterResult | null>(null);
+  const [selectedTweets, setSelectedTweets] = useState<Set<string>>(new Set());
   
   // Example result data for demonstration
   const exampleResult: ScraperResult = {
@@ -74,17 +113,62 @@ const ScraperPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // In a real app, make API call to scrape content
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate successful response
-      setResult(exampleResult);
-      toast.success('Content scraped successfully!');
+      if (activeTab === 'twitter') {
+        await handleTwitterScrape();
+      } else {
+        // Handle other platforms (existing code)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setResult(exampleResult);
+        toast.success('Content scraped successfully!');
+      }
     } catch (error) {
-      console.error('Error scraping content:', error);
-      toast.error('Failed to scrape content. Please try again.');
+      console.error(`Error scraping content from ${activeTab}:`, error);
+      toast.error(`Failed to scrape content from ${activeTab}. Please try again.`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Twitter specific scraping logic
+  const handleTwitterScrape = async () => {
+    // Extract username from Twitter URL or direct input
+    let username = inputUrl;
+    
+    // If it's a URL, extract the username
+    if (inputUrl.includes('twitter.com/') || inputUrl.includes('x.com/')) {
+      const urlParts = inputUrl.split('/');
+      username = urlParts[urlParts.length - 1];
+      
+      // Clean up any query parameters
+      username = username.split('?')[0];
+    }
+    
+    // Remove @ symbol if present
+    if (username.startsWith('@')) {
+      username = username.substring(1);
+    }
+    
+    if (!username) {
+      toast.error('Please enter a valid Twitter username');
+      return;
+    }
+    
+    // Call backend API to get tweets
+    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/user/${username}`;
+    const response = await axios.get(apiUrl);
+    
+    if (response.data && response.data.success) {
+      const tweets = response.data.data;
+      
+      setTwitterResult({
+        tweets,
+        username,
+        profileImageUrl: tweets[0]?.author?.profile_image_url
+      });
+      
+      toast.success(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+    } else {
+      throw new Error(response.data?.message || 'Failed to fetch tweets');
     }
   };
 
@@ -106,17 +190,83 @@ const ScraperPage: React.FC = () => {
     navigate('/dashboard/post');
   };
 
+  // Toggle tweet selection
+  const handleToggleTweetSelection = (tweetId: string) => {
+    const newSelection = new Set(selectedTweets);
+    
+    if (newSelection.has(tweetId)) {
+      newSelection.delete(tweetId);
+    } else {
+      newSelection.add(tweetId);
+    }
+    
+    setSelectedTweets(newSelection);
+  };
+
+  // Save selected tweets
+  const handleSaveSelectedTweets = async () => {
+    if (selectedTweets.size === 0) {
+      toast.error('Please select at least one tweet to save');
+      return;
+    }
+    
+    if (!twitterResult || !twitterResult.tweets) {
+      toast.error('No tweets available to save');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Filter only selected tweets
+      const tweetsToSave = twitterResult.tweets.filter(tweet => 
+        selectedTweets.has(tweet.id)
+      );
+      
+      // Call API to save tweets
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/save`;
+      
+      const response = await axios.post(apiUrl, {
+        tweets: tweetsToSave,
+        username: user?.email || 'anonymous',
+        options: {
+          preserveThreadOrder: true
+        }
+      });
+      
+      if (response.data && response.data.success) {
+        toast.success(`Saved ${response.data.count} tweets successfully!`);
+        setSelectedTweets(new Set());
+      } else {
+        throw new Error(response.data?.message || 'Failed to save tweets');
+      }
+    } catch (error) {
+      console.error('Error saving tweets:', error);
+      toast.error('Failed to save tweets. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset selection when tab changes
+  useEffect(() => {
+    setInputUrl('');
+    setResult(null);
+    setTwitterResult(null);
+    setSelectedTweets(new Set());
+  }, [activeTab]);
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Content Scraper</h1>
         <p className="text-gray-500 dark:text-gray-400">
-          Extract valuable content from LinkedIn profiles, websites, and YouTube videos
+          Extract valuable content from LinkedIn profiles, websites, Twitter, and YouTube videos
         </p>
       </div>
       
       <Tabs defaultValue="linkedin" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mb-8">
+        <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="linkedin" className="flex items-center gap-2">
             <Linkedin className="h-4 w-4" />
             <span>LinkedIn</span>
@@ -124,6 +274,10 @@ const ScraperPage: React.FC = () => {
           <TabsTrigger value="website" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
             <span>Website</span>
+          </TabsTrigger>
+          <TabsTrigger value="twitter" className="flex items-center gap-2">
+            <Twitter className="h-4 w-4" />
+            <span>Twitter</span>
           </TabsTrigger>
           <TabsTrigger value="youtube" className="flex items-center gap-2">
             <Youtube className="h-4 w-4" />
@@ -140,7 +294,9 @@ const ScraperPage: React.FC = () => {
                     ? 'Enter LinkedIn profile or post URL' 
                     : activeTab === 'website'
                       ? 'Enter website URL'
-                      : 'Enter YouTube video URL'
+                      : activeTab === 'twitter'
+                        ? 'Enter Twitter username or profile URL'
+                        : 'Enter YouTube video URL'
                 }
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
@@ -170,13 +326,161 @@ const ScraperPage: React.FC = () => {
               ? 'Example: https://www.linkedin.com/in/username or https://www.linkedin.com/posts/...' 
               : activeTab === 'website'
                 ? 'Example: https://www.example.com/blog/article'
-                : 'Example: https://www.youtube.com/watch?v=videoId'
+                : activeTab === 'twitter'
+                  ? 'Example: @username or https://twitter.com/username'
+                  : 'Example: https://www.youtube.com/watch?v=videoId'
             }
           </p>
         </div>
         
-        {/* Results section */}
-        {result && (
+        {/* Twitter Results Section */}
+        {activeTab === 'twitter' && twitterResult && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {twitterResult.profileImageUrl && (
+                  <img 
+                    src={twitterResult.profileImageUrl} 
+                    alt={twitterResult.username}
+                    className="w-10 h-10 rounded-full" 
+                  />
+                )}
+                <div>
+                  <h3 className="font-semibold">@{twitterResult.username}</h3>
+                  <p className="text-sm text-gray-500">
+                    {twitterResult.tweets.length} tweets scraped
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedTweets(new Set(twitterResult.tweets.map(t => t.id)))}
+                  disabled={isLoading}
+                >
+                  Select All
+                </Button>
+                <Button
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setSelectedTweets(new Set())}
+                  disabled={isLoading || selectedTweets.size === 0}
+                >
+                  Clear Selection
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSaveSelectedTweets}
+                  disabled={isLoading || selectedTweets.size === 0}
+                  className="gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-3 w-3" />
+                      Save Selected ({selectedTweets.size})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              {twitterResult.tweets.map(tweet => (
+                <Card key={tweet.id} className={`overflow-hidden ${selectedTweets.has(tweet.id) ? 'border-primary' : ''}`}>
+                  <CardHeader className="p-4 pb-2 flex flex-row justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <img 
+                          src={tweet.author.profile_image_url} 
+                          alt={tweet.author.name}
+                          className="w-8 h-8 rounded-full" 
+                        />
+                        <div>
+                          <CardTitle className="text-base">{tweet.author.name}</CardTitle>
+                          <CardDescription className="text-xs">@{tweet.author.username}</CardDescription>
+                        </div>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {new Date(tweet.created_at).toLocaleDateString()}
+                      </CardDescription>
+                    </div>
+                    <div>
+                      <Button
+                        variant={selectedTweets.has(tweet.id) ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => handleToggleTweetSelection(tweet.id)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {selectedTweets.has(tweet.id) ? (
+                          <div className="h-5 w-5 rounded-sm bg-primary text-primary-foreground flex items-center justify-center">
+                            ✓
+                          </div>
+                        ) : (
+                          <div className="h-5 w-5 rounded-sm border border-input"></div>
+                        )}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-2">
+                    <p className="whitespace-pre-line text-sm">
+                      {tweet.full_text || tweet.text}
+                    </p>
+                    
+                    {tweet.media && tweet.media.length > 0 && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {tweet.media.map((media, index) => (
+                          media.type === 'photo' && (
+                            <div key={media.media_key || index} className="rounded overflow-hidden">
+                              <img 
+                                src={media.url} 
+                                alt={media.alt_text || 'Tweet media'} 
+                                className="w-full h-auto"
+                              />
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="p-3 border-t flex justify-between bg-gray-50">
+                    <div className="flex items-center gap-6 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {tweet.public_metrics.reply_count}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        {tweet.public_metrics.retweet_count}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        {tweet.public_metrics.like_count}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => handleCopy(tweet.full_text || tweet.text)}>
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Results section - Original content for LinkedIn/Website/YouTube */}
+        {activeTab !== 'twitter' && result && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left column - Extracted content */}
             <div className="md:col-span-2">
@@ -335,6 +639,8 @@ const ScraperPage: React.FC = () => {
                     <Linkedin className="h-8 w-8 text-primary" />
                   ) : activeTab === 'website' ? (
                     <Globe className="h-8 w-8 text-primary" />
+                  ) : activeTab === 'twitter' ? (
+                    <Twitter className="h-8 w-8 text-primary" />
                   ) : (
                     <Youtube className="h-8 w-8 text-primary" />
                   )}
@@ -345,7 +651,9 @@ const ScraperPage: React.FC = () => {
                     ? 'Extract Content from LinkedIn' 
                     : activeTab === 'website'
                       ? 'Extract Content from Websites'
-                      : 'Extract Content from YouTube Videos'
+                      : activeTab === 'twitter'
+                        ? 'Extract Content from Twitter'
+                        : 'Extract Content from YouTube Videos'
                   }
                 </h3>
                 
@@ -354,7 +662,9 @@ const ScraperPage: React.FC = () => {
                     ? 'Paste a LinkedIn profile URL or post link to extract professional insights, experience, and content for your posts.' 
                     : activeTab === 'website'
                       ? 'Paste any article or blog URL to extract key points, analyze tone, and suggest hooks for your LinkedIn content.'
-                      : 'Paste a YouTube video URL to extract transcripts, key points, and insights to share on LinkedIn.'
+                      : activeTab === 'twitter'
+                        ? 'Paste a Twitter username or profile URL to extract tweets and insights for your LinkedIn content.'
+                        : 'Paste a YouTube video URL to extract transcripts, key points, and insights to share on LinkedIn.'
                   }
                 </p>
                 
