@@ -8,7 +8,8 @@ import {
   LogOut, User, Settings, ChevronDown, Users, Bell,
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
-  Layers, LayoutGrid, ArrowUp, CreditCard, Building, Loader2
+  Layers, LayoutGrid, ArrowUp, CreditCard, Building, Loader2,
+  AlertCircle
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -272,15 +273,44 @@ const DashboardPage: React.FC = () => {
       if (profileRes.status === 'fulfilled') {
         setLinkedInProfile(profileRes.value.data.data);
         setLoading(prev => ({ ...prev, profile: false }));
+        
+        // Show toast if using sample data
+        if (profileRes.value.data.usingRealData === false) {
+          console.warn('Using sample LinkedIn profile data:', profileRes.value.data.error);
+          toast.warning('Using sample LinkedIn profile data. Some features may be limited.', {
+            description: profileRes.value.data.errorDetails || 'Try reconnecting your LinkedIn account.',
+            duration: 5000
+          });
+        } else if (profileRes.value.data.usingRealData === true) {
+          console.log('Using real LinkedIn profile data');
+          toast.success('Successfully connected to LinkedIn', {
+            description: 'Your profile data has been loaded.',
+            duration: 3000
+          });
+        }
       } else {
         console.error('Failed to fetch LinkedIn profile:', profileRes.reason);
         setLoading(prev => ({ ...prev, profile: false }));
+        toast.error('Failed to load LinkedIn profile', {
+          description: profileRes.reason?.response?.data?.message || profileRes.reason?.message || 'Unknown error',
+          duration: 5000
+        });
       }
       
       // Handle posts response
       if (postsRes.status === 'fulfilled') {
         setRecentPosts(postsRes.value.data.data);
         setLoading(prev => ({ ...prev, posts: false }));
+        
+        // Show toast if using sample data
+        if (postsRes.value.data.usingRealData === false && !toast.isVisible('sample-posts')) {
+          console.warn('Using sample LinkedIn posts data:', postsRes.value.data.error);
+          toast.warning('Using sample LinkedIn posts data.', {
+            id: 'sample-posts',
+            description: postsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading your real posts.',
+            duration: 5000
+          });
+        }
       } else {
         console.error('Failed to fetch posts:', postsRes.reason);
         setLoading(prev => ({ ...prev, posts: false }));
@@ -290,6 +320,16 @@ const DashboardPage: React.FC = () => {
       if (analyticsRes.status === 'fulfilled') {
         setAnalyticsData(analyticsRes.value.data.data);
         setLoading(prev => ({ ...prev, analytics: false }));
+        
+        // Show toast if using sample data
+        if (analyticsRes.value.data.usingRealData === false && !toast.isVisible('sample-analytics')) {
+          console.warn('Using sample LinkedIn analytics data:', analyticsRes.value.data.error);
+          toast.warning('Using sample LinkedIn analytics data.', {
+            id: 'sample-analytics',
+            description: analyticsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.',
+            duration: 5000
+          });
+        }
       } else {
         console.error('Failed to fetch analytics:', analyticsRes.reason);
         setLoading(prev => ({ ...prev, analytics: false }));
@@ -303,7 +343,10 @@ const DashboardPage: React.FC = () => {
       });
       
       // Show error toast
-      toast.error('Failed to load LinkedIn data');
+      toast.error('Failed to load LinkedIn data', {
+        description: error.response?.data?.message || error.message || 'Network error',
+        duration: 5000
+      });
     }
   };
 
@@ -457,7 +500,14 @@ const DashboardPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-              {linkedInProfile ? (
+              {loading.profile && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
+                  <p className="text-sm text-gray-500">Loading LinkedIn profile...</p>
+                </div>
+              )}
+              
+              {!loading.profile && linkedInProfile ? (
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
@@ -480,25 +530,37 @@ const DashboardPage: React.FC = () => {
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Followers</p>
                     </div>
                   </div>
+                  
+                  {/* Show sample data notice if needed */}
+                  {linkedInProfile.verified === false && (
+                    <div className="mt-4 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                      <p className="text-xs text-amber-600 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Sample data displayed. Reconnect LinkedIn for real data.
+                      </p>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                    <Linkedin className="h-8 w-8 text-gray-400" />
+                !loading.profile && (
+                  <div className="text-center py-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                      <Linkedin className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="font-medium mb-2">Connect LinkedIn Account</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      Link your LinkedIn profile to enable powerful content creation features
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-600 group"
+                      onClick={handleConnectLinkedIn}
+                    >
+                      <Linkedin className="h-4 w-4 mr-2 text-blue-600" />
+                      Connect LinkedIn
+                    </Button>
                   </div>
-                  <h3 className="font-medium mb-2">Connect LinkedIn Account</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Link your LinkedIn profile to enable powerful content creation features
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="w-full border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-600 group"
-                    onClick={handleConnectLinkedIn}
-                  >
-                    <Linkedin className="h-4 w-4 mr-2 text-blue-600" />
-                    Connect LinkedIn
-                  </Button>
-                </div>
+                )
               )}
             </CardContent>
           </Card>
