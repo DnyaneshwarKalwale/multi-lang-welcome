@@ -345,33 +345,32 @@ export default function PostFormatPage() {
                   Scripe will learn your individual preferences over time.
                 </div>
               </motion.div>
+              
+              <motion.div 
+                className="flex justify-center"
+                variants={fadeIn}
+                transition={{ delay: 0.8 }}
+              >
+                <Button
+                  onClick={nextStep} 
+                  disabled={!postFormat}
+                  className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
+                >
+                  <span>Continue</span>
+                  <ChevronRight size={16} className="ml-2" />
+                </Button>
+              </motion.div>
             </motion.div>
           </div>
         </div>
         
-        {/* Continue button moved outside of the two-column layout for center alignment */}
-        <motion.div 
-          className="flex justify-center mb-8"
+        <motion.div
+          className="flex justify-center" 
           variants={fadeIn}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.9 }}
         >
-          <Button
-            onClick={nextStep} 
-            disabled={!postFormat}
-            className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
-          >
-            <span>Continue</span>
-            <ChevronRight size={16} className="ml-2" />
-          </Button>
+          <ProgressDots current={current} total={total} />
         </motion.div>
-      </motion.div>
-      
-      <motion.div
-        className="flex justify-center" 
-        variants={fadeIn}
-        transition={{ delay: 0.9 }}
-      >
-        <ProgressDots current={current} total={total} />
       </motion.div>
     </div>
   );

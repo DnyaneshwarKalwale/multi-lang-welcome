@@ -268,31 +268,12 @@ const DashboardPage: React.FC = () => {
         analyticsPromise
       ]);
       
-      let linkedinNeedsConnection = false;
-      let linkedinNeedsReconnection = false;
-      
       // Handle profile response
       if (profileRes.status === 'fulfilled') {
         setLinkedInProfile(profileRes.value.data.data);
         setLoading(prev => ({ ...prev, profile: false }));
-        
-        // Check if LinkedIn needs to be connected or reconnected
-        if (profileRes.value.data.needsConnection) {
-          linkedinNeedsConnection = true;
-        }
-        
-        if (profileRes.value.data.needsReconnection) {
-          linkedinNeedsReconnection = true;
-        }
       } else {
         console.error('Failed to fetch LinkedIn profile:', profileRes.reason);
-        
-        // Check if error is due to LinkedIn not being connected
-        if (profileRes.reason?.response?.status === 400 || 
-            profileRes.reason?.response?.status === 401) {
-          linkedinNeedsConnection = true;
-        }
-        
         setLoading(prev => ({ ...prev, profile: false }));
       }
       
@@ -313,29 +294,6 @@ const DashboardPage: React.FC = () => {
         console.error('Failed to fetch analytics:', analyticsRes.reason);
         setLoading(prev => ({ ...prev, analytics: false }));
       }
-      
-      // If LinkedIn needs to be connected, show a notification to the user
-      if (linkedinNeedsConnection) {
-        toast({
-          title: "LinkedIn not connected",
-          description: "Please connect your LinkedIn account to access LinkedIn features.",
-          action: (
-            <Button variant="default" size="sm" onClick={handleConnectLinkedIn}>
-              Connect LinkedIn
-            </Button>
-          ),
-        });
-      } else if (linkedinNeedsReconnection) {
-        toast({
-          title: "LinkedIn token expired",
-          description: "Your LinkedIn access has expired. Please reconnect your account.",
-          action: (
-            <Button variant="default" size="sm" onClick={handleConnectLinkedIn}>
-              Reconnect
-            </Button>
-          ),
-        });
-      }
     } catch (error) {
       console.error('Error fetching LinkedIn data:', error);
       setLoading({
@@ -345,11 +303,7 @@ const DashboardPage: React.FC = () => {
       });
       
       // Show error toast
-      toast({
-        title: "LinkedIn Error",
-        description: "Failed to load LinkedIn data. Please try again later.",
-        variant: "destructive",
-      });
+      toast.error('Failed to load LinkedIn data');
     }
   };
 
@@ -369,24 +323,15 @@ const DashboardPage: React.FC = () => {
 
   // Function to handle LinkedIn connection
   const handleConnectLinkedIn = () => {
-    try {
-      console.log('Initiating LinkedIn connection');
-      // Get the backend URL from environment variable or fallback to Render deployed URL
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const baseUrl = baseApiUrl.replace('/api', '');
-      
-      // Store current URL in localStorage to redirect back after LinkedIn connection
-      localStorage.setItem('redirectAfterAuth', '/dashboard');
-      
-      // Show a connecting message to the user
-      toast.info('Redirecting to LinkedIn for authentication...');
-      
-      // Redirect to LinkedIn OAuth endpoint
-      window.location.href = `${baseUrl}/api/auth/linkedin`;
-    } catch (error) {
-      console.error('Error initiating LinkedIn connection:', error);
-      toast.error('Failed to connect to LinkedIn. Please try again.');
-    }
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
+    localStorage.setItem('redirectAfterAuth', '/dashboard');
+    
+    // Redirect to LinkedIn OAuth endpoint
+    window.location.href = `${baseUrl}/api/auth/linkedin`;
   };
 
   return (
