@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authApi } from "@/services/api";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +15,7 @@ export interface User {
   language: string;
   role?: string;
   authMethod?: string;
-  twitterId?: string;
+  linkedinId?: string;
 }
 
 // Define the AuthContext type
@@ -28,7 +27,7 @@ export interface AuthContextType {
   error: string | null;
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void | User>;
-  twitterAuth: (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => Promise<void>;
+  linkedinAuth: (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<User | undefined>;
@@ -135,52 +134,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const twitterAuth = async (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => {
+  const linkedinAuth = async (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      setError(null);
+      const response = await authApi.linkedinAuth(userData);
       
-      try {
-        const response = await authApi.twitterAuth(userData);
-        
+      if (response.token) {
         localStorage.setItem('token', response.token);
+        setToken(response.token);
         setUser(response.user);
         
-        // Immediately redirect based on onboarding status
-        if (!response.user.onboardingCompleted) {
-          navigate('/onboarding/welcome', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
+        if (response.user) {
+          localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted ? 'true' : 'false');
         }
-        return;
-      } catch (apiErr: any) {
-        console.log("API approach failed, trying browser redirect:", apiErr);
-        
-        if (apiErr.message && apiErr.message.includes('Network Error')) {
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-          const baseUrl = baseApiUrl.replace('/api', '');
-          
-          const params = new URLSearchParams();
-          params.append('name', userData.name);
-          params.append('twitterId', userData.twitterId);
-          
-          if (userData.email) {
-            params.append('email', userData.email);
-          }
-          
-          if (userData.profileImage) {
-            params.append('profileImage', userData.profileImage);
-          }
-          
-          window.location.href = `${baseUrl}/api/auth/mock-twitter-auth?${params.toString()}`;
-          return;
-        }
-        
-        throw apiErr;
+      } else {
+        setError('Failed to authenticate with LinkedIn');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Twitter authentication failed');
-      console.error('Twitter auth error:', err);
+    } catch (error) {
+      console.error('LinkedIn Auth Error:', error);
+      setError('Failed to authenticate with LinkedIn');
     } finally {
       setLoading(false);
     }
@@ -206,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         register,
         login,
-        twitterAuth,
+        linkedinAuth,
         logout,
         clearError,
         fetchUser

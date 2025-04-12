@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
-  FileText, ArrowRight, PlusCircle, Twitter,
-  ThumbsUp, ExternalLink, Code
+  FileText, ArrowRight, PlusCircle, Twitter
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { toast } from 'sonner';
-import { fetchUserTweets, Tweet, Thread, TwitterResult } from '@/utils/twitterApi';
+import axios from 'axios';
 
 // Scraper result interface
 interface ScraperResult {
@@ -43,6 +42,42 @@ interface ScraperResult {
   wordCount: number;
 }
 
+// Tweet interface
+interface Tweet {
+  id: string;
+  text: string;
+  full_text?: string;
+  created_at: string;
+  public_metrics: {
+    retweet_count: number;
+    reply_count: number;
+    like_count: number;
+    quote_count: number;
+  };
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    profile_image_url: string;
+  };
+  media?: {
+    media_key: string;
+    type: string;
+    url: string;
+    preview_image_url?: string;
+    alt_text?: string;
+    width?: number;
+    height?: number;
+  }[];
+}
+
+// Twitter result interface
+interface TwitterResult {
+  tweets: Tweet[];
+  username: string;
+  profileImageUrl?: string;
+}
+
 const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -52,8 +87,6 @@ const ScraperPage: React.FC = () => {
   const [result, setResult] = useState<ScraperResult | null>(null);
   const [twitterResult, setTwitterResult] = useState<TwitterResult | null>(null);
   const [selectedTweets, setSelectedTweets] = useState<Set<string>>(new Set());
-  const [selectedThreads, setSelectedThreads] = useState<Set<string>>(new Set());
-  const [twitterFilter, setTwitterFilter] = useState<'all' | 'tweets' | 'threads'>('all');
   
   // Example result data for demonstration
   const exampleResult: ScraperResult = {
@@ -84,9 +117,9 @@ const ScraperPage: React.FC = () => {
         await handleTwitterScrape();
       } else {
         // Handle other platforms (existing code)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setResult(exampleResult);
-        toast.success('Content scraped successfully!');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setResult(exampleResult);
+      toast.success('Content scraped successfully!');
       }
     } catch (error) {
       console.error(`Error scraping content from ${activeTab}:`, error);
@@ -120,15 +153,23 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
-    // Fetch tweets directly using our utility
-    const result = await fetchUserTweets(username);
-    setTwitterResult(result);
+    // Call backend API to get tweets
+    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/user/${username}`;
+    const response = await axios.get(apiUrl);
     
-    // Show success message
-    const totalTweets = result.tweets.length + result.threads.reduce(
-      (total, thread) => total + thread.tweets.length, 0
-    );
-    toast.success(`Successfully retrieved ${totalTweets} tweets from @${username}`);
+    if (response.data && response.data.success) {
+      const tweets = response.data.data;
+      
+      setTwitterResult({
+        tweets,
+        username,
+        profileImageUrl: tweets[0]?.author?.profile_image_url
+      });
+      
+      toast.success(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+    } else {
+      throw new Error(response.data?.message || 'Failed to fetch tweets');
+    }
   };
 
   // Copy content to clipboard
@@ -162,37 +203,49 @@ const ScraperPage: React.FC = () => {
     setSelectedTweets(newSelection);
   };
 
-  // Toggle thread selection
-  const handleToggleThreadSelection = (threadId: string) => {
-    const newSelection = new Set(selectedThreads);
-    
-    if (newSelection.has(threadId)) {
-      newSelection.delete(threadId);
-    } else {
-      newSelection.add(threadId);
-    }
-    
-    setSelectedThreads(newSelection);
-  };
-
   // Save selected tweets
-  const handleSaveSelectedTweets = () => {
-    if (selectedTweets.size === 0 && selectedThreads.size === 0) {
-      toast.error('Please select at least one tweet or thread to save');
+  const handleSaveSelectedTweets = async () => {
+    if (selectedTweets.size === 0) {
+      toast.error('Please select at least one tweet to save');
       return;
     }
     
-    // Calculate the total number of selected items
-    const selectedTweetsCount = selectedTweets.size;
-    const selectedThreadTweets = twitterResult?.threads
-      .filter(thread => selectedThreads.has(thread.id))
-      .reduce((count, thread) => count + thread.tweets.length, 0) || 0;
+    if (!twitterResult || !twitterResult.tweets) {
+      toast.error('No tweets available to save');
+      return;
+    }
     
-    const totalSelected = selectedTweetsCount + selectedThreadTweets;
+    setIsLoading(true);
     
-    toast.success(`Saved ${totalSelected} tweets to your inspiration collection!`);
-    setSelectedTweets(new Set());
-    setSelectedThreads(new Set());
+    try {
+      // Filter only selected tweets
+      const tweetsToSave = twitterResult.tweets.filter(tweet => 
+        selectedTweets.has(tweet.id)
+      );
+      
+      // Call API to save tweets
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/save`;
+      
+      const response = await axios.post(apiUrl, {
+        tweets: tweetsToSave,
+        username: user?.email || 'anonymous',
+        options: {
+          preserveThreadOrder: true
+        }
+      });
+      
+      if (response.data && response.data.success) {
+        toast.success(`Saved ${response.data.count} tweets successfully!`);
+        setSelectedTweets(new Set());
+      } else {
+        throw new Error(response.data?.message || 'Failed to save tweets');
+      }
+    } catch (error) {
+      console.error('Error saving tweets:', error);
+      toast.error('Failed to save tweets. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Reset selection when tab changes
@@ -201,229 +254,7 @@ const ScraperPage: React.FC = () => {
     setResult(null);
     setTwitterResult(null);
     setSelectedTweets(new Set());
-    setSelectedThreads(new Set());
   }, [activeTab]);
-
-  // Get filtered Twitter content based on current filter
-  const getFilteredTwitterContent = () => {
-    if (!twitterResult) return { tweets: [], threads: [] };
-    
-    if (twitterFilter === 'all') {
-      return { tweets: twitterResult.tweets, threads: twitterResult.threads };
-    } else if (twitterFilter === 'tweets') {
-      return { tweets: twitterResult.tweets, threads: [] };
-    } else {
-      return { tweets: [], threads: twitterResult.threads };
-    }
-  };
-
-  // Render a tweet card
-  const renderTweetCard = (tweet: Tweet) => (
-    <Card key={tweet.id} className={`overflow-hidden ${selectedTweets.has(tweet.id) ? 'border-primary' : ''}`}>
-      <CardHeader className="p-4 pb-2 flex flex-row justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img 
-              src={tweet.author.profile_image_url} 
-              alt={tweet.author.name}
-              className="w-8 h-8 rounded-full" 
-            />
-            <div>
-              <CardTitle className="text-base">{tweet.author.name}</CardTitle>
-              <CardDescription className="text-xs">@{tweet.author.username}</CardDescription>
-            </div>
-          </div>
-          <CardDescription className="text-xs">
-            {new Date(tweet.created_at).toLocaleDateString()}
-          </CardDescription>
-        </div>
-        <div>
-          <Button
-            variant={selectedTweets.has(tweet.id) ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => handleToggleTweetSelection(tweet.id)}
-            className="h-8 w-8 p-0"
-          >
-            {selectedTweets.has(tweet.id) ? (
-              <div className="h-5 w-5 rounded-sm bg-primary text-primary-foreground flex items-center justify-center">
-                ✓
-              </div>
-            ) : (
-              <div className="h-5 w-5 rounded-sm border border-input"></div>
-            )}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 pt-2">
-        <p className="whitespace-pre-line text-sm">
-          {tweet.full_text || tweet.text}
-        </p>
-        
-        {tweet.media && tweet.media.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {tweet.media.map((media, index) => (
-              media.type === 'photo' && (
-                <div key={media.media_key || index} className="rounded overflow-hidden">
-                  <img 
-                    src={media.url} 
-                    alt="Tweet media" 
-                    className="w-full h-auto"
-                  />
-                </div>
-              )
-            ))}
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="p-3 border-t flex justify-between bg-gray-50">
-        <div className="flex items-center gap-6 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <MessageSquare className="h-3 w-3" />
-            {tweet.public_metrics.reply_count}
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-            {tweet.public_metrics.retweet_count}
-          </div>
-          <div className="flex items-center gap-1">
-            <ThumbsUp className="h-3 w-3" />
-            {tweet.public_metrics.like_count}
-          </div>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => handleCopy(tweet.full_text || tweet.text)}>
-          <Copy className="h-3 w-3 mr-1" />
-          Copy
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
-  // Render a thread card
-  const renderThreadCard = (thread: Thread) => (
-    <Card key={thread.id} className={`overflow-hidden ${selectedThreads.has(thread.id) ? 'border-primary' : ''}`}>
-      <CardHeader className="p-4 pb-2 flex flex-row justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img 
-              src={thread.author.profile_image_url} 
-              alt={thread.author.name}
-              className="w-8 h-8 rounded-full" 
-            />
-            <div>
-              <CardTitle className="text-base">{thread.author.name}</CardTitle>
-              <CardDescription className="text-xs">@{thread.author.username}</CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <CardDescription className="text-xs">
-              {new Date(thread.created_at).toLocaleDateString()}
-            </CardDescription>
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-              Thread • {thread.tweets.length} tweets
-            </span>
-          </div>
-        </div>
-        <div>
-          <Button
-            variant={selectedThreads.has(thread.id) ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => handleToggleThreadSelection(thread.id)}
-            className="h-8 w-8 p-0"
-          >
-            {selectedThreads.has(thread.id) ? (
-              <div className="h-5 w-5 rounded-sm bg-primary text-primary-foreground flex items-center justify-center">
-                ✓
-              </div>
-            ) : (
-              <div className="h-5 w-5 rounded-sm border border-input"></div>
-            )}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 pt-2">
-        <div className="space-y-4">
-          {thread.tweets.slice(0, 2).map((tweet, index) => (
-            <div key={tweet.id} className="relative">
-              {index > 0 && (
-                <div className="absolute top-0 left-4 h-4 w-0.5 bg-gray-200" style={{ top: '-16px' }}></div>
-              )}
-              <div className={`flex gap-3 ${index < thread.tweets.length - 1 ? 'pb-4' : ''}`}>
-                <div className="relative">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
-                    <img 
-                      src={tweet.author.profile_image_url} 
-                      alt={tweet.author.name}
-                      className="w-full h-full" 
-                    />
-                  </div>
-                  {index < thread.tweets.length - 1 && (
-                    <div className="absolute top-8 left-4 bottom-0 w-0.5 bg-gray-200"></div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="whitespace-pre-line text-sm">
-                    {tweet.full_text || tweet.text}
-                  </p>
-                  
-                  {tweet.media && tweet.media.length > 0 && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {tweet.media.map((media, idx) => (
-                        media.type === 'photo' && (
-                          <div key={media.media_key || idx} className="rounded overflow-hidden">
-                            <img 
-                              src={media.url} 
-                              alt="Tweet media" 
-                              className="w-full h-auto"
-                            />
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {thread.tweets.length > 2 && (
-            <div className="pt-2 text-center">
-              <Button variant="outline" size="sm" className="w-full">
-                Show {thread.tweets.length - 2} more tweets
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="p-3 border-t flex justify-between bg-gray-50">
-        <div className="flex items-center gap-6 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <MessageSquare className="h-3 w-3" />
-            {thread.tweets.reduce((sum, t) => sum + t.public_metrics.reply_count, 0)}
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-            {thread.tweets.reduce((sum, t) => sum + t.public_metrics.retweet_count, 0)}
-          </div>
-          <div className="flex items-center gap-1">
-            <ThumbsUp className="h-3 w-3" />
-            {thread.tweets.reduce((sum, t) => sum + t.public_metrics.like_count, 0)}
-          </div>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => handleCopy(thread.tweets.map(t => t.full_text || t.text).join('\n\n'))}
-        >
-          <Copy className="h-3 w-3 mr-1" />
-          Copy Thread
-        </Button>
-      </CardFooter>
-    </Card>
-  );
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -465,7 +296,7 @@ const ScraperPage: React.FC = () => {
                       ? 'Enter website URL'
                       : activeTab === 'twitter'
                         ? 'Enter Twitter username or profile URL'
-                        : 'Enter YouTube video URL'
+                      : 'Enter YouTube video URL'
                 }
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
@@ -497,7 +328,7 @@ const ScraperPage: React.FC = () => {
                 ? 'Example: https://www.example.com/blog/article'
                 : activeTab === 'twitter'
                   ? 'Example: @username or https://twitter.com/username'
-                  : 'Example: https://www.youtube.com/watch?v=videoId'
+                : 'Example: https://www.youtube.com/watch?v=videoId'
             }
           </p>
         </div>
@@ -505,78 +336,27 @@ const ScraperPage: React.FC = () => {
         {/* Twitter Results Section */}
         {activeTab === 'twitter' && twitterResult && (
           <div className="space-y-6">
-            {/* Twitter profile summary */}
-            {twitterResult.profile && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
-                <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {twitterResult.profileImageUrl && (
                   <img 
-                    src={twitterResult.profile.profile_image_url} 
-                    alt={twitterResult.profile.name}
-                    className="w-16 h-16 rounded-full border-2 border-white shadow-md" 
+                    src={twitterResult.profileImageUrl} 
+                    alt={twitterResult.username}
+                    className="w-10 h-10 rounded-full" 
                   />
-                  <div>
-                    <h3 className="font-bold text-lg">{twitterResult.profile.name}</h3>
-                    <p className="text-blue-700">@{twitterResult.profile.username}</p>
-                    <div className="flex gap-4 mt-1 text-sm">
-                      <span className="text-gray-600">
-                        <strong>{twitterResult.profile.followers_count.toLocaleString()}</strong> Followers
-                      </span>
-                      <span className="text-gray-600">
-                        <strong>{twitterResult.profile.following_count.toLocaleString()}</strong> Following
-                      </span>
-                    </div>
-                  </div>
-                  <div className="ml-auto">
-                    <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`https://twitter.com/${twitterResult.profile?.username}`, '_blank')}>
-                      <ExternalLink className="h-3 w-3" />
-                      View Profile
-                    </Button>
-                  </div>
-                </div>
-                {twitterResult.profile.description && (
-                  <p className="mt-3 text-gray-700">{twitterResult.profile.description}</p>
                 )}
-              </div>
-            )}
-            
-            {/* Filters and controls */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Filter:</span>
-                <div className="flex rounded-md overflow-hidden border">
-                  <button 
-                    className={`px-3 py-1 text-sm ${twitterFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'bg-white text-gray-600'}`}
-                    onClick={() => setTwitterFilter('all')}
-                  >
-                    All
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-sm border-l ${twitterFilter === 'tweets' ? 'bg-blue-50 text-blue-700 font-medium' : 'bg-white text-gray-600'}`}
-                    onClick={() => setTwitterFilter('tweets')}
-                  >
-                    Tweets ({twitterResult.tweets.length})
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-sm border-l ${twitterFilter === 'threads' ? 'bg-blue-50 text-blue-700 font-medium' : 'bg-white text-gray-600'}`}
-                    onClick={() => setTwitterFilter('threads')}
-                  >
-                    Threads ({twitterResult.threads.length})
-                  </button>
+                <div>
+                  <h3 className="font-semibold">@{twitterResult.username}</h3>
+                  <p className="text-sm text-gray-500">
+                    {twitterResult.tweets.length} tweets scraped
+                  </p>
                 </div>
               </div>
-              
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    const { tweets, threads } = getFilteredTwitterContent();
-                    const allTweetIds = tweets.map(t => t.id);
-                    const allThreadIds = threads.map(t => t.id);
-                    
-                    setSelectedTweets(new Set(allTweetIds));
-                    setSelectedThreads(new Set(allThreadIds));
-                  }}
+                  onClick={() => setSelectedTweets(new Set(twitterResult.tweets.map(t => t.id)))}
                   disabled={isLoading}
                 >
                   Select All
@@ -584,19 +364,16 @@ const ScraperPage: React.FC = () => {
                 <Button
                   variant="outline" 
                   size="sm"
-                  onClick={() => {
-                    setSelectedTweets(new Set());
-                    setSelectedThreads(new Set());
-                  }}
-                  disabled={isLoading || (selectedTweets.size === 0 && selectedThreads.size === 0)}
+                  onClick={() => setSelectedTweets(new Set())}
+                  disabled={isLoading || selectedTweets.size === 0}
                 >
-                  Clear
+                  Clear Selection
                 </Button>
                 <Button
                   variant="default"
                   size="sm"
                   onClick={handleSaveSelectedTweets}
-                  disabled={isLoading || (selectedTweets.size === 0 && selectedThreads.size === 0)}
+                  disabled={isLoading || selectedTweets.size === 0}
                   className="gap-2"
                 >
                   {isLoading ? (
@@ -607,29 +384,102 @@ const ScraperPage: React.FC = () => {
                   ) : (
                     <>
                       <Save className="h-3 w-3" />
-                      Save Selected
+                      Save Selected ({selectedTweets.size})
                     </>
                   )}
                 </Button>
               </div>
             </div>
             
-            {/* Display filtered content */}
             <div className="space-y-4">
-              {getFilteredTwitterContent().threads.map(thread => renderThreadCard(thread))}
-              {getFilteredTwitterContent().tweets.map(tweet => renderTweetCard(tweet))}
-              
-              {getFilteredTwitterContent().threads.length === 0 && 
-               getFilteredTwitterContent().tweets.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No {twitterFilter === 'all' ? 'content' : twitterFilter} found
-                </div>
-              )}
+              {twitterResult.tweets.map(tweet => (
+                <Card key={tweet.id} className={`overflow-hidden ${selectedTweets.has(tweet.id) ? 'border-primary' : ''}`}>
+                  <CardHeader className="p-4 pb-2 flex flex-row justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <img 
+                          src={tweet.author.profile_image_url} 
+                          alt={tweet.author.name}
+                          className="w-8 h-8 rounded-full" 
+                        />
+                        <div>
+                          <CardTitle className="text-base">{tweet.author.name}</CardTitle>
+                          <CardDescription className="text-xs">@{tweet.author.username}</CardDescription>
+                        </div>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {new Date(tweet.created_at).toLocaleDateString()}
+                      </CardDescription>
+                    </div>
+                    <div>
+                      <Button
+                        variant={selectedTweets.has(tweet.id) ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => handleToggleTweetSelection(tweet.id)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {selectedTweets.has(tweet.id) ? (
+                          <div className="h-5 w-5 rounded-sm bg-primary text-primary-foreground flex items-center justify-center">
+                            ✓
+                          </div>
+                        ) : (
+                          <div className="h-5 w-5 rounded-sm border border-input"></div>
+                        )}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-2">
+                    <p className="whitespace-pre-line text-sm">
+                      {tweet.full_text || tweet.text}
+                    </p>
+                    
+                    {tweet.media && tweet.media.length > 0 && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {tweet.media.map((media, index) => (
+                          media.type === 'photo' && (
+                            <div key={media.media_key || index} className="rounded overflow-hidden">
+                              <img 
+                                src={media.url} 
+                                alt={media.alt_text || 'Tweet media'} 
+                                className="w-full h-auto"
+                              />
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="p-3 border-t flex justify-between bg-gray-50">
+                    <div className="flex items-center gap-6 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {tweet.public_metrics.reply_count}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        {tweet.public_metrics.retweet_count}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        {tweet.public_metrics.like_count}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => handleCopy(tweet.full_text || tweet.text)}>
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
           </div>
         )}
         
-        {/* Results section for other platforms */}
+        {/* Results section - Original content for LinkedIn/Website/YouTube */}
         {activeTab !== 'twitter' && result && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left column - Extracted content */}
@@ -803,7 +653,7 @@ const ScraperPage: React.FC = () => {
                       ? 'Extract Content from Websites'
                       : activeTab === 'twitter'
                         ? 'Extract Content from Twitter'
-                        : 'Extract Content from YouTube Videos'
+                      : 'Extract Content from YouTube Videos'
                   }
                 </h3>
                 
@@ -814,7 +664,7 @@ const ScraperPage: React.FC = () => {
                       ? 'Paste any article or blog URL to extract key points, analyze tone, and suggest hooks for your LinkedIn content.'
                       : activeTab === 'twitter'
                         ? 'Paste a Twitter username or profile URL to extract tweets and insights for your LinkedIn content.'
-                        : 'Paste a YouTube video URL to extract transcripts, key points, and insights to share on LinkedIn.'
+                      : 'Paste a YouTube video URL to extract transcripts, key points, and insights to share on LinkedIn.'
                   }
                 </p>
                 

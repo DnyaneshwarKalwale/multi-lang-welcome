@@ -162,15 +162,18 @@ export default function CompletionPage() {
     }, 2000);
   };
   
-  const handleUploadFiles = () => {
+  const handleConnectLinkedIn = () => {
     setIsUploadingFiles(true);
     
-    // Simulate file upload (would connect to real API in production)
-    setTimeout(() => {
-      setIsUploadingFiles(false);
-      setAccountsConnected(true);
-      // Remove automatic redirect to dashboard
-    }, 2000);
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
+    localStorage.setItem('redirectAfterAuth', '/dashboard');
+    
+    // Redirect to LinkedIn OAuth endpoint
+    window.location.href = `${baseUrl}/api/auth/linkedin`;
   };
 
   return (
@@ -269,13 +272,13 @@ export default function CompletionPage() {
                     variant="outline"
                     rounded="full"
                     className="w-full md:w-auto border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600 group"
-                    onClick={handleUploadFiles}
+                    onClick={handleConnectLinkedIn}
                     disabled={isUploadingFiles}
                   >
                     {isUploadingFiles ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Connecting...
+                        Connecting to LinkedIn...
                       </>
                     ) : (
                       <>

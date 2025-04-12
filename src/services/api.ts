@@ -49,9 +49,9 @@ export const authApi = {
     return response.data;
   },
 
-  // Twitter direct authentication (for development)
-  twitterAuth: async (userData: { name: string; twitterId: string; email?: string; profileImage?: string }) => {
-    const response = await api.post('/auth/twitter-auth', userData);
+  // LinkedIn direct authentication (for development)
+  linkedinAuth: async (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => {
+    const response = await api.post('/auth/linkedin-auth', userData);
     return response.data;
   },
 

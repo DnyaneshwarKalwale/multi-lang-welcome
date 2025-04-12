@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -49,10 +48,17 @@ export default function OAuthCallbackPage() {
         // Check for pending invitation token
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
         
+        // Check for redirect after auth (set during LinkedIn connection on completion page)
+        const redirectAfterAuth = localStorage.getItem('redirectAfterAuth');
+        
         // Determine where to redirect the user
         if (pendingInvitationToken) {
           navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
           localStorage.removeItem('pendingInvitationToken');
+        } else if (redirectAfterAuth) {
+          // Navigate to the stored redirect path and remove it from localStorage
+          navigate(redirectAfterAuth, { replace: true });
+          localStorage.removeItem('redirectAfterAuth');
         } else {
           // Get onboarding status from localStorage (set by fetchUser)
           const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
@@ -70,9 +76,15 @@ export default function OAuthCallbackPage() {
         // Check for pending invitation
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
         
+        // Check for redirect after auth
+        const redirectAfterAuth = localStorage.getItem('redirectAfterAuth');
+        
         if (pendingInvitationToken) {
           navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
           localStorage.removeItem('pendingInvitationToken');
+        } else if (redirectAfterAuth) {
+          navigate(redirectAfterAuth, { replace: true });
+          localStorage.removeItem('redirectAfterAuth');
         } else if (onboarding) {
           navigate('/onboarding/welcome', { replace: true });
         } else {

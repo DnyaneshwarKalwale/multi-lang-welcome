@@ -8,7 +8,7 @@ import {
   LogOut, User, Settings, ChevronDown, Users, Bell,
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
-  Layers, LayoutGrid, ArrowUp, CreditCard, Building
+  Layers, LayoutGrid, ArrowUp, CreditCard, Building, Loader2
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -321,6 +321,19 @@ const DashboardPage: React.FC = () => {
     return `${firstName} ${lastName}`.trim();
   };
 
+  // Function to handle LinkedIn connection
+  const handleConnectLinkedIn = () => {
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
+    localStorage.setItem('redirectAfterAuth', '/dashboard');
+    
+    // Redirect to LinkedIn OAuth endpoint
+    window.location.href = `${baseUrl}/api/auth/linkedin`;
+  };
+
   return (
     <div className="w-full h-full">
       {/* Welcome message and workspace switch */}
@@ -477,11 +490,12 @@ const DashboardPage: React.FC = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Link your LinkedIn profile to enable powerful content creation features
                   </p>
-            <Button
-              variant="outline"
-                    className="w-full border-gray-300 text-gray-700 hover:text-primary hover:border-primary"
+                  <Button
+                    variant="outline"
+                    className="w-full border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-600 group"
+                    onClick={handleConnectLinkedIn}
                   >
-                    <Linkedin className="h-4 w-4 mr-2" />
+                    <Linkedin className="h-4 w-4 mr-2 text-blue-600" />
                     Connect LinkedIn
                   </Button>
                 </div>
@@ -538,6 +552,124 @@ const DashboardPage: React.FC = () => {
               </p>
             </CardContent>
           </Card>
+
+          {/* LinkedIn Connection Section - Show if no LinkedIn account is connected */}
+          {!linkedInProfile && !loading.profile && (
+            <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
+              <CardContent className="p-0">
+                <div className="flex flex-col md:flex-row items-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-6">
+                  <div className="flex-1 mb-4 md:mb-0 md:mr-6">
+                    <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                      Connect Your LinkedIn Account
+                    </h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      Link your LinkedIn profile to view analytics, schedule posts, and boost your engagement with our AI-powered tools.
+                    </p>
+                    <Button 
+                      onClick={handleConnectLinkedIn}
+                      variant="default" 
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Linkedin className="w-5 h-5 mr-2" />
+                      Connect LinkedIn
+                    </Button>
+                  </div>
+                  <div className="flex-shrink-0 w-32 h-32 md:w-48 md:h-48 relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Linkedin className="w-24 h-24 md:w-32 md:h-32 text-blue-500/20" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* LinkedIn Analytics Section - Show only if LinkedIn account is connected */}
+          {linkedInProfile && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle>LinkedIn Analytics</CardTitle>
+                  <CardDescription>Your LinkedIn performance snapshot</CardDescription>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-primary"
+                  onClick={() => navigate('/dashboard/analytics')}
+                >
+                  View Full Analytics
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {/* Show when loading */}
+                {loading.analytics && (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
+                    <p className="text-sm text-gray-500">Loading LinkedIn analytics...</p>
+                  </div>
+                )}
+                
+                {/* Show when analytics are loaded */}
+                {!loading.analytics && analyticsData && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Total Impressions</div>
+                        <div className="text-2xl font-bold">{analyticsData.summary.totalImpressions.toLocaleString()}</div>
+                        <div className="text-xs text-green-600 mt-1">
+                          <span className="flex items-center">
+                            <ArrowUp className="h-3 w-3 mr-1" />
+                            {analyticsData.impressions.increase}% from last period
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Avg. Engagement</div>
+                        <div className="text-2xl font-bold">{analyticsData.summary.averageEngagement}%</div>
+                        <div className="text-xs text-green-600 mt-1">
+                          <span className="flex items-center">
+                            <ArrowUp className="h-3 w-3 mr-1" />
+                            {analyticsData.engagement.increase}% from last period
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <div className="text-sm font-medium text-gray-500 mb-1">Follower Growth</div>
+                        <div className="text-2xl font-bold">+{analyticsData.summary.followerGrowth}</div>
+                        <div className="text-xs text-green-600 mt-1">
+                          <span className="flex items-center">
+                            <ArrowUp className="h-3 w-3 mr-1" />
+                            {analyticsData.followers.increase}% from last period
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Best Performing Post</h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <p className="text-sm mb-2">{analyticsData.summary.bestPerformingPost.text}</p>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <span className="flex items-center mr-3">
+                            <Eye className="h-3 w-3 mr-1" />
+                            {analyticsData.summary.bestPerformingPost.impressions.toLocaleString()} impressions
+                          </span>
+                          <span className="flex items-center">
+                            <ThumbsUp className="h-3 w-3 mr-1" />
+                            {analyticsData.summary.bestPerformingPost.engagement}% engagement
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
         
         {/* Middle & Right columns - Scheduled Posts & Recent Activity */}
