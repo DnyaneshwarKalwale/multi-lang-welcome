@@ -130,8 +130,6 @@ export default function PostFormatPage() {
         <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px] opacity-70"></div>
       </div>
       
-      {/* Social media floating elements - removed for cleaner design */}
-      
       {/* Back button */}
       <motion.div
         className="absolute top-6 left-6 z-10"
@@ -150,25 +148,25 @@ export default function PostFormatPage() {
       </motion.div>
       
       <motion.div 
-        className="max-w-4xl w-full" 
+        className="max-w-6xl w-full" 
         variants={fadeIn}
         initial="initial"
         animate="animate"
       >
         <motion.div 
-          className="mb-8 flex justify-center"
+          className="mb-6 flex justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <BrandOutIcon className="w-14 h-14 sm:w-20 sm:h-20" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={26} />
+            <BrandOutIcon className="w-14 h-14 sm:w-16 sm:h-16" />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={22} />
           </div>
         </motion.div>
         
         <motion.h1 
-          className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center text-gray-800"
+          className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 text-center text-gray-800"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -176,7 +174,7 @@ export default function PostFormatPage() {
         </motion.h1>
         
         <motion.p 
-          className="text-gray-600 mb-8 text-center max-w-md mx-auto"
+          className="text-gray-600 mb-6 text-center max-w-md mx-auto text-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -184,130 +182,190 @@ export default function PostFormatPage() {
           Scripe is trained on millions of viral posts. When you create posts, the best performing posts about the same topics will be used as a reference.
         </motion.p>
         
-        <motion.div 
-          className="mb-6 sm:mb-10"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div 
-            className="grid grid-cols-5 gap-4 mb-8"
-            variants={fadeIn}
-            transition={{ delay: 0.4 }}
-          >
-            {formatOptions.map((format, index) => (
+        {/* Two-column layout with post preview on left and options on right */}
+        <div className="flex flex-col lg:flex-row gap-6 mb-8">
+          {/* Preview column - left side on desktop */}
+          <div className="lg:w-1/2 order-2 lg:order-1">
+            {postFormat ? (
               <motion.div 
-                key={format.id}
-                className={`
-                  flex flex-col items-center justify-between p-3 rounded-xl border 
-                  transition-all duration-300 cursor-pointer h-full
-                  ${postFormat === format.id 
-                    ? 'border-[#0077B5] bg-blue-50' 
-                    : 'border-gray-200 hover:border-[#0077B5] hover:bg-blue-50/40'
-                  }
-                `}
-                variants={itemVariants}
-                onClick={() => setPostFormat(format.id as any)}
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm h-full"
+                variants={fadeIn}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                <div className="flex flex-col items-center text-center mb-2">
-                  <div className={`
-                    w-12 h-12 flex items-center justify-center rounded-xl 
-                    ${postFormat === format.id 
-                      ? 'bg-white shadow-sm' 
-                      : 'bg-gray-50'
-                    } mb-2
-                  `}>
-                    {format.icon}
+                <div className="border-b border-gray-200 p-3 flex items-center justify-between bg-white">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-[#0077B5] flex items-center justify-center text-white">
+                      {userInitials}
+                    </div>
+                    <div className="ml-2">
+                      <div className="text-sm font-medium">Your Name</div>
+                      <div className="text-xs text-gray-500">Professional title</div>
+                    </div>
                   </div>
-                  <h3 className="font-medium text-sm mb-0">{format.title}</h3>
+                  <Linkedin size={18} className="text-[#0077B5]" />
+                </div>
+                <div className="p-4 min-h-[300px]">
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {getExampleText(formatOptions.find(f => f.id === postFormat))}
+                  </p>
+                </div>
+                <div className="p-3 border-t border-gray-200 bg-white flex justify-between items-center text-xs text-gray-500">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp size={14} /> {postLength > 50 ? "87" : "42"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageSquareText size={14} /> {postLength > 50 ? "16" : "8"}
+                    </span>
+                  </div>
+                  <span>Content powered by Scripe AI</span>
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
+            ) : (
+              <motion.div
+                className="flex items-center justify-center h-full min-h-[300px] rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4"
+                variants={fadeIn}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="text-center text-gray-500">
+                  <FileText size={40} className="mx-auto mb-3 text-gray-400" />
+                  <p>Select a format to preview your LinkedIn content</p>
+                </div>
+              </motion.div>
+            )}
+          </div>
           
-          {/* Content preview based on selected format */}
-          {postFormat && (
-            <motion.div 
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden max-w-2xl mx-auto mb-8 shadow-sm"
-              variants={fadeIn}
-              transition={{ delay: 0.6 }}
+          {/* Options column - right side on desktop */}
+          <div className="lg:w-1/2 order-1 lg:order-2">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
             >
-              <div className="border-b border-gray-200 p-3 flex items-center justify-between bg-white">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-full bg-[#0077B5] flex items-center justify-center text-white">
-                    {userInitials}
-                  </div>
-                  <div className="ml-2">
-                    <div className="text-sm font-medium">Your Name</div>
-                    <div className="text-xs text-gray-500">Professional title</div>
+              {/* Format options */}
+              <motion.div 
+                className="grid grid-cols-5 gap-3 mb-8"
+                variants={fadeIn}
+                transition={{ delay: 0.4 }}
+              >
+                {formatOptions.map((format, index) => (
+                  <motion.div 
+                    key={format.id}
+                    className={`
+                      flex flex-col items-center justify-between p-3 rounded-xl border 
+                      transition-all duration-300 cursor-pointer h-full
+                      ${postFormat === format.id 
+                        ? 'border-[#0077B5] bg-blue-50' 
+                        : 'border-gray-200 hover:border-[#0077B5] hover:bg-blue-50/40'
+                      }
+                    `}
+                    variants={itemVariants}
+                    onClick={() => setPostFormat(format.id as any)}
+                  >
+                    <div className="flex flex-col items-center text-center mb-2">
+                      <div className={`
+                        w-12 h-12 flex items-center justify-center rounded-xl 
+                        ${postFormat === format.id 
+                          ? 'bg-white shadow-sm' 
+                          : 'bg-gray-50'
+                        } mb-2
+                      `}>
+                        {format.icon}
+                      </div>
+                      <h3 className="font-medium text-sm mb-0">{format.title}</h3>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+              
+              {/* Post length slider with 3 checkpoints */}
+              <motion.div 
+                className="mb-10"
+                variants={fadeIn}
+                transition={{ delay: 0.7 }}
+              >
+                <div className="flex justify-between mb-2 text-sm text-gray-600">
+                  <span>Post length</span>
+                  <span>{calculateCharacterCount()}</span>
+                </div>
+                
+                {/* Custom slider with checkpoint marks */}
+                <div className="relative mb-6">
+                  <Slider
+                    value={[postLength]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onValueChange={(value) => setPostLength(value[0])}
+                    className="mb-3"
+                  />
+                  
+                  {/* Checkpoints */}
+                  <div className="flex justify-between mt-1 relative">
+                    {/* Checkpoint 1 */}
+                    <div 
+                      className={`checkpoint flex flex-col items-center cursor-pointer`}
+                      onClick={() => setPostLength(15)}
+                    >
+                      <div className={`w-3 h-3 rounded-full ${postLength <= 30 ? 'bg-[#0077B5]' : 'bg-gray-300'} mb-1`}></div>
+                      <span className={`text-xs ${postLength <= 30 ? 'text-[#0077B5] font-medium' : 'text-gray-500'}`}>
+                        Short
+                      </span>
+                    </div>
+                    
+                    {/* Checkpoint 2 */}
+                    <div 
+                      className={`checkpoint flex flex-col items-center cursor-pointer`}
+                      onClick={() => setPostLength(50)}
+                    >
+                      <div className={`w-3 h-3 rounded-full ${postLength > 30 && postLength < 70 ? 'bg-[#0077B5]' : 'bg-gray-300'} mb-1`}></div>
+                      <span className={`text-xs ${postLength > 30 && postLength < 70 ? 'text-[#0077B5] font-medium' : 'text-gray-500'}`}>
+                        Medium
+                      </span>
+                    </div>
+                    
+                    {/* Checkpoint 3 */}
+                    <div 
+                      className={`checkpoint flex flex-col items-center cursor-pointer`}
+                      onClick={() => setPostLength(85)}
+                    >
+                      <div className={`w-3 h-3 rounded-full ${postLength >= 70 ? 'bg-[#0077B5]' : 'bg-gray-300'} mb-1`}></div>
+                      <span className={`text-xs ${postLength >= 70 ? 'text-[#0077B5] font-medium' : 'text-gray-500'}`}>
+                        Long
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <Linkedin size={18} className="text-[#0077B5]" />
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-gray-700 whitespace-pre-line">
-                  {getExampleText(formatOptions.find(f => f.id === postFormat))}
-                </p>
-              </div>
-              <div className="p-3 border-t border-gray-200 bg-white flex justify-between items-center text-xs text-gray-500">
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1">
-                    <ThumbsUp size={14} /> {postLength > 50 ? "87" : "42"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MessageSquareText size={14} /> {postLength > 50 ? "16" : "8"}
-                  </span>
+                
+                <div className="text-center text-xs text-gray-400">
+                  Scripe will learn your individual preferences over time.
                 </div>
-                <span>Content powered by Scripe AI</span>
-              </div>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-center"
+                variants={fadeIn}
+                transition={{ delay: 0.8 }}
+              >
+                <Button
+                  onClick={nextStep} 
+                  disabled={!postFormat}
+                  className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
+                >
+                  <span>Continue</span>
+                  <ChevronRight size={16} className="ml-2" />
+                </Button>
+              </motion.div>
             </motion.div>
-          )}
-          
-          {/* Post length slider */}
-          <motion.div 
-            className="mb-10 max-w-lg mx-auto"
-            variants={fadeIn}
-            transition={{ delay: 0.7 }}
-          >
-            <div className="flex justify-between mb-2 text-sm text-gray-600">
-              <span>Post length</span>
-              <span>{calculateCharacterCount()}</span>
-            </div>
-            <Slider
-              value={[postLength]}
-              min={0}
-              max={100}
-              step={1}
-              onValueChange={(value) => setPostLength(value[0])}
-              className="mb-1"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Short</span>
-              <span>Super long</span>
-            </div>
-            <div className="mt-2 text-center text-xs text-gray-400">
-              Scripe will learn your individual preferences over time.
-            </div>
-          </motion.div>
-        </motion.div>
-        
-        <motion.div 
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          variants={fadeIn}
-          transition={{ delay: 0.8 }}
-        >
-          <Button
-            onClick={nextStep} 
-            disabled={!postFormat}
-            className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
-          >
-            <span>Continue</span>
-            <ChevronRight size={16} className="ml-2" />
-          </Button>
-        </motion.div>
+          </div>
+        </div>
         
         <motion.div
-          className="mt-8 flex justify-center" 
+          className="flex justify-center" 
           variants={fadeIn}
           transition={{ delay: 0.9 }}
         >
