@@ -123,87 +123,14 @@ export default function PostFormatPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-3 sm:px-4 py-6 sm:py-10 bg-background text-foreground relative overflow-hidden">
-      {/* LinkedIn-inspired background */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-3 sm:px-4 py-6 sm:py-10 bg-white text-foreground relative overflow-hidden">
+      {/* LinkedIn-inspired background - simplified and brightened */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-primary-100 dark:bg-primary/30 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px] opacity-70"></div>
+        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px] opacity-70"></div>
       </div>
       
-      {/* Social media floating elements for decoration - hidden on smallest screens */}
-      <div className="hidden sm:block">
-        <motion.div 
-          className="absolute opacity-10 pointer-events-none"
-          animate={{ 
-            y: [0, -15, 0],
-            x: [0, 10, 0],
-            rotate: [0, 5, 0],
-          }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 8, 
-            ease: "easeInOut" 
-          }}
-          style={{ top: '15%', right: '10%' }}
-        >
-          <Linkedin size={80} className="text-primary" />
-        </motion.div>
-        
-        <motion.div 
-          className="absolute opacity-10 pointer-events-none"
-          animate={{ 
-            y: [0, 20, 0],
-            x: [0, -15, 0],
-            rotate: [0, -5, 0],
-          }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 10, 
-            ease: "easeInOut",
-            delay: 1 
-          }}
-          style={{ bottom: '20%', left: '8%' }}
-        >
-          <HeartHandshake size={60} className="text-primary" />
-        </motion.div>
-        
-        <motion.div 
-          className="absolute opacity-10 pointer-events-none"
-          animate={{ 
-            y: [0, -10, 0],
-            x: [0, -10, 0],
-            rotate: [0, 3, 0],
-          }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 7, 
-            ease: "easeInOut",
-            delay: 0.5 
-          }}
-          style={{ top: '30%', left: '15%' }}
-        >
-          <TrendingUp size={50} className="text-primary" />
-        </motion.div>
-        
-        <motion.div 
-          className="absolute opacity-10 pointer-events-none"
-          animate={{ 
-            y: [0, 15, 0],
-            x: [0, 5, 0],
-            rotate: [0, -3, 0],
-          }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 9, 
-            ease: "easeInOut",
-            delay: 1.5 
-          }}
-          style={{ bottom: '30%', right: '12%' }}
-        >
-          <Users size={45} className="text-primary" />
-        </motion.div>
-      </div>
+      {/* Social media floating elements - removed for cleaner design */}
       
       {/* Back button */}
       <motion.div
@@ -215,7 +142,7 @@ export default function PostFormatPage() {
         <Button
           variant="ghost"
           size="icon"
-          className="flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary rounded-full"
+          className="flex items-center justify-center w-10 h-10 text-gray-700 hover:bg-gray-100 hover:text-primary rounded-full"
           onClick={prevStep}
         >
           <ArrowLeft size={18} />
@@ -241,11 +168,11 @@ export default function PostFormatPage() {
         </motion.div>
         
         <motion.h1 
-          className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+          className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center text-gray-800"
           variants={fadeIn}
           transition={{ delay: 0.2 }}
         >
-          Choose your LinkedIn content type
+          Pick your preferred post formatting style
         </motion.h1>
         
         <motion.p 
@@ -254,8 +181,7 @@ export default function PostFormatPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          BrandOut analyzes thousands of high-performing posts to optimize your content strategy.
-          Select the content type that best aligns with your professional goals.
+          Scripe is trained on millions of viral posts. When you create posts, the best performing posts about the same topics will be used as a reference.
         </motion.p>
         
         <motion.div 
@@ -265,7 +191,7 @@ export default function PostFormatPage() {
           animate="visible"
         >
           <motion.div 
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 md:gap-6 mb-6 sm:mb-10"
+            className="grid grid-cols-5 gap-4 mb-8"
             variants={fadeIn}
             transition={{ delay: 0.4 }}
           >
@@ -273,37 +199,27 @@ export default function PostFormatPage() {
               <motion.div 
                 key={format.id}
                 className={`
-                  flex flex-col items-center justify-between p-4 sm:p-5 rounded-xl border 
+                  flex flex-col items-center justify-between p-3 rounded-xl border 
                   transition-all duration-300 cursor-pointer h-full
                   ${postFormat === format.id 
-                    ? 'border-primary bg-primary-50 dark:bg-primary-900/20' 
-                    : 'border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary-50/40 dark:hover:bg-primary-900/10'
+                    ? 'border-[#0077B5] bg-blue-50' 
+                    : 'border-gray-200 hover:border-[#0077B5] hover:bg-blue-50/40'
                   }
                 `}
                 variants={itemVariants}
                 onClick={() => setPostFormat(format.id as any)}
               >
-                <div className="flex flex-col items-center text-center mb-3">
+                <div className="flex flex-col items-center text-center mb-2">
                   <div className={`
-                    w-12 h-12 flex items-center justify-center rounded-full 
+                    w-12 h-12 flex items-center justify-center rounded-xl 
                     ${postFormat === format.id 
-                      ? 'bg-primary-100 dark:bg-primary-900/50' 
-                      : 'bg-gray-100 dark:bg-gray-800'
-                    } mb-3
+                      ? 'bg-white shadow-sm' 
+                      : 'bg-gray-50'
+                    } mb-2
                   `}>
                     {format.icon}
                   </div>
-                  <h3 className="font-semibold mb-1">{format.title}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{format.description}</p>
-                </div>
-                <div className={`
-                  w-5 h-5 flex items-center justify-center rounded-full border-2
-                  ${postFormat === format.id 
-                    ? 'border-primary bg-primary text-white' 
-                    : 'border-gray-300 dark:border-gray-600'
-                  } 
-                `}>
-                  {postFormat === format.id && <Check size={12} />}
+                  <h3 className="font-medium text-sm mb-0">{format.title}</h3>
                 </div>
               </motion.div>
             ))}
@@ -312,28 +228,28 @@ export default function PostFormatPage() {
           {/* Content preview based on selected format */}
           {postFormat && (
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden max-w-2xl mx-auto mb-8"
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden max-w-2xl mx-auto mb-8 shadow-sm"
               variants={fadeIn}
               transition={{ delay: 0.6 }}
             >
-              <div className="border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
+              <div className="border-b border-gray-200 p-3 flex items-center justify-between bg-white">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white">
+                  <div className="w-8 h-8 rounded-full bg-[#0077B5] flex items-center justify-center text-white">
                     {userInitials}
                   </div>
                   <div className="ml-2">
                     <div className="text-sm font-medium">Your Name</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Professional title</div>
+                    <div className="text-xs text-gray-500">Professional title</div>
                   </div>
                 </div>
-                <Linkedin size={18} className="text-primary" />
+                <Linkedin size={18} className="text-[#0077B5]" />
               </div>
               <div className="p-4">
-                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                <p className="text-sm text-gray-700 whitespace-pre-line">
                   {getExampleText(formatOptions.find(f => f.id === postFormat))}
                 </p>
               </div>
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+              <div className="p-3 border-t border-gray-200 bg-white flex justify-between items-center text-xs text-gray-500">
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1">
                     <ThumbsUp size={14} /> {postLength > 50 ? "87" : "42"}
@@ -342,7 +258,7 @@ export default function PostFormatPage() {
                     <MessageSquareText size={14} /> {postLength > 50 ? "16" : "8"}
                   </span>
                 </div>
-                <span>Content powered by BrandOut AI</span>
+                <span>Content powered by Scripe AI</span>
               </div>
             </motion.div>
           )}
@@ -353,8 +269,8 @@ export default function PostFormatPage() {
             variants={fadeIn}
             transition={{ delay: 0.7 }}
           >
-            <div className="flex justify-between mb-2 text-sm text-gray-600 dark:text-gray-400">
-              <span>Content Length</span>
+            <div className="flex justify-between mb-2 text-sm text-gray-600">
+              <span>Post length</span>
               <span>{calculateCharacterCount()}</span>
             </div>
             <Slider
@@ -365,18 +281,12 @@ export default function PostFormatPage() {
               onValueChange={(value) => setPostLength(value[0])}
               className="mb-1"
             />
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-500">
-              <span>Concise</span>
-              <span>Detailed</span>
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>Short</span>
+              <span>Super long</span>
             </div>
-            <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-              {postLength < 30 ? (
-                "Short posts are quick to read and focus on a single point"
-              ) : postLength < 70 ? (
-                "Medium-length posts balance detail with readability"
-              ) : (
-                "Detailed posts are comprehensive and establish your expertise"
-              )}
+            <div className="mt-2 text-center text-xs text-gray-400">
+              Scripe will learn your individual preferences over time.
             </div>
           </motion.div>
         </motion.div>
@@ -389,7 +299,7 @@ export default function PostFormatPage() {
           <Button
             onClick={nextStep} 
             disabled={!postFormat}
-            className="w-full sm:w-auto bg-primary hover:bg-primary-600 text-white px-8"
+            className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
           >
             <span>Continue</span>
             <ChevronRight size={16} className="ml-2" />
