@@ -46,7 +46,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     onOpenChange(false);
     toast.info("Redirecting to LinkedIn authentication...");
     
-    window.location.href = `${baseUrl}/api/auth/linkedin`;
+    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {

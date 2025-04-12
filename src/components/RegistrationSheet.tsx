@@ -172,19 +172,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               <motion.div variants={itemVariants}>
                 <Button 
                   variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-gray-50 transition-all duration-200 text-gray-700 shadow-sm" 
-                  onClick={handleLinkedInAuth}
-                  disabled={loading}
-                >
-                  <Linkedin size={18} className="text-[#0077B5]" />
-                  <span>{t('continueWithLinkedIn') || 'Continue with LinkedIn'}</span>
-                </Button>
-              </motion.div>
-              
-              <motion.div variants={itemVariants}>
-                <Button 
-                  variant="outline" 
-                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-blue-50 transition-all duration-200 text-gray-700 shadow-sm border-blue-100" 
+                  className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-blue-50 transition-all duration-200 text-gray-700 shadow-sm" 
                   onClick={() => {
                     // Get the backend URL from environment variable or fallback to Render deployed URL
                     const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -199,7 +187,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                   disabled={loading}
                 >
                   <Linkedin size={18} className="text-[#0077B5]" />
-                  <span>{t('directLinkedInLogin') || 'Try Direct LinkedIn Login'}</span>
+                  <span>{t('continueWithLinkedIn') || 'Continue with LinkedIn'}</span>
                 </Button>
               </motion.div>
             </div>
