@@ -66,8 +66,7 @@ export default function OAuthCallbackPage() {
           console.log('OAuthCallback - Onboarding param:', onboarding);
           console.log('OAuthCallback - onboardingCompleted from localStorage:', onboardingCompleted);
           
-          // If onboarding is true in query params OR onboardingCompleted is not 'true', go to onboarding
-          if (onboarding === true || onboardingCompleted !== 'true') {
+          if (onboarding || onboardingCompleted !== 'true') {
             console.log('OAuthCallback - Redirecting to onboarding');
             navigate('/onboarding/welcome', { replace: true });
           } else {
