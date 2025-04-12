@@ -452,47 +452,21 @@ const DashboardPage: React.FC = () => {
           <Card>
             <CardHeader className="pb-0">
               <CardTitle className="flex items-center gap-2">
-                <Linkedin className="h-5 w-5 text-blue-600" />
+                <Linkedin className="h-5 w-5 text-primary" />
                 LinkedIn Profile
-                {linkedInProfile && (
-                  <Badge variant="outline" className="ml-2 text-xs bg-blue-50 text-blue-600 border-blue-200">
-                    Connected
-                  </Badge>
-                )}
               </CardTitle>
-              {linkedInProfile && (
-                <CardDescription>
-                  Manage your connected LinkedIn account
-                </CardDescription>
-              )}
             </CardHeader>
             <CardContent className="pt-4">
-              {loading.profile ? (
-                <div className="flex flex-col items-center justify-center py-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
-                  <p className="text-sm text-gray-500">Loading profile information...</p>
-                </div>
-              ) : linkedInProfile ? (
+              {linkedInProfile ? (
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <Avatar className="h-16 w-16 border-2 border-blue-100">
+                    <Avatar className="h-16 w-16 border-2 border-primary/10">
                       <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name} />
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-lg">{linkedInProfile.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {linkedInProfile.bio || 'Connected LinkedIn Profile'}
-                      </p>
-                      <a 
-                        href={`https://linkedin.com/in/${linkedInProfile.username}`}
-                        target="_blank"
-                        rel="noopener noreferrer" 
-                        className="text-xs text-blue-600 flex items-center mt-1 hover:underline"
-                      >
-                        View profile
-                        <ChevronRight className="h-3 w-3 ml-1" />
-                      </a>
+                      <h3 className="font-semibold">{linkedInProfile.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{linkedInProfile.bio || 'LinkedIn Profile'}</p>
                     </div>
                   </div>
                   
@@ -509,19 +483,19 @@ const DashboardPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
-                    <Linkedin className="h-8 w-8 text-blue-500" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                    <Linkedin className="h-8 w-8 text-gray-400" />
                   </div>
                   <h3 className="font-medium mb-2">Connect LinkedIn Account</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Link your LinkedIn profile to access analytics and publish content directly
+                    Link your LinkedIn profile to enable powerful content creation features
                   </p>
                   <Button
-                    variant="default"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    variant="outline"
+                    className="w-full border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-600 group"
                     onClick={handleConnectLinkedIn}
                   >
-                    <Linkedin className="h-4 w-4 mr-2" />
+                    <Linkedin className="h-4 w-4 mr-2 text-blue-600" />
                     Connect LinkedIn
                   </Button>
                 </div>
@@ -541,25 +515,25 @@ const DashboardPage: React.FC = () => {
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Create New Post
-              </Button>
+            </Button>
             
-              <Button
-                variant="outline"
+            <Button
+              variant="outline"
                 className="w-full justify-start"
                 onClick={() => navigate('/dashboard/request-carousel')}
-              >
+            >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Request Carousel
-              </Button>
+            </Button>
             
-              <Button
-                variant="outline"
+            <Button
+              variant="outline"
                 className="w-full justify-start"
                 onClick={() => navigate('/dashboard/scraper')}
-              >
+            >
                 <FileText className="h-4 w-4 mr-2" />
                 Scrape Content
-              </Button>
+            </Button>
             </CardContent>
           </Card>
           
@@ -578,38 +552,71 @@ const DashboardPage: React.FC = () => {
               </p>
             </CardContent>
           </Card>
+
+          {/* LinkedIn Connection Section - Show if no LinkedIn account is connected */}
+          {!linkedInProfile && !loading.profile && (
+            <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
+              <CardContent className="p-0">
+                <div className="flex flex-col md:flex-row items-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-6">
+                  <div className="flex-1 mb-4 md:mb-0 md:mr-6">
+                    <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                      Connect Your LinkedIn Account
+                    </h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      Link your LinkedIn profile to view analytics, schedule posts, and boost your engagement with our AI-powered tools.
+                    </p>
+                    <Button 
+                      onClick={handleConnectLinkedIn}
+                      variant="default" 
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Linkedin className="w-5 h-5 mr-2" />
+                      Connect LinkedIn
+                    </Button>
+                  </div>
+                  <div className="flex-shrink-0 w-32 h-32 md:w-48 md:h-48 relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Linkedin className="w-24 h-24 md:w-32 md:h-32 text-blue-500/20" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           {/* LinkedIn Analytics Section - Show only if LinkedIn account is connected */}
           {linkedInProfile && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
-                    LinkedIn Analytics
-                  </CardTitle>
-                  <CardDescription>Your LinkedIn performance summary</CardDescription>
+                  <CardTitle>LinkedIn Analytics</CardTitle>
+                  <CardDescription>Your LinkedIn performance snapshot</CardDescription>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="text-blue-600"
+                  className="text-primary"
                   onClick={() => navigate('/dashboard/analytics')}
                 >
-                  View Details
+                  View Full Analytics
                 </Button>
               </CardHeader>
               <CardContent>
-                {loading.analytics ? (
+                {/* Show when loading */}
+                {loading.analytics && (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
                     <p className="text-sm text-gray-500">Loading LinkedIn analytics...</p>
                   </div>
-                ) : analyticsData ? (
+                )}
+                
+                {/* Show when analytics are loaded */}
+                {!loading.analytics && analyticsData && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Impressions</div>
+                        <div className="text-sm font-medium text-gray-500 mb-1">Total Impressions</div>
                         <div className="text-2xl font-bold">{analyticsData.summary.totalImpressions.toLocaleString()}</div>
                         <div className="text-xs text-green-600 mt-1">
                           <span className="flex items-center">
@@ -620,7 +627,7 @@ const DashboardPage: React.FC = () => {
                       </div>
                       
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Engagement</div>
+                        <div className="text-sm font-medium text-gray-500 mb-1">Avg. Engagement</div>
                         <div className="text-2xl font-bold">{analyticsData.summary.averageEngagement}%</div>
                         <div className="text-xs text-green-600 mt-1">
                           <span className="flex items-center">
@@ -631,7 +638,7 @@ const DashboardPage: React.FC = () => {
                       </div>
                       
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">New Followers</div>
+                        <div className="text-sm font-medium text-gray-500 mb-1">Follower Growth</div>
                         <div className="text-2xl font-bold">+{analyticsData.summary.followerGrowth}</div>
                         <div className="text-xs text-green-600 mt-1">
                           <span className="flex items-center">
@@ -641,10 +648,23 @@ const DashboardPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <p className="text-sm text-gray-500">No analytics data available</p>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Best Performing Post</h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <p className="text-sm mb-2">{analyticsData.summary.bestPerformingPost.text}</p>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <span className="flex items-center mr-3">
+                            <Eye className="h-3 w-3 mr-1" />
+                            {analyticsData.summary.bestPerformingPost.impressions.toLocaleString()} impressions
+                          </span>
+                          <span className="flex items-center">
+                            <ThumbsUp className="h-3 w-3 mr-1" />
+                            {analyticsData.summary.bestPerformingPost.engagement}% engagement
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
