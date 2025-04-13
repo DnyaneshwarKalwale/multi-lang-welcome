@@ -1,5 +1,9 @@
 import axios from 'axios';
-import { API_URL } from '../utils/constants';
+
+// Create axios instance with base URL
+// In Vite, we need to use import.meta.env instead of process.env
+// Fall back to deployed Render backend URL if environment variable is not available
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
 
 const API = axios.create({
   baseURL: API_URL,

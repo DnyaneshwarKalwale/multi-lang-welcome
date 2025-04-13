@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button, Card, Container, Row, Col, Form, Spinner, Tabs, Tab, Alert, Stack } from 'react-bootstrap';
 import { useDropzone } from 'react-dropzone';
 import aiService, { ContentGenerationParams, ImageGenerationParams, YouTubeTranscriptParams } from '../services/aiService';
 import { toast } from 'react-toastify';
 
 const LinkedInContentGenerator: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   
   // State for YouTube transcript
   const [videoUrl, setVideoUrl] = useState('');
