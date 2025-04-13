@@ -571,7 +571,7 @@ const CreatePostPage: React.FC = () => {
       
       try {
         // Try to save to backend first
-        savedScheduledPost = await linkedInApi.schedulePostInBackend(scheduledPostData, scheduledDateTime);
+        savedScheduledPost = await linkedInApi.schedulePost(scheduledPostData, scheduledDateTime);
         toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
       } catch (backendError) {
         console.error('Backend scheduling failed, using localStorage:', backendError);

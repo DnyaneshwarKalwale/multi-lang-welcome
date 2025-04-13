@@ -1,8 +1,5 @@
 import axios from 'axios';
 
-// Import the configured API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-
 // Types for LinkedIn API requests
 export interface LinkedInPostRequest {
   author: string; // Format: urn:li:person:{memberId}
@@ -90,7 +87,7 @@ export interface ScheduledPostData {
 
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
-  private API_URL = `${API_URL}/linkedin`; // Use the configured API URL
+  private API_URL = '/api/linkedin'; // Proxy through our backend
 
   // Get the current user's LinkedIn ID
   async getUserLinkedInId(): Promise<string> {
@@ -304,8 +301,8 @@ class LinkedInApi {
     }
   }
 
-  // Schedule a post to backend storage
-  async schedulePostInBackend(postData: ScheduledPostData, scheduledTime: Date): Promise<any> {
+  // Schedule a post
+  async schedulePost(postData: ScheduledPostData, scheduledTime: Date): Promise<any> {
     try {
       const response = await axios.post(`${this.API_URL}/scheduled-posts`, {
         postData,
@@ -331,11 +328,11 @@ class LinkedInApi {
   }
 
   // Delete a draft or scheduled post
-  async deleteScheduledPost(postId: string): Promise<void> {
+  async deletePost(postId: string): Promise<void> {
     try {
       await axios.delete(`${this.API_URL}/scheduled-posts/${postId}`);
     } catch (error) {
-      console.error('Error deleting scheduled post:', error);
+      console.error('Error deleting post:', error);
       throw error;
     }
   }
