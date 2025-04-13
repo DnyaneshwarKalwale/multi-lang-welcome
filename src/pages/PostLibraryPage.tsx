@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import linkedinApi from '@/utils/linkedinApi';
+import { linkedInApi } from '@/utils/linkedinApi';
 import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
 
 // Define interfaces for post types
@@ -142,7 +142,7 @@ const PostLibraryPage: React.FC = () => {
       try {
         // Try to load from API first
         try {
-          const apiData = await linkedinApi.getDraftsAndScheduled();
+          const apiData = await linkedInApi.getDraftsAndScheduled();
           
           // Process data into our expected format
           const apiDrafts = apiData.filter((item: any) => item.status === 'draft');
@@ -257,7 +257,7 @@ const PostLibraryPage: React.FC = () => {
       }
       
       // Publish to LinkedIn
-      const response = await linkedinApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
+      const response = await linkedInApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
       
       // Remove from drafts
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
@@ -364,7 +364,7 @@ const PostLibraryPage: React.FC = () => {
       }
       
       // Publish to LinkedIn
-      const response = await linkedinApi.createTextPost(postContent, post.visibility || 'PUBLIC');
+      const response = await linkedInApi.createTextPost(postContent, post.visibility || 'PUBLIC');
       
       // Remove from scheduled
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
@@ -445,43 +445,43 @@ const PostLibraryPage: React.FC = () => {
               </Card>
             ) : (
               drafts.map(draft => (
-                <Card key={draft.id} className="overflow-hidden">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="flex-1 p-6">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">{draft.title}</h3>
+              <Card key={draft.id} className="overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                  <div className="flex-1 p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium mb-2">{draft.title}</h3>
                           <p className="text-neutral-medium text-sm mb-3">{draft.content?.substring(0, 100) || ''}...</p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal size={18} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editDraft(draft.id)}>
-                              <PencilLine size={14} /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteDraft(draft.id)}>
-                              <Trash2 size={14} /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center text-xs text-neutral-medium gap-2">
-                          <Clock size={14} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal size={18} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editDraft(draft.id)}>
+                            <PencilLine size={14} /> Edit
+                          </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteDraft(draft.id)}>
+                            <Trash2 size={14} /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center text-xs text-neutral-medium gap-2">
+                        <Clock size={14} />
                           <span>Last edited: {new Date(draft.updatedAt).toLocaleDateString()}</span>
                         </div>
                         {draft.slides && draft.slides.length > 0 && (
                           <div className="text-xs bg-primary-50 text-primary px-2 py-1 rounded">
                             Carousel ({draft.slides.length} slides)
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex flex-row md:flex-col shrink-0 bg-neutral-lightest border-t md:border-t-0 md:border-l border-border">
+                  </div>
+                  <div className="flex flex-row md:flex-col shrink-0 bg-neutral-lightest border-t md:border-t-0 md:border-l border-border">
                       <Button variant="ghost" onClick={() => scheduleDraft(draft.id)} className="flex-1 rounded-none border-r md:border-r-0 md:border-b text-xs py-3 px-4">Schedule</Button>
                       <Button 
                         variant="ghost" 
@@ -492,8 +492,8 @@ const PostLibraryPage: React.FC = () => {
                         {isPublishing ? 'Publishing...' : 'Publish'}
                       </Button>
                     </div>
-                  </div>
-                </Card>
+                </div>
+              </Card>
               ))
             )}
           </div>
@@ -514,39 +514,39 @@ const PostLibraryPage: React.FC = () => {
               </Card>
             ) : (
               scheduled.map(post => (
-                <Card key={post.id} className="overflow-hidden">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="flex-1 p-6">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">{post.title}</h3>
+              <Card key={post.id} className="overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                  <div className="flex-1 p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium mb-2">{post.title}</h3>
                           <p className="text-neutral-medium text-sm mb-3">
                             {post.content 
                               ? post.content.substring(0, 100) + '...'
                               : post.excerpt}
                           </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal size={18} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editScheduledPost(post.id)}>
-                              <PencilLine size={14} /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                              <Clock size={14} /> Reschedule
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteScheduledPost(post.id)}>
-                              <Trash2 size={14} /> Cancel
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
-                      <div className="flex items-center text-xs bg-accent-50 text-accent-dark px-2 py-1 rounded w-fit gap-2 mt-4">
-                        <Calendar size={14} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal size={18} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editScheduledPost(post.id)}>
+                            <PencilLine size={14} /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
+                            <Clock size={14} /> Reschedule
+                          </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteScheduledPost(post.id)}>
+                            <Trash2 size={14} /> Cancel
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="flex items-center text-xs bg-accent-50 text-accent-dark px-2 py-1 rounded w-fit gap-2 mt-4">
+                      <Calendar size={14} />
                         <span>
                           Scheduled for: {
                             post.scheduledTime
@@ -566,9 +566,9 @@ const PostLibraryPage: React.FC = () => {
                       >
                         {isPublishing ? 'Publishing...' : 'Publish Now'}
                       </Button>
-                    </div>
                   </div>
-                </Card>
+                </div>
+              </Card>
               ))
             )}
           </div>

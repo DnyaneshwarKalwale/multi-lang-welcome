@@ -1,5 +1,7 @@
-import api from '../services/api';
 import axios from 'axios';
+
+// Import the configured API URL
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
 
 // Types for LinkedIn API requests
 export interface LinkedInPostRequest {
@@ -88,12 +90,12 @@ export interface ScheduledPostData {
 
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
-  private API_URL = '/linkedin'; // API endpoint path
+  private API_URL = `${API_URL}/linkedin`; // Use the configured API URL
 
   // Get the current user's LinkedIn ID
   async getUserLinkedInId(): Promise<string> {
     try {
-      const response = await api.get(`${this.API_URL}/profile`);
+      const response = await axios.get(`${this.API_URL}/profile`);
       return response.data.id;
     } catch (error) {
       console.error('Error getting LinkedIn user ID:', error);
@@ -124,7 +126,7 @@ class LinkedInApi {
         }
       };
 
-      const response = await api.post(`${this.API_URL}/posts`, postData);
+      const response = await axios.post(`${this.API_URL}/posts`, postData);
       return response.data;
     } catch (error) {
       console.error('Error creating LinkedIn post:', error);
@@ -135,7 +137,7 @@ class LinkedInApi {
   // Initialize image upload to LinkedIn
   async initializeImageUpload(title: string): Promise<LinkedInImageUploadResponse> {
     try {
-      const response = await api.post(`${this.API_URL}/images/initializeUpload`, {
+      const response = await axios.post(`${this.API_URL}/images/initializeUpload`, {
         initializeUploadRequest: {
           owner: 'urn:li:person:' + await this.getUserLinkedInId(),
           serviceRelationships: [
@@ -156,7 +158,6 @@ class LinkedInApi {
   // Upload image to LinkedIn using the upload URL
   async uploadImageToLinkedIn(uploadUrl: string, imageFile: File): Promise<void> {
     try {
-      // We need to use the raw axios for this call because it goes to LinkedIn's servers directly
       await axios.put(uploadUrl, imageFile, {
         headers: {
           'Content-Type': imageFile.type
@@ -208,7 +209,7 @@ class LinkedInApi {
         }
       };
 
-      const response = await api.post(`${this.API_URL}/posts`, postData);
+      const response = await axios.post(`${this.API_URL}/posts`, postData);
       return response.data;
     } catch (error) {
       console.error('Error creating LinkedIn image post:', error);
@@ -216,15 +217,15 @@ class LinkedInApi {
     }
   }
 
-  // Schedule a post for later using LinkedInPostRequest
-  async scheduleLinkedInPost(postData: LinkedInPostRequest, scheduledTime: Date): Promise<any> {
+  // Schedule a post for later
+  async schedulePost(postData: LinkedInPostRequest, scheduledTime: Date): Promise<any> {
     try {
       const scheduledRequest: LinkedInScheduledPostRequest = {
         ...postData,
         scheduledTime: scheduledTime.getTime()
       };
       
-      const response = await api.post(`${this.API_URL}/posts/schedule`, scheduledRequest);
+      const response = await axios.post(`${this.API_URL}/posts/schedule`, scheduledRequest);
       return response.data;
     } catch (error) {
       console.error('Error scheduling LinkedIn post:', error);
@@ -248,7 +249,7 @@ class LinkedInApi {
         }
       };
       
-      const response = await api.post(`${this.API_URL}/polls`, pollData);
+      const response = await axios.post(`${this.API_URL}/polls`, pollData);
       return response.data;
     } catch (error) {
       console.error('Error creating LinkedIn poll:', error);
@@ -259,7 +260,7 @@ class LinkedInApi {
   // Delete a post
   async deletePost(postId: string): Promise<void> {
     try {
-      await api.delete(`${this.API_URL}/posts/${postId}`);
+      await axios.delete(`${this.API_URL}/posts/${postId}`);
     } catch (error) {
       console.error('Error deleting LinkedIn post:', error);
       throw error;
@@ -270,7 +271,7 @@ class LinkedInApi {
   async getUserPosts(limit: number = 10): Promise<any> {
     try {
       const userId = await this.getUserLinkedInId();
-      const response = await api.get(`${this.API_URL}/posts?author=${userId}&limit=${limit}`);
+      const response = await axios.get(`${this.API_URL}/posts?author=${userId}&limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error getting user LinkedIn posts:', error);
@@ -281,7 +282,7 @@ class LinkedInApi {
   // Get user's drafts and scheduled posts
   async getDraftsAndScheduled(): Promise<any> {
     try {
-      const response = await api.get(`${this.API_URL}/scheduled-posts`);
+      const response = await axios.get(`${this.API_URL}/scheduled-posts`);
       return response.data;
     } catch (error) {
       console.error('Error getting drafts and scheduled posts:', error);
@@ -292,7 +293,7 @@ class LinkedInApi {
   // Save a draft post
   async saveDraft(postData: ScheduledPostData): Promise<any> {
     try {
-      const response = await api.post(`${this.API_URL}/scheduled-posts`, {
+      const response = await axios.post(`${this.API_URL}/scheduled-posts`, {
         postData,
         status: 'draft'
       });
@@ -303,10 +304,10 @@ class LinkedInApi {
     }
   }
 
-  // Schedule a post for later using ScheduledPostData
-  async schedulePost(postData: ScheduledPostData, scheduledTime: Date): Promise<any> {
+  // Schedule a post to backend storage
+  async schedulePostInBackend(postData: ScheduledPostData, scheduledTime: Date): Promise<any> {
     try {
-      const response = await api.post(`${this.API_URL}/scheduled-posts`, {
+      const response = await axios.post(`${this.API_URL}/scheduled-posts`, {
         postData,
         scheduledTime: scheduledTime.toISOString(),
         status: 'scheduled'
@@ -321,7 +322,7 @@ class LinkedInApi {
   // Update a draft or scheduled post
   async updatePost(postId: string, updates: Partial<ScheduledPostData>): Promise<any> {
     try {
-      const response = await api.put(`${this.API_URL}/scheduled-posts/${postId}`, updates);
+      const response = await axios.put(`${this.API_URL}/scheduled-posts/${postId}`, updates);
       return response.data;
     } catch (error) {
       console.error('Error updating post:', error);
@@ -329,10 +330,10 @@ class LinkedInApi {
     }
   }
 
-  // Delete a scheduled post
+  // Delete a draft or scheduled post
   async deleteScheduledPost(postId: string): Promise<void> {
     try {
-      await api.delete(`${this.API_URL}/scheduled-posts/${postId}`);
+      await axios.delete(`${this.API_URL}/scheduled-posts/${postId}`);
     } catch (error) {
       console.error('Error deleting scheduled post:', error);
       throw error;
@@ -342,7 +343,7 @@ class LinkedInApi {
   // Publish a draft or scheduled post immediately
   async publishNow(postId: string): Promise<any> {
     try {
-      const response = await api.post(`${this.API_URL}/scheduled-posts/${postId}/publish`);
+      const response = await axios.post(`${this.API_URL}/scheduled-posts/${postId}/publish`);
       return response.data;
     } catch (error) {
       console.error('Error publishing post:', error);
@@ -351,6 +352,4 @@ class LinkedInApi {
   }
 }
 
-// Singleton instance
-const linkedinApi = new LinkedInApi();
-export default linkedinApi; 
+export const linkedInApi = new LinkedInApi(); 

@@ -70,7 +70,7 @@ import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersistentState, useAppState } from '@/contexts/StateContext';
-import linkedinApi from '@/utils/linkedinApi';
+import { linkedInApi } from '@/utils/linkedinApi';
 import { 
   Dialog,
   DialogContent,
@@ -414,17 +414,17 @@ const CreatePostPage: React.FC = () => {
       if (isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2) {
         // Publish as poll
         const filteredOptions = pollOptions.filter(opt => opt.trim());
-        response = await linkedinApi.createPollPost(content, filteredOptions, pollDuration);
+        response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
         toast.success('Poll published to LinkedIn successfully!');
       } else if (postImage) {
         // TODO: Convert Cloudinary URL to File object for upload to LinkedIn
         // For now, we'll just post as text
         toast.warning('Image posts are currently being implemented. Publishing as text post instead.');
-        response = await linkedinApi.createTextPost(content, visibility);
+        response = await linkedInApi.createTextPost(content, visibility);
         toast.success('Post published to LinkedIn successfully!');
       } else {
         // Simple text post
-        response = await linkedinApi.createTextPost(content, visibility);
+        response = await linkedInApi.createTextPost(content, visibility);
         toast.success('Post published to LinkedIn successfully!');
       }
       
@@ -487,7 +487,7 @@ const CreatePostPage: React.FC = () => {
       
       try {
         // Try to save to backend first
-        savedDraft = await linkedinApi.saveDraft(draftPost);
+        savedDraft = await linkedInApi.saveDraft(draftPost);
         toast.success('Post saved as draft to your account');
       } catch (backendError) {
         console.error('Backend save failed, using localStorage:', backendError);
@@ -571,7 +571,7 @@ const CreatePostPage: React.FC = () => {
       
       try {
         // Try to save to backend first
-        savedScheduledPost = await linkedinApi.schedulePost(scheduledPostData, scheduledDateTime);
+        savedScheduledPost = await linkedInApi.schedulePostInBackend(scheduledPostData, scheduledDateTime);
         toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
       } catch (backendError) {
         console.error('Backend scheduling failed, using localStorage:', backendError);
@@ -626,7 +626,7 @@ const CreatePostPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
+        <h1 className="text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
           {saveStatus !== 'idle' && (
             <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
               saveStatus === 'saving' 
@@ -681,10 +681,10 @@ const CreatePostPage: React.FC = () => {
           
           <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <Clock size={16} />
-                Schedule
-              </Button>
+          <Button variant="outline" size="sm" className="gap-1">
+            <Clock size={16} />
+            Schedule
+          </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -761,7 +761,7 @@ const CreatePostPage: React.FC = () => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="bg-primary text-white gap-1">
+          <Button size="sm" className="bg-primary text-white gap-1">
                 {isPublishing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -769,11 +769,11 @@ const CreatePostPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <ArrowRightFromLine size={16} />
-                    Publish Now
+            <ArrowRightFromLine size={16} />
+            Publish Now
                   </>
                 )}
-              </Button>
+          </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem 
@@ -901,7 +901,7 @@ const CreatePostPage: React.FC = () => {
                               onClick={() => setPostImage(null)}
                             >
                               Remove
-                            </Button>
+                      </Button>
                           </div>
                         ) : (
                           <div className="flex gap-2">
@@ -1255,7 +1255,7 @@ const CreatePostPage: React.FC = () => {
                     <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 flex-1">
                       <Forward size={18} />
                       <span className="text-xs font-medium">Send</span>
-                    </button>
+                  </button>
                   </div>
                 </div>
               </div>
