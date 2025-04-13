@@ -143,15 +143,28 @@ const AIWriterPage: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      // In a real app, make API call to AI service
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the OpenAI API through our backend
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate-content`, {
+        prompt: prompt,
+        contentType: contentFormat,
+        tone: tone
+      });
       
-      // Simulate response based on selected format
-      setResponse(exampleResponses[contentFormat]);
-      toast.success('Content generated successfully!');
+      if (response.data) {
+        setResponse({
+          content: response.data.content,
+          suggestedHashtags: response.data.suggestedHashtags || []
+        });
+        toast.success('Content generated successfully!');
+      } else {
+        throw new Error('Failed to generate content');
+      }
     } catch (error) {
       console.error('Error generating content:', error);
-      toast.error('Failed to generate content. Please try again.');
+      
+      // Check if there's a specific error message from the API
+      const errorMessage = error.response?.data?.message || 'Failed to generate content. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -167,48 +180,54 @@ const AIWriterPage: React.FC = () => {
     setIsGeneratingImage(true);
     
     try {
-      // Instead of using backend API, simulate AI image generation with a direct upload
-      // This is a simplified implementation - in a real app you would use an AI API
-      // to generate the image first, but for demo purposes we'll use a placeholder image
+      // Call the OpenAI API through our backend
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate-image`, {
+        prompt: imagePrompt,
+        size: '1024x1024',
+        style: 'vivid'
+      });
       
-      // Create a placeholder image from a service like Lorem Picsum
-      const response = await fetch(`https://picsum.photos/seed/${encodeURIComponent(imagePrompt)}/1024/1024`);
-      
-      if (!response.ok) {
+      if (response.data) {
+        const imageData = response.data;
+        
+        setGeneratedImage({
+          url: imageData.url,
+          secure_url: imageData.secure_url,
+          public_id: imageData.public_id,
+          format: imageData.format,
+          width: imageData.width,
+          height: imageData.height,
+          original_prompt: imagePrompt,
+          revised_prompt: imageData.revised_prompt
+        });
+        
+        // Save to gallery for future use
+        saveImageToGallery({
+          id: imageData.public_id,
+          url: imageData.url,
+          secure_url: imageData.secure_url,
+          public_id: imageData.public_id,
+          title: imagePrompt.substring(0, 50) + (imagePrompt.length > 50 ? '...' : ''),
+          tags: ['ai-generated', 'linkedin'],
+          uploadedAt: new Date().toISOString(),
+          type: 'ai-generated',
+          width: imageData.width,
+          height: imageData.height
+        });
+        
+        toast.success('Image generated successfully!');
+        
+        // Refresh suggested images to include the new one
+        fetchSuggestedImages();
+      } else {
         throw new Error('Failed to generate image');
       }
-      
-      // Convert the response to a blob
-      const imageBlob = await response.blob();
-      
-      // Create a File object from the blob
-      const file = new File([imageBlob], `ai-generated-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      
-      // Upload to Cloudinary directly
-      const uploadResult = await uploadToCloudinaryDirect(file, {
-        folder: 'linkedin_generated',
-        title: imagePrompt.substring(0, 50) + (imagePrompt.length > 50 ? '...' : ''),
-        tags: ['ai-generated', 'linkedin'],
-        type: 'ai-generated'
-      });
-      
-      setGeneratedImage({
-        url: uploadResult.url,
-        secure_url: uploadResult.secure_url,
-        public_id: uploadResult.public_id,
-        format: 'jpeg',
-        width: uploadResult.width,
-        height: uploadResult.height,
-        original_prompt: imagePrompt
-      });
-      
-      toast.success('Image generated successfully!');
-      
-      // Refresh suggested images to include the new one
-      fetchSuggestedImages();
     } catch (error) {
       console.error('Error generating image:', error);
-      toast.error('Failed to generate image. Please try again.');
+      
+      // Check if there's a specific error message from the API
+      const errorMessage = error.response?.data?.message || 'Failed to generate image. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsGeneratingImage(false);
     }
