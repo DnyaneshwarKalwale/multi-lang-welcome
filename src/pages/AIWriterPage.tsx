@@ -143,8 +143,14 @@ const AIWriterPage: React.FC = () => {
     setIsGenerating(true);
     
     try {
+      // Fix the API URL to avoid duplicate "/api/"
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/generate-content` 
+        : `${baseUrl}/api/generate-content`;
+        
       // Call the OpenAI API through our backend
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate-content`, {
+      const response = await axios.post(apiUrl, {
         prompt: prompt,
         contentType: contentFormat,
         tone: tone
@@ -180,8 +186,14 @@ const AIWriterPage: React.FC = () => {
     setIsGeneratingImage(true);
     
     try {
+      // Fix the API URL to avoid duplicate "/api/"
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/generate-image` 
+        : `${baseUrl}/api/generate-image`;
+      
       // Call the OpenAI API through our backend
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate-image`, {
+      const response = await axios.post(apiUrl, {
         prompt: imagePrompt,
         size: '1024x1024',
         style: 'vivid'
