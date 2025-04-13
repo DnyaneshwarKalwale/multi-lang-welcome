@@ -335,299 +335,299 @@ const AnalyticsPage: React.FC = () => {
       {/* Main content - only show when not loading and no errors */}
       {!loading && !error && (
         <>
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-neutral-medium">Impressions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline justify-between">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-medium">Impressions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-bold">{formatNumber(overviewData.totalImpressions)}</div>
-                  <div className="flex items-center text-xs text-accent">
-                    <ArrowUpRight size={14} className="mr-1" />
-                    {overviewData.impressionGrowth}%
-                  </div>
-                </div>
-                
-                <div className="mt-4 h-10 relative">
-                  {/* Simple sparkline visualization */}
-                  <div className="absolute inset-0 flex items-end">
-                    {impressionsChart.data.slice(-10).map((value, index) => (
-                      <div 
-                        key={index} 
-                        className="flex-1 mx-0.5"
-                        style={{ height: `${(value / Math.max(...impressionsChart.data.slice(-10))) * 100}%` }}
-                      >
-                        <div 
-                          className="w-full h-full rounded-t-sm bg-gradient-to-t from-primary-500/40 to-primary-light/40"
-                          style={{ opacity: 0.5 + ((index + 1) / 10) * 0.5 }}
-                        ></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="flex items-center text-xs text-accent">
+                <ArrowUpRight size={14} className="mr-1" />
+                {overviewData.impressionGrowth}%
+              </div>
+            </div>
             
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-neutral-medium">Engagement</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline justify-between">
+            <div className="mt-4 h-10 relative">
+              {/* Simple sparkline visualization */}
+              <div className="absolute inset-0 flex items-end">
+                {impressionsChart.data.slice(-10).map((value, index) => (
+                  <div 
+                    key={index} 
+                    className="flex-1 mx-0.5"
+                    style={{ height: `${(value / Math.max(...impressionsChart.data.slice(-10))) * 100}%` }}
+                  >
+                    <div 
+                      className="w-full h-full rounded-t-sm bg-gradient-to-t from-primary-500/40 to-primary-light/40"
+                      style={{ opacity: 0.5 + ((index + 1) / 10) * 0.5 }}
+                    ></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-medium">Engagement</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-bold">{formatNumber(Math.round(overviewData.totalEngagement))}</div>
-                  <div className="flex items-center text-xs text-accent">
-                    <ArrowUpRight size={14} className="mr-1" />
-                    {overviewData.engagementGrowth}%
-                  </div>
-                </div>
-                
-                <div className="mt-4 h-10 relative">
-                  <div className="absolute inset-0 flex items-end">
-                    {engagementChart.data.slice(-10).map((value, index) => (
-                      <div 
-                        key={index} 
-                        className="flex-1 mx-0.5"
-                        style={{ height: `${(value / Math.max(...engagementChart.data.slice(-10))) * 100}%` }}
-                      >
-                        <div 
-                          className="w-full h-full rounded-t-sm bg-gradient-to-t from-secondary-500/40 to-secondary-light/40"
-                          style={{ opacity: 0.5 + ((index + 1) / 10) * 0.5 }}
-                        ></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="flex items-center text-xs text-accent">
+                <ArrowUpRight size={14} className="mr-1" />
+                {overviewData.engagementGrowth}%
+              </div>
+            </div>
             
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-neutral-medium">Followers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline justify-between">
+            <div className="mt-4 h-10 relative">
+              <div className="absolute inset-0 flex items-end">
+                {engagementChart.data.slice(-10).map((value, index) => (
+                  <div 
+                    key={index} 
+                    className="flex-1 mx-0.5"
+                    style={{ height: `${(value / Math.max(...engagementChart.data.slice(-10))) * 100}%` }}
+                  >
+                    <div 
+                      className="w-full h-full rounded-t-sm bg-gradient-to-t from-secondary-500/40 to-secondary-light/40"
+                      style={{ opacity: 0.5 + ((index + 1) / 10) * 0.5 }}
+                    ></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-medium">Followers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline justify-between">
                   <div className="text-2xl font-bold">{formatNumber(overviewData.totalFollowers)}</div>
-                  <div className="flex items-center text-xs text-accent">
-                    <ArrowUpRight size={14} className="mr-1" />
-                    {overviewData.followerGrowth}%
+              <div className="flex items-center text-xs text-accent">
+                <ArrowUpRight size={14} className="mr-1" />
+                {overviewData.followerGrowth}%
+              </div>
+            </div>
+            
+            <div className="mt-4 h-10 relative">
+              <div className="absolute inset-0 flex items-end">
+                {followersChart.data.slice(-10).map((value, index) => (
+                  <div 
+                    key={index} 
+                    className="flex-1 mx-0.5"
+                    style={{ height: `${(value / Math.max(...followersChart.data.slice(-10))) * 100}%` }}
+                  >
+                    <div 
+                      className="w-full h-full rounded-t-sm bg-gradient-to-t from-accent-500/40 to-accent-light/40"
+                      style={{ opacity: 0.5 + ((index + 1) / 10) * 0.5 }}
+                    ></div>
                   </div>
-                </div>
-                
-                <div className="mt-4 h-10 relative">
-                  <div className="absolute inset-0 flex items-end">
-                    {followersChart.data.slice(-10).map((value, index) => (
-                      <div 
-                        key={index} 
-                        className="flex-1 mx-0.5"
-                        style={{ height: `${(value / Math.max(...followersChart.data.slice(-10))) * 100}%` }}
-                      >
-                        <div 
-                          className="w-full h-full rounded-t-sm bg-gradient-to-t from-accent-500/40 to-accent-light/40"
-                          style={{ opacity: 0.5 + ((index + 1) / 10) * 0.5 }}
-                        ></div>
-                      </div>
-                    ))}
-                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-neutral-medium">Engagement Rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline justify-between">
+              <div className="text-2xl font-bold">{overviewData.engagementRate}%</div>
+              <div className="flex items-center text-xs text-neutral-medium">
+                Avg per post
+              </div>
+            </div>
+            
+            <div className="mt-6 grid grid-cols-3 gap-2 text-xs text-neutral-medium">
+              <div className="flex flex-col items-center">
+                <div className="text-lg font-semibold text-primary mb-1">{overviewData.impressionsPerPost}</div>
+                <div>Impressions/Post</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-lg font-semibold text-primary mb-1">{overviewData.bestDayToPost}</div>
+                <div>Best Day</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-lg font-semibold text-primary mb-1">{overviewData.bestTimeToPost}</div>
+                <div>Best Time</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Tabs for detailed analytics */}
+      <Tabs defaultValue="overview" className="mt-8">
+        <TabsList className="mb-8">
+          <TabsTrigger value="overview" className="flex gap-2 items-center">
+            <Layers size={16} />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="posts" className="flex gap-2 items-center">
+            <FileText size={16} />
+            Posts
+          </TabsTrigger>
+          <TabsTrigger value="followers" className="flex gap-2 items-center">
+            <Users size={16} />
+            Followers
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Impressions Over Time</CardTitle>
+                <CardDescription>
+                  Total number of times your content has been viewed
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
+                {/* Placeholder for actual chart */}
+                <div className="text-neutral-medium">
+                  Impressions Chart
                 </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-neutral-medium">Engagement Rate</CardTitle>
+              <CardHeader>
+                <CardTitle>Engagement Breakdown</CardTitle>
+                <CardDescription>
+                  Distribution of interactions with your content
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline justify-between">
-                  <div className="text-2xl font-bold">{overviewData.engagementRate}%</div>
-                  <div className="flex items-center text-xs text-neutral-medium">
-                    Avg per post
-                  </div>
-                </div>
-                
-                <div className="mt-6 grid grid-cols-3 gap-2 text-xs text-neutral-medium">
-                  <div className="flex flex-col items-center">
-                    <div className="text-lg font-semibold text-primary mb-1">{overviewData.impressionsPerPost}</div>
-                    <div>Impressions/Post</div>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="text-lg font-semibold text-primary mb-1">{overviewData.bestDayToPost}</div>
-                    <div>Best Day</div>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="text-lg font-semibold text-primary mb-1">{overviewData.bestTimeToPost}</div>
-                    <div>Best Time</div>
-                  </div>
+              <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
+                {/* Placeholder for actual chart */}
+                <div className="text-neutral-medium">
+                  Engagement Chart
                 </div>
               </CardContent>
             </Card>
           </div>
-          
-          {/* Tabs for detailed analytics */}
-          <Tabs defaultValue="overview" className="mt-8">
-            <TabsList className="mb-8">
-              <TabsTrigger value="overview" className="flex gap-2 items-center">
-                <Layers size={16} />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="posts" className="flex gap-2 items-center">
-                <FileText size={16} />
-                Posts
-              </TabsTrigger>
-              <TabsTrigger value="followers" className="flex gap-2 items-center">
-                <Users size={16} />
-                Followers
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Impressions Over Time</CardTitle>
-                    <CardDescription>
-                      Total number of times your content has been viewed
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
-                    {/* Placeholder for actual chart */}
-                    <div className="text-neutral-medium">
-                      Impressions Chart
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Engagement Breakdown</CardTitle>
-                    <CardDescription>
-                      Distribution of interactions with your content
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
-                    {/* Placeholder for actual chart */}
-                    <div className="text-neutral-medium">
-                      Engagement Chart
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="posts">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Performing Posts</CardTitle>
-                  <CardDescription>
-                    Posts with the highest engagement
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
+        </TabsContent>
+        
+        <TabsContent value="posts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Performing Posts</CardTitle>
+              <CardDescription>
+                Posts with the highest engagement
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
                     {topPosts.length === 0 ? (
                       <div className="text-center py-8 text-neutral-medium">
                         No posts data available
                       </div>
                     ) : (
                       topPosts.map((post, index) => (
-                        <div key={post.id} className={`flex flex-col md:flex-row gap-4 ${index !== topPosts.length - 1 ? 'pb-6 border-b' : ''}`}>
-                          <div className="flex-1">
-                            <h3 className="font-medium mb-1">{post.title}</h3>
-                            <div className="flex items-center text-xs text-neutral-medium gap-2 mb-3">
-                              <Clock size={14} />
-                              <span>{post.date}</span>
-                            </div>
-                            
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <div className="flex items-center gap-1 text-neutral-medium">
-                                  <Eye size={14} />
-                                  Impressions
-                                </div>
+                  <div key={post.id} className={`flex flex-col md:flex-row gap-4 ${index !== topPosts.length - 1 ? 'pb-6 border-b' : ''}`}>
+                    <div className="flex-1">
+                      <h3 className="font-medium mb-1">{post.title}</h3>
+                      <div className="flex items-center text-xs text-neutral-medium gap-2 mb-3">
+                        <Clock size={14} />
+                        <span>{post.date}</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <div className="flex items-center gap-1 text-neutral-medium">
+                            <Eye size={14} />
+                            Impressions
+                          </div>
                                 <div className="font-semibold mt-1">{formatNumber(post.impressions)}</div>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1 text-neutral-medium">
-                                  <TrendingUp size={14} />
-                                  Engagement
-                                </div>
-                                <div className="font-semibold mt-1">{formatNumber(post.engagement)}</div>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1 text-neutral-medium">
-                                  <BarChart2 size={14} />
-                                  Rate
-                                </div>
-                                <div className="font-semibold mt-1">{post.engagementRate}%</div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex md:flex-col items-center md:items-end gap-4 md:gap-2">
-                            <div className="flex items-center gap-1 text-neutral-medium text-sm">
-                              <ThumbsUp size={14} />
-                              <span>{post.likes}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-neutral-medium text-sm">
-                              <MessageCircle size={14} />
-                              <span>{post.comments}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-neutral-medium text-sm">
-                              <Share2 size={14} />
-                              <span>{post.shares}</span>
-                            </div>
-                          </div>
                         </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-neutral-medium">
+                            <TrendingUp size={14} />
+                            Engagement
+                          </div>
+                                <div className="font-semibold mt-1">{formatNumber(post.engagement)}</div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-neutral-medium">
+                            <BarChart2 size={14} />
+                            Rate
+                          </div>
+                          <div className="font-semibold mt-1">{post.engagementRate}%</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex md:flex-col items-center md:items-end gap-4 md:gap-2">
+                      <div className="flex items-center gap-1 text-neutral-medium text-sm">
+                        <ThumbsUp size={14} />
+                        <span>{post.likes}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-neutral-medium text-sm">
+                        <MessageCircle size={14} />
+                        <span>{post.comments}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-neutral-medium text-sm">
+                        <Share2 size={14} />
+                        <span>{post.shares}</span>
+                      </div>
+                    </div>
+                  </div>
                       ))
                     )}
-                  </div>
-                </CardContent>
-                {topPosts.length > 0 && (
-                  <CardFooter className="flex justify-center border-t pt-4">
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
-                      View All Posts
-                      <ChevronDown size={14} />
-                    </Button>
-                  </CardFooter>
-                )}
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="followers">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Follower Growth</CardTitle>
-                    <CardDescription>
-                      New followers over time
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
-                    {/* Placeholder for actual chart */}
-                    <div className="text-neutral-medium">
-                      Follower Growth Chart
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Follower Demographics</CardTitle>
-                    <CardDescription>
-                      Breakdown of your audience
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
-                    {/* Placeholder for actual chart */}
-                    <div className="text-neutral-medium">
-                      Demographics Chart
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
-            </TabsContent>
-          </Tabs>
+            </CardContent>
+                {topPosts.length > 0 && (
+            <CardFooter className="flex justify-center border-t pt-4">
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                View All Posts
+                <ChevronDown size={14} />
+              </Button>
+            </CardFooter>
+                )}
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="followers">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Follower Growth</CardTitle>
+                <CardDescription>
+                  New followers over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
+                {/* Placeholder for actual chart */}
+                <div className="text-neutral-medium">
+                  Follower Growth Chart
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Follower Demographics</CardTitle>
+                <CardDescription>
+                  Breakdown of your audience
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px] flex items-center justify-center bg-neutral-lightest/50">
+                {/* Placeholder for actual chart */}
+                <div className="text-neutral-medium">
+                  Demographics Chart
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
         </>
       )}
     </div>
