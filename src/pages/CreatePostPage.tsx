@@ -411,16 +411,16 @@ const CreatePostPage: React.FC = () => {
                       <div className="flex-1">
                         <h3 className="text-md font-medium mb-2">Post Image</h3>
                         {postImage ? (
-                          <div className="relative rounded-md overflow-hidden mb-2">
+                          <div className="relative rounded-md overflow-hidden mb-2 border border-gray-200 dark:border-gray-700">
                             <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ minHeight: '300px' }}>
                               <img 
                                 src={postImage.secure_url} 
                                 alt="Post image"
-                                className="rounded-md"
+                                className="max-w-full max-h-[350px] object-contain"
                                 style={{ 
-                                  maxWidth: '100%', 
-                                  maxHeight: '350px',
-                                  objectFit: 'contain'
+                                  padding: '12px',
+                                  display: 'block',
+                                  margin: '0 auto'
                                 }}
                               />
                             </div>
@@ -508,16 +508,16 @@ const CreatePostPage: React.FC = () => {
                   {aiGeneratedImage && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium mb-2">AI Generated Image</label>
-                      <div className="relative rounded-md overflow-hidden mb-2">
+                      <div className="relative rounded-md overflow-hidden mb-2 border border-gray-200 dark:border-gray-700">
                         <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ minHeight: '300px' }}>
                           <img 
                             src={aiGeneratedImage} 
                             alt="AI Generated"
-                            className="rounded-md"
+                            className="max-w-full max-h-[350px] object-contain"
                             style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: '350px',
-                              objectFit: 'contain'
+                              padding: '12px',
+                              display: 'block',
+                              margin: '0 auto'
                             }}
                           />
                         </div>
@@ -684,11 +684,16 @@ const CreatePostPage: React.FC = () => {
                     
                     {/* Display post image in preview if selected */}
                     {(postImage || aiGeneratedImage) && (
-                      <div className="mb-3 rounded-md overflow-hidden transition-all duration-300">
+                      <div className="mb-3 rounded-md overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800">
                         <img 
                           src={postImage ? postImage.secure_url : aiGeneratedImage!} 
                           alt="Post image"
-                          className="max-w-full object-contain max-h-[250px] transition-all duration-200"
+                          className="w-full object-contain transition-all duration-200"
+                          style={{ 
+                            maxHeight: '350px',
+                            display: 'block',
+                            margin: '0 auto'
+                          }}
                         />
                       </div>
                     )}
