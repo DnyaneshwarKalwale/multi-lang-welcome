@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Import the API_URL from the services/api.ts file or define it here
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+
 // Types for LinkedIn API requests
 export interface LinkedInPostRequest {
   author: string; // Format: urn:li:person:{memberId}
@@ -87,7 +90,7 @@ export interface ScheduledPostData {
 
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
-  private API_URL = '/api/linkedin'; // Proxy through our backend
+  private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
 
   // Get the current user's LinkedIn ID
   async getUserLinkedInId(): Promise<string> {
