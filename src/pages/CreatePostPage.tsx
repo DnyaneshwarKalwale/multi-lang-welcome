@@ -130,6 +130,27 @@ const CreatePostPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Add CSS for preview pulse animation
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .preview-pulse {
+        transition: all 0.3s ease;
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+      }
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0); }
+        100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+  
   const [content, setContent] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeTab, setActiveTab] = useState('text');
@@ -244,11 +265,32 @@ const CreatePostPage: React.FC = () => {
     if (image.type === 'ai-generated') {
       setActiveTab('text');
     }
+    
+    // Add visual feedback to preview
+    setTimeout(() => {
+      const previewEl = document.querySelector('.preview-section');
+      if (previewEl) {
+        previewEl.classList.add('preview-pulse');
+        setTimeout(() => previewEl.classList.remove('preview-pulse'), 500);
+      }
+    }, 100);
+    
+    toast.success('Image selected for your post');
   };
 
   // Handle direct image upload complete
   const handleUploadComplete = (image: CloudinaryImage) => {
     setPostImage(image);
+    
+    // Add visual feedback to preview
+    setTimeout(() => {
+      const previewEl = document.querySelector('.preview-section');
+      if (previewEl) {
+        previewEl.classList.add('preview-pulse');
+        setTimeout(() => previewEl.classList.remove('preview-pulse'), 500);
+      }
+    }, 100);
+    
     toast.success('Image uploaded and added to your post');
   };
   
@@ -317,7 +359,15 @@ const CreatePostPage: React.FC = () => {
                       placeholder="Share your insights, knowledge, or ask a question..."
                       className="min-h-[200px] resize-y"
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      onChange={(e) => {
+                        setContent(e.target.value);
+                        // Add visual feedback to preview
+                        const previewEl = document.querySelector('.preview-section');
+                        if (previewEl) {
+                          previewEl.classList.add('preview-pulse');
+                          setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
+                        }
+                      }}
                     />
                     
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -546,7 +596,15 @@ const CreatePostPage: React.FC = () => {
                                   placeholder="Slide content here..."
                                   className="min-h-[100px]"
                                   value={slide.content}
-                                  onChange={(e) => updateSlide(slide.id, e.target.value)}
+                                  onChange={(e) => {
+                                    updateSlide(slide.id, e.target.value);
+                                    // Add a small haptic-like visual feedback
+                                    const previewEl = document.querySelector('.preview-section');
+                                    if (previewEl) {
+                                      previewEl.classList.add('preview-pulse');
+                                      setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
+                                    }
+                                  }}
                                 />
                                 <div className="flex items-center gap-2 mt-3">
                                   <Button variant="outline" size="sm" className="gap-1 text-xs">
@@ -596,13 +654,20 @@ const CreatePostPage: React.FC = () => {
           </Tabs>
           
           {/* Live Preview Section */}
-          <Card className="mt-6">
-            <CardHeader className="pb-2">
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>See how your post will look on LinkedIn</CardDescription>
+          <Card className="mt-6 border-primary/30">
+            <CardHeader className="pb-2 bg-primary/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Live Preview</CardTitle>
+                  <CardDescription>Your post updates in real-time as you type</CardDescription>
+                </div>
+                <Badge variant="outline" className="bg-primary/10 text-primary">
+                  Live
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-lg border p-4 max-w-xl mx-auto">
+              <div className="rounded-lg border p-4 max-w-xl mx-auto preview-section">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
                     {user?.firstName?.charAt(0) || 'U'}
@@ -614,16 +679,16 @@ const CreatePostPage: React.FC = () => {
                 </div>
                 
                 {activeTab === 'text' && (
-                  <div className="mb-4">
-                    <p className="text-sm mb-3">{content || "Your post content will appear here"}</p>
+                  <div className="mb-4 transition-all duration-200">
+                    <p className="text-sm mb-3 transition-all duration-200">{content || "Your post content will appear here"}</p>
                     
                     {/* Display post image in preview if selected */}
                     {(postImage || aiGeneratedImage) && (
-                      <div className="mb-3 rounded-md overflow-hidden">
+                      <div className="mb-3 rounded-md overflow-hidden transition-all duration-300">
                         <img 
                           src={postImage ? postImage.secure_url : aiGeneratedImage!} 
                           alt="Post image"
-                          className="max-w-full object-contain max-h-[250px]"
+                          className="max-w-full object-contain max-h-[250px] transition-all duration-200"
                         />
                       </div>
                     )}
