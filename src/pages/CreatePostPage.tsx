@@ -51,7 +51,8 @@ import {
   MessageCircle,
   Folder,
   BarChart4,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -667,24 +668,31 @@ const CreatePostPage: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-lg border p-4 max-w-xl mx-auto preview-section">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xl mx-auto preview-section bg-white dark:bg-gray-900 shadow-sm">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center text-white font-bold ring-2 ring-white">
                     {user?.firstName?.charAt(0) || 'U'}
                   </div>
                   <div>
-                    <h4 className="font-medium">{user ? `${user.firstName} ${user.lastName}` : 'User Name'}</h4>
+                    <h4 className="font-semibold text-[15px]">{user ? `${user.firstName} ${user.lastName}` : 'User Name'}</h4>
                     <p className="text-xs text-neutral-medium">{user?.role || 'LinkedIn User'}</p>
+                    <div className="flex items-center gap-1 text-[11px] text-neutral-medium mt-0.5">
+                      <span>Now</span>
+                      <span>•</span>
+                      <Globe className="h-3 w-3" />
+                    </div>
                   </div>
                 </div>
                 
                 {activeTab === 'text' && (
                   <div className="mb-4 transition-all duration-200">
-                    <p className="text-sm mb-3 transition-all duration-200">{content || "Your post content will appear here"}</p>
+                    <p className="text-[14px] leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-line mb-3 transition-all duration-200">
+                      {content || "Your post content will appear here"}
+                    </p>
                     
                     {/* Display post image in preview if selected */}
                     {(postImage || aiGeneratedImage) && (
-                      <div className="mb-3 rounded-md overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800">
+                      <div className="mb-3 rounded-lg overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800">
                         <img 
                           src={postImage ? postImage.secure_url : aiGeneratedImage!} 
                           alt="Post image"
@@ -700,7 +708,7 @@ const CreatePostPage: React.FC = () => {
                     
                     {/* Display poll if active */}
                     {isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2 && (
-                      <div className="mb-3 border rounded-md p-3 bg-gray-50 dark:bg-gray-900">
+                      <div className="mb-3 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
                         <p className="text-sm font-medium mb-2">Poll ({pollDuration} day{pollDuration > 1 ? 's' : ''})</p>
                         <div className="space-y-2">
                           {pollOptions.filter(opt => opt.trim()).map((option, index) => (
@@ -713,9 +721,9 @@ const CreatePostPage: React.FC = () => {
                       </div>
                     )}
                     
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5 mt-1">
                       {hashtags.map(tag => (
-                        <span key={tag} className="text-primary text-sm">#{tag}</span>
+                        <span key={tag} className="text-blue-600 dark:text-blue-500 text-[13px] hover:underline cursor-pointer">#{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -734,21 +742,37 @@ const CreatePostPage: React.FC = () => {
                   </div>
                 )}
                 
+                {/* LinkedIn engagement stats */}
+                <div className="flex items-center gap-1 text-neutral-medium text-xs mb-1 pt-2">
+                  <div className="flex -space-x-1">
+                    <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[8px] text-white">👍</div>
+                    <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[8px] text-white">❤️</div>
+                    <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-[8px] text-white">👏</div>
+                  </div>
+                  <span className="ml-1 hover:text-blue-600 hover:underline cursor-pointer">You and 24 others</span>
+                  <span className="mx-1">•</span>
+                  <span className="hover:text-blue-600 hover:underline cursor-pointer">8 comments</span>
+                </div>
+                
                 <div className="flex items-center justify-between text-neutral-medium text-sm pt-3 border-t">
-                  <div className="flex gap-4">
-                    <button className="flex items-center gap-1">
-                      <ThumbsUp size={16} /> Like
+                  <div className="flex w-full justify-between">
+                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-3 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 group flex-1">
+                      <ThumbsUp size={18} className="group-hover:animate-pulse" />
+                      <span className="text-xs font-medium">Like</span>
                     </button>
-                    <button className="flex items-center gap-1">
-                      <MessageCircle size={16} /> Comment
+                    <button className="flex flex-col items-center gap-1 hover:text-green-600 transition-colors py-1 px-3 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 flex-1">
+                      <MessageSquare size={18} />
+                      <span className="text-xs font-medium">Comment</span>
                     </button>
-                    <button className="flex items-center gap-1">
-                      <Share2 size={16} /> Share
+                    <button className="flex flex-col items-center gap-1 hover:text-orange-600 transition-colors py-1 px-3 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/20 flex-1">
+                      <Share2 size={18} />
+                      <span className="text-xs font-medium">Repost</span>
+                    </button>
+                    <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 flex-1">
+                      <Forward size={18} />
+                      <span className="text-xs font-medium">Send</span>
                     </button>
                   </div>
-                  <button className="flex items-center gap-1">
-                    <Forward size={16} /> Send
-                  </button>
                 </div>
               </div>
             </CardContent>
