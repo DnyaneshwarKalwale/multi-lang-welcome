@@ -672,7 +672,8 @@ const AIWriterPage: React.FC = () => {
                         <img 
                           src={uploadedImage} 
                           alt="Selected file preview" 
-                          className="max-w-full h-auto rounded-md mx-auto"
+                          className="max-w-full h-auto rounded-md mx-auto object-contain"
+                          style={{ maxHeight: '300px' }}
                         />
                         <button 
                           className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
@@ -735,11 +736,18 @@ const AIWriterPage: React.FC = () => {
                 <CardContent>
                   {generatedImage ? (
                     <div className="text-center">
-                      <img 
-                        src={generatedImage.secure_url} 
-                        alt="Generated image" 
-                        className="max-w-full h-auto rounded-md mx-auto"
-                      />
+                      <div className="flex justify-center items-center bg-gray-50 dark:bg-gray-900 rounded-md p-2 mb-4" style={{ minHeight: '300px' }}>
+                        <img 
+                          src={generatedImage.secure_url} 
+                          alt="Generated image" 
+                          className="rounded-md mx-auto"
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '500px',
+                            objectFit: 'contain'
+                          }}
+                        />
+                      </div>
                       {generatedImage.revised_prompt && (
                         <p className="text-xs text-gray-500 mt-2">
                           {generatedImage.revised_prompt}
@@ -791,11 +799,11 @@ const AIWriterPage: React.FC = () => {
                   ) : suggestedImages.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {suggestedImages.map((image, index) => (
-                        <div key={index} className="relative group cursor-pointer" onClick={() => handleSelectSuggestedImage(image)}>
+                        <div key={index} className="relative group cursor-pointer aspect-square overflow-hidden rounded-md" onClick={() => handleSelectSuggestedImage(image)}>
                           <img 
                             src={image.secure_url} 
                             alt={`Suggestion ${index + 1}`} 
-                            className="w-full h-auto rounded-md aspect-square object-cover"
+                            className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                             <Check className="h-8 w-8 text-white" />

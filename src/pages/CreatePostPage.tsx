@@ -360,11 +360,18 @@ const CreatePostPage: React.FC = () => {
                         <h3 className="text-md font-medium mb-2">Post Image</h3>
                         {postImage ? (
                           <div className="relative rounded-md overflow-hidden mb-2">
-                            <img 
-                              src={postImage.secure_url} 
-                              alt="Post image"
-                              className="w-full max-h-[300px] object-cover"
-                            />
+                            <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ minHeight: '300px' }}>
+                              <img 
+                                src={postImage.secure_url} 
+                                alt="Post image"
+                                className="rounded-md"
+                                style={{ 
+                                  maxWidth: '100%', 
+                                  maxHeight: '350px',
+                                  objectFit: 'contain'
+                                }}
+                              />
+                            </div>
                             <Button
                               variant="destructive"
                               size="sm"
@@ -450,11 +457,18 @@ const CreatePostPage: React.FC = () => {
                     <div className="mt-4">
                       <label className="block text-sm font-medium mb-2">AI Generated Image</label>
                       <div className="relative rounded-md overflow-hidden mb-2">
-                        <img 
-                          src={aiGeneratedImage} 
-                          alt="AI Generated"
-                          className="w-full max-h-[300px] object-cover"
-                        />
+                        <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ minHeight: '300px' }}>
+                          <img 
+                            src={aiGeneratedImage} 
+                            alt="AI Generated"
+                            className="rounded-md"
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '350px',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        </div>
                         <Button
                           variant="destructive"
                           size="sm"

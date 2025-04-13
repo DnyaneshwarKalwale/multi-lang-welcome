@@ -167,11 +167,12 @@ const ImageGalleryPicker: React.FC<ImageGalleryPickerProps> = ({
                       }`}
                       onClick={() => handleSelectImage(image)}
                     >
-                      <div className="aspect-square relative">
+                      <div className="aspect-square relative bg-gray-50 dark:bg-gray-900">
                         <img
                           src={image.secure_url}
                           alt={image.title || 'Gallery image'}
-                          className="w-full h-full object-cover"
+                          className="absolute inset-0 m-auto max-w-full max-h-full object-contain"
+                          style={{ padding: '4px' }}
                         />
                         {selectedImage?.id === image.id && (
                           <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">

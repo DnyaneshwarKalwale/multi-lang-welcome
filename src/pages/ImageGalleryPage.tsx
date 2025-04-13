@@ -13,7 +13,8 @@ import {
   Grid2X2,
   Copy,
   Check,
-  ChevronsRight
+  ChevronsRight,
+  PlusCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -359,55 +360,85 @@ const ImageGalleryPage: React.FC = () => {
                     </Button>
                   </div>
                 ) : viewMode === 'grid' ? (
-                  <div className={`grid gap-4 ${gridSize === 'small' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'}`}>
-                    {filteredImages.map((image) => (
-                      <div
-                        key={image.id}
-                        className={`relative group rounded-lg overflow-hidden border ${
-                          selectedImages.has(image.id) ? 'ring-2 ring-primary border-primary' : ''
-                        }`}
+                  <div className={`grid gap-4 ${
+                    gridSize === 'small' 
+                      ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5' 
+                      : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                  }`}>
+                    {filteredImages.map(image => (
+                      <div 
+                        key={image.id} 
+                        className={`group relative overflow-hidden border border-border hover:border-primary transition-colors ${
+                          selectedImages.has(image.id) ? 'ring-2 ring-primary ring-offset-2' : ''
+                        } rounded-md`}
                       >
-                        <div className="aspect-square relative">
-                          <img
-                            src={image.secure_url}
-                            alt={image.title || 'Gallery image'}
-                            className="w-full h-full object-cover"
+                        <div 
+                          className={`cursor-pointer ${
+                            viewMode === 'grid' 
+                              ? 'aspect-square'
+                              : 'aspect-[16/9]'
+                          } bg-gray-50 dark:bg-gray-900 flex items-center justify-center`}
+                          onClick={() => toggleImageSelection(image.id)}
+                        >
+                          <img 
+                            src={image.secure_url} 
+                            alt={image.title || 'Gallery image'} 
+                            className="max-w-full max-h-full object-contain"
+                            style={{ padding: '12px' }}
                           />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                        </div>
+                        
+                        {/* Info bar */}
+                        <div className="p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm truncate">
+                                {image.title || 'Untitled Image'}
+                              </h3>
+                              <p className="text-xs text-muted-foreground truncate mt-1">
+                                {new Date(image.createdAt).toLocaleDateString()} · {image.type}
+                              </p>
+                            </div>
+                            <div className="flex gap-1 mt-1">
                               <Button 
-                                size="sm" 
-                                variant="secondary" 
-                                className="rounded-full h-8 w-8 p-0"
+                                variant="ghost" 
+                                size="icon"
+                                className="h-7 w-7"
                                 onClick={() => useInPost(image)}
                               >
-                                <ChevronsRight className="h-4 w-4" />
+                                <PlusCircle className="h-3.5 w-3.5" />
                               </Button>
+                              
                               <Button 
-                                size="sm" 
-                                variant="secondary" 
-                                className="rounded-full h-8 w-8 p-0"
-                                onClick={() => toggleImageSelection(image.id)}
+                                variant="ghost" 
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => window.open(image.secure_url, '_blank')}
                               >
-                                {selectedImages.has(image.id) 
-                                  ? <Check className="h-4 w-4" /> 
-                                  : <Plus className="h-4 w-4" />
-                                }
+                                <Download className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </div>
-                        </div>
-                        {gridSize === 'large' && (
-                          <div className="p-2">
-                            <h4 className="font-medium text-sm truncate">{image.title || 'Untitled'}</h4>
-                            <p className="text-xs text-gray-500">{new Date(image.createdAt).toLocaleDateString()}</p>
-                            <div className="flex items-center mt-1">
-                              <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-sm">
-                                {image.type === 'ai-generated' ? 'AI' : 'Uploaded'}
-                              </span>
+                          
+                          {/* Tags */}
+                          {image.tags && image.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {image.tags.slice(0, 2).map((tag, index) => (
+                                <span 
+                                  key={index}
+                                  className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {image.tags.length > 2 && (
+                                <span className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                                  +{image.tags.length - 2}
+                                </span>
+                              )}
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
