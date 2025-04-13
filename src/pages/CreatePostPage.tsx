@@ -62,6 +62,7 @@ import ImageUploader from '@/components/ImageUploader';
 import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const carouselTemplates = [
   {
@@ -127,6 +128,7 @@ const CreatePostPage: React.FC = () => {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [content, setContent] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
@@ -603,17 +605,44 @@ const CreatePostPage: React.FC = () => {
               <div className="rounded-lg border p-4 max-w-xl mx-auto">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                    U
+                    {user?.firstName?.charAt(0) || 'U'}
                   </div>
                   <div>
-                    <h4 className="font-medium">User Name</h4>
-                    <p className="text-xs text-neutral-medium">Product Marketing Manager</p>
+                    <h4 className="font-medium">{user ? `${user.firstName} ${user.lastName}` : 'User Name'}</h4>
+                    <p className="text-xs text-neutral-medium">{user?.role || 'LinkedIn User'}</p>
                   </div>
                 </div>
                 
                 {activeTab === 'text' && (
                   <div className="mb-4">
                     <p className="text-sm mb-3">{content || "Your post content will appear here"}</p>
+                    
+                    {/* Display post image in preview if selected */}
+                    {(postImage || aiGeneratedImage) && (
+                      <div className="mb-3 rounded-md overflow-hidden">
+                        <img 
+                          src={postImage ? postImage.secure_url : aiGeneratedImage!} 
+                          alt="Post image"
+                          className="max-w-full object-contain max-h-[250px]"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Display poll if active */}
+                    {isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2 && (
+                      <div className="mb-3 border rounded-md p-3 bg-gray-50 dark:bg-gray-900">
+                        <p className="text-sm font-medium mb-2">Poll ({pollDuration} day{pollDuration > 1 ? 's' : ''})</p>
+                        <div className="space-y-2">
+                          {pollOptions.filter(opt => opt.trim()).map((option, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded-full border border-primary flex-shrink-0"></div>
+                              <span className="text-sm">{option || `Option ${index + 1}`}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex flex-wrap gap-1">
                       {hashtags.map(tag => (
                         <span key={tag} className="text-primary text-sm">#{tag}</span>
@@ -685,6 +714,15 @@ const CreatePostPage: React.FC = () => {
                         AI Assistance
                       </h3>
                       <div className="space-y-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full justify-start text-sm"
+                          onClick={() => navigate('/dashboard/ai-writer')}
+                        >
+                          <Wand2 className="h-3.5 w-3.5 mr-2" />
+                          Go to AI Writer
+                        </Button>
                         <Button size="sm" variant="outline" className="w-full justify-start text-sm">
                           Generate a professional post
                         </Button>
@@ -777,6 +815,15 @@ const CreatePostPage: React.FC = () => {
                         AI Carousel Helper
                       </h3>
                       <div className="space-y-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full justify-start text-sm"
+                          onClick={() => navigate('/dashboard/ai-writer')}
+                        >
+                          <Wand2 className="h-3.5 w-3.5 mr-2" />
+                          Go to AI Writer
+                        </Button>
                         <Button size="sm" variant="outline" className="w-full justify-start text-sm">
                           Generate carousel content
                         </Button>
