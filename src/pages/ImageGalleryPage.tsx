@@ -14,7 +14,9 @@ import {
   Copy,
   Check,
   ChevronsRight,
-  PlusCircle
+  PlusCircle,
+  ChevronDown,
+  List
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -55,55 +57,45 @@ const ImageGalleryPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   
   // Sample images - will be replaced with API data in production
-  const sampleImages: GalleryImage[] = [
-    {
-      id: '1',
-      userId: '123',
-      url: 'https://res.cloudinary.com/dexlsqpbv/image/upload/v1611234567/linkedin_generated/sample1.jpg',
-      secure_url: 'https://res.cloudinary.com/dexlsqpbv/image/upload/v1611234567/linkedin_generated/sample1.jpg',
-      public_id: 'linkedin_generated/sample1',
-      prompt: 'Professional woman presenting in a modern conference room with a digital display',
-      title: 'Business Presentation',
-      tags: ['presentation', 'business', 'professional'],
-      createdAt: '2023-05-10T15:30:00Z',
-      type: 'ai-generated',
-      width: 1024,
-      height: 1024
-    },
-    {
-      id: '2',
-      userId: '123',
-      url: 'https://res.cloudinary.com/dexlsqpbv/image/upload/v1611234568/linkedin_generated/sample2.jpg',
-      secure_url: 'https://res.cloudinary.com/dexlsqpbv/image/upload/v1611234568/linkedin_generated/sample2.jpg',
-      public_id: 'linkedin_generated/sample2',
-      title: 'Team Collaboration',
-      tags: ['team', 'collaboration', 'meeting'],
-      createdAt: '2023-05-15T10:20:00Z',
-      type: 'uploaded',
-      width: 1200,
-      height: 800
-    }
-  ];
+  const sampleImages: GalleryImage[] = [];
 
   // Initialize with sample data
   useEffect(() => {
     // In production, this would fetch from API
     const fetchImages = async () => {
       setIsLoading(true);
-      // Mock API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For the sample, we'll use the sample data
-      // In production, this would be:
-      // const response = await axios.get(`${import.meta.env.VITE_API_URL}/cloudinary/gallery?userId=${user?.id}`);
-      // setImages(response.data.data);
-      
-      setImages(sampleImages);
-      setIsLoading(false);
+      // Get images from local storage
+      try {
+        const storedImages = localStorage.getItem('cloudinary_gallery_images');
+        if (storedImages) {
+          const parsedImages = JSON.parse(storedImages) as CloudinaryImage[];
+          const galleryImages = parsedImages.map(img => ({
+            id: img.id || img.public_id,
+            userId: user?.id || 'guest',
+            url: img.url,
+            secure_url: img.secure_url,
+            public_id: img.public_id,
+            prompt: img.title,
+            title: img.title || 'Untitled',
+            tags: img.tags || [],
+            createdAt: img.created_at || new Date().toISOString(),
+            type: img.type as 'ai-generated' | 'uploaded',
+            width: img.width || 800,
+            height: img.height || 600
+          }));
+          setImages(galleryImages);
+        }
+      } catch (error) {
+        console.error('Error loading gallery images:', error);
+        toast.error('Failed to load images');
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     fetchImages();
-  }, []);
+  }, [user?.id]);
 
   // Filter images based on search and active tab
   const filteredImages = images.filter(image => {
@@ -226,6 +218,31 @@ const ImageGalleryPage: React.FC = () => {
     navigate('/dashboard/post', { 
       state: { image: image.secure_url } 
     });
+  };
+
+  // Delete single image
+  const deleteImage = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this image? This cannot be undone.")) {
+      // Remove from state
+      setImages(images.filter(img => img.id !== id));
+      
+      // Remove from selected images if it was selected
+      if (selectedImages.has(id)) {
+        const newSelection = new Set(selectedImages);
+        newSelection.delete(id);
+        setSelectedImages(newSelection);
+      }
+      
+      // Remove from localStorage
+      const storedImages = JSON.parse(localStorage.getItem('cloudinary_gallery_images') || '[]');
+      const updatedImages = storedImages.filter((img: any) => img.id !== id);
+      localStorage.setItem('cloudinary_gallery_images', JSON.stringify(updatedImages));
+      
+      toast({
+        title: "Image deleted",
+        description: "The image has been removed from your gallery.",
+      });
+    }
   };
 
   return (
@@ -417,6 +434,18 @@ const ImageGalleryPage: React.FC = () => {
                               >
                                 <Download className="h-3.5 w-3.5" />
                               </Button>
+
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteImage(image.id);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </div>
                           
@@ -484,6 +513,14 @@ const ImageGalleryPage: React.FC = () => {
                             onClick={() => toggleImageSelection(image.id)}
                           >
                             {selectedImages.has(image.id) ? 'Selected' : 'Select'}
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600 border-red-200 hover:border-red-300"
+                            onClick={() => deleteImage(image.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
