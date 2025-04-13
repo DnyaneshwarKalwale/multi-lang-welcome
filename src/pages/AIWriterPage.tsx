@@ -170,8 +170,15 @@ const AIWriterPage: React.FC = () => {
       });
       
       if (response.data && response.data.success) {
+        // Check if we're using fallback content
+        if (response.data.usingFallback) {
+          console.log('Using fallback content:', response.data.data);
+          toast.success('Content generated with example data');
+        } else {
+          toast.success('Content generated successfully!');
+        }
+        
         setResponse(response.data.data);
-        toast.success('Content generated successfully!');
       } else {
         // Fallback to example responses if API fails
         setResponse(exampleResponses[contentFormat]);
@@ -179,7 +186,7 @@ const AIWriterPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error generating content:', error);
-      toast.error('Failed to generate content. Please try again.');
+      toast.error('Failed to generate content. Using example data instead.');
       
       // Fallback to example responses if API fails
       setResponse(exampleResponses[contentFormat]);
