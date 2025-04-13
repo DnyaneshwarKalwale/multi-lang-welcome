@@ -26,7 +26,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { uploadToCloudinary } from '@/utils/cloudinaryUpload';
+import { uploadToCloudinaryDirect } from '@/utils/cloudinaryDirectUpload';
+import {
+  getGalleryImages,
+  removeImageFromGallery
+} from '@/utils/cloudinaryDirectUpload';
 
 // Interface for gallery image
 interface GalleryImage {
@@ -65,12 +69,11 @@ const ImageGalleryPage: React.FC = () => {
     const fetchImages = async () => {
       setIsLoading(true);
       
-      // Get images from local storage
+      // Get images from utility function
       try {
-        const storedImages = localStorage.getItem('cloudinary_gallery_images');
-        if (storedImages) {
-          const parsedImages = JSON.parse(storedImages) as CloudinaryImage[];
-          const galleryImages = parsedImages.map(img => ({
+        const cloudinaryImages = getGalleryImages();
+        if (cloudinaryImages.length > 0) {
+          const galleryImages = cloudinaryImages.map(img => ({
             id: img.id || img.public_id,
             userId: user?.id || 'guest',
             url: img.url,
@@ -79,7 +82,7 @@ const ImageGalleryPage: React.FC = () => {
             prompt: img.title,
             title: img.title || 'Untitled',
             tags: img.tags || [],
-            createdAt: img.created_at || new Date().toISOString(),
+            createdAt: img.uploadedAt || new Date().toISOString(),
             type: img.type as 'ai-generated' | 'uploaded',
             width: img.width || 800,
             height: img.height || 600
@@ -118,33 +121,26 @@ const ImageGalleryPage: React.FC = () => {
     try {
       // Process each file
       for (const file of acceptedFiles) {
-        // Upload to Cloudinary directly
-        const uploadResult = await uploadToCloudinary(file);
-        
-        // In production, save the reference to your backend
-        // const saveResponse = await axios.post(`${import.meta.env.VITE_API_URL}/cloudinary/gallery`, {
-        //   userId: user?.id,
-        //   public_id: uploadResult.publicId,
-        //   url: uploadResult.url,
-        //   secure_url: uploadResult.url,
-        //   type: 'uploaded',
-        //   width: uploadResult.width,
-        //   height: uploadResult.height
-        // });
-        
-        // For demo purposes, add to local state
-        const newImage: GalleryImage = {
-          id: Date.now().toString(),
-          userId: user?.id || 'guest',
-          url: uploadResult.url,
-          secure_url: uploadResult.url,
-          public_id: uploadResult.publicId,
+        // Upload to Cloudinary directly using the utility
+        const uploadResult = await uploadToCloudinaryDirect(file, {
           title: file.name.split('.')[0],
           tags: ['uploaded'],
-          createdAt: new Date().toISOString(),
+          type: 'uploaded'
+        });
+        
+        // Add to local state
+        const newImage: GalleryImage = {
+          id: uploadResult.id,
+          userId: user?.id || 'guest',
+          url: uploadResult.url,
+          secure_url: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          title: uploadResult.title || file.name.split('.')[0],
+          tags: uploadResult.tags || ['uploaded'],
+          createdAt: uploadResult.uploadedAt,
           type: 'uploaded',
-          width: uploadResult.width || 800,
-          height: uploadResult.height || 600
+          width: uploadResult.width,
+          height: uploadResult.height
         };
         
         setImages(prev => [newImage, ...prev]);
@@ -193,14 +189,15 @@ const ImageGalleryPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // In production, delete from backend/Cloudinary
-      // await Promise.all(
-      //   Array.from(selectedImages).map(id => 
-      //     axios.delete(`${import.meta.env.VITE_API_URL}/cloudinary/gallery/${id}`)
-      //   )
-      // );
+      // Get the public_ids for all selected images
+      const selectedImageObjects = images.filter(image => selectedImages.has(image.id));
       
-      // For demo, just remove from local state
+      // Delete each image using the utility function
+      selectedImageObjects.forEach(image => {
+        removeImageFromGallery(image.public_id);
+      });
+      
+      // Update local state
       setImages(images.filter(image => !selectedImages.has(image.id)));
       setSelectedImages(new Set());
       
@@ -223,6 +220,10 @@ const ImageGalleryPage: React.FC = () => {
   // Delete single image
   const deleteImage = (id: string) => {
     if (window.confirm("Are you sure you want to delete this image? This cannot be undone.")) {
+      // Find the image to get its public_id
+      const imageToDelete = images.find(img => img.id === id);
+      if (!imageToDelete) return;
+      
       // Remove from state
       setImages(images.filter(img => img.id !== id));
       
@@ -233,10 +234,8 @@ const ImageGalleryPage: React.FC = () => {
         setSelectedImages(newSelection);
       }
       
-      // Remove from localStorage
-      const storedImages = JSON.parse(localStorage.getItem('cloudinary_gallery_images') || '[]');
-      const updatedImages = storedImages.filter((img: any) => img.id !== id);
-      localStorage.setItem('cloudinary_gallery_images', JSON.stringify(updatedImages));
+      // Remove from localStorage using the utility function with public_id
+      removeImageFromGallery(imageToDelete.public_id);
       
       toast({
         title: "Image deleted",

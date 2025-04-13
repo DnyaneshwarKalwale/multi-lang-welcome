@@ -27,6 +27,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -52,7 +53,11 @@ import {
   Folder,
   BarChart4,
   X,
-  Globe
+  Globe,
+  Linkedin,
+  Eye,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -65,6 +70,17 @@ import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersistentState, useAppState } from '@/contexts/StateContext';
+import { linkedInApi } from '@/utils/linkedinApi';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import axios from 'axios';
 
 const carouselTemplates = [
   {
@@ -124,6 +140,7 @@ interface LocationState {
   content?: string;
   hashtags?: string[];
   image?: string;
+  openScheduleDialog?: boolean;
 }
 
 const CreatePostPage: React.FC = () => {
@@ -136,6 +153,9 @@ const CreatePostPage: React.FC = () => {
   // Add state for tracking save status
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveStatusTimeoutRef = React.useRef<number | null>(null);
+  
+  // Add state for draft saving
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   
   // Add CSS for preview pulse animation
   useEffect(() => {
@@ -182,6 +202,21 @@ const CreatePostPage: React.FC = () => {
   const [pollOptions, setPollOptions] = usePersistentState<string[]>('createPost.pollOptions', ['', '']);
   const [pollDuration, setPollDuration] = usePersistentState('createPost.pollDuration', 1); // days
   
+  // LinkedIn posting states
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishingPlatform, setPublishingPlatform] = useState<'linkedin' | 'twitter' | 'facebook'>('linkedin');
+  const [visibility, setVisibility] = usePersistentState<'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN'>('createPost.visibility', 'PUBLIC');
+  
+  // Scheduling states
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    return tomorrow;
+  });
+  const [scheduleTime, setScheduleTime] = useState('09:00');
+  
   // Initialize with data from location state (if available)
   useEffect(() => {
     if (locationState) {
@@ -196,6 +231,13 @@ const CreatePostPage: React.FC = () => {
       if (locationState.image) {
         setAiGeneratedImage(locationState.image);
         setActiveTab('carousel'); // Switch to carousel tab if image is provided
+      }
+      
+      // Open schedule dialog if requested
+      if (locationState.openScheduleDialog) {
+        setTimeout(() => {
+          setShowScheduleDialog(true);
+        }, 500);
       }
     }
   }, [locationState, setContent, setHashtags, setAiGeneratedImage, setActiveTab]);
@@ -354,6 +396,232 @@ const CreatePostPage: React.FC = () => {
     showSaveIndicator();
   };
   
+  // Function to publish post directly to LinkedIn
+  const publishToLinkedIn = async () => {
+    try {
+      setIsPublishing(true);
+      
+      // Validate content
+      if (!content.trim()) {
+        toast.error('Please add some content to your post');
+        setIsPublishing(false);
+        return;
+      }
+      
+      let response;
+      
+      // Handle different post types
+      if (isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2) {
+        // Publish as poll
+        const filteredOptions = pollOptions.filter(opt => opt.trim());
+        response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
+        toast.success('Poll published to LinkedIn successfully!');
+      } else if (postImage) {
+        // TODO: Convert Cloudinary URL to File object for upload to LinkedIn
+        // For now, we'll just post as text
+        toast.warning('Image posts are currently being implemented. Publishing as text post instead.');
+        response = await linkedInApi.createTextPost(content, visibility);
+        toast.success('Post published to LinkedIn successfully!');
+      } else {
+        // Simple text post
+        response = await linkedInApi.createTextPost(content, visibility);
+        toast.success('Post published to LinkedIn successfully!');
+      }
+      
+      // Clear the form after successful publishing
+      setTimeout(() => {
+        // Clear all createPost related state
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('state:createPost.')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Redirect to the post library
+        navigate('/dashboard/posts', {
+          state: { 
+            newPost: true,
+            postId: response?.id,
+            platform: 'linkedin'
+          }
+        });
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Error publishing to LinkedIn:', error);
+      toast.error('Failed to publish to LinkedIn. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+  
+  // Function to save post as draft
+  const saveAsDraft = async () => {
+    try {
+      setIsSavingDraft(true);
+      
+      // Validate content
+      if (!content.trim()) {
+        toast.error('Please add some content to your draft');
+        setIsSavingDraft(false);
+        return;
+      }
+      
+      // Create draft object with all post data
+      const draftPost = {
+        title: content.split('\n')[0].substring(0, 50) || 'Untitled Draft',
+        content: content,
+        hashtags: hashtags,
+        postImage: postImage,
+        isPollActive: isPollActive,
+        pollOptions: pollOptions,
+        pollDuration: pollDuration,
+        slides: slides,
+        visibility: visibility,
+        status: 'draft' as const,
+        provider: 'linkedin',
+        userId: user?.id || 'guest'
+      };
+      
+      let savedDraft;
+      
+      try {
+        // Try to save to backend first
+        savedDraft = await linkedInApi.saveDraft(draftPost);
+        toast.success('Post saved as draft to your account');
+      } catch (backendError) {
+        console.error('Backend save failed, using localStorage:', backendError);
+        
+        // Fallback to localStorage if backend fails
+        const localDraftPost = {
+          ...draftPost,
+          id: `draft_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        const existingDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
+        existingDrafts.unshift(localDraftPost);
+        localStorage.setItem('post_drafts', JSON.stringify(existingDrafts));
+        
+        savedDraft = localDraftPost;
+        toast.success('Post saved as draft (offline mode)');
+      }
+      
+      // Navigate to post library with draft tab active
+      setTimeout(() => {
+        navigate('/dashboard/posts', {
+          state: { 
+            activeTab: 'drafts',
+            newDraft: true,
+            draftId: savedDraft.id
+          }
+        });
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft. Please try again.');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+  
+  // Function to schedule a post for later
+  const schedulePost = async () => {
+    try {
+      setIsPublishing(true);
+      
+      // Validate content
+      if (!content.trim()) {
+        toast.error('Please add some content to your post');
+        setIsPublishing(false);
+        return;
+      }
+      
+      // Prepare scheduled date
+      const [hours, minutes] = scheduleTime.split(':').map(Number);
+      const scheduledDateTime = new Date(scheduledDate);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
+      
+      // Validate scheduled time is in future
+      if (scheduledDateTime <= new Date()) {
+        toast.error('Please select a future date and time');
+        setIsPublishing(false);
+        return;
+      }
+      
+      // Create scheduled post object
+      const scheduledPostData = {
+        title: content.split('\n')[0].substring(0, 50) || 'Scheduled Post',
+        content: content,
+        hashtags: hashtags,
+        postImage: postImage,
+        isPollActive: isPollActive,
+        pollOptions: pollOptions,
+        pollDuration: pollDuration,
+        slides: slides,
+        visibility: visibility,
+        status: 'scheduled' as const,
+        provider: 'linkedin',
+        userId: user?.id || 'guest'
+      };
+      
+      let savedScheduledPost;
+      
+      try {
+        // Try to save to backend first
+        savedScheduledPost = await linkedInApi.schedulePost(scheduledPostData, scheduledDateTime);
+        toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
+      } catch (backendError) {
+        console.error('Backend scheduling failed, using localStorage:', backendError);
+        
+        // Fallback to localStorage if backend fails
+        const localScheduledPost = {
+          ...scheduledPostData,
+          id: `scheduled_${Date.now()}`,
+          scheduledTime: scheduledDateTime.toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        const existingScheduledPosts = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
+        existingScheduledPosts.unshift(localScheduledPost);
+        localStorage.setItem('scheduled_posts', JSON.stringify(existingScheduledPosts));
+        
+        savedScheduledPost = localScheduledPost;
+        toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()} (offline mode)`);
+      }
+      
+      setShowScheduleDialog(false);
+      
+      // Redirect to the post library after a short delay
+      setTimeout(() => {
+        // Clear the form data
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('state:createPost.')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        navigate('/dashboard/posts', {
+          state: { 
+            activeTab: 'scheduled',
+            scheduled: true,
+            scheduledTime: scheduledDateTime.toISOString(),
+            scheduledPostId: savedScheduledPost.id
+          }
+        });
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      toast.error('Failed to schedule post. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -390,14 +658,149 @@ const CreatePostPage: React.FC = () => {
             <X size={16} />
             Clear Draft
           </Button>
-          <Button variant="outline" size="sm" className="gap-1">
-            <Clock size={16} />
-            Schedule
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={saveAsDraft}
+            disabled={isSavingDraft}
+          >
+            {isSavingDraft ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText size={16} />
+                Save as Draft
+              </>
+            )}
           </Button>
-          <Button size="sm" className="bg-primary text-white gap-1">
-            <ArrowRightFromLine size={16} />
-            Publish Now
-          </Button>
+          
+          <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Clock size={16} />
+                Schedule
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Schedule LinkedIn Post</DialogTitle>
+                <DialogDescription>
+                  Choose when you want this post to be published to LinkedIn
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Date</label>
+                    <Input
+                      type="date"
+                      value={scheduledDate.toISOString().split('T')[0]}
+                      onChange={(e) => {
+                        const newDate = new Date(e.target.value);
+                        setScheduledDate(newDate);
+                      }}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Time</label>
+                    <Input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Visibility</label>
+                  <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select visibility" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
+                      <SelectItem value="CONNECTIONS">Connections only</SelectItem>
+                      <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="mt-2">
+                  <h4 className="text-sm font-medium mb-1">Post Summary</h4>
+                  <div className="border rounded p-3 bg-gray-50 dark:bg-gray-900 text-sm">
+                    <p className="line-clamp-3">{content || "No content yet"}</p>
+                    {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
+                    {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
+                <Button onClick={schedulePost} disabled={isPublishing}>
+                  {isPublishing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Schedule Post
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="bg-primary text-white gap-1">
+                {isPublishing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRightFromLine size={16} />
+                    Publish Now
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={publishToLinkedIn}
+                disabled={isPublishing}
+                className="gap-2 cursor-pointer"
+              >
+                <Linkedin size={16} className="text-blue-600" />
+                Publish to LinkedIn
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => toast.info("Twitter integration coming soon!")}
+                className="gap-2 cursor-pointer text-muted-foreground"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M14.258 10.152 23.176 0h-2.113l-7.747 8.813L7.133 0H0l9.352 13.328L0 23.973h2.113l8.176-9.309 6.531 9.309h7.133zm-2.895 3.293-.949-1.328L2.875 1.56h3.246l6.086 8.523.945 1.328 7.91 11.078h-3.246z"/></svg>
+                Publish to X (Twitter)
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => toast.info("Facebook integration coming soon!")}
+                className="gap-2 cursor-pointer text-muted-foreground"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Publish to Facebook
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
