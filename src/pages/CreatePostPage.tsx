@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -107,7 +108,17 @@ const sliderOptions: SliderVariant[] = [
   'parallax'
 ];
 
+// Define an interface for the location state
+interface LocationState {
+  content?: string;
+  hashtags?: string[];
+  image?: string;
+}
+
 const CreatePostPage: React.FC = () => {
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
+  
   const [content, setContent] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeTab, setActiveTab] = useState('text');
@@ -124,6 +135,25 @@ const CreatePostPage: React.FC = () => {
   ]);
   
   const [newHashtag, setNewHashtag] = useState('');
+  const [aiGeneratedImage, setAiGeneratedImage] = useState<string | null>(null);
+  
+  // Initialize with data from location state (if available)
+  useEffect(() => {
+    if (locationState) {
+      if (locationState.content) {
+        setContent(locationState.content);
+      }
+      
+      if (locationState.hashtags && locationState.hashtags.length > 0) {
+        setHashtags(locationState.hashtags);
+      }
+      
+      if (locationState.image) {
+        setAiGeneratedImage(locationState.image);
+        setActiveTab('carousel'); // Switch to carousel tab if image is provided
+      }
+    }
+  }, [locationState]);
   
   const addHashtag = () => {
     if (newHashtag && !hashtags.includes(newHashtag)) {
@@ -287,16 +317,61 @@ const CreatePostPage: React.FC = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="carousel" className="mt-4">
+            <TabsContent value="carousel" className="mt-4 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Create Carousel Post</CardTitle>
+                  <CardTitle>Carousel Content</CardTitle>
                   <CardDescription>
-                    Build a multi-slide carousel to showcase your content
+                    Create multi-slide carousel posts for higher engagement
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
+                <CardContent className="space-y-4">
+                  {/* Template selection section */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Choose a Template</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {carouselTemplates.map(template => (
+                        <div
+                          key={template.id}
+                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                            selectedTemplate === template.id 
+                              ? 'border-primary/50 bg-primary/5' 
+                              : 'border-border hover:border-primary/30'
+                          }`}
+                          onClick={() => applyTemplate(template.id)}
+                        >
+                          <div className="font-medium mb-1">{template.name}</div>
+                          <div className="text-xs text-muted-foreground">{template.description}</div>
+                          <div className="text-xs mt-1 text-muted-foreground">{template.slideCount} slides</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Show AI Generated Image if available */}
+                  {aiGeneratedImage && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium mb-2">AI Generated Image</label>
+                      <div className="relative rounded-md overflow-hidden mb-2">
+                        <img 
+                          src={aiGeneratedImage} 
+                          alt="AI Generated"
+                          className="w-full max-h-[300px] object-cover"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={() => setAiGeneratedImage(null)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Rest of carousel editor */}
+                  <div className="space-y-4">
                     <div className="flex flex-col gap-3">
                       <label className="text-sm font-medium">Slider Type</label>
                       <Select 
@@ -374,28 +449,6 @@ const CreatePostPage: React.FC = () => {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Wand2 size={16} />
-                      AI Assist
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Hash size={16} />
-                      Add Hashtags
-                    </Button>
-                  </div>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={toggleSidebar}
-                    className="gap-1 md:hidden"
-                  >
-                    {showSidebar ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
-                    {showSidebar ? "Hide Templates" : "Show Templates"}
-                  </Button>
-                </CardFooter>
               </Card>
             </TabsContent>
             

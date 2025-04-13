@@ -37,6 +37,7 @@ import MyCarouselsPage from "./pages/MyCarouselsPage";
 import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
+import ImageGalleryPage from "./pages/ImageGalleryPage";
 
 const queryClient = new QueryClient();
 
@@ -257,6 +258,7 @@ const AppRoutes = () => {
           <Route path="/dashboard/team" element={<TeamsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/billing" element={<BillingPage />} />
+          <Route path="/dashboard/images" element={<ImageGalleryPage />} />
         </Route>
       </Route>
       
