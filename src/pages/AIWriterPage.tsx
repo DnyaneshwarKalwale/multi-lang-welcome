@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   MessageSquare, Send, Copy, PlusCircle, 
   Sparkles, RefreshCw, Lightbulb, TextQuote,
-  ListOrdered, Loader2, Settings, Download
+  ListOrdered, Loader2, Settings, Download,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -43,14 +44,27 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 // Content format types
-type ContentFormat = 'short' | 'long' | 'listicle' | 'hook';
+type ContentFormat = 'short' | 'long' | 'listicle' | 'hook' | 'carousel';
+
+// Industry options type
+type Industry = 'tech' | 'marketing' | 'finance' | 'healthcare' | 'education' | 'retail' | 'other';
+
+// Audience options type
+type Audience = 'professionals' | 'executives' | 'marketers' | 'developers' | 'general' | 'students';
 
 // Response interface
 interface AIResponse {
   content: string;
   suggestedHashtags: string[];
+  slides?: {
+    number: string;
+    title: string;
+    content: string;
+  }[];
+  imageUrl?: string;
 }
 
 const AIWriterPage: React.FC = () => {
@@ -59,28 +73,16 @@ const AIWriterPage: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [contentFormat, setContentFormat] = useState<ContentFormat>('short');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isImageGenerating, setIsImageGenerating] = useState(false);
   const [response, setResponse] = useState<AIResponse | null>(null);
   const [tone, setTone] = useState('professional');
+  const [industry, setIndustry] = useState<Industry>('tech');
+  const [audience, setAudience] = useState<Audience>('professionals');
+  const [imagePrompt, setImagePrompt] = useState('');
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   
-  // Example AI responses for demonstration
-  const exampleResponses: Record<ContentFormat, AIResponse> = {
-    short: {
-      content: "Our recent study of 500 marketing professionals revealed that companies using AI-assisted content generation saw a 37% increase in engagement and a 22% reduction in content production time. The key is finding the right balance between AI efficiency and human creativity. Are you leveraging AI in your content strategy yet?",
-      suggestedHashtags: ["#AIContentCreation", "#MarketingStrategy", "#ContentEfficiency", "#LinkedInTips"]
-    },
-    long: {
-      content: "In today's digital landscape, content creation has become a cornerstone of successful marketing strategies. However, many businesses struggle with consistency and quality.\n\nOur recent study of 500 marketing professionals revealed some fascinating insights:\n\n- Companies using AI-assisted content generation saw a 37% increase in engagement\n- Content production time was reduced by 22% on average\n- Teams reported higher satisfaction with their output quality\n\nThe key findings suggest that human-AI collaboration produces the best results, with AI handling research and initial drafts while humans refine messaging and add authentic perspectives. This approach not only improves efficiency but also enhances content relevance across different platforms.\n\nWe discovered that the most successful companies aren't simply replacing human writers with AI, but instead creating workflows where each contributes their strengths.\n\nHave you experimented with AI in your content creation process? I'd love to hear about your experience in the comments below.",
-      suggestedHashtags: ["#AIContentCreation", "#MarketingInsights", "#ContentStrategy", "#DigitalMarketing", "#AICollaboration"]
-    },
-    listicle: {
-      content: "5 Ways AI Is Transforming Content Creation According to Our New Research\n\n1️⃣ Higher Engagement: Companies using AI-assisted content saw a 37% increase in audience engagement metrics\n\n2️⃣ Time Efficiency: Content production time reduced by 22% when using collaborative AI tools\n\n3️⃣ Consistency Improvement: AI helps maintain brand voice across multiple channels and content types\n\n4️⃣ Research Enhancement: AI can analyze trends and competitor content to identify optimal topics\n\n5️⃣ Personalization at Scale: AI enables creating tailored content variations for different audience segments\n\nThe key isn't replacing human creativity, but enhancing it through strategic AI collaboration. Which of these benefits would most impact your content strategy?",
-      suggestedHashtags: ["#AIContent", "#ContentMarketing", "#MarketingTips", "#LinkedInStrategy", "#DigitalTransformation"]
-    },
-    hook: {
-      content: "Our recent study of 500 marketing professionals revealed a surprising insight about AI-assisted content creation that could transform your engagement metrics...",
-      suggestedHashtags: ["#ContentMarketing", "#AIInsights"]
-    }
-  };
+  // API base URL
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   // Generate content based on prompt
   const handleGenerate = async () => {
@@ -90,19 +92,97 @@ const AIWriterPage: React.FC = () => {
     }
     
     setIsGenerating(true);
+    setResponse(null);
     
     try {
-      // In a real app, make API call to AI service
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await axios.post(`${API_URL}/api/openai/generate-content`, {
+        prompt,
+        format: contentFormat,
+        tone,
+        industry,
+        audience
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       
-      // Simulate response based on selected format
-      setResponse(exampleResponses[contentFormat]);
-      toast.success('Content generated successfully!');
+      if (response.data && response.data.success) {
+        if (contentFormat === 'carousel') {
+          // For carousel format, generate a carousel post
+          const carouselResponse = await axios.post(`${API_URL}/api/openai/generate-carousel`, {
+            topic: prompt,
+            slideCount: 5,
+            industry,
+            audience,
+            tone
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (carouselResponse.data && carouselResponse.data.success) {
+            setResponse({
+              content: carouselResponse.data.data.rawContent,
+              suggestedHashtags: response.data.data.hashtags || [],
+              slides: carouselResponse.data.data.slides
+            });
+          }
+        } else {
+          // For other formats, use the regular response
+          setResponse({
+            content: response.data.data.content,
+            suggestedHashtags: response.data.data.hashtags || []
+          });
+        }
+        
+        toast.success('Content generated successfully!');
+      } else {
+        throw new Error(response.data?.message || 'Failed to generate content');
+      }
     } catch (error) {
       console.error('Error generating content:', error);
       toast.error('Failed to generate content. Please try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Generate image for LinkedIn post
+  const handleGenerateImage = async () => {
+    if (!imagePrompt.trim()) {
+      toast.error('Please enter an image prompt');
+      return;
+    }
+    
+    setIsImageGenerating(true);
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/openai/generate-image`, {
+        prompt: imagePrompt,
+        size: '1024x1024',
+        style: 'vivid'
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.data && response.data.success) {
+        setGeneratedImageUrl(response.data.data.cloudinary_url);
+        toast.success('Image generated successfully!');
+      } else {
+        throw new Error(response.data?.message || 'Failed to generate image');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast.error('Failed to generate image. Please try again.');
+    } finally {
+      setIsImageGenerating(false);
     }
   };
 
@@ -114,12 +194,13 @@ const AIWriterPage: React.FC = () => {
 
   // Create post from generated content
   const handleCreatePost = () => {
-    // In a real app, you would store the generated content and redirect
     if (response) {
       navigate('/dashboard/post', { 
         state: { 
           content: response.content,
-          hashtags: response.suggestedHashtags 
+          hashtags: response.suggestedHashtags,
+          slides: response.slides,
+          imageUrl: generatedImageUrl
         } 
       });
     }
@@ -171,13 +252,49 @@ const AIWriterPage: React.FC = () => {
                   onValueChange={(value) => setContentFormat(value as ContentFormat)}
                   className="w-full"
                 >
-                  <TabsList className="grid grid-cols-4 w-full">
+                  <TabsList className="grid grid-cols-5 w-full">
                     <TabsTrigger value="short" className="text-xs">Short</TabsTrigger>
                     <TabsTrigger value="long" className="text-xs">Long</TabsTrigger>
                     <TabsTrigger value="listicle" className="text-xs">Listicle</TabsTrigger>
+                    <TabsTrigger value="carousel" className="text-xs">Carousel</TabsTrigger>
                     <TabsTrigger value="hook" className="text-xs">Hook Only</TabsTrigger>
                   </TabsList>
                 </Tabs>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Industry</label>
+                <Select value={industry} onValueChange={(value) => setIndustry(value as Industry)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tech">Technology</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
+                    <SelectItem value="healthcare">Healthcare</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="retail">Retail</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Target Audience</label>
+                <Select value={audience} onValueChange={(value) => setAudience(value as Audience)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select audience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="professionals">Professionals</SelectItem>
+                    <SelectItem value="executives">Executives</SelectItem>
+                    <SelectItem value="marketers">Marketers</SelectItem>
+                    <SelectItem value="developers">Developers</SelectItem>
+                    <SelectItem value="students">Students</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
@@ -250,9 +367,15 @@ const AIWriterPage: React.FC = () => {
                       </p>
                     </div>
                     <div>
+                      <div className="font-medium mb-1">Carousel</div>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">
+                        Slide-based content for LinkedIn carousel posts
+                      </p>
+                    </div>
+                    <div>
                       <div className="font-medium mb-1">Hook Only</div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs">
-                        Attention-grabbing opening line to start your post (50-150 characters)
+                        Attention-grabbing first line to start your post
                       </p>
                     </div>
                   </div>
@@ -262,150 +385,157 @@ const AIWriterPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Right column - Generated content */}
+        {/* Middle/Right columns - Output and Preview */}
         <div className="lg:col-span-2">
           {response ? (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle>Generated Content</CardTitle>
-                  <CardDescription>
-                    {contentFormat === 'short' 
-                      ? 'Short-form LinkedIn post' 
-                      : contentFormat === 'long'
-                        ? 'Long-form LinkedIn post'
-                        : contentFormat === 'listicle'
-                          ? 'Listicle format post'
-                          : 'Attention-grabbing hook'}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={handleRefresh}>
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Regenerate content</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={() => handleCopy(response.content)}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Copy to clipboard</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-5 bg-white dark:bg-gray-900 min-h-[300px] mb-4">
-                  <div className="whitespace-pre-line text-gray-700 dark:text-gray-300">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div>
+                    <CardTitle>Generated Content</CardTitle>
+                    <CardDescription>
+                      Ready to use on LinkedIn
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => handleCopy(response.content)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copy to clipboard</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={handleRefresh}
+                            disabled={isGenerating}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Regenerate</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="whitespace-pre-line bg-gray-50 dark:bg-gray-900 p-4 rounded-md text-sm">
                     {response.content}
                   </div>
-                </div>
-                
-                {response.suggestedHashtags.length > 0 && (
-                  <div className="mb-4">
-                    <div className="text-sm font-medium mb-2">Suggested Hashtags</div>
-                    <div className="flex flex-wrap gap-2">
-                      {response.suggestedHashtags.map((tag, index) => (
-                        <span 
-                          key={index}
-                          className="bg-primary-50 dark:bg-primary-900/20 text-primary px-2 py-1 rounded-md text-sm"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-center mt-6">
-                  <Button onClick={handleCreatePost} className="gap-2">
-                    <PlusCircle className="h-4 w-4" />
-                    Create Post with This Content
-                  </Button>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-4">
-                <div className="text-xs text-gray-500 flex items-center">
-                  <Lightbulb className="h-3 w-3 mr-1" />
-                  <span>Edit or refine the content before publishing</span>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1"
-                  onClick={() => handleCopy(response.content)}
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </Button>
-              </CardFooter>
-            </Card>
-          ) : (
-            <Card className="min-h-[500px] flex flex-col items-center justify-center text-center p-8">
-              <div className="max-w-md">
-                <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20">
-                  <MessageSquare className="h-8 w-8 text-primary" />
-                </div>
-                
-                <h3 className="text-lg font-medium mb-2">
-                  AI-Powered LinkedIn Content Generator
-                </h3>
-                
-                <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-                  Enter a topic or paste your raw notes on the left to generate professional LinkedIn content. Choose from different formats based on your needs.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left">
-                    <div className="flex items-center gap-2 mb-1">
-                      <TextQuote className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Short & Long Form</span>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Generate concise posts or detailed articles
-                    </p>
+                </CardContent>
+                <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-4">
+                  <div className="flex flex-wrap gap-2">
+                    {response.suggestedHashtags.map((tag, index) => (
+                      <div 
+                        key={index}
+                        className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded-full"
+                      >
+                        #{tag}
+                      </div>
+                    ))}
                   </div>
                   
-                  <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left">
-                    <div className="flex items-center gap-2 mb-1">
-                      <ListOrdered className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Listicles</span>
+                  <Button onClick={handleCreatePost} className="gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    Create Post
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              {/* Image Generator */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Generate Matching Image</CardTitle>
+                  <CardDescription>
+                    Create an image to accompany your LinkedIn post
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Describe the image you want to generate"
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                    />
+                    <Button
+                      onClick={handleGenerateImage}
+                      disabled={isImageGenerating || !imagePrompt.trim()}
+                    >
+                      {isImageGenerating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {generatedImageUrl && (
+                    <div className="mt-4">
+                      <img 
+                        src={generatedImageUrl} 
+                        alt="Generated image"
+                        className="w-full rounded-md shadow-md"
+                      />
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Create engaging numbered list posts
-                    </p>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* If carousel format, show slides preview */}
+              {contentFormat === 'carousel' && response.slides && response.slides.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Carousel Slides</CardTitle>
+                    <CardDescription>
+                      Preview your carousel slides
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {response.slides.map((slide, index) => (
+                        <div 
+                          key={index}
+                          className="border border-gray-200 dark:border-gray-800 rounded-md p-4"
+                        >
+                          <div className="font-bold mb-2">Slide {slide.number}: {slide.title}</div>
+                          <div className="text-sm whitespace-pre-line">{slide.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            <Card className="h-full flex items-center justify-center p-8">
+              <div className="text-center">
+                <Lightbulb className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                <h3 className="text-lg font-medium mb-2">Ready to Generate</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-6">
+                  Fill in the details on the left and click "Generate" to create LinkedIn content using AI
+                </p>
+                <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Powered by OpenAI technology</span>
                   </div>
                 </div>
-                
-                {isGenerating ? (
-                  <div className="text-center">
-                    <Loader2 className="h-8 w-8 text-primary mx-auto animate-spin mb-3" />
-                    <p className="text-sm text-gray-500">Generating your content...</p>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={!prompt.trim()}
-                    className="gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Generate Content
-                  </Button>
-                )}
               </div>
             </Card>
           )}

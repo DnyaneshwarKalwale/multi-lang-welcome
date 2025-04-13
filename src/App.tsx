@@ -37,7 +37,6 @@ import MyCarouselsPage from "./pages/MyCarouselsPage";
 import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
-import LinkedInContentGenerator from "./pages/LinkedInContentGenerator";
 
 const queryClient = new QueryClient();
 
@@ -254,7 +253,6 @@ const AppRoutes = () => {
           <Route path="/dashboard/scraper" element={<ScraperPage />} />
           <Route path="/dashboard/inspiration" element={<InspirationPage />} />
           <Route path="/dashboard/ai" element={<AIWriterPage />} />
-          <Route path="/dashboard/linkedin-content" element={<LinkedInContentGenerator />} />
           <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
           <Route path="/dashboard/team" element={<TeamsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />

@@ -75,7 +75,6 @@ export function CollapsibleSidebar() {
     { title: 'Scraper', icon: Search, path: '/dashboard/scraper' },
     { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
     { title: 'AI Writer', icon: MessageSquare, path: '/dashboard/ai' },
-    { title: 'LinkedIn Content', icon: Linkedin, path: '/dashboard/linkedin-content' },
     { title: 'Analytics', icon: BarChart3, path: '/dashboard/analytics' },
     { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
     { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },

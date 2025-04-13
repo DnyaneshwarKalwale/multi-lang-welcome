@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import axios from 'axios';
+import YouTubeTranscriptFetcher from '@/components/YouTubeTranscriptFetcher';
 
 // Scraper result interface
 interface ScraperResult {
@@ -255,6 +256,26 @@ const ScraperPage: React.FC = () => {
     setTwitterResult(null);
     setSelectedTweets(new Set());
   }, [activeTab]);
+
+  // Function to handle YouTube content generation
+  const handleYoutubeContentGenerated = (content: {
+    content: string;
+    hashtags: string[];
+    sourceType: string;
+    videoId?: string;
+    title?: string;
+  }) => {
+    // Store the generated content or redirect to post creation page
+    navigate('/dashboard/post', { 
+      state: { 
+        content: content.content,
+        hashtags: content.hashtags, 
+        sourceType: 'youtube',
+        sourceId: content.videoId,
+        sourceTitle: content.title
+      } 
+    });
+  };
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -694,6 +715,16 @@ const ScraperPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* YouTube Scraper Content */}
+        <TabsContent value="youtube">
+          <YouTubeTranscriptFetcher onContentGenerated={handleYoutubeContentGenerated} />
+        </TabsContent>
+
+        {/* Website Scraper Content */}
+        <TabsContent value="website">
+          {/* ... existing Website scraper UI ... */}
+        </TabsContent>
       </Tabs>
     </div>
   );
