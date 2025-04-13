@@ -170,9 +170,20 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
+    // Get token for authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('You need to be logged in to use this feature');
+      return;
+    }
+    
     // Call backend API to get tweets
     const apiUrl = `https://backend-scripe.onrender.com/api/twitter/user/${username}`;
-    const response = await axios.get(apiUrl);
+    const response = await axios.get(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     
     if (response.data && response.data.success) {
       const tweets = response.data.data;
@@ -197,10 +208,20 @@ const ScraperPage: React.FC = () => {
         return;
       }
       
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You need to be logged in to use this feature');
+        return;
+      }
+      
       // Call backend API to get transcript - use direct URL since env variable may not be set
       const apiUrl = `https://backend-scripe.onrender.com/api/youtube/transcript`;
       const response = await axios.get(apiUrl, {
-        params: { url: inputUrl }
+        params: { url: inputUrl },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (response.data && response.data.success) {
@@ -231,11 +252,23 @@ const ScraperPage: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You need to be logged in to use this feature');
+        return;
+      }
+      
       // Call backend API to analyze transcript - use direct URL since env variable may not be set
       const apiUrl = `https://backend-scripe.onrender.com/api/youtube/analyze`;
       const response = await axios.post(apiUrl, {
         transcript: youtubeTranscript.transcript,
         preferences: contentPreferences
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
       if (response.data && response.data.success) {
@@ -296,6 +329,13 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
+    // Get token for authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('You need to be logged in to save tweets');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -312,6 +352,11 @@ const ScraperPage: React.FC = () => {
         username: user?.email || 'anonymous',
         options: {
           preserveThreadOrder: true
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
