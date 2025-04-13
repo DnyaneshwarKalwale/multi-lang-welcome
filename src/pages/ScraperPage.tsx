@@ -171,7 +171,7 @@ const ScraperPage: React.FC = () => {
     }
     
     // Call backend API to get tweets
-    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/user/${username}`;
+    const apiUrl = `https://backend-scripe.onrender.com/api/twitter/user/${username}`;
     const response = await axios.get(apiUrl);
     
     if (response.data && response.data.success) {
@@ -197,8 +197,8 @@ const ScraperPage: React.FC = () => {
         return;
       }
       
-      // Call backend API to get transcript
-      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/youtube/transcript`;
+      // Call backend API to get transcript - use direct URL since env variable may not be set
+      const apiUrl = `https://backend-scripe.onrender.com/api/youtube/transcript`;
       const response = await axios.get(apiUrl, {
         params: { url: inputUrl }
       });
@@ -231,8 +231,8 @@ const ScraperPage: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
-      // Call backend API to analyze transcript
-      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/youtube/analyze`;
+      // Call backend API to analyze transcript - use direct URL since env variable may not be set
+      const apiUrl = `https://backend-scripe.onrender.com/api/youtube/analyze`;
       const response = await axios.post(apiUrl, {
         transcript: youtubeTranscript.transcript,
         preferences: contentPreferences
@@ -305,7 +305,7 @@ const ScraperPage: React.FC = () => {
       );
       
       // Call API to save tweets
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/save`;
+      const apiUrl = `https://backend-scripe.onrender.com/api/twitter/save`;
       
       const response = await axios.post(apiUrl, {
         tweets: tweetsToSave,
