@@ -70,7 +70,7 @@ import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersistentState, useAppState } from '@/contexts/StateContext';
-import { linkedInApi } from '@/utils/linkedinApi';
+import linkedinApi from '@/utils/linkedinApi';
 import { 
   Dialog,
   DialogContent,
@@ -414,17 +414,17 @@ const CreatePostPage: React.FC = () => {
       if (isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2) {
         // Publish as poll
         const filteredOptions = pollOptions.filter(opt => opt.trim());
-        response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
+        response = await linkedinApi.createPollPost(content, filteredOptions, pollDuration);
         toast.success('Poll published to LinkedIn successfully!');
       } else if (postImage) {
         // TODO: Convert Cloudinary URL to File object for upload to LinkedIn
         // For now, we'll just post as text
         toast.warning('Image posts are currently being implemented. Publishing as text post instead.');
-        response = await linkedInApi.createTextPost(content, visibility);
+        response = await linkedinApi.createTextPost(content, visibility);
         toast.success('Post published to LinkedIn successfully!');
       } else {
         // Simple text post
-        response = await linkedInApi.createTextPost(content, visibility);
+        response = await linkedinApi.createTextPost(content, visibility);
         toast.success('Post published to LinkedIn successfully!');
       }
       
@@ -487,7 +487,7 @@ const CreatePostPage: React.FC = () => {
       
       try {
         // Try to save to backend first
-        savedDraft = await linkedInApi.saveDraft(draftPost);
+        savedDraft = await linkedinApi.saveDraft(draftPost);
         toast.success('Post saved as draft to your account');
       } catch (backendError) {
         console.error('Backend save failed, using localStorage:', backendError);
@@ -571,7 +571,7 @@ const CreatePostPage: React.FC = () => {
       
       try {
         // Try to save to backend first
-        savedScheduledPost = await linkedInApi.schedulePost(scheduledPostData, scheduledDateTime);
+        savedScheduledPost = await linkedinApi.schedulePost(scheduledPostData, scheduledDateTime);
         toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
       } catch (backendError) {
         console.error('Backend scheduling failed, using localStorage:', backendError);

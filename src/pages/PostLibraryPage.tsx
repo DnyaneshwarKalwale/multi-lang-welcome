@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { linkedInApi } from '@/utils/linkedinApi';
+import linkedinApi from '@/utils/linkedinApi';
 import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
 
 // Define interfaces for post types
@@ -142,7 +142,7 @@ const PostLibraryPage: React.FC = () => {
       try {
         // Try to load from API first
         try {
-          const apiData = await linkedInApi.getDraftsAndScheduled();
+          const apiData = await linkedinApi.getDraftsAndScheduled();
           
           // Process data into our expected format
           const apiDrafts = apiData.filter((item: any) => item.status === 'draft');
@@ -257,7 +257,7 @@ const PostLibraryPage: React.FC = () => {
       }
       
       // Publish to LinkedIn
-      const response = await linkedInApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
+      const response = await linkedinApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
       
       // Remove from drafts
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
@@ -364,7 +364,7 @@ const PostLibraryPage: React.FC = () => {
       }
       
       // Publish to LinkedIn
-      const response = await linkedInApi.createTextPost(postContent, post.visibility || 'PUBLIC');
+      const response = await linkedinApi.createTextPost(postContent, post.visibility || 'PUBLIC');
       
       // Remove from scheduled
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
