@@ -7,6 +7,7 @@ import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { StateProvider } from "@/contexts/StateContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
@@ -271,19 +272,21 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <LanguageProvider>
-            <TooltipProvider>
-              <ContextVerifier>
-                <OnboardingProvider>
-                  <AppRoutes />
-                  <Toaster />
-                  <Sonner position="top-right" />
-                </OnboardingProvider>
-              </ContextVerifier>
-            </TooltipProvider>
-          </LanguageProvider>
-        </AuthProvider>
+        <StateProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <TooltipProvider>
+                <ContextVerifier>
+                  <OnboardingProvider>
+                    <AppRoutes />
+                    <Toaster />
+                    <Sonner position="top-right" />
+                  </OnboardingProvider>
+                </ContextVerifier>
+              </TooltipProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </StateProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>

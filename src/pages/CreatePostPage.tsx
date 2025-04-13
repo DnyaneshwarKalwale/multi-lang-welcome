@@ -64,6 +64,7 @@ import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePersistentState, useAppState } from '@/contexts/StateContext';
 
 const carouselTemplates = [
   {
@@ -130,6 +131,11 @@ const CreatePostPage: React.FC = () => {
   const locationState = location.state as LocationState | null;
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { clearState } = useAppState();
+  
+  // Add state for tracking save status
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveStatusTimeoutRef = React.useRef<number | null>(null);
   
   // Add CSS for preview pulse animation
   useEffect(() => {
@@ -152,28 +158,29 @@ const CreatePostPage: React.FC = () => {
     };
   }, []);
   
-  const [content, setContent] = useState('');
-  const [showSidebar, setShowSidebar] = useState(true);
-  const [activeTab, setActiveTab] = useState('text');
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [sliderType, setSliderType] = useState<SliderVariant>('basic');
-  const [slides, setSlides] = useState<{id: string, content: string}[]>([
+  // Use persistent state for all form fields
+  const [content, setContent] = usePersistentState('createPost.content', '');
+  const [showSidebar, setShowSidebar] = usePersistentState('createPost.showSidebar', true);
+  const [activeTab, setActiveTab] = usePersistentState('createPost.activeTab', 'text');
+  const [selectedTemplate, setSelectedTemplate] = usePersistentState<string | null>('createPost.selectedTemplate', null);
+  const [sliderType, setSliderType] = usePersistentState<SliderVariant>('createPost.sliderType', 'basic');
+  const [slides, setSlides] = usePersistentState<{id: string, content: string}[]>('createPost.slides', [
     { id: '1', content: 'Slide 1: Introduction to your topic' },
     { id: '2', content: 'Slide 2: Key point or insight #1' },
     { id: '3', content: 'Slide 3: Key point or insight #2' },
   ]);
   
-  const [hashtags, setHashtags] = useState<string[]>([
+  const [hashtags, setHashtags] = usePersistentState<string[]>('createPost.hashtags', [
     'LinkedInTips', 'ContentCreation', 'ProfessionalDevelopment'
   ]);
   
   const [newHashtag, setNewHashtag] = useState('');
-  const [aiGeneratedImage, setAiGeneratedImage] = useState<string | null>(null);
-  const [postImage, setPostImage] = useState<CloudinaryImage | null>(null);
+  const [aiGeneratedImage, setAiGeneratedImage] = usePersistentState<string | null>('createPost.aiGeneratedImage', null);
+  const [postImage, setPostImage] = usePersistentState<CloudinaryImage | null>('createPost.postImage', null);
   
-  const [isPollActive, setIsPollActive] = useState(false);
-  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
-  const [pollDuration, setPollDuration] = useState(1); // days
+  const [isPollActive, setIsPollActive] = usePersistentState('createPost.isPollActive', false);
+  const [pollOptions, setPollOptions] = usePersistentState<string[]>('createPost.pollOptions', ['', '']);
+  const [pollDuration, setPollDuration] = usePersistentState('createPost.pollDuration', 1); // days
   
   // Initialize with data from location state (if available)
   useEffect(() => {
@@ -191,17 +198,40 @@ const CreatePostPage: React.FC = () => {
         setActiveTab('carousel'); // Switch to carousel tab if image is provided
       }
     }
-  }, [locationState]);
+  }, [locationState, setContent, setHashtags, setAiGeneratedImage, setActiveTab]);
+  
+  // Helper function to show save indicator
+  const showSaveIndicator = () => {
+    // Show saving indicator
+    setSaveStatus('saving');
+    
+    // Clear any existing timeout
+    if (saveStatusTimeoutRef.current) {
+      window.clearTimeout(saveStatusTimeoutRef.current);
+    }
+    
+    // Show saved indicator after a short delay
+    setTimeout(() => {
+      setSaveStatus('saved');
+      
+      // Reset status after 2 seconds
+      saveStatusTimeoutRef.current = window.setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2000);
+    }, 500);
+  };
   
   const addHashtag = () => {
     if (newHashtag && !hashtags.includes(newHashtag)) {
       setHashtags([...hashtags, newHashtag]);
       setNewHashtag('');
+      showSaveIndicator();
     }
   };
   
   const removeHashtag = (tag: string) => {
     setHashtags(hashtags.filter(t => t !== tag));
+    showSaveIndicator();
   };
   
   const addSlide = () => {
@@ -276,6 +306,7 @@ const CreatePostPage: React.FC = () => {
       }
     }, 100);
     
+    showSaveIndicator();
     toast.success('Image selected for your post');
   };
 
@@ -292,12 +323,14 @@ const CreatePostPage: React.FC = () => {
       }
     }, 100);
     
+    showSaveIndicator();
     toast.success('Image uploaded and added to your post');
   };
   
   const handleAddPollOption = () => {
     if (pollOptions.length < 4) {
       setPollOptions([...pollOptions, '']);
+      showSaveIndicator();
     } else {
       toast.error('Maximum 4 options allowed for LinkedIn polls');
     }
@@ -308,6 +341,7 @@ const CreatePostPage: React.FC = () => {
       const newOptions = [...pollOptions];
       newOptions.splice(index, 1);
       setPollOptions(newOptions);
+      showSaveIndicator();
     } else {
       toast.error('Poll requires at least 2 options');
     }
@@ -317,14 +351,45 @@ const CreatePostPage: React.FC = () => {
     const newOptions = [...pollOptions];
     newOptions[index] = value;
     setPollOptions(newOptions);
+    showSaveIndicator();
   };
   
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
+          {saveStatus !== 'idle' && (
+            <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
+              saveStatus === 'saving' 
+                ? 'bg-amber-100 text-amber-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
+            </span>
+          )}
+        </div>
         
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+            onClick={() => {
+              if (window.confirm("Are you sure you want to clear your draft? This cannot be undone.")) {
+                // Clear all createPost related state
+                Object.keys(localStorage).forEach(key => {
+                  if (key.startsWith('state:createPost.')) {
+                    localStorage.removeItem(key);
+                  }
+                });
+                window.location.reload();
+              }
+            }}
+          >
+            <X size={16} />
+            Clear Draft
+          </Button>
           <Button variant="outline" size="sm" className="gap-1">
             <Clock size={16} />
             Schedule
@@ -368,6 +433,7 @@ const CreatePostPage: React.FC = () => {
                           previewEl.classList.add('preview-pulse');
                           setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
                         }
+                        showSaveIndicator();
                       }}
                     />
                     
@@ -605,6 +671,7 @@ const CreatePostPage: React.FC = () => {
                                       previewEl.classList.add('preview-pulse');
                                       setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
                                     }
+                                    showSaveIndicator();
                                   }}
                                 />
                                 <div className="flex items-center gap-2 mt-3">
@@ -670,16 +737,30 @@ const CreatePostPage: React.FC = () => {
             <CardContent>
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xl mx-auto preview-section bg-white dark:bg-gray-900 shadow-sm">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center text-white font-bold ring-2 ring-white">
-                    {user?.firstName?.charAt(0) || 'U'}
+                  <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center text-white font-bold ring-2 ring-white overflow-hidden">
+                    {user?.profilePicture ? (
+                      <img 
+                        src={user.profilePicture} 
+                        alt={user.firstName} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user?.firstName?.charAt(0) || 'U'
+                    )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-[15px]">{user ? `${user.firstName} ${user.lastName}` : 'User Name'}</h4>
-                    <p className="text-xs text-neutral-medium">{user?.role || 'LinkedIn User'}</p>
+                    <p className="text-xs text-neutral-medium">
+                      {user?.role || 'LinkedIn User'} {user?.role ? ' · ' : ''} 
+                      <span className="text-blue-600">Follow</span>
+                    </p>
                     <div className="flex items-center gap-1 text-[11px] text-neutral-medium mt-0.5">
                       <span>Now</span>
                       <span>•</span>
                       <Globe className="h-3 w-3" />
+                      <span className="ml-auto text-[11px] text-neutral-medium">
+                        <span className="text-blue-600">500+ connections</span>
+                      </span>
                     </div>
                   </div>
                 </div>
