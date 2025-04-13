@@ -114,8 +114,19 @@ const AIWriterPage: React.FC = () => {
   const fetchSuggestedImages = async () => {
     setIsLoadingSuggestions(true);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/suggestions`;
-      const response = await axios.get(apiUrl);
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No authentication token found');
+        return;
+      }
+      
+      const apiUrl = `https://backend-scripe.onrender.com/api/cloudinary/suggestions`;
+      const response = await axios.get(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       if (response.data && response.data.success) {
         setSuggestedImages(response.data.data.slice(0, 6)); // Limit to 6 suggestions
@@ -137,15 +148,41 @@ const AIWriterPage: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      // In a real app, make API call to AI service
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You need to be logged in to use this feature');
+        setIsGenerating(false);
+        return;
+      }
       
-      // Simulate response based on selected format
-      setResponse(exampleResponses[contentFormat]);
-      toast.success('Content generated successfully!');
+      // Make API call to backend for AI content generation
+      const apiUrl = `https://backend-scripe.onrender.com/api/ai/generate`;
+      const response = await axios.post(apiUrl, {
+        prompt: prompt,
+        format: contentFormat,
+        tone: tone
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data && response.data.success) {
+        setResponse(response.data.data);
+        toast.success('Content generated successfully!');
+      } else {
+        // Fallback to example responses if API fails
+        setResponse(exampleResponses[contentFormat]);
+        toast.success('Content generated with fallback data');
+      }
     } catch (error) {
       console.error('Error generating content:', error);
       toast.error('Failed to generate content. Please try again.');
+      
+      // Fallback to example responses if API fails
+      setResponse(exampleResponses[contentFormat]);
     } finally {
       setIsGenerating(false);
     }
@@ -161,11 +198,24 @@ const AIWriterPage: React.FC = () => {
     setIsGeneratingImage(true);
     
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/generate`;
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You need to be logged in to use this feature');
+        setIsGeneratingImage(false);
+        return;
+      }
+      
+      const apiUrl = `https://backend-scripe.onrender.com/api/cloudinary/generate`;
       const response = await axios.post(apiUrl, {
         prompt: imagePrompt,
         size: '1024x1024',
         style: 'vivid'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
       if (response.data && response.data.success) {
@@ -207,11 +257,24 @@ const AIWriterPage: React.FC = () => {
     setIsUploading(true);
     
     try {
+      // Get token for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You need to be logged in to use this feature');
+        setIsUploading(false);
+        return;
+      }
+      
       const formData = new FormData();
       formData.append('image', selectedFile);
       
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cloudinary/upload`;
-      const response = await axios.post(apiUrl, formData);
+      const apiUrl = `https://backend-scripe.onrender.com/api/cloudinary/upload`;
+      const response = await axios.post(apiUrl, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       
       if (response.data && response.data.success) {
         const uploadedImage = response.data.data;
