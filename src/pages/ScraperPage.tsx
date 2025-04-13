@@ -198,7 +198,7 @@ const ScraperPage: React.FC = () => {
       }
       
       // Call backend API to get transcript
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/transcript`;
+      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/youtube/transcript`;
       const response = await axios.get(apiUrl, {
         params: { url: inputUrl }
       });
@@ -232,7 +232,7 @@ const ScraperPage: React.FC = () => {
     
     try {
       // Call backend API to analyze transcript
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/analyze`;
+      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/youtube/analyze`;
       const response = await axios.post(apiUrl, {
         transcript: youtubeTranscript.transcript,
         preferences: contentPreferences

@@ -114,7 +114,7 @@ const AIWriterPage: React.FC = () => {
   const fetchSuggestedImages = async () => {
     setIsLoadingSuggestions(true);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cloudinary/suggestions`;
+      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/suggestions`;
       const response = await axios.get(apiUrl);
       
       if (response.data && response.data.success) {
@@ -161,7 +161,7 @@ const AIWriterPage: React.FC = () => {
     setIsGeneratingImage(true);
     
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cloudinary/generate`;
+      const apiUrl = `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/generate`;
       const response = await axios.post(apiUrl, {
         prompt: imagePrompt,
         size: '1024x1024',

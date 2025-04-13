@@ -16,6 +16,10 @@ export const uploadToCloudinary = async (file: File) => {
       throw new Error('Cloudinary configuration missing. Please check your environment variables.');
     }
     
+    // We can either upload directly to Cloudinary or through our backend
+    // Let's provide both options:
+    
+    // Option 1: Direct to Cloudinary
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
@@ -33,6 +37,33 @@ export const uploadToCloudinary = async (file: File) => {
     }
     
     const data = await response.json();
+    
+    // Option 2: Through backend (commented out, but available if needed)
+    /*
+    const API_URL = import.meta.env.VITE_API_URL;
+    
+    if (!API_URL) {
+      throw new Error('API URL configuration missing. Please check your environment variables.');
+    }
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await fetch(
+      `${API_URL.replace(/\/api$/, '')}/api/cloudinary/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to upload image through backend');
+    }
+    
+    const responseData = await response.json();
+    const data = responseData.data;
+    */
     
     return {
       url: data.secure_url,
