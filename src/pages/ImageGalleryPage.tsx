@@ -94,7 +94,7 @@ const ImageGalleryPage: React.FC = () => {
       
       // For the sample, we'll use the sample data
       // In production, this would be:
-      // const response = await axios.get(`${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/gallery?userId=${user?.id}`);
+      // const response = await axios.get(`${import.meta.env.VITE_API_URL}/cloudinary/gallery?userId=${user?.id}`);
       // setImages(response.data.data);
       
       setImages(sampleImages);
@@ -129,7 +129,7 @@ const ImageGalleryPage: React.FC = () => {
         const uploadResult = await uploadToCloudinary(file);
         
         // In production, save the reference to your backend
-        // const saveResponse = await axios.post(`${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/gallery`, {
+        // const saveResponse = await axios.post(`${import.meta.env.VITE_API_URL}/cloudinary/gallery`, {
         //   userId: user?.id,
         //   public_id: uploadResult.publicId,
         //   url: uploadResult.url,
@@ -203,7 +203,7 @@ const ImageGalleryPage: React.FC = () => {
       // In production, delete from backend/Cloudinary
       // await Promise.all(
       //   Array.from(selectedImages).map(id => 
-      //     axios.delete(`${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}/api/cloudinary/gallery/${id}`)
+      //     axios.delete(`${import.meta.env.VITE_API_URL}/cloudinary/gallery/${id}`)
       //   )
       // );
       

@@ -49,29 +49,19 @@ import {
   Wand2,
   Users,
   MessageCircle,
-  Upload,
-  Grid,
-  Trash,
-  Plus,
-  X,
-  BarChart2
+  Folder,
+  BarChart4,
+  X
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { SliderVariant } from '@/types/LinkedInPost';
 import { CarouselPreview } from '@/components/CarouselPreview';
+import ImageGalleryPicker from '@/components/ImageGalleryPicker';
+import ImageUploader from '@/components/ImageUploader';
+import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
+import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogClose
-} from '@/components/ui/dialog';
-import { uploadToCloudinary } from '@/utils/cloudinaryUpload';
 
 const carouselTemplates = [
   {
@@ -133,16 +123,10 @@ interface LocationState {
   image?: string;
 }
 
-// Poll option interface
-interface PollOption {
-  id: string;
-  text: string;
-}
-
 const CreatePostPage: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const locationState = location.state as LocationState | null;
+  const navigate = useNavigate();
   
   const [content, setContent] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
@@ -161,20 +145,11 @@ const CreatePostPage: React.FC = () => {
   
   const [newHashtag, setNewHashtag] = useState('');
   const [aiGeneratedImage, setAiGeneratedImage] = useState<string | null>(null);
+  const [postImage, setPostImage] = useState<CloudinaryImage | null>(null);
   
-  // New states for image handling
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isImageUpLoading, setIsImageUpLoading] = useState(false);
-  const [imageGallery, setImageGallery] = useState<{id: string, url: string}[]>([]);
-  
-  // New states for poll
-  const [hasPoll, setHasPoll] = useState(false);
-  const [pollQuestion, setPollQuestion] = useState('');
-  const [pollOptions, setPollOptions] = useState<PollOption[]>([
-    { id: '1', text: '' },
-    { id: '2', text: '' }
-  ]);
-  const [pollDuration, setPollDuration] = useState(7); // Default 7 days
+  const [isPollActive, setIsPollActive] = useState(false);
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+  const [pollDuration, setPollDuration] = useState(1); // days
   
   // Initialize with data from location state (if available)
   useEffect(() => {
@@ -260,80 +235,43 @@ const CreatePostPage: React.FC = () => {
     }
   };
   
-  // Handle file upload
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    setIsImageUpLoading(true);
-    
-    try {
-      const uploadResult = await uploadToCloudinary(file);
-      setSelectedImage(uploadResult.url);
-      
-      // Add to gallery in real implementation
-      const newImage = {
-        id: Date.now().toString(),
-        url: uploadResult.url
-      };
-      
-      setImageGallery(prev => [newImage, ...prev]);
-      toast.success('Image uploaded successfully!');
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Failed to upload image. Please try again.');
-    } finally {
-      setIsImageUpLoading(false);
+  // Handle image selected from gallery
+  const handleImageSelected = (image: CloudinaryImage) => {
+    setPostImage(image);
+    // If it's an AI-generated image, automatically switch to text tab
+    if (image.type === 'ai-generated') {
+      setActiveTab('text');
     }
   };
-  
-  // Navigate to AI image generator
-  const handleNavigateToAIGenerator = () => {
-    // Save current state if needed
-    navigate('/dashboard/ai-writer', { state: { returnTo: 'createPost' } });
+
+  // Handle direct image upload complete
+  const handleUploadComplete = (image: CloudinaryImage) => {
+    setPostImage(image);
+    toast.success('Image uploaded and added to your post');
   };
   
-  // Add poll option
   const handleAddPollOption = () => {
-    if (pollOptions.length >= 4) {
-      toast.error('Maximum 4 options allowed for a poll');
-      return;
+    if (pollOptions.length < 4) {
+      setPollOptions([...pollOptions, '']);
+    } else {
+      toast.error('Maximum 4 options allowed for LinkedIn polls');
     }
-    
-    const newId = (pollOptions.length + 1).toString();
-    setPollOptions([...pollOptions, { id: newId, text: '' }]);
   };
-  
-  // Remove poll option
-  const handleRemovePollOption = (id: string) => {
-    if (pollOptions.length <= 2) {
-      toast.error('At least 2 options are required for a poll');
-      return;
+
+  const handleRemovePollOption = (index: number) => {
+    if (pollOptions.length > 2) {
+      const newOptions = [...pollOptions];
+      newOptions.splice(index, 1);
+      setPollOptions(newOptions);
+    } else {
+      toast.error('Poll requires at least 2 options');
     }
-    
-    setPollOptions(pollOptions.filter(option => option.id !== id));
   };
-  
-  // Update poll option
-  const handleUpdatePollOption = (id: string, text: string) => {
-    setPollOptions(pollOptions.map(option => 
-      option.id === id ? { ...option, text } : option
-    ));
-  };
-  
-  // Toggle poll
-  const handleTogglePoll = () => {
-    setHasPoll(!hasPoll);
-    if (!hasPoll) {
-      // Reset poll data when adding a new poll
-      setPollQuestion('');
-      setPollOptions([
-        { id: '1', text: '' },
-        { id: '2', text: '' }
-      ]);
-      setPollDuration(7);
-    }
+
+  const handlePollOptionChange = (index: number, value: string) => {
+    const newOptions = [...pollOptions];
+    newOptions[index] = value;
+    setPollOptions(newOptions);
   };
   
   return (
@@ -417,305 +355,60 @@ const CreatePostPage: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 mt-3">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <ImageIcon size={14} />
-                            Add Image
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[525px]">
-                          <DialogHeader>
-                            <DialogTitle>Add Image</DialogTitle>
-                            <DialogDescription>
-                              Choose an image from your computer, gallery, or create a new one with AI
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <Tabs defaultValue="upload" className="mt-4">
-                            <TabsList className="grid grid-cols-3 w-full">
-                              <TabsTrigger value="upload">Upload</TabsTrigger>
-                              <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                              <TabsTrigger value="create">Create with AI</TabsTrigger>
-                            </TabsList>
-                            
-                            <TabsContent value="upload" className="py-4">
-                              <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                                {isImageUpLoading ? (
-                                  <div className="flex flex-col items-center">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
-                                    <p className="text-sm">Uploading image...</p>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                                    <p className="text-sm mb-3">Drag & drop an image or click to browse</p>
-                                    <label htmlFor="file-upload">
-                                      <input
-                                        id="file-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleFileUpload}
-                                      />
-                                      <Button variant="outline" size="sm" asChild>
-                                        <span>Select Image</span>
-                                      </Button>
-                                    </label>
-                                  </>
-                                )}
-                              </div>
-                            </TabsContent>
-                            
-                            <TabsContent value="gallery" className="py-4">
-                              <div className="grid grid-cols-3 gap-3 mb-4">
-                                {imageGallery.length === 0 ? (
-                                  <div className="col-span-3 text-center py-8">
-                                    <Grid className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                                    <p className="text-sm mb-2">No images in your gallery yet</p>
-                                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/gallery')}>
-                                      Go to Gallery
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  imageGallery.map((img) => (
-                                    <div 
-                                      key={img.id}
-                                      className={`aspect-square relative cursor-pointer rounded-md overflow-hidden border-2 ${
-                                        selectedImage === img.url ? 'border-primary' : 'border-transparent'
-                                      }`}
-                                      onClick={() => setSelectedImage(img.url)}
-                                    >
-                                      <img 
-                                        src={img.url} 
-                                        alt="Gallery" 
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                  ))
-                                )}
-                              </div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full"
-                                onClick={() => navigate('/dashboard/gallery')}
-                              >
-                                Browse All Images
-                              </Button>
-                            </TabsContent>
-                            
-                            <TabsContent value="create" className="py-4">
-                              <div className="text-center py-8">
-                                <Wand2 className="h-10 w-10 text-primary mx-auto mb-2" />
-                                <h3 className="text-lg font-medium mb-2">Create with AI</h3>
-                                <p className="text-sm text-gray-500 mb-4">
-                                  Generate unique images for your post using our AI image generator
-                                </p>
-                                <Button onClick={handleNavigateToAIGenerator}>
-                                  Open AI Image Generator
-                                </Button>
-                              </div>
-                            </TabsContent>
-                          </Tabs>
-                          
-                          {selectedImage && (
-                            <div className="mt-4 border rounded-md p-2">
-                              <div className="relative">
-                                <img 
-                                  src={selectedImage} 
-                                  alt="Selected" 
-                                  className="w-full h-auto rounded"
-                                />
-                                <Button
-                                  variant="destructive"
-                                  size="icon"
-                                  className="absolute top-2 right-2 h-8 w-8"
-                                  onClick={() => setSelectedImage(null)}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          <DialogFooter className="gap-2 mt-4">
-                            <DialogClose asChild>
-                              <Button variant="outline">Cancel</Button>
-                            </DialogClose>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-md font-medium mb-2">Post Image</h3>
+                        {postImage ? (
+                          <div className="relative rounded-md overflow-hidden mb-2">
+                            <img 
+                              src={postImage.secure_url} 
+                              alt="Post image"
+                              className="w-full max-h-[300px] object-cover"
+                            />
                             <Button
-                              type="submit"
-                              disabled={!selectedImage}
-                              onClick={() => {
-                                setAiGeneratedImage(selectedImage);
-                                toast.success('Image added to post');
-                              }}
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-2 right-2"
+                              onClick={() => setPostImage(null)}
                             >
-                              Add to Post
+                              Remove
                             </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <BarChart2 size={14} />
-                            Add Poll
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[525px]">
-                          <DialogHeader>
-                            <DialogTitle>Create Poll</DialogTitle>
-                            <DialogDescription>
-                              Add a poll to engage with your audience
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <label htmlFor="poll-question" className="text-sm font-medium">
-                                Poll Question
-                              </label>
-                              <Input
-                                id="poll-question"
-                                placeholder="Ask a question..."
-                                value={pollQuestion}
-                                onChange={(e) => setPollQuestion(e.target.value)}
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium">Poll Options</label>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 gap-1 text-xs"
-                                  onClick={handleAddPollOption}
-                                  disabled={pollOptions.length >= 4}
-                                >
-                                  <Plus size={12} />
-                                  Add Option
-                                </Button>
-                              </div>
-                              
-                              {pollOptions.map((option, index) => (
-                                <div key={option.id} className="flex items-center gap-2">
-                                  <Input
-                                    placeholder={`Option ${index + 1}`}
-                                    value={option.text}
-                                    onChange={(e) => handleUpdatePollOption(option.id, e.target.value)}
-                                  />
-                                  {pollOptions.length > 2 && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => handleRemovePollOption(option.id)}
-                                    >
-                                      <X size={14} />
-                                    </Button>
-                                  )}
-                                </div>
-                              ))}
-                              <p className="text-xs text-gray-500">
-                                Add between 2 and 4 options
-                              </p>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Poll Duration</label>
-                              <Select 
-                                value={pollDuration.toString()} 
-                                onValueChange={(value) => setPollDuration(parseInt(value))}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select duration" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="1">1 day</SelectItem>
-                                  <SelectItem value="3">3 days</SelectItem>
-                                  <SelectItem value="7">1 week</SelectItem>
-                                  <SelectItem value="14">2 weeks</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
                           </div>
-                          
-                          <DialogFooter className="gap-2">
-                            <DialogClose asChild>
-                              <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <Button
-                              type="submit"
-                              disabled={!pollQuestion || pollOptions.some(opt => !opt.text)}
-                              onClick={() => {
-                                setHasPoll(true);
-                                toast.success('Poll added to post');
-                              }}
+                        ) : (
+                          <div className="flex gap-2">
+                            <ImageGalleryPicker
+                              onSelectImage={handleImageSelected}
+                              triggerButton={
+                                <Button variant="outline" className="gap-2">
+                                  <ImageIcon className="h-4 w-4" />
+                                  Select from Gallery
+                                </Button>
+                              }
+                            />
+                            <Button 
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => navigate('/dashboard/images')}
                             >
-                              Add Poll
+                              <Folder className="h-4 w-4" />
+                              Manage Images
                             </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
-                    {/* Display Selected Image */}
-                    {aiGeneratedImage && (
-                      <div className="mt-4 border rounded-md p-2">
-                        <div className="relative">
-                          <img 
-                            src={aiGeneratedImage} 
-                            alt="Post image" 
-                            className="w-full h-auto rounded"
-                          />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-8 w-8"
-                            onClick={() => setAiGeneratedImage(null)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Display Poll */}
-                    {hasPoll && (
-                      <div className="mt-4 border rounded-md p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium">Poll</h4>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setHasPoll(false)}
-                          >
-                            <X size={14} />
-                          </Button>
-                        </div>
-                        <p className="font-medium mb-3">{pollQuestion}</p>
-                        <div className="space-y-2 mb-3">
-                          {pollOptions.map((option, index) => (
-                            <div key={option.id} className="flex items-center gap-2">
-                              <div className="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center text-xs">
-                                {index + 1}
-                              </div>
-                              <div className="flex-1 p-2 bg-gray-100 dark:bg-gray-800 rounded">
-                                {option.text}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Poll duration: {pollDuration} {pollDuration === 1 ? 'day' : 'days'}
-                        </p>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 mt-3">
+                      <Button 
+                        variant={isPollActive ? "default" : "outline"}
+                        size="sm" 
+                        className="gap-1"
+                        onClick={() => setIsPollActive(!isPollActive)}
+                      >
+                        <BarChart4 size={14} />
+                        {isPollActive ? 'Remove Poll' : 'Add Poll'}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1163,6 +856,59 @@ const CreatePostPage: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {isPollActive && (
+        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-md">
+          <h3 className="text-sm font-medium mb-3">Poll Options</h3>
+          <div className="space-y-3">
+            {pollOptions.map((option, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Input
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                  />
+                </div>
+                {pollOptions.length > 2 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemovePollOption(index)}
+                  >
+                    <X size={14} />
+                  </Button>
+                )}
+              </div>
+            ))}
+            
+            {pollOptions.length < 4 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddPollOption}
+                className="w-full"
+              >
+                Add Option
+              </Button>
+            )}
+            
+            <div className="mt-3">
+              <label className="block text-sm mb-1">Poll Duration</label>
+              <select
+                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded"
+                value={pollDuration}
+                onChange={(e) => setPollDuration(parseInt(e.target.value))}
+              >
+                <option value={1}>1 day</option>
+                <option value={3}>3 days</option>
+                <option value={7}>1 week</option>
+                <option value={14}>2 weeks</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

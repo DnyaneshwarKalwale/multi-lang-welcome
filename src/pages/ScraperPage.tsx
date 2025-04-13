@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
-  FileText, ArrowRight, PlusCircle, Twitter, ImageIcon
+  FileText, ArrowRight, PlusCircle, Twitter, ImageIcon, Folder
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 
 // Scraper result interface
 interface ScraperResult {
@@ -102,6 +103,8 @@ const ScraperPage: React.FC = () => {
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [linkedinContent, setLinkedinContent] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedContentImage, setGeneratedContentImage] = useState<string | null>(null);
   
   // Example result data for demonstration
   const exampleResult: ScraperResult = {
@@ -170,20 +173,9 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
-    // Get token for authentication
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('You need to be logged in to use this feature');
-      return;
-    }
-    
     // Call backend API to get tweets
-    const apiUrl = `https://backend-scripe.onrender.com/api/twitter/user/${username}`;
-    const response = await axios.get(apiUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/user/${username}`;
+    const response = await axios.get(apiUrl);
     
     if (response.data && response.data.success) {
       const tweets = response.data.data;
@@ -208,20 +200,10 @@ const ScraperPage: React.FC = () => {
         return;
       }
       
-      // Get token for authentication
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('You need to be logged in to use this feature');
-        return;
-      }
-      
-      // Call backend API to get transcript - use direct URL since env variable may not be set
-      const apiUrl = `https://backend-scripe.onrender.com/api/youtube/transcript`;
+      // Call backend API to get transcript
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/transcript`;
       const response = await axios.get(apiUrl, {
-        params: { url: inputUrl },
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        params: { url: inputUrl }
       });
       
       if (response.data && response.data.success) {
@@ -252,23 +234,11 @@ const ScraperPage: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
-      // Get token for authentication
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('You need to be logged in to use this feature');
-        return;
-      }
-      
-      // Call backend API to analyze transcript - use direct URL since env variable may not be set
-      const apiUrl = `https://backend-scripe.onrender.com/api/youtube/analyze`;
+      // Call backend API to analyze transcript
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/analyze`;
       const response = await axios.post(apiUrl, {
         transcript: youtubeTranscript.transcript,
         preferences: contentPreferences
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
       
       if (response.data && response.data.success) {
@@ -329,13 +299,6 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
-    // Get token for authentication
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('You need to be logged in to save tweets');
-      return;
-    }
-    
     setIsLoading(true);
     
     try {
@@ -345,18 +308,13 @@ const ScraperPage: React.FC = () => {
       );
       
       // Call API to save tweets
-      const apiUrl = `https://backend-scripe.onrender.com/api/twitter/save`;
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/save`;
       
       const response = await axios.post(apiUrl, {
         tweets: tweetsToSave,
         username: user?.email || 'anonymous',
         options: {
           preserveThreadOrder: true
-        }
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       });
       
@@ -381,6 +339,55 @@ const ScraperPage: React.FC = () => {
     setTwitterResult(null);
     setSelectedTweets(new Set());
   }, [activeTab]);
+
+  // Add function to generate image from content
+  const handleGenerateImageFromContent = async () => {
+    if (!linkedinContent && !youtubeTranscript?.transcript) {
+      toast.error('No content available to generate an image');
+      return;
+    }
+    
+    setIsGeneratingImage(true);
+    
+    try {
+      const prompt = youtubeTranscript?.transcript.substring(0, 200) || linkedinContent.substring(0, 200);
+      
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cloudinary/generate`;
+      const response = await axios.post(apiUrl, {
+        prompt: `Create a professional, high-quality image based on this content: ${prompt}`,
+        size: '1024x1024',
+        style: 'vivid'
+      });
+      
+      if (response.data && response.data.success) {
+        const imageData = response.data.data;
+        setGeneratedContentImage(imageData.secure_url);
+        
+        // Save to gallery for future use
+        saveImageToGallery({
+          id: imageData.public_id,
+          url: imageData.url,
+          secure_url: imageData.secure_url,
+          public_id: imageData.public_id,
+          title: 'Generated from YouTube: ' + (youtubeTranscript?.videoId || 'content'),
+          tags: ['ai-generated', 'youtube', 'linkedin'],
+          uploadedAt: new Date().toISOString(),
+          type: 'ai-generated',
+          width: imageData.width,
+          height: imageData.height
+        });
+        
+        toast.success('Image generated successfully!');
+      } else {
+        throw new Error(response.data?.message || 'Failed to generate image');
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast.error('Failed to generate image. Please try again.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -972,6 +979,67 @@ const ScraperPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+      
+      {/* Generated Image Section */}
+      {linkedinContent && (
+        <div className="mt-4">
+          <h4 className="text-md font-medium mb-2">Generated Image</h4>
+          <div className="flex justify-between mt-4">
+            <Button
+              variant="outline"
+              onClick={handleGenerateImageFromContent}
+              disabled={isGeneratingImage}
+              className="gap-2"
+            >
+              {isGeneratingImage ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating Image...
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-4 w-4" />
+                  Generate Image
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {generatedContentImage && (
+            <div className="mt-4">
+              <div className="relative rounded-md overflow-hidden">
+                <img 
+                  src={generatedContentImage} 
+                  alt="Generated image"
+                  className="w-full max-h-[250px] object-cover"
+                />
+              </div>
+              <div className="flex justify-between mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dashboard/images')}
+                  className="gap-2"
+                >
+                  <Folder className="h-4 w-4" />
+                  View in Gallery
+                </Button>
+                <Button
+                  onClick={() => navigate('/dashboard/post', { 
+                    state: { 
+                      content: linkedinContent, 
+                      image: generatedContentImage 
+                    } 
+                  })}
+                  className="gap-2"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Create Post with Image
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
