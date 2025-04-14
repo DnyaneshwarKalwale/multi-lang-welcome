@@ -424,14 +424,14 @@ const PostLibraryPage: React.FC = () => {
   // Render a unified post card for all types
   const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
     return (
-      <Card key={post.id} className="overflow-hidden">
-        <CardHeader className="pb-3">
+      <Card key={post.id} className="overflow-hidden max-w-sm h-[450px] flex flex-col">
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
-            <CardTitle>{post.title}</CardTitle>
+            <CardTitle className="text-lg line-clamp-1">{post.title}</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal size={18} />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -471,21 +471,21 @@ const PostLibraryPage: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <CardDescription>
-            {post.content || post.excerpt}
+          <CardDescription className="line-clamp-2 text-sm h-10">
+            {post.content || post.excerpt || "No content"}
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 flex-grow overflow-auto">
           {/* Post Image (if available) */}
           {post.postImage && (
             <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
-              <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ maxHeight: '250px' }}>
+              <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center h-[180px]">
                 <img 
                   src={post.postImage.secure_url} 
                   alt="Post image"
-                  className="max-w-full max-h-[250px] object-contain"
-                  style={{ padding: '12px' }}
+                  className="max-w-full h-full object-contain"
+                  style={{ padding: '8px' }}
                 />
               </div>
             </div>
@@ -493,43 +493,53 @@ const PostLibraryPage: React.FC = () => {
           
           {/* Hashtags (if available) */}
           {post.hashtags && post.hashtags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.hashtags.map(tag => (
-                <Badge key={tag} variant="secondary" className="px-2 py-1">
+            <div className="flex flex-wrap gap-1">
+              {post.hashtags.slice(0, 3).map(tag => (
+                <Badge key={tag} variant="secondary" className="px-2 py-0.5 text-xs">
                   #{tag}
                 </Badge>
               ))}
+              {post.hashtags.length > 3 && (
+                <Badge variant="secondary" className="px-2 py-0.5 text-xs">
+                  +{post.hashtags.length - 3} more
+                </Badge>
+              )}
             </div>
           )}
           
           {/* Poll (if available) */}
           {post.isPollActive && post.pollOptions && post.pollOptions.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart4 size={14} />
-                <span className="text-sm font-medium">Poll</span>
+            <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart4 size={12} />
+                <span className="text-xs font-medium">Poll</span>
               </div>
-              <div className="space-y-2">
-                {post.pollOptions.map((option, index) => (
-                  <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+              <div className="space-y-1">
+                {post.pollOptions.slice(0, 2).map((option, index) => (
+                  <div key={index} className="text-xs p-1.5 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 truncate">
                     {option}
                   </div>
                 ))}
+                {post.pollOptions.length > 2 && (
+                  <div className="text-xs text-center text-gray-500">
+                    +{post.pollOptions.length - 2} more options
+                  </div>
+                )}
               </div>
             </div>
           )}
           
           {/* Status information */}
-          <div className="flex items-center gap-2 text-sm text-neutral-medium">
+          <div className="flex items-center gap-2 text-xs text-neutral-medium">
             {type === 'draft' && (
               <>
-                <Clock size={14} />
+                <Clock size={12} />
                 <span>Last edited: {new Date(post.updatedAt).toLocaleDateString()}</span>
               </>
             )}
             {type === 'scheduled' && (
               <>
-                <Calendar size={14} />
+                <Calendar size={12} />
                 <span className="text-accent-dark">
                   Scheduled for: {
                     post.scheduledTime
@@ -541,15 +551,8 @@ const PostLibraryPage: React.FC = () => {
             )}
             {type === 'published' && (
               <>
-                <CheckCircle2 size={14} />
+                <CheckCircle2 size={12} />
                 <span>Published: {(post as PublishedPost).publishedDate}</span>
-                {(post as PublishedPost).stats && (
-                  <div className="ml-auto flex gap-3">
-                    <span>Views: {(post as PublishedPost).stats?.impressions}</span>
-                    <span>Likes: {(post as PublishedPost).stats?.likes}</span>
-                    <span>Comments: {(post as PublishedPost).stats?.comments}</span>
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -560,29 +563,38 @@ const PostLibraryPage: React.FC = () => {
               Carousel ({post.slideCount} slides)
             </Badge>
           )}
+          
+          {/* Stats for published posts */}
+          {type === 'published' && (post as PublishedPost).stats && (
+            <div className="flex text-xs gap-2 justify-between">
+              <span>Views: {(post as PublishedPost).stats?.impressions}</span>
+              <span>Likes: {(post as PublishedPost).stats?.likes}</span>
+              <span>Comments: {(post as PublishedPost).stats?.comments}</span>
+            </div>
+          )}
         </CardContent>
         
-        <CardFooter className="flex gap-2 pt-2 border-t">
+        <CardFooter className="flex gap-1 pt-2 border-t mt-auto">
           {type === 'draft' && (
             <>
               <Button 
                 variant="outline" 
                 onClick={() => editDraft(post.id)} 
-                className="flex-1"
+                className="flex-1 h-9 text-xs"
               >
-                <PencilLine size={14} className="mr-2" /> Edit
+                <PencilLine size={12} className="mr-1" /> Edit
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => scheduleDraft(post.id)} 
-                className="flex-1"
+                className="flex-1 h-9 text-xs"
               >
-                <Calendar size={14} className="mr-2" /> Schedule
+                <Calendar size={12} className="mr-1" /> Schedule
               </Button>
               <Button 
                 variant="default" 
                 onClick={() => publishDraft(post.id)} 
-                className="flex-1"
+                className="flex-1 h-9 text-xs"
                 disabled={isPublishing}
               >
                 {isPublishing ? 'Publishing...' : 'Publish'}
@@ -594,14 +606,14 @@ const PostLibraryPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={() => editScheduledPost(post.id)} 
-                className="flex-1"
+                className="flex-1 h-9 text-xs"
               >
-                <PencilLine size={14} className="mr-2" /> Edit
+                <PencilLine size={12} className="mr-1" /> Edit
               </Button>
               <Button 
                 variant="default" 
                 onClick={() => publishScheduledPost(post.id)} 
-                className="flex-1"
+                className="flex-1 h-9 text-xs"
                 disabled={isPublishing}
               >
                 {isPublishing ? 'Publishing...' : 'Publish Now'}
@@ -610,14 +622,14 @@ const PostLibraryPage: React.FC = () => {
           )}
           {type === 'published' && (
             <>
-              <Button variant="outline" className="flex-1">
+              <Button variant="outline" className="flex-1 h-9 text-xs">
                 View Post
               </Button>
-              <Button variant="outline" className="flex-1">
-                View Analytics
+              <Button variant="outline" className="flex-1 h-9 text-xs">
+                Analytics
               </Button>
-              <Button variant="outline" className="flex-1">
-                <Copy size={14} className="mr-2" /> Duplicate
+              <Button variant="outline" className="flex-1 h-9 text-xs">
+                <Copy size={12} className="mr-1" /> Duplicate
               </Button>
             </>
           )}
@@ -656,60 +668,60 @@ const PostLibraryPage: React.FC = () => {
         </TabsList>
         
         <TabsContent value="drafts">
-          <div className="grid grid-cols-1 gap-4">
-            {drafts.length === 0 ? (
-              <Card className="p-6 text-center">
-                <div className="py-8">
-                  <FileText size={48} className="mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium mb-2">No drafts yet</h3>
-                  <p className="text-neutral-medium text-sm mb-4">Save your work as drafts to continue later</p>
-                  <Button onClick={() => navigate('/dashboard/post')}>
-                    Create a Post
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              drafts.map((draft) => renderPostCard(draft, 'draft'))
-            )}
-          </div>
+          {drafts.length === 0 ? (
+            <Card className="p-6 text-center">
+              <div className="py-8">
+                <FileText size={48} className="mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium mb-2">No drafts yet</h3>
+                <p className="text-neutral-medium text-sm mb-4">Save your work as drafts to continue later</p>
+                <Button onClick={() => navigate('/dashboard/post')}>
+                  Create a Post
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {drafts.map((draft) => renderPostCard(draft, 'draft'))}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="scheduled">
-          <div className="grid grid-cols-1 gap-4">
-            {scheduled.length === 0 ? (
-              <Card className="p-6 text-center">
-                <div className="py-8">
-                  <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium mb-2">No scheduled posts</h3>
-                  <p className="text-neutral-medium text-sm mb-4">Schedule posts to be published automatically</p>
-                  <Button onClick={() => navigate('/dashboard/post')}>
-                    Create a Post
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              scheduled.map((post) => renderPostCard(post, 'scheduled'))
-            )}
-          </div>
+          {scheduled.length === 0 ? (
+            <Card className="p-6 text-center">
+              <div className="py-8">
+                <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium mb-2">No scheduled posts</h3>
+                <p className="text-neutral-medium text-sm mb-4">Schedule posts to be published automatically</p>
+                <Button onClick={() => navigate('/dashboard/post')}>
+                  Create a Post
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {scheduled.map((post) => renderPostCard(post, 'scheduled'))}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="published">
-          <div className="grid grid-cols-1 gap-4">
-            {published.length === 0 ? (
-              <Card className="p-6 text-center">
-                <div className="py-8">
-                  <CheckCircle2 size={48} className="mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium mb-2">No published posts</h3>
-                  <p className="text-neutral-medium text-sm mb-4">Your published posts will appear here</p>
-                  <Button onClick={() => navigate('/dashboard/post')}>
-                    Create a Post
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              published.map((post) => renderPostCard(post, 'published'))
-            )}
-          </div>
+          {published.length === 0 ? (
+            <Card className="p-6 text-center">
+              <div className="py-8">
+                <CheckCircle2 size={48} className="mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium mb-2">No published posts</h3>
+                <p className="text-neutral-medium text-sm mb-4">Your published posts will appear here</p>
+                <Button onClick={() => navigate('/dashboard/post')}>
+                  Create a Post
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {published.map((post) => renderPostCard(post, 'published'))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
