@@ -57,7 +57,25 @@ import {
   Linkedin,
   Eye,
   Check,
-  Loader2
+  Loader2,
+  AlertCircle,
+  ArrowUpCircle,
+  BarChart2,
+  BookTemplate,
+  Brain,
+  Clipboard,
+  Copy,
+  Edit,
+  Layers,
+  Megaphone,
+  Plus,
+  RefreshCw,
+  Save,
+  Target,
+  Trash,
+  Trash2,
+  Upload,
+  UserRound
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -779,12 +797,27 @@ const CreatePostPage: React.FC = () => {
               <TabsTrigger value="document">Document</TabsTrigger>
             </TabsList>
             
+            {/* Show open sidebar button when sidebar is closed */}
+            {!showSidebar && (
+              <div className="hidden md:flex justify-end mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={toggleSidebar}
+                  className="flex items-center gap-1"
+                >
+                  <PanelLeftOpen size={16} />
+                  <span>Open Tools</span>
+                </Button>
+              </div>
+            )}
+            
             <TabsContent value="text" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Create Text Post</CardTitle>
+                  <CardTitle>Create LinkedIn Post</CardTitle>
                   <CardDescription>
-                    Write a professional text post for your LinkedIn audience
+                    Write your post content to share with your network
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1198,24 +1231,22 @@ const CreatePostPage: React.FC = () => {
                     <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[8px] text-white">❤️</div>
                     <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-[8px] text-white">👏</div>
                   </div>
-                  <span className="ml-1 hover:text-blue-600 hover:underline cursor-pointer">You and 24 others</span>
-                  <span className="mx-1">•</span>
-                  <span className="hover:text-blue-600 hover:underline cursor-pointer">8 comments</span>
+                  <span className="text-xs">John Doe and 24 others</span> • <span className="text-xs">8 comments</span>
                 </div>
                 
-                <div className="flex items-center justify-between text-neutral-medium text-sm pt-3 border-t">
-                  <div className="flex w-full justify-between">
-                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-3 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 group flex-1">
-                      <ThumbsUp size={18} className="group-hover:animate-pulse" />
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+                  <div className="flex items-center justify-between">
+                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-3 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-1">
+                      <ThumbsUp size={18} />
                       <span className="text-xs font-medium">Like</span>
                     </button>
                     <button className="flex flex-col items-center gap-1 hover:text-green-600 transition-colors py-1 px-3 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 flex-1">
-                      <MessageSquare size={18} />
+                      <MessageCircle size={18} />
                       <span className="text-xs font-medium">Comment</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-orange-600 transition-colors py-1 px-3 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/20 flex-1">
+                    <button className="flex flex-col items-center gap-1 hover:text-amber-600 transition-colors py-1 px-3 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-1">
                       <Share2 size={18} />
-                      <span className="text-xs font-medium">Repost</span>
+                      <span className="text-xs font-medium">Share</span>
                     </button>
                     <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 flex-1">
                       <Forward size={18} />
@@ -1226,6 +1257,19 @@ const CreatePostPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Additional open sidebar button at the bottom when sidebar is closed */}
+          {!showSidebar && (
+            <div className="hidden md:flex justify-end mt-4">
+              <Button 
+                onClick={toggleSidebar}
+                className="flex items-center gap-1"
+              >
+                <PanelLeftOpen size={16} />
+                <span>Open Tools & Templates</span>
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Sidebar / AI Tools Panel */}
