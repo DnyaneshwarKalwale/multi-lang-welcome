@@ -251,80 +251,39 @@ const PostLibraryPage: React.FC = () => {
     }
   };
   
-  // Publish a draft directly
-  const publishDraft = async (draftId: string) => {
-    // Find the draft
-    const draft = drafts.find(d => d.id === draftId);
-    if (!draft) return;
-    
-    if (!window.confirm('Are you sure you want to publish this draft to LinkedIn?')) return;
-    
-    try {
-      setIsPublishing(true);
-      
-      // Prepare content with hashtags
-      let postContent = draft.content || '';
-      if (draft.hashtags && draft.hashtags.length > 0) {
-        postContent += '\n\n' + draft.hashtags.map(tag => `#${tag}`).join(' ');
-      }
-      
-      // Publish to LinkedIn
-      const response = await linkedInApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
-      
-      // Remove from drafts
-      const updatedDrafts = drafts.filter(d => d.id !== draftId);
-      localStorage.setItem('post_drafts', JSON.stringify(updatedDrafts));
-      setDrafts(updatedDrafts);
-      
-      // Add to published (in a real app, would save to backend)
-      const publishedPost: PublishedPost = {
-        id: response?.id || `published_${Date.now()}`,
-        title: draft.title || 'Published Post',
-        excerpt: draft.content?.substring(0, 100) + '...',
-        publishedDate: new Date().toLocaleDateString(),
-        stats: {
-          impressions: 0,
-          likes: 0,
-          comments: 0,
-          shares: 0
-        },
-        isCarousel: draft.slides && draft.slides.length > 0,
-        slideCount: draft.slides?.length || 0,
-        status: 'published',
-        postImage: draft.postImage,
-        hashtags: draft.hashtags,
-        isPollActive: draft.isPollActive,
-        pollOptions: draft.pollOptions
-      };
-      
-      setPublished([publishedPost, ...published]);
-      
-      toast.success('Post published to LinkedIn successfully');
-      setActiveTab('published');
-      
-    } catch (error) {
-      console.error('Error publishing draft:', error);
-      toast.error('Failed to publish draft');
-    } finally {
-      setIsPublishing(false);
-    }
-  };
-  
   // Schedule a draft
-  const scheduleDraft = (draftId: string) => {
+  const scheduleDraft = async (draftId: string) => {
     // Find the draft
     const draft = drafts.find(d => d.id === draftId);
     if (!draft) return;
     
-    // Set up the form data in localStorage
+    // Set up the form data in localStorage for the create post page
     Object.entries(draft).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
         localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
       }
     });
     
-    // Navigate to the create post page with schedule dialog open
-    navigate('/dashboard/post', { state: { openScheduleDialog: true } });
+    try {
+      // Remove from drafts via backend API
+      await linkedInApi.deleteDraft(draftId);
+      
+      // Update local state after successful API call
+      const updatedDrafts = drafts.filter(d => d.id !== draftId);
+      setDrafts(updatedDrafts);
+      
+      // Navigate to the create post page with schedule dialog open
+      navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
+    } catch (error) {
+      console.error('Error removing draft from backend:', error);
+      // Fallback to localStorage if API fails
+      const updatedDrafts = drafts.filter(d => d.id !== draftId);
+      localStorage.setItem('post_drafts', JSON.stringify(updatedDrafts));
+      setDrafts(updatedDrafts);
+      
+      navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
+      toast.error('Failed to update database, changes saved locally');
+    }
   };
   
   // Edit a scheduled post
@@ -362,6 +321,73 @@ const PostLibraryPage: React.FC = () => {
     }
   };
   
+  // Publish a draft directly
+  const publishDraft = async (draftId: string) => {
+    // Find the draft
+    const draft = drafts.find(d => d.id === draftId);
+    if (!draft) return;
+    
+    if (!window.confirm('Are you sure you want to publish this draft to LinkedIn?')) return;
+    
+    try {
+      setIsPublishing(true);
+      
+      // Prepare content with hashtags
+      let postContent = draft.content || '';
+      if (draft.hashtags && draft.hashtags.length > 0) {
+        postContent += '\n\n' + draft.hashtags.map(tag => `#${tag}`).join(' ');
+      }
+      
+      // Publish to LinkedIn
+      const response = await linkedInApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
+      
+      // Remove from drafts via backend API
+      await linkedInApi.deleteDraft(draftId);
+      
+      // Update local state after successful API call
+      const updatedDrafts = drafts.filter(d => d.id !== draftId);
+      setDrafts(updatedDrafts);
+      
+      // Add to published posts via backend API
+      const publishedPost: PublishedPost = {
+        id: response?.id || `published_${Date.now()}`,
+        title: draft.title || 'Published Post',
+        excerpt: draft.content?.substring(0, 100) + '...',
+        publishedDate: new Date().toLocaleDateString(),
+        stats: {
+          impressions: 0,
+          likes: 0,
+          comments: 0,
+          shares: 0
+        },
+        isCarousel: draft.slides && draft.slides.length > 0,
+        slideCount: draft.slides?.length || 0,
+        status: 'published',
+        postImage: draft.postImage,
+        hashtags: draft.hashtags,
+        isPollActive: draft.isPollActive,
+        pollOptions: draft.pollOptions
+      };
+      
+      try {
+        await linkedInApi.savePublishedPost(publishedPost);
+      } catch (saveError) {
+        console.error('Error saving published post to backend:', saveError);
+        toast.error('Post published, but failed to save to database');
+      }
+      
+      setPublished([publishedPost, ...published]);
+      toast.success('Post published to LinkedIn successfully');
+      setActiveTab('published');
+      
+    } catch (error) {
+      console.error('Error publishing draft:', error);
+      toast.error('Failed to publish draft');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+  
   // Publish a scheduled post immediately
   const publishScheduledPost = async (postId: string) => {
     // Find the scheduled post
@@ -382,12 +408,14 @@ const PostLibraryPage: React.FC = () => {
       // Publish to LinkedIn
       const response = await linkedInApi.createTextPost(postContent, post.visibility || 'PUBLIC');
       
-      // Remove from scheduled
+      // Remove from scheduled via backend API
+      await linkedInApi.deleteScheduledPost(postId);
+      
+      // Update local state after successful API call
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
-      localStorage.setItem('scheduled_posts', JSON.stringify(updatedScheduled));
       setScheduled(updatedScheduled);
       
-      // Add to published (in a real app, would save to backend)
+      // Add to published via backend API
       const publishedPost: PublishedPost = {
         id: response?.id || `published_${Date.now()}`,
         title: post.title || 'Published Post',
@@ -408,14 +436,29 @@ const PostLibraryPage: React.FC = () => {
         pollOptions: post.pollOptions
       };
       
-      setPublished([publishedPost, ...published]);
+      try {
+        await linkedInApi.savePublishedPost(publishedPost);
+      } catch (saveError) {
+        console.error('Error saving published post to backend:', saveError);
+        toast.error('Post published, but failed to save to database');
+      }
       
+      setPublished([publishedPost, ...published]);
       toast.success('Post published to LinkedIn successfully');
       setActiveTab('published');
       
     } catch (error) {
       console.error('Error publishing scheduled post:', error);
       toast.error('Failed to publish post');
+      
+      // Fallback to localStorage if API fails
+      try {
+        const updatedScheduled = scheduled.filter(p => p.id !== postId);
+        localStorage.setItem('scheduled_posts', JSON.stringify(updatedScheduled));
+        setScheduled(updatedScheduled);
+      } catch (fallbackError) {
+        console.error('Error in localStorage fallback:', fallbackError);
+      }
     } finally {
       setIsPublishing(false);
     }
@@ -424,7 +467,7 @@ const PostLibraryPage: React.FC = () => {
   // Render a unified post card for all types
   const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
     return (
-      <Card key={post.id} className="overflow-hidden max-w-sm h-[450px] flex flex-col">
+      <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg line-clamp-1">{post.title}</CardTitle>
@@ -471,7 +514,7 @@ const PostLibraryPage: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <CardDescription className="line-clamp-2 text-sm h-10">
+          <CardDescription className="text-sm mt-1 line-clamp-3">
             {post.content || post.excerpt || "No content"}
           </CardDescription>
         </CardHeader>
@@ -680,7 +723,7 @@ const PostLibraryPage: React.FC = () => {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {drafts.map((draft) => renderPostCard(draft, 'draft'))}
             </div>
           )}
@@ -699,7 +742,7 @@ const PostLibraryPage: React.FC = () => {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {scheduled.map((post) => renderPostCard(post, 'scheduled'))}
             </div>
           )}
@@ -718,7 +761,7 @@ const PostLibraryPage: React.FC = () => {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {published.map((post) => renderPostCard(post, 'published'))}
             </div>
           )}

@@ -457,71 +457,58 @@ const CreatePostPage: React.FC = () => {
   
   // Function to save post as draft
   const saveAsDraft = async () => {
+    if (!content.trim()) {
+      toast.error("Can't save an empty post");
+      return;
+    }
+
+    setIsSavingDraft(true);
+    
     try {
-      setIsSavingDraft(true);
-      
-      // Validate content
-      if (!content.trim()) {
-        toast.error('Please add some content to your draft');
-        setIsSavingDraft(false);
-        return;
-      }
-      
-      // Create draft object with all post data
-      const draftPost = {
+      // Create a draft post object
+      const draft = {
+        id: `draft_${Date.now()}`,
         title: content.split('\n')[0].substring(0, 50) || 'Untitled Draft',
         content: content,
-        hashtags: hashtags,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         postImage: postImage,
+        hashtags: hashtags,
+        visibility: visibility,
         isPollActive: isPollActive,
         pollOptions: pollOptions,
         pollDuration: pollDuration,
-        slides: slides,
-        visibility: visibility,
-        status: 'draft' as const,
-        provider: 'linkedin',
-        userId: user?.id || 'guest'
+        status: 'draft'
       };
       
-      let savedDraft;
-      
+      // Save to backend
       try {
-        // Try to save to backend first
-        savedDraft = await linkedInApi.saveDraft(draftPost);
-        toast.success('Post saved as draft to your account');
-      } catch (backendError) {
-        console.error('Backend save failed, using localStorage:', backendError);
+        const savedDraft = await linkedInApi.saveDraft(draft);
+        // Update the local ID with the one from the backend
+        draft.id = savedDraft.id || draft.id;
+        toast.success('Draft saved to backend');
+      } catch (apiError) {
+        console.error('Error saving draft to backend:', apiError);
+        // Fallback to localStorage if API fails
+        console.log('Backend save failed, using localStorage');
         
-        // Fallback to localStorage if backend fails
-        const localDraftPost = {
-          ...draftPost,
-          id: `draft_${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
+        // Get existing drafts from localStorage
         const existingDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
-        existingDrafts.unshift(localDraftPost);
-        localStorage.setItem('post_drafts', JSON.stringify(existingDrafts));
         
-        savedDraft = localDraftPost;
-        toast.success('Post saved as draft (offline mode)');
+        // Add new draft to beginning of array
+        localStorage.setItem('post_drafts', JSON.stringify([draft, ...existingDrafts]));
+        toast.error('Failed to save to database, draft saved locally');
       }
       
-      // Navigate to post library with draft tab active
-      setTimeout(() => {
-        navigate('/dashboard/posts', {
-          state: { 
-            activeTab: 'drafts',
-            newDraft: true,
-            draftId: savedDraft.id
-          }
-        });
-      }, 1000);
+      // Clear form data from localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('state:createPost.')) {
+          localStorage.removeItem(key);
+        }
+      });
       
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      toast.error('Failed to save draft. Please try again.');
+      // Navigate back to library
+      navigate('/dashboard/posts', { state: { activeTab: 'drafts', newDraft: true, draftId: draft.id } });
     } finally {
       setIsSavingDraft(false);
     }
@@ -529,16 +516,15 @@ const CreatePostPage: React.FC = () => {
   
   // Function to schedule a post for later
   const schedulePost = async () => {
+    if (!content.trim()) {
+      toast.error("Can't schedule an empty post");
+      setShowScheduleDialog(false);
+      return;
+    }
+    
+    setIsPublishing(true);
+    
     try {
-      setIsPublishing(true);
-      
-      // Validate content
-      if (!content.trim()) {
-        toast.error('Please add some content to your post');
-        setIsPublishing(false);
-        return;
-      }
-      
       // Prepare scheduled date
       const [hours, minutes] = scheduleTime.split(':').map(Number);
       const scheduledDateTime = new Date(scheduledDate);
@@ -548,77 +534,56 @@ const CreatePostPage: React.FC = () => {
       if (scheduledDateTime <= new Date()) {
         toast.error('Please select a future date and time');
         setIsPublishing(false);
+        setShowScheduleDialog(false);
         return;
       }
       
-      // Create scheduled post object
-      const scheduledPostData = {
+      // Create a scheduled post object
+      const scheduledPost = {
+        id: `scheduled_${Date.now()}`,
         title: content.split('\n')[0].substring(0, 50) || 'Scheduled Post',
         content: content,
-        hashtags: hashtags,
+        createdAt: new Date().toISOString(),
+        scheduledTime: scheduledDateTime.toISOString(),
         postImage: postImage,
+        hashtags: hashtags,
+        visibility: visibility,
         isPollActive: isPollActive,
         pollOptions: pollOptions,
         pollDuration: pollDuration,
-        slides: slides,
-        visibility: visibility,
-        status: 'scheduled' as const,
-        provider: 'linkedin',
-        userId: user?.id || 'guest'
+        status: 'scheduled'
       };
       
-      let savedScheduledPost;
-      
+      // Try to save to backend
       try {
-        // Try to save to backend first
-        savedScheduledPost = await linkedInApi.schedulePost(scheduledPostData, scheduledDateTime);
+        const savedPost = await linkedInApi.saveScheduledPost(scheduledPost);
+        // Update the local ID with the one from the backend
+        scheduledPost.id = savedPost.id || scheduledPost.id;
         toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
-      } catch (backendError) {
-        console.error('Backend scheduling failed, using localStorage:', backendError);
+      } catch (apiError) {
+        console.error('Backend scheduling failed, using localStorage:', apiError);
         
-        // Fallback to localStorage if backend fails
-        const localScheduledPost = {
-          ...scheduledPostData,
-          id: `scheduled_${Date.now()}`,
-          scheduledTime: scheduledDateTime.toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+        // Fallback to localStorage if API fails
+        // Get existing scheduled posts from localStorage
+        const existingScheduled = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
         
-        const existingScheduledPosts = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
-        existingScheduledPosts.unshift(localScheduledPost);
-        localStorage.setItem('scheduled_posts', JSON.stringify(existingScheduledPosts));
-        
-        savedScheduledPost = localScheduledPost;
-        toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()} (offline mode)`);
+        // Add new scheduled post to beginning of array
+        localStorage.setItem('scheduled_posts', JSON.stringify([scheduledPost, ...existingScheduled]));
+        toast.error('Failed to save to database, scheduled post saved locally');
       }
       
-      setShowScheduleDialog(false);
+      // Clear form data from localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('state:createPost.')) {
+          localStorage.removeItem(key);
+        }
+      });
       
-      // Redirect to the post library after a short delay
-      setTimeout(() => {
-        // Clear the form data
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('state:createPost.')) {
-            localStorage.removeItem(key);
-          }
-        });
-        
-        navigate('/dashboard/posts', {
-          state: { 
-            activeTab: 'scheduled',
-            scheduled: true,
-            scheduledTime: scheduledDateTime.toISOString(),
-            scheduledPostId: savedScheduledPost.id
-          }
-        });
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Error scheduling post:', error);
-      toast.error('Failed to schedule post. Please try again.');
+      // Navigate back to library
+      navigate('/dashboard/posts', { state: { activeTab: 'scheduled', scheduled: true, scheduledTime: scheduledDateTime.toISOString(), scheduledPostId: scheduledPost.id } });
     } finally {
       setIsPublishing(false);
+      setShowScheduleDialog(false);
     }
   };
   

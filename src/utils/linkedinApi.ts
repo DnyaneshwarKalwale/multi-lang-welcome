@@ -279,10 +279,12 @@ class LinkedInApi {
     }
   }
 
-  // Get user's drafts and scheduled posts
+  // Get drafts and scheduled posts
   async getDraftsAndScheduled(): Promise<any> {
     try {
-      const response = await axios.get(`${this.API_URL}/scheduled-posts`);
+      const response = await axios.get(`${this.API_URL}/posts/all`, {
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       console.error('Error getting drafts and scheduled posts:', error);
@@ -290,12 +292,50 @@ class LinkedInApi {
     }
   }
 
+  // Delete a draft
+  async deleteDraft(draftId: string): Promise<boolean> {
+    try {
+      await axios.delete(`${this.API_URL}/posts/draft/${draftId}`, {
+        withCredentials: true
+      });
+      return true;
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      throw error;
+    }
+  }
+
+  // Delete a scheduled post
+  async deleteScheduledPost(postId: string): Promise<boolean> {
+    try {
+      await axios.delete(`${this.API_URL}/posts/scheduled/${postId}`, {
+        withCredentials: true
+      });
+      return true;
+    } catch (error) {
+      console.error('Error deleting scheduled post:', error);
+      throw error;
+    }
+  }
+
+  // Save a published post
+  async savePublishedPost(post: any): Promise<any> {
+    try {
+      const response = await axios.post(`${this.API_URL}/posts/published`, post, {
+        withCredentials: true
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error saving published post:', error);
+      throw error;
+    }
+  }
+
   // Save a draft post
   async saveDraft(postData: ScheduledPostData): Promise<any> {
     try {
-      const response = await axios.post(`${this.API_URL}/scheduled-posts`, {
-        postData,
-        status: 'draft'
+      const response = await axios.post(`${this.API_URL}/posts/draft`, postData, {
+        withCredentials: true
       });
       return response.data;
     } catch (error) {
@@ -304,13 +344,11 @@ class LinkedInApi {
     }
   }
 
-  // Schedule a post
-  async schedulePost(postData: ScheduledPostData, scheduledTime: Date): Promise<any> {
+  // Save a scheduled post
+  async saveScheduledPost(postData: ScheduledPostData): Promise<any> {
     try {
-      const response = await axios.post(`${this.API_URL}/scheduled-posts`, {
-        postData,
-        scheduledTime: scheduledTime.toISOString(),
-        status: 'scheduled'
+      const response = await axios.post(`${this.API_URL}/posts/scheduled`, postData, {
+        withCredentials: true
       });
       return response.data;
     } catch (error) {
@@ -322,7 +360,7 @@ class LinkedInApi {
   // Update a draft or scheduled post
   async updatePost(postId: string, updates: Partial<ScheduledPostData>): Promise<any> {
     try {
-      const response = await axios.put(`${this.API_URL}/scheduled-posts/${postId}`, updates);
+      const response = await axios.put(`${this.API_URL}/posts/${postId}`, updates);
       return response.data;
     } catch (error) {
       console.error('Error updating post:', error);
@@ -330,20 +368,10 @@ class LinkedInApi {
     }
   }
 
-  // Delete a draft or scheduled post
-  async deletePost(postId: string): Promise<void> {
-    try {
-      await axios.delete(`${this.API_URL}/scheduled-posts/${postId}`);
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      throw error;
-    }
-  }
-
   // Publish a draft or scheduled post immediately
   async publishNow(postId: string): Promise<any> {
     try {
-      const response = await axios.post(`${this.API_URL}/scheduled-posts/${postId}/publish`);
+      const response = await axios.post(`${this.API_URL}/posts/${postId}/publish`);
       return response.data;
     } catch (error) {
       console.error('Error publishing post:', error);
