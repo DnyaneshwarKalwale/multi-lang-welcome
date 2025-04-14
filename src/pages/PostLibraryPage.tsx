@@ -5,7 +5,8 @@ import {
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +19,9 @@ import {
   PencilLine,
   Copy,
   Trash2,
-  Share2
+  Share2,
+  Image as ImageIcon,
+  BarChart4
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -29,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { linkedInApi } from '@/utils/linkedinApi';
 import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
+import { Badge } from '@/components/ui/badge';
 
 // Define interfaces for post types
 interface BasePost {
@@ -157,7 +161,11 @@ const PostLibraryPage: React.FC = () => {
               content: post.content,
               updatedAt: item.updatedAt,
               slides: post.slides,
-              postData: post
+              postData: post,
+              postImage: post.postImage,
+              hashtags: post.hashtags,
+              isPollActive: post.isPollActive,
+              pollOptions: post.pollOptions
             };
           }));
           
@@ -169,7 +177,11 @@ const PostLibraryPage: React.FC = () => {
               content: post.content,
               scheduledTime: item.scheduledTime,
               slides: post.slides,
-              postData: post
+              postData: post,
+              postImage: post.postImage,
+              hashtags: post.hashtags,
+              isPollActive: post.isPollActive,
+              pollOptions: post.pollOptions
             };
           }));
           
@@ -278,7 +290,11 @@ const PostLibraryPage: React.FC = () => {
         },
         isCarousel: draft.slides && draft.slides.length > 0,
         slideCount: draft.slides?.length || 0,
-        status: 'published'
+        status: 'published',
+        postImage: draft.postImage,
+        hashtags: draft.hashtags,
+        isPollActive: draft.isPollActive,
+        pollOptions: draft.pollOptions
       };
       
       setPublished([publishedPost, ...published]);
@@ -385,7 +401,11 @@ const PostLibraryPage: React.FC = () => {
         },
         isCarousel: post.slides && post.slides.length > 0,
         slideCount: post.slides?.length || 0,
-        status: 'published'
+        status: 'published',
+        postImage: post.postImage,
+        hashtags: post.hashtags,
+        isPollActive: post.isPollActive,
+        pollOptions: post.pollOptions
       };
       
       setPublished([publishedPost, ...published]);
@@ -399,6 +419,211 @@ const PostLibraryPage: React.FC = () => {
     } finally {
       setIsPublishing(false);
     }
+  };
+  
+  // Render a unified post card for all types
+  const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
+    return (
+      <Card key={post.id} className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start">
+            <CardTitle>{post.title}</CardTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {type === 'draft' && (
+                  <>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editDraft(post.id)}>
+                      <PencilLine size={14} /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteDraft(post.id)}>
+                      <Trash2 size={14} /> Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {type === 'scheduled' && (
+                  <>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editScheduledPost(post.id)}>
+                      <PencilLine size={14} /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
+                      <Clock size={14} /> Reschedule
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteScheduledPost(post.id)}>
+                      <Trash2 size={14} /> Cancel
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {type === 'published' && (
+                  <>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
+                      <Copy size={14} /> Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
+                      <Share2 size={14} /> Share Analytics
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <CardDescription>
+            {post.content || post.excerpt}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Post Image (if available) */}
+          {post.postImage && (
+            <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ maxHeight: '250px' }}>
+                <img 
+                  src={post.postImage.secure_url} 
+                  alt="Post image"
+                  className="max-w-full max-h-[250px] object-contain"
+                  style={{ padding: '12px' }}
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Hashtags (if available) */}
+          {post.hashtags && post.hashtags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {post.hashtags.map(tag => (
+                <Badge key={tag} variant="secondary" className="px-2 py-1">
+                  #{tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+          
+          {/* Poll (if available) */}
+          {post.isPollActive && post.pollOptions && post.pollOptions.length > 0 && (
+            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+              <div className="flex items-center gap-2 mb-2">
+                <BarChart4 size={14} />
+                <span className="text-sm font-medium">Poll</span>
+              </div>
+              <div className="space-y-2">
+                {post.pollOptions.map((option, index) => (
+                  <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+                    {option}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Status information */}
+          <div className="flex items-center gap-2 text-sm text-neutral-medium">
+            {type === 'draft' && (
+              <>
+                <Clock size={14} />
+                <span>Last edited: {new Date(post.updatedAt).toLocaleDateString()}</span>
+              </>
+            )}
+            {type === 'scheduled' && (
+              <>
+                <Calendar size={14} />
+                <span className="text-accent-dark">
+                  Scheduled for: {
+                    post.scheduledTime
+                      ? new Date(post.scheduledTime).toLocaleString()
+                      : (post as ScheduledPost).scheduledDate
+                  }
+                </span>
+              </>
+            )}
+            {type === 'published' && (
+              <>
+                <CheckCircle2 size={14} />
+                <span>Published: {(post as PublishedPost).publishedDate}</span>
+                {(post as PublishedPost).stats && (
+                  <div className="ml-auto flex gap-3">
+                    <span>Views: {(post as PublishedPost).stats?.impressions}</span>
+                    <span>Likes: {(post as PublishedPost).stats?.likes}</span>
+                    <span>Comments: {(post as PublishedPost).stats?.comments}</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          
+          {/* Carousel indicator (if applicable) */}
+          {post.isCarousel && (
+            <Badge variant="outline" className="text-xs">
+              Carousel ({post.slideCount} slides)
+            </Badge>
+          )}
+        </CardContent>
+        
+        <CardFooter className="flex gap-2 pt-2 border-t">
+          {type === 'draft' && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => editDraft(post.id)} 
+                className="flex-1"
+              >
+                <PencilLine size={14} className="mr-2" /> Edit
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => scheduleDraft(post.id)} 
+                className="flex-1"
+              >
+                <Calendar size={14} className="mr-2" /> Schedule
+              </Button>
+              <Button 
+                variant="default" 
+                onClick={() => publishDraft(post.id)} 
+                className="flex-1"
+                disabled={isPublishing}
+              >
+                {isPublishing ? 'Publishing...' : 'Publish'}
+              </Button>
+            </>
+          )}
+          {type === 'scheduled' && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => editScheduledPost(post.id)} 
+                className="flex-1"
+              >
+                <PencilLine size={14} className="mr-2" /> Edit
+              </Button>
+              <Button 
+                variant="default" 
+                onClick={() => publishScheduledPost(post.id)} 
+                className="flex-1"
+                disabled={isPublishing}
+              >
+                {isPublishing ? 'Publishing...' : 'Publish Now'}
+              </Button>
+            </>
+          )}
+          {type === 'published' && (
+            <>
+              <Button variant="outline" className="flex-1">
+                View Post
+              </Button>
+              <Button variant="outline" className="flex-1">
+                View Analytics
+              </Button>
+              <Button variant="outline" className="flex-1">
+                <Copy size={14} className="mr-2" /> Duplicate
+              </Button>
+            </>
+          )}
+        </CardFooter>
+      </Card>
+    );
   };
   
   return (
@@ -444,57 +669,7 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               </Card>
             ) : (
-              drafts.map(draft => (
-              <Card key={draft.id} className="overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  <div className="flex-1 p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-medium mb-2">{draft.title}</h3>
-                          <p className="text-neutral-medium text-sm mb-3">{draft.content?.substring(0, 100) || ''}...</p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal size={18} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editDraft(draft.id)}>
-                            <PencilLine size={14} /> Edit
-                          </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteDraft(draft.id)}>
-                            <Trash2 size={14} /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center text-xs text-neutral-medium gap-2">
-                        <Clock size={14} />
-                          <span>Last edited: {new Date(draft.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                        {draft.slides && draft.slides.length > 0 && (
-                          <div className="text-xs bg-primary-50 text-primary px-2 py-1 rounded">
-                            Carousel ({draft.slides.length} slides)
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-row md:flex-col shrink-0 bg-neutral-lightest border-t md:border-t-0 md:border-l border-border">
-                      <Button variant="ghost" onClick={() => scheduleDraft(draft.id)} className="flex-1 rounded-none border-r md:border-r-0 md:border-b text-xs py-3 px-4">Schedule</Button>
-                      <Button 
-                        variant="ghost" 
-                        className="flex-1 rounded-none text-xs py-3 px-4"
-                        onClick={() => publishDraft(draft.id)}
-                        disabled={isPublishing}
-                      >
-                        {isPublishing ? 'Publishing...' : 'Publish'}
-                      </Button>
-                    </div>
-                </div>
-              </Card>
-              ))
+              drafts.map((draft) => renderPostCard(draft, 'draft'))
             )}
           </div>
         </TabsContent>
@@ -513,113 +688,27 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               </Card>
             ) : (
-              scheduled.map(post => (
-              <Card key={post.id} className="overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  <div className="flex-1 p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-medium mb-2">{post.title}</h3>
-                          <p className="text-neutral-medium text-sm mb-3">
-                            {post.content 
-                              ? post.content.substring(0, 100) + '...'
-                              : post.excerpt}
-                          </p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal size={18} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editScheduledPost(post.id)}>
-                            <PencilLine size={14} /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                            <Clock size={14} /> Reschedule
-                          </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteScheduledPost(post.id)}>
-                            <Trash2 size={14} /> Cancel
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="flex items-center text-xs bg-accent-50 text-accent-dark px-2 py-1 rounded w-fit gap-2 mt-4">
-                      <Calendar size={14} />
-                        <span>
-                          Scheduled for: {
-                            post.scheduledTime
-                              ? new Date(post.scheduledTime).toLocaleString()
-                              : post.scheduledDate
-                          }
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-row md:flex-col shrink-0 bg-neutral-lightest border-t md:border-t-0 md:border-l border-border">
-                      <Button variant="ghost" onClick={() => editScheduledPost(post.id)} className="flex-1 rounded-none border-r md:border-r-0 md:border-b text-xs py-3 px-4">Edit</Button>
-                      <Button 
-                        variant="ghost" 
-                        className="flex-1 rounded-none text-xs py-3 px-4"
-                        onClick={() => publishScheduledPost(post.id)}
-                        disabled={isPublishing}
-                      >
-                        {isPublishing ? 'Publishing...' : 'Publish Now'}
-                      </Button>
-                  </div>
-                </div>
-              </Card>
-              ))
+              scheduled.map((post) => renderPostCard(post, 'scheduled'))
             )}
           </div>
         </TabsContent>
         
         <TabsContent value="published">
           <div className="grid grid-cols-1 gap-4">
-            {published.map(post => (
-              <Card key={post.id} className="overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  <div className="flex-1 p-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-medium mb-2">{post.title}</h3>
-                        <p className="text-neutral-medium text-sm mb-3">{post.excerpt}</p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal size={18} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                            <Copy size={14} /> Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                            <Share2 size={14} /> Share Analytics
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-2 mt-4">
-                      <div className="flex items-center text-xs text-neutral-medium gap-2">
-                        <CheckCircle2 size={14} />
-                        <span>Published: {post.publishedDate}</span>
-                      </div>
-                      <div className="flex gap-3">
-                        <div className="text-xs text-neutral-medium">Views: {post.stats.impressions}</div>
-                        <div className="text-xs text-neutral-medium">Likes: {post.stats.likes}</div>
-                        <div className="text-xs text-neutral-medium">Comments: {post.stats.comments}</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-row md:flex-col shrink-0 bg-neutral-lightest border-t md:border-t-0 md:border-l border-border">
-                    <Button variant="ghost" className="flex-1 rounded-none border-r md:border-r-0 md:border-b text-xs py-3 px-4">View Post</Button>
-                    <Button variant="ghost" className="flex-1 rounded-none text-xs py-3 px-4">Analytics</Button>
-                  </div>
+            {published.length === 0 ? (
+              <Card className="p-6 text-center">
+                <div className="py-8">
+                  <CheckCircle2 size={48} className="mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium mb-2">No published posts</h3>
+                  <p className="text-neutral-medium text-sm mb-4">Your published posts will appear here</p>
+                  <Button onClick={() => navigate('/dashboard/post')}>
+                    Create a Post
+                  </Button>
                 </div>
               </Card>
-            ))}
+            ) : (
+              published.map((post) => renderPostCard(post, 'published'))
+            )}
           </div>
         </TabsContent>
       </Tabs>
