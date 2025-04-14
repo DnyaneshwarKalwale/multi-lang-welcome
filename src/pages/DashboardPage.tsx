@@ -684,80 +684,22 @@ const DashboardPage: React.FC = () => {
                   <CardTitle>LinkedIn Analytics</CardTitle>
                   <CardDescription>Your LinkedIn performance snapshot</CardDescription>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-primary"
-                  onClick={() => navigate('/dashboard/analytics')}
-                >
-                  View Full Analytics
-                </Button>
               </CardHeader>
               <CardContent>
-                {/* Show when loading */}
-                {loading.analytics && (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
-                    <p className="text-sm text-gray-500">Loading LinkedIn analytics...</p>
-                  </div>
-                )}
-                
-                {/* Show when analytics are loaded */}
-                {!loading.analytics && analyticsData && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Total Impressions</div>
-                        <div className="text-2xl font-bold">{analyticsData.summary.totalImpressions.toLocaleString()}</div>
-                        <div className="text-xs text-green-600 mt-1">
-                          <span className="flex items-center">
-                            <ArrowUp className="h-3 w-3 mr-1" />
-                            {analyticsData.impressions.increase}% from last period
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Avg. Engagement</div>
-                        <div className="text-2xl font-bold">{analyticsData.summary.averageEngagement}%</div>
-                        <div className="text-xs text-green-600 mt-1">
-                          <span className="flex items-center">
-                            <ArrowUp className="h-3 w-3 mr-1" />
-                            {analyticsData.engagement.increase}% from last period
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div className="text-sm font-medium text-gray-500 mb-1">Follower Growth</div>
-                        <div className="text-2xl font-bold">+{analyticsData.summary.followerGrowth}</div>
-                        <div className="text-xs text-green-600 mt-1">
-                          <span className="flex items-center">
-                            <ArrowUp className="h-3 w-3 mr-1" />
-                            {analyticsData.followers.increase}% from last period
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Best Performing Post</h4>
-                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <p className="text-sm mb-2">{analyticsData.summary.bestPerformingPost.text}</p>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <span className="flex items-center mr-3">
-                            <Eye className="h-3 w-3 mr-1" />
-                            {analyticsData.summary.bestPerformingPost.impressions.toLocaleString()} impressions
-                          </span>
-                          <span className="flex items-center">
-                            <ThumbsUp className="h-3 w-3 mr-1" />
-                            {analyticsData.summary.bestPerformingPost.engagement}% engagement
-                          </span>
-                        </div>
-                      </div>
+                      <h4 className="font-medium text-amber-800 mb-1">Analytics Not Available</h4>
+                      <p className="text-sm text-amber-700 mb-2">
+                        LinkedIn Analytics requires additional API permissions that are not currently enabled for this application.
+                      </p>
+                      <p className="text-xs text-amber-600">
+                        Currently enabled permissions: openid, profile, email, w_member_social
+                      </p>
                     </div>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           )}

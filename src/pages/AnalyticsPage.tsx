@@ -113,54 +113,22 @@ const AnalyticsPage: React.FC = () => {
     };
     
     try {
-      // Fetch analytics data
-      const analyticsResponse = await axios.get(`${apiBaseUrl}/linkedin/analytics`, { headers });
-      
-      // Fetch recent posts for top posts section
+      // We know analytics will return a permission error, so just fetch posts
       const postsResponse = await axios.get(`${apiBaseUrl}/linkedin/posts`, { headers });
-      
-      // Set analytics data
-      setAnalyticsData(analyticsResponse.data.data);
-      
-      // Check if using sample data and show notification
-      if (analyticsResponse.data.usingRealData === false) {
-        console.warn('Using sample LinkedIn analytics data:', analyticsResponse.data.error);
-        setUsingSampleData(true);
-        
-        let errorMessage = 'Using sample LinkedIn analytics data';
-        let errorDescription = analyticsResponse.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.';
-        
-        // Customize message based on error type
-        if (analyticsResponse.data.errorType === 'token_expired') {
-          errorMessage = 'LinkedIn access token expired';
-          errorDescription = 'Please reconnect your LinkedIn account to refresh your access.';
-        } else if (analyticsResponse.data.errorType === 'permission_denied') {
-          errorMessage = 'LinkedIn permission denied';
-          errorDescription = 'Analytics features require additional permissions. Try reconnecting.';
-        }
-        
-        toast.warning(errorMessage, {
-          description: errorDescription,
-          duration: 5000
-        });
-      } else if (analyticsResponse.data.usingRealData === true) {
-        setUsingSampleData(false);
-        toast.success('Successfully loaded LinkedIn analytics', {
-          description: 'Displaying your real LinkedIn data.',
-          duration: 3000
-        });
-      }
       
       // Set posts data
       setRecentPosts(postsResponse.data.data);
       
+      // Set a specific error message about missing analytics permissions
+      setError('LinkedIn Analytics are not available with current API permissions');
+      
       setLoading(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching LinkedIn data:', err);
-      setError(err.response?.data?.message || 'Failed to load LinkedIn analytics');
+      setError(err.response?.data?.message || 'Failed to load LinkedIn data');
       setLoading(false);
       
-      toast.error('Failed to load LinkedIn analytics', {
+      toast.error('Failed to load LinkedIn data', {
         description: err.response?.data?.message || 'Please try again later',
         duration: 5000
       });

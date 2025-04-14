@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -12,9 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   File,
-  FileText,
-  Calendar,
-  CheckCircle2,
+  FileText, 
+  Calendar, 
+  CheckCircle2, 
   Clock,
   MoreHorizontal,
   PencilLine,
@@ -26,7 +27,9 @@ import {
   ExternalLink,
   ThumbsUp,
   MessageSquare,
-  BarChart2
+  BarChart2,
+  AlertCircle,
+  Linkedin
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -149,11 +152,26 @@ const PostLibraryPage: React.FC = () => {
   
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [linkedInAuthError, setLinkedInAuthError] = useState(false);
+  
+  // Function to handle LinkedIn reconnection
+  const handleConnectLinkedIn = () => {
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
+    localStorage.setItem('redirectAfterAuth', '/dashboard/library');
+    
+    // Redirect to LinkedIn OAuth endpoint
+    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+  };
   
   // Load drafts and scheduled posts from API or localStorage
   useEffect(() => {
     const loadUserContent = async () => {
       try {
+        setLinkedInAuthError(false);
         // Try to load from API first
         try {
           const apiData = await linkedInApi.getDraftsAndScheduled();
@@ -195,8 +213,14 @@ const PostLibraryPage: React.FC = () => {
             };
           }));
           
-        } catch (apiError) {
+        } catch (apiError: any) {
           console.error('API load failed, using localStorage:', apiError);
+          
+          // Check if it's a LinkedIn auth error
+          if (apiError?.response?.status === 401) {
+            setLinkedInAuthError(true);
+            toast.error('LinkedIn authentication failed. Please reconnect your account.');
+          }
           
           // Fallback to localStorage if API fails
           const savedDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
@@ -283,8 +307,8 @@ const PostLibraryPage: React.FC = () => {
       // Update local state after successful API call
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
       setDrafts(updatedDrafts);
-      
-      // Navigate to the create post page with schedule dialog open
+    
+    // Navigate to the create post page with schedule dialog open
       navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
     } catch (error) {
       console.error('Error removing draft from backend:', error);
@@ -392,9 +416,16 @@ const PostLibraryPage: React.FC = () => {
       toast.success('Post published to LinkedIn successfully');
       setActiveTab('published');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing draft:', error);
-      toast.error('Failed to publish draft');
+      
+      // Check if it's a LinkedIn auth error
+      if (error?.response?.status === 401) {
+        setLinkedInAuthError(true);
+        toast.error('LinkedIn authentication failed. Please reconnect your account.');
+      } else {
+        toast.error('Failed to publish draft');
+      }
     } finally {
       setIsPublishing(false);
     }
@@ -707,6 +738,30 @@ const PostLibraryPage: React.FC = () => {
         </Button>
       </div>
       
+      {linkedInAuthError && (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardContent className="p-4">
+            <div className="flex items-start">
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-medium text-amber-800 mb-1">LinkedIn Authentication Required</h3>
+                <p className="text-sm text-amber-700 mb-3">
+                  Your LinkedIn connection has expired or is missing required permissions. 
+                  Please reconnect your account to publish posts.
+                </p>
+                <Button 
+                  className="bg-amber-600 hover:bg-amber-700 text-white" 
+                  onClick={handleConnectLinkedIn}
+                >
+                  <Linkedin className="h-4 w-4 mr-2" />
+                  Reconnect LinkedIn
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="drafts" className="flex gap-2 items-center">
@@ -731,17 +786,17 @@ const PostLibraryPage: React.FC = () => {
               </div>
             </Card>
           ) : drafts.length === 0 ? (
-            <Card className="p-6 text-center">
-              <div className="py-8">
-                <FileText size={48} className="mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium mb-2">No drafts yet</h3>
+              <Card className="p-6 text-center">
+                <div className="py-8">
+                  <FileText size={48} className="mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium mb-2">No drafts yet</h3>
                 <p className="text-neutral-medium text-sm mb-4">Start creating content for LinkedIn</p>
-                <Button onClick={() => navigate('/dashboard/post')}>
-                  Create a Post
-                </Button>
-              </div>
-            </Card>
-          ) : (
+                  <Button onClick={() => navigate('/dashboard/post')}>
+                    Create a Post
+                  </Button>
+                </div>
+              </Card>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {drafts.map((draft) => (
                 <div key={draft.id} className="h-full">
@@ -749,22 +804,22 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          )}
+            )}
         </TabsContent>
         
         <TabsContent value="scheduled">
-          {scheduled.length === 0 ? (
-            <Card className="p-6 text-center">
-              <div className="py-8">
-                <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium mb-2">No scheduled posts</h3>
-                <p className="text-neutral-medium text-sm mb-4">Schedule posts to be published automatically</p>
-                <Button onClick={() => navigate('/dashboard/post')}>
-                  Create a Post
-                </Button>
-              </div>
-            </Card>
-          ) : (
+            {scheduled.length === 0 ? (
+              <Card className="p-6 text-center">
+                <div className="py-8">
+                  <Calendar size={48} className="mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium mb-2">No scheduled posts</h3>
+                  <p className="text-neutral-medium text-sm mb-4">Schedule posts to be published automatically</p>
+                  <Button onClick={() => navigate('/dashboard/post')}>
+                    Create a Post
+                  </Button>
+                </div>
+              </Card>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {scheduled.map((post) => (
                 <div key={post.id} className="h-full">
@@ -772,7 +827,7 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          )}
+            )}
         </TabsContent>
         
         <TabsContent value="published">
@@ -784,8 +839,8 @@ const PostLibraryPage: React.FC = () => {
                 <p className="text-neutral-medium text-sm mb-4">Your published posts will appear here</p>
                 <Button onClick={() => navigate('/dashboard/post')}>
                   Create a Post
-                </Button>
-              </div>
+                          </Button>
+                    </div>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -793,8 +848,8 @@ const PostLibraryPage: React.FC = () => {
                 <div key={post.id} className="h-full">
                   {renderPostCard(post, 'published')}
                 </div>
-              ))}
-            </div>
+            ))}
+          </div>
           )}
         </TabsContent>
       </Tabs>
