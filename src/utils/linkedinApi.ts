@@ -270,11 +270,10 @@ class LinkedInApi {
   // Get user's posts
   async getUserPosts(limit: number = 10): Promise<any> {
     try {
-      const userId = await this.getUserLinkedInId();
-      const response = await axios.get(`${this.API_URL}/posts?author=${userId}&limit=${limit}`);
+      const response = await axios.get(`${this.API_URL}/posts?limit=${limit}`);
       return response.data;
     } catch (error) {
-      console.error('Error getting user LinkedIn posts:', error);
+      console.error('Error getting LinkedIn user posts:', error);
       throw error;
     }
   }
