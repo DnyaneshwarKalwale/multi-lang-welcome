@@ -40,6 +40,7 @@ import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, Send } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define interfaces for post types
 interface BasePost {
@@ -86,8 +87,10 @@ const PostLibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as any;
+  const { user } = useAuth();
   
   const [activeTab, setActiveTab] = useState(locationState?.activeTab || 'drafts');
+  const [isLoading, setIsLoading] = useState(true);
   const [drafts, setDrafts] = useState<DraftPost[]>([]);
   const [scheduled, setScheduled] = useState<ScheduledPost[]>([
     {
@@ -205,6 +208,8 @@ const PostLibraryPage: React.FC = () => {
       } catch (error) {
         console.error('Error loading user content:', error);
         toast.error('Failed to load your content');
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -478,15 +483,15 @@ const PostLibraryPage: React.FC = () => {
         {/* User Info Header */}
         <div className="flex items-center p-4 border-b dark:border-gray-700">
           <Avatar className="h-10 w-10 mr-3">
-            <AvatarImage src={user?.profilePic || '/placeholder-avatar.png'} alt={user?.name || 'User'} />
-            <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
+            <AvatarImage src={user?.profilePicture || '/placeholder-avatar.png'} alt={`${user?.firstName} ${user?.lastName}` || 'User'} />
+            <AvatarFallback>{user?.firstName?.[0] || 'U'}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h3 className="text-sm font-medium">{user?.name || 'User'}</h3>
+            <h3 className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : 'User'}</h3>
             <p className="text-xs text-muted-foreground">
               {type === 'published' ? 'Posted' : type === 'scheduled' ? 'Scheduled' : 'Draft'} · {
-                type === 'scheduled' && post.scheduledTime ? 
-                  new Date(post.scheduledTime).toLocaleString() : 
+                type === 'scheduled' && (post as ScheduledPost).scheduledTime ? 
+                  new Date((post as ScheduledPost).scheduledTime).toLocaleString() : 
                   new Date(post.updatedAt).toLocaleDateString()
               }
             </p>
