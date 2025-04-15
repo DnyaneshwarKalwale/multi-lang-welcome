@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useTheme } from '@/contexts/ThemeContext';
@@ -35,13 +34,13 @@ const ThemeDebug: React.FC = () => {
   
   return (
     <div className="fixed bottom-4 right-4 p-4 glass-card rounded-lg z-50 bg-white/80 backdrop-blur-md border border-gray-200/30 text-foreground">
-      <h3 className="text-sm font-medium mb-2 text-blue-600">Theme Debug</h3>
-      <p className="text-xs mb-2 text-muted-foreground">
-        Current theme: <strong className="text-blue-500">light</strong>
+      <h3 className="text-sm font-medium mb-2 text-primary">Theme Debug</h3>
+      <p className="text-xs mb-3">
+        Current theme: <strong className="text-primary">light</strong>
       </p>
-      <div className="flex flex-col gap-2">
-        <Button size="sm" onClick={forceLight} variant="outline" className="text-xs border-blue-200 hover:bg-blue-50">Force Light</Button>
-        <Button size="sm" onClick={syncWithLocalStorage} variant="outline" className="text-xs border-blue-200 hover:bg-blue-50">Sync with localStorage</Button>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={forceLight} variant="outline" className="text-xs border-primary-200 hover:bg-primary-50">Force Light</Button>
+        <Button size="sm" onClick={syncWithLocalStorage} variant="outline" className="text-xs border-primary-200 hover:bg-primary-50">Sync with localStorage</Button>
       </div>
     </div>
   );
