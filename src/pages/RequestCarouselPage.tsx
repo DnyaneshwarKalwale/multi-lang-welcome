@@ -166,8 +166,8 @@ const RequestCarouselPage: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20">
-            <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-500" />
+          <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border-2 border-green-500">
+            <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
           
           <h1 className="text-2xl font-bold mb-3">Carousel Request Submitted!</h1>
@@ -198,16 +198,16 @@ const RequestCarouselPage: React.FC = () => {
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Request Carousel Post</h1>
-        <p className="">
+        <p className="text-black">
           Share your requirements and our team will create a professional carousel for your LinkedIn profile
         </p>
       </div>
       
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg p-4 mb-8 flex items-start gap-3">
+      <div className="bg-white border-2 border-blue-300 rounded-lg p-4 mb-8 flex items-start gap-3">
         <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
         <div>
-          <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-1">About Carousel Requests</h3>
-          <p className="text-sm text-blue-700 dark:text-blue-400">
+          <h3 className="font-medium text-black mb-1">About Carousel Requests</h3>
+          <p className="text-sm text-black">
             Our team will design a professional LinkedIn carousel based on your brief. You can expect delivery within 24 hours.
             Each request counts as 1 carousel credit from your subscription.
           </p>
@@ -321,9 +321,9 @@ const RequestCarouselPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1" htmlFor="file-upload">
                     Upload Reference Material (Optional)
                   </label>
-                  <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center">
+                  <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center bg-white">
                     <div className="flex flex-col items-center">
-                      <Upload className="h-8 w-8 text-primary mb-2" />
+                      <Upload className="h-8 w-8 text-black mb-2" />
                       <p className="text-sm text-black mb-2">
                         {selectedFile ? selectedFile.name : 'PDF or image files up to 10MB'}
                       </p>
@@ -375,9 +375,9 @@ const RequestCarouselPage: React.FC = () => {
                               onClick={() => field.onChange(template.id)}
                             >
                               <div className="flex items-start gap-3">
-                                <div className="w-20 h-20 bg-white border-2 border-blue-200 rounded-md flex items-center justify-center overflow-hidden">
+                                <div className="w-20 h-20 bg-white border border-blue-200 rounded-md flex items-center justify-center overflow-hidden">
                                   {/* If you have actual images, use them here */}
-                                  <LayoutGrid className="h-8 w-8 text-primary" />
+                                  <LayoutGrid className="h-8 w-8 text-blue-400" />
                                 </div>
                                 <div className="flex-1">
                                   <h3 className="font-medium">{template.name}</h3>
@@ -427,7 +427,7 @@ const RequestCarouselPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center justify-between border-t border-blue-100 pt-6">
+          <div className="flex items-center justify-between border-t border-blue-200 pt-6">
             <div className="flex items-center text-sm text-black">
               <Calendar className="h-4 w-4 mr-1" />
               Estimated delivery: 24 hours
