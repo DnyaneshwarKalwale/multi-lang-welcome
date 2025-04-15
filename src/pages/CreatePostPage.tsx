@@ -101,7 +101,7 @@ import axios from 'axios';
 
 // Extend CloudinaryImage interface to include properties used in the component
 interface ExtendedCloudinaryImage extends CloudinaryImage {
-  secure_url?: string;
+  secure_url: string;
   original_filename?: string;
 }
 
@@ -477,8 +477,8 @@ const CreatePostPage: React.FC = () => {
         response = await linkedInApi.createArticlePost(
           content,
           articleUrl,
-          articleTitle,
-          articleDescription,
+          articleTitle || '',
+          articleDescription || '',
           visibility
         );
         console.log('LinkedIn article post response:', response);
@@ -544,7 +544,7 @@ const CreatePostPage: React.FC = () => {
         isPollActive: isPollActive,
         pollOptions: pollOptions,
         pollDuration: pollDuration,
-        status: 'draft',
+        status: 'draft' as 'draft',
         provider: 'linkedin'
       };
       
@@ -618,7 +618,7 @@ const CreatePostPage: React.FC = () => {
         isPollActive: isPollActive,
         pollOptions: pollOptions,
         pollDuration: pollDuration,
-        status: 'scheduled',
+        status: 'scheduled' as 'scheduled',
         provider: 'linkedin'
       };
       

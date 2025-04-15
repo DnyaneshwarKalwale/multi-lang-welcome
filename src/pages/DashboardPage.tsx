@@ -66,38 +66,6 @@ interface Post {
   };
 }
 
-// Interface for LinkedIn analytics data
-interface LinkedInAnalytics {
-  impressions: {
-    data: number[];
-    labels: string[];
-    increase: number;
-    timeframe: string;
-  };
-  engagement: {
-    data: number[];
-    labels: string[];
-    increase: number;
-    timeframe: string;
-  };
-  followers: {
-    data: number[];
-    labels: string[];
-    increase: number;
-    timeframe: string;
-  };
-  summary: {
-    totalImpressions: number;
-    averageEngagement: number;
-    followerGrowth: number;
-    bestPerformingPost: {
-      text: string;
-      impressions: number;
-      engagement: number;
-    };
-  };
-}
-
 // Interface for a workspace
 interface Workspace {
   id: string;
@@ -117,11 +85,9 @@ const DashboardPage: React.FC = () => {
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
-  const [analyticsData, setAnalyticsData] = useState<LinkedInAnalytics | null>(null);
   const [loading, setLoading] = useState({
     profile: false,
-    posts: false,
-    analytics: false
+    posts: false
   });
   
   // Track shown toasts
@@ -209,10 +175,6 @@ const DashboardPage: React.FC = () => {
           if (linkedInData.posts) {
             setRecentPosts(linkedInData.posts);
           }
-          
-          if (linkedInData.analytics) {
-            setAnalyticsData(linkedInData.analytics);
-          }
         })
         .catch((error: Error) => {
           console.error('Failed to load LinkedIn data from extension:', error);
@@ -234,11 +196,7 @@ const DashboardPage: React.FC = () => {
       if (linkedInData.posts) {
         setRecentPosts(linkedInData.posts);
       }
-      
-      if (linkedInData.analytics) {
-        setAnalyticsData(linkedInData.analytics);
-          }
-        });
+    });
     
     return () => {
       // Clean up event listener
@@ -258,8 +216,7 @@ const DashboardPage: React.FC = () => {
     // Set loading states
     setLoading({
       profile: true,
-      posts: true,
-      analytics: true
+      posts: true
     });
     
     const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -275,14 +232,10 @@ const DashboardPage: React.FC = () => {
       // Fetch recent posts
       const postsPromise = axios.get(`${apiBaseUrl}/linkedin/posts`, { headers });
       
-      // Fetch analytics data
-      const analyticsPromise = axios.get(`${apiBaseUrl}/linkedin/analytics`, { headers });
-      
       // Execute all requests in parallel
-      const [profileRes, postsRes, analyticsRes] = await Promise.allSettled([
+      const [profileRes, postsRes] = await Promise.allSettled([
         profilePromise, 
-        postsPromise, 
-        analyticsPromise
+        postsPromise
       ]);
       
       // Handle profile response
@@ -354,39 +307,11 @@ const DashboardPage: React.FC = () => {
         console.error('Failed to fetch posts:', postsRes.reason);
         setLoading(prev => ({ ...prev, posts: false }));
       }
-      
-      // Handle analytics response
-      if (analyticsRes.status === 'fulfilled') {
-        setAnalyticsData(analyticsRes.value.data.data);
-        setLoading(prev => ({ ...prev, analytics: false }));
-        
-        // Show toast if using sample data
-        if (analyticsRes.value.data.usingRealData === false && !shownToasts.includes('sample-analytics')) {
-          console.warn('Using sample LinkedIn analytics data:', analyticsRes.value.data.error);
-          
-          // Don't show another toast if we already showed one for the profile or posts
-          if ((profileRes.status === 'fulfilled' && profileRes.value.data.usingRealData !== false) && 
-              (postsRes.status === 'fulfilled' && postsRes.value.data.usingRealData !== false)) {
-            toast.warning('Using sample LinkedIn analytics data', {
-              id: 'sample-analytics',
-              description: analyticsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.',
-              duration: 5000
-            });
-            
-            // Mark toast as shown
-            setShownToasts(prev => [...prev, 'sample-analytics']);
-          }
-        }
-      } else {
-        console.error('Failed to fetch analytics:', analyticsRes.reason);
-        setLoading(prev => ({ ...prev, analytics: false }));
-      }
     } catch (error) {
       console.error('Error fetching LinkedIn data:', error);
       setLoading({
         profile: false,
-        posts: false,
-        analytics: false
+        posts: false
       });
       
       // Show error toast
@@ -500,7 +425,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Engagement</p>
-                <h3 className="text-2xl font-bold mt-1">{analyticsData?.summary?.averageEngagement || '4.8%'}</h3>
+                <h3 className="text-2xl font-bold mt-1">4.8%</h3>
               </div>
               <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
                 <MessageSquare className="h-6 w-6 text-purple-500" />
@@ -519,7 +444,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Follower Growth</p>
-                <h3 className="text-2xl font-bold mt-1">+{analyticsData?.summary?.followerGrowth || '47'}</h3>
+                <h3 className="text-2xl font-bold mt-1">+47</h3>
               </div>
               <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
                 <Users className="h-6 w-6 text-green-500" />
@@ -730,34 +655,6 @@ const DashboardPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
-          {/* LinkedIn Analytics Section - Show only if LinkedIn account is connected */}
-          {linkedInProfile && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <div>
-                  <CardTitle>LinkedIn Analytics</CardTitle>
-                  <CardDescription>Your LinkedIn performance snapshot</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-medium text-amber-800 mb-1">Analytics Not Available</h4>
-                      <p className="text-sm text-amber-700 mb-2">
-                        LinkedIn Analytics requires additional API permissions that are not currently enabled for this application.
-                      </p>
-                      <p className="text-xs text-amber-600">
-                        Currently enabled permissions: openid, profile, email, w_member_social
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
         
         {/* Middle & Right columns - Scheduled Posts & Recent Activity */}
