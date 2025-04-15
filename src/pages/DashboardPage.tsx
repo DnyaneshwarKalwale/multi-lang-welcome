@@ -123,6 +123,21 @@ const DashboardPage: React.FC = () => {
     analytics: false
   });
   
+  // Track shown toasts
+  const [shownToasts, setShownToasts] = useState<string[]>([]);
+  
+  // Track if the user is connected via LinkedIn
+  const [isLinkedInConnected, setIsLinkedInConnected] = useState<boolean>(
+    user?.authMethod === 'linkedin' || !!user?.linkedinId || !!user?.linkedinConnected
+  );
+  
+  // Update LinkedIn connection status when user data changes
+  useEffect(() => {
+    setIsLinkedInConnected(
+      user?.authMethod === 'linkedin' || !!user?.linkedinId || !!user?.linkedinConnected
+    );
+  }, [user]);
+  
   // State for workspaces
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
     {
@@ -221,8 +236,8 @@ const DashboardPage: React.FC = () => {
       
       if (linkedInData.analytics) {
         setAnalyticsData(linkedInData.analytics);
-      }
-    });
+          }
+        });
     
     return () => {
       // Clean up event listener
@@ -294,6 +309,9 @@ const DashboardPage: React.FC = () => {
             description: errorDescription,
             duration: 5000
           });
+          
+          // Mark toast as shown
+          setShownToasts(prev => [...prev, 'profile-warning']);
         } else if (profileRes.value.data.usingRealData === true) {
           console.log('Using real LinkedIn profile data');
           toast.success('Successfully connected to LinkedIn', {
@@ -316,16 +334,19 @@ const DashboardPage: React.FC = () => {
         setLoading(prev => ({ ...prev, posts: false }));
         
         // Show toast if using sample data
-        if (postsRes.value.data.usingRealData === false && !toast.isVisible('sample-posts')) {
+        if (postsRes.value.data.usingRealData === false && !shownToasts.includes('sample-posts')) {
           console.warn('Using sample LinkedIn posts data:', postsRes.value.data.error);
           
           // Don't show another toast if we already showed one for the profile
-          if (!profileRes.value?.data?.usingRealData === false) {
+          if (profileRes.status === 'fulfilled' && profileRes.value.data.usingRealData !== false) {
             toast.warning('Using sample LinkedIn posts data', {
               id: 'sample-posts',
               description: postsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading your real posts.',
               duration: 5000
             });
+            
+            // Mark toast as shown
+            setShownToasts(prev => [...prev, 'sample-posts']);
           }
         }
       } else {
@@ -339,16 +360,20 @@ const DashboardPage: React.FC = () => {
         setLoading(prev => ({ ...prev, analytics: false }));
         
         // Show toast if using sample data
-        if (analyticsRes.value.data.usingRealData === false && !toast.isVisible('sample-analytics')) {
+        if (analyticsRes.value.data.usingRealData === false && !shownToasts.includes('sample-analytics')) {
           console.warn('Using sample LinkedIn analytics data:', analyticsRes.value.data.error);
           
           // Don't show another toast if we already showed one for the profile or posts
-          if (!profileRes.value?.data?.usingRealData === false && !postsRes.value?.data?.usingRealData === false) {
+          if ((profileRes.status === 'fulfilled' && profileRes.value.data.usingRealData !== false) && 
+              (postsRes.status === 'fulfilled' && postsRes.value.data.usingRealData !== false)) {
             toast.warning('Using sample LinkedIn analytics data', {
               id: 'sample-analytics',
               description: analyticsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading real analytics.',
               duration: 5000
             });
+            
+            // Mark toast as shown
+            setShownToasts(prev => [...prev, 'sample-analytics']);
           }
         }
       } else {
@@ -407,7 +432,7 @@ const DashboardPage: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400">
             You're in <span className="font-medium">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
-                    </div>
+        </div>
 
         <div className="mt-4 md:mt-0">
           <DropdownMenu>
@@ -434,8 +459,8 @@ const DashboardPage: React.FC = () => {
                   {workspace.type === 'team' && (
                     <Badge variant="outline" className="ml-auto text-xs">
                       {workspace.memberCount} members
-                                </Badge>
-                              )}
+                    </Badge>
+                  )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -539,13 +564,13 @@ const DashboardPage: React.FC = () => {
                       <h3 className="font-semibold">{linkedInProfile.name}</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{linkedInProfile.bio || 'LinkedIn Profile'}</p>
                     </div>
-                  </div>
+                      </div>
                   
                   <div className="grid grid-cols-2 gap-4 mt-3 text-center">
                     <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                       <p className="text-xl font-bold">{linkedInProfile.connections.toLocaleString()}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Connections</p>
-                    </div>
+                      </div>
                     <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                       <p className="text-xl font-bold">{linkedInProfile.followers.toLocaleString()}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Followers</p>
@@ -606,25 +631,25 @@ const DashboardPage: React.FC = () => {
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Create New Post
-            </Button>
+              </Button>
             
-            <Button
-              variant="outline"
+              <Button
+                variant="outline"
                 className="w-full justify-start"
                 onClick={() => navigate('/dashboard/request-carousel')}
-            >
+              >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Request Carousel
-            </Button>
+              </Button>
             
-            <Button
-              variant="outline"
+              <Button
+                variant="outline"
                 className="w-full justify-start"
                 onClick={() => navigate('/dashboard/scraper')}
-            >
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 Scrape Content
-            </Button>
+              </Button>
             </CardContent>
           </Card>
           
@@ -645,7 +670,7 @@ const DashboardPage: React.FC = () => {
           </Card>
 
           {/* LinkedIn Connection Section - Show if no LinkedIn account is connected */}
-          {!linkedInProfile && !loading.profile && (
+          {(!isLinkedInConnected && !linkedInProfile && !loading.profile) && (
             <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
               <CardContent className="p-0">
                 <div className="flex flex-col md:flex-row items-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-6">
@@ -675,6 +700,35 @@ const DashboardPage: React.FC = () => {
               </CardContent>
             </Card>
           )}
+          
+          {/* Login method indicator */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                  {user?.authMethod === 'linkedin' ? (
+                    <Linkedin className="h-5 w-5 text-blue-500" />
+                  ) : user?.authMethod === 'google' ? (
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Logged in with</p>
+                  <p className="text-base font-semibold capitalize">{user?.authMethod || 'Email'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
           {/* LinkedIn Analytics Section - Show only if LinkedIn account is connected */}
           {linkedInProfile && (
@@ -714,14 +768,14 @@ const DashboardPage: React.FC = () => {
                 <CardTitle>Upcoming Posts</CardTitle>
                 <CardDescription>Your scheduled content for publishing</CardDescription>
               </div>
-                <Button
+              <Button
                 variant="ghost" 
-                  size="sm"
+                size="sm"
                 className="text-primary"
                 onClick={() => navigate('/dashboard/posts')}
               >
                 View All
-                </Button>
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -745,7 +799,7 @@ const DashboardPage: React.FC = () => {
                       <p className="text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2">
                         {post.content}
                       </p>
-                  </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -753,21 +807,21 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* Recent Activity */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div>
                 <CardTitle>Recent LinkedIn Activity</CardTitle>
                 <CardDescription>Your recent posts and engagement</CardDescription>
-              </div>
-              <Button 
+                  </div>
+                  <Button
                 variant="ghost" 
-                size="sm" 
+                    size="sm"
                 className="text-primary"
                 onClick={() => navigate('/dashboard/analytics')}
-              >
+                  >
                 View Analytics
-              </Button>
-            </CardHeader>
+                  </Button>
+                </CardHeader>
             <CardContent className="px-0">
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {recentPosts.length > 0 ? (
@@ -783,7 +837,7 @@ const DashboardPage: React.FC = () => {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-sm">{linkedInProfile?.name || getUserFullName()}</span>
                             <span className="text-xs text-gray-500">• {new Date(post.created_at).toLocaleDateString()}</span>
-                          </div>
+                    </div>
                           
                           <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{post.text.substring(0, 150)}...</p>
                           
@@ -805,11 +859,11 @@ const DashboardPage: React.FC = () => {
                       </div>
                     </div>
                   ))
-                ) : (
-                  <div className="text-center py-8">
+                  ) : (
+                    <div className="text-center py-8">
                     <p className="text-gray-500 dark:text-gray-400">No recent posts</p>
                     <Button 
-                      variant="outline" 
+                      variant="outline"
                       className="mt-4 gap-2"
                       onClick={() => navigate('/dashboard/post')}
                     >
@@ -819,14 +873,14 @@ const DashboardPage: React.FC = () => {
                   </div>
                 )}
               </div>
-            </CardContent>
+              </CardContent>
             <CardFooter className="border-t border-gray-100 dark:border-gray-800 flex justify-center py-3">
               <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate('/dashboard/posts')}>
                 See All Posts
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </CardFooter>
-          </Card>
+            </Card>
         </div>
       </div>
     </div>

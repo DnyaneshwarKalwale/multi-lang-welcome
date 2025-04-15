@@ -435,14 +435,48 @@ const CreatePostPage: React.FC = () => {
         response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
         toast.success('Poll published to LinkedIn successfully!');
       } else if (postImage) {
-        // TODO: Convert Cloudinary URL to File object for upload to LinkedIn
-        // For now, we'll just post as text
-        toast.warning('Image posts are currently being implemented. Publishing as text post instead.');
-        response = await linkedInApi.createTextPost(content, visibility);
-        toast.success('Post published to LinkedIn successfully!');
+        // Handle image post using Cloudinary image
+        console.log('Publishing LinkedIn post with image:', postImage);
+        try {
+          // Make sure we have all required image data
+          if (!postImage.secure_url) {
+            throw new Error('Image URL is missing');
+          }
+          
+          response = await linkedInApi.createCloudinaryImagePost(
+            content, 
+            postImage.secure_url,
+            postImage.original_filename || 'image',
+            postImage.original_filename || 'Shared image',
+            visibility
+          );
+          console.log('LinkedIn image post response:', response);
+          toast.success('Image post published to LinkedIn successfully!');
+        } catch (imageError) {
+          console.error('Error publishing LinkedIn image post:', imageError);
+          toast.error('Failed to publish image. Publishing as text post instead.');
+          // Fallback to text post
+          response = await linkedInApi.createTextPost(content, visibility);
+          console.log('LinkedIn text post fallback response:', response);
+          toast.success('Post published to LinkedIn as text instead.');
+        }
+      } else if (hasArticle && articleUrl) {
+        // Handle article post
+        console.log('Publishing LinkedIn post with article:', articleUrl);
+        response = await linkedInApi.createArticlePost(
+          content,
+          articleUrl,
+          articleTitle,
+          articleDescription,
+          visibility
+        );
+        console.log('LinkedIn article post response:', response);
+        toast.success('Article post published to LinkedIn successfully!');
       } else {
         // Simple text post
+        console.log('Publishing LinkedIn text post');
         response = await linkedInApi.createTextPost(content, visibility);
+        console.log('LinkedIn text post response:', response);
         toast.success('Post published to LinkedIn successfully!');
       }
       
@@ -467,6 +501,9 @@ const CreatePostPage: React.FC = () => {
       
     } catch (error) {
       console.error('Error publishing to LinkedIn:', error);
+      if (error.response) {
+        console.error('LinkedIn API error response:', error.response.data);
+      }
       toast.error('Failed to publish to LinkedIn. Please try again.');
     } finally {
       setIsPublishing(false);
@@ -602,6 +639,29 @@ const CreatePostPage: React.FC = () => {
     } finally {
       setIsPublishing(false);
       setShowScheduleDialog(false);
+    }
+  };
+  
+  // Test LinkedIn posting with a simple text post
+  const testLinkedInPosting = async () => {
+    try {
+      setIsPublishing(true);
+      console.log('Testing LinkedIn connection with a simple text post');
+      
+      const testPostContent = 'This is a test post from our application. ' + new Date().toISOString();
+      const response = await linkedInApi.createTextPost(testPostContent, 'PUBLIC');
+      
+      console.log('Test post successful:', response);
+      toast.success('LinkedIn connection test successful!');
+      
+      setIsPublishing(false);
+    } catch (error) {
+      console.error('LinkedIn test post failed:', error);
+      if (error.response) {
+        console.error('API response:', error.response.data);
+      }
+      toast.error('LinkedIn test failed: ' + (error.message || 'Unknown error'));
+      setIsPublishing(false);
     }
   };
   
@@ -1557,6 +1617,54 @@ const CreatePostPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="flex flex-col sm:flex-row gap-3 mt-6">
+        {/* Publishing actions */}
+        <Button 
+          type="button"
+          variant="outline"
+          onClick={saveAsDraft}
+          disabled={isPublishing || isSavingDraft || !content.trim()}
+          className="flex items-center gap-2"
+        >
+          {isSavingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Save as Draft
+        </Button>
+        
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowScheduleDialog(true)}
+          disabled={isPublishing || isSavingDraft || !content.trim()}
+          className="flex items-center gap-2"
+        >
+          <Clock className="w-4 h-4" />
+          Schedule
+        </Button>
+        
+        <Button 
+          type="button"
+          onClick={publishToLinkedIn}
+          disabled={isPublishing || isSavingDraft || !content.trim()}
+          className="flex-1 flex items-center gap-2"
+        >
+          {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpCircle className="w-4 h-4" />}
+          {isPublishing ? 'Publishing...' : 'Publish Now'}
+        </Button>
+        
+        {/* Add a test button for LinkedIn posting */}
+        <Button 
+          type="button"
+          variant="secondary"
+          onClick={testLinkedInPosting}
+          disabled={isPublishing}
+          className="flex items-center gap-2"
+          title="Test LinkedIn connection"
+        >
+          <Linkedin className="w-4 h-4" />
+          Test LinkedIn
+        </Button>
+      </div>
     </div>
   );
 };

@@ -16,6 +16,8 @@ export interface User {
   role?: string;
   authMethod?: string;
   linkedinId?: string;
+  linkedinAccessToken?: string;
+  linkedinConnected?: boolean;
 }
 
 // Define the AuthContext type
@@ -31,6 +33,7 @@ export interface AuthContextType {
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<User | undefined>;
+  updateUserProfile: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -171,6 +174,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
   };
 
+  const updateUserProfile = (updates: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...updates });
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -184,7 +193,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         linkedinAuth,
         logout,
         clearError,
-        fetchUser
+        fetchUser,
+        updateUserProfile
       }}
     >
       {children}
