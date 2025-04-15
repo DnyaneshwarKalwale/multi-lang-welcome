@@ -1392,7 +1392,7 @@ const CreatePostPage: React.FC = () => {
       </div>
       
       {/* Tools Section Below */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* AI Tools */}
         <Card>
           <CardHeader>
@@ -1512,46 +1512,60 @@ const CreatePostPage: React.FC = () => {
             )}
           </CardContent>
         </Card>
-        
-        {/* Scheduling Card */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Schedule Post</CardTitle>
-            <CardDescription>
-              Choose when to publish your content
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium">Date</label>
-                  <Input type="date" className="mt-1" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Time</label>
-                  <Input type="time" className="mt-1" />
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
-                  <BarChart size={16} className="text-primary" />
-                  Best Time To Post
-                </h3>
-                <div className="bg-primary-50 rounded-lg p-3 text-sm">
-                  <p>Based on your audience, the best times to post are:</p>
-                  <ul className="list-disc list-inside mt-2">
-                    <li>Tuesday 9-11 AM</li>
-                    <li>Wednesday 1-3 PM</li>
-                    <li>Thursday 8-10 AM</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+      
+      {isPollActive && (
+        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-md">
+          <h3 className="text-sm font-medium mb-3">Poll Options</h3>
+          <div className="space-y-3">
+            {pollOptions.map((option, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Input
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                  />
+                </div>
+                {pollOptions.length > 2 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemovePollOption(index)}
+                  >
+                    <X size={14} />
+                  </Button>
+                )}
+              </div>
+            ))}
+            
+            {pollOptions.length < 4 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddPollOption}
+                className="w-full"
+              >
+                Add Option
+              </Button>
+            )}
+            
+            <div className="mt-3">
+              <label className="block text-sm mb-1">Poll Duration</label>
+              <select
+                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded"
+                value={pollDuration}
+                onChange={(e) => setPollDuration(parseInt(e.target.value))}
+              >
+                <option value={1}>1 day</option>
+                <option value={3}>3 days</option>
+                <option value={7}>1 week</option>
+                <option value={14}>2 weeks</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
