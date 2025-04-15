@@ -26,55 +26,55 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         
-        // Primary Reds (changed from Blues):
+        // Primary Blues - Bright Theme:
         primary: {
-          DEFAULT: "#E0302C", // Main (changed from #0070E0)
-          50: "#FFF0F0",
-          100: "#FFE1E1",
-          200: "#FFC3C3",
-          300: "#FF9B9B",
-          400: "#FA6464",
-          500: "#E0302C", // Main
-          600: "#D1231F",
-          700: "#AD1C19",
-          800: "#8A1614",
-          900: "#871410", // Dark
-          light: "#FF3A36", // Light
+          DEFAULT: "#0088FF", // Bright Blue Main
+          50: "#F0F9FF",
+          100: "#E0F2FF",
+          200: "#C0E5FF",
+          300: "#99D8FF",
+          400: "#66C2FF",
+          500: "#0088FF", // Main
+          600: "#0077E6",
+          700: "#0066CC",
+          800: "#0055AD",
+          900: "#00448A",
+          light: "#33ADFF", // Light Bright Blue
         },
         
-        // Secondary Purples:
+        // Secondary Blues - Lighter:
         secondary: {
-          DEFAULT: "#635BFF", // Main
-          50: "#F5F4FF",
-          100: "#ECEBFF",
-          200: "#D9D7FF",
-          300: "#B9B4FF",
-          400: "#9690FF", 
-          500: "#635BFF", // Main
-          600: "#564CFF",
-          700: "#4F46E5", // Dark
-          800: "#4338CA",
-          900: "#3730A3",
-          light: "#857DFF", // Light
+          DEFAULT: "#66B2FF", // Lighter Blue Main
+          50: "#F5FAFF",
+          100: "#EBF5FF",
+          200: "#D6EBFF",
+          300: "#B8DFFF",
+          400: "#8CCEFF", 
+          500: "#66B2FF", // Main
+          600: "#4D99E6",
+          700: "#3B80CC",
+          800: "#3366AD",
+          900: "#2A4D8A",
+          light: "#99CCFF", // Very Light Blue
         },
         
-        // Accent Greens:
+        // Accent Blues (replacing greens):
         accent: {
-          DEFAULT: "#12B76A", // Main
-          50: "#ECFDF3",
-          100: "#DEFAEC",
-          200: "#BBF3D9",
-          300: "#86E8BA",
-          400: "#43D58C",
-          500: "#12B76A", // Main
-          600: "#0DA15D",
-          700: "#039E74", // Dark
-          800: "#05734D",
-          900: "#064A37",
-          light: "#32D583", // Light
+          DEFAULT: "#33ADFF", // Bright Blue accent
+          50: "#F0F9FF",
+          100: "#E0F2FF",
+          200: "#C0E5FF",
+          300: "#99D8FF",
+          400: "#66C2FF",
+          500: "#33ADFF", // Main
+          600: "#0088FF",
+          700: "#0077E6",
+          800: "#0066CC",
+          900: "#0055AD",
+          light: "#66C2FF", // Light
         },
         
-        // Neutral Tones:
+        // Neutral Tones - Keep whites/grays:
         neutral: {
           white: "#FFFFFF", // White
           lightest: "#F6F9FC", // Lightest
@@ -85,23 +85,15 @@ export default {
           black: "#0A2540", // Black
         },
         
-        // Complementary Colors:
-        coral: {
-          DEFAULT: "#FF9E80", // Coral
-        },
-        yellow: {
-          DEFAULT: "#FFD666", // Yellow
-        },
+        // System states - All blue now
+        success: "#0088FF", // Blue (was green)
+        warning: "#66B2FF", // Light blue (was orange)
+        error: "#0066CC", // Dark blue (was red)
+        info: "#0088FF", // Blue
         
-        // System states
-        success: "#12B76A",
-        warning: "#F79009", 
-        error: "#F04438",
-        info: "#0070E0",
-        
-        // Traditional shadcn-ui colors (keeping light mode only)
+        // Traditional shadcn-ui colors
         destructive: {
-          DEFAULT: "#F04438",
+          DEFAULT: "#0066CC", // Dark blue (was red)
           foreground: "#FFFFFF",
         },
         muted: {

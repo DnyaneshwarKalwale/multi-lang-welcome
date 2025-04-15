@@ -40,7 +40,7 @@ export default function TeamSelectionPage() {
         >
           <div className="relative">
             <BrandOutIcon className="w-20 h-20" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>
         

@@ -161,7 +161,7 @@ export default function PostFormatPage() {
         >
           <div className="relative">
             <BrandOutIcon className="w-14 h-14 sm:w-16 sm:h-16" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={22} />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={22} />
           </div>
         </motion.div>
         
@@ -196,7 +196,7 @@ export default function PostFormatPage() {
               >
                 <div className="border-b border-gray-200 p-3 flex items-center justify-between bg-white">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-[#0077B5] flex items-center justify-center text-white">
+                    <div className="w-8 h-8 rounded-full bg-[#0088FF] flex items-center justify-center text-white">
                       {userInitials}
                     </div>
                     <div className="ml-2">
@@ -204,7 +204,7 @@ export default function PostFormatPage() {
                       <div className="text-xs text-gray-500">Professional title</div>
                     </div>
                   </div>
-                  <Linkedin size={18} className="text-[#0077B5]" />
+                  <Linkedin size={18} className="text-[#0088FF]" />
                 </div>
                 <div className="p-4 min-h-[300px]">
                   <p className="text-sm text-gray-700 whitespace-pre-line">
@@ -259,8 +259,8 @@ export default function PostFormatPage() {
                       flex flex-col items-center justify-between p-3 rounded-xl border 
                   transition-all duration-300 cursor-pointer h-full
                   ${postFormat === format.id 
-                        ? 'border-[#0077B5] bg-blue-50' 
-                        : 'border-gray-200 hover:border-[#0077B5] hover:bg-blue-50/40'
+                        ? 'border-[#0088FF] bg-blue-50' 
+                        : 'border-gray-200 hover:border-[#0088FF] hover:bg-blue-50/40'
                   }
                 `}
                 variants={itemVariants}
@@ -311,8 +311,8 @@ export default function PostFormatPage() {
                       className={`checkpoint flex flex-col items-center cursor-pointer`}
                       onClick={() => setPostLength(15)}
                     >
-                      <div className={`w-3 h-3 rounded-full ${postLength <= 30 ? 'bg-[#0077B5]' : 'bg-gray-300'} mb-1`}></div>
-                      <span className={`text-xs ${postLength <= 30 ? 'text-[#0077B5] font-medium' : 'text-gray-500'}`}>
+                      <div className={`w-3 h-3 rounded-full ${postLength <= 30 ? 'bg-[#0088FF]' : 'bg-gray-300'} mb-1`}></div>
+                      <span className={`text-xs ${postLength <= 30 ? 'text-[#0088FF] font-medium' : 'text-gray-500'}`}>
                         Short
                       </span>
                     </div>
@@ -322,8 +322,8 @@ export default function PostFormatPage() {
                       className={`checkpoint flex flex-col items-center cursor-pointer`}
                       onClick={() => setPostLength(50)}
                     >
-                      <div className={`w-3 h-3 rounded-full ${postLength > 30 && postLength < 70 ? 'bg-[#0077B5]' : 'bg-gray-300'} mb-1`}></div>
-                      <span className={`text-xs ${postLength > 30 && postLength < 70 ? 'text-[#0077B5] font-medium' : 'text-gray-500'}`}>
+                      <div className={`w-3 h-3 rounded-full ${postLength > 30 && postLength < 70 ? 'bg-[#0088FF]' : 'bg-gray-300'} mb-1`}></div>
+                      <span className={`text-xs ${postLength > 30 && postLength < 70 ? 'text-[#0088FF] font-medium' : 'text-gray-500'}`}>
                         Medium
                       </span>
                     </div>
@@ -333,8 +333,8 @@ export default function PostFormatPage() {
                       className={`checkpoint flex flex-col items-center cursor-pointer`}
                       onClick={() => setPostLength(85)}
                     >
-                      <div className={`w-3 h-3 rounded-full ${postLength >= 70 ? 'bg-[#0077B5]' : 'bg-gray-300'} mb-1`}></div>
-                      <span className={`text-xs ${postLength >= 70 ? 'text-[#0077B5] font-medium' : 'text-gray-500'}`}>
+                      <div className={`w-3 h-3 rounded-full ${postLength >= 70 ? 'bg-[#0088FF]' : 'bg-gray-300'} mb-1`}></div>
+                      <span className={`text-xs ${postLength >= 70 ? 'text-[#0088FF] font-medium' : 'text-gray-500'}`}>
                         Long
                       </span>
                     </div>
@@ -354,7 +354,7 @@ export default function PostFormatPage() {
           <Button
             onClick={nextStep} 
             disabled={!postFormat}
-                  className="w-full sm:w-auto bg-[#0077B5] hover:bg-[#005885] text-white px-8"
+                  className="w-full sm:w-auto bg-[#0088FF] hover:bg-[#0066CC] text-white px-8"
           >
             <span>Continue</span>
             <ChevronRight size={16} className="ml-2" />

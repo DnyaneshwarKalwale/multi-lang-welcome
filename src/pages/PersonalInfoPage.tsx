@@ -141,7 +141,7 @@ export default function PersonalInfoPage() {
         <div className="mb-10 flex justify-center">
           <div className="relative">
             <BrandOutIcon className="w-20 h-20" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={26} />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={26} />
           </div>
         </div>
         

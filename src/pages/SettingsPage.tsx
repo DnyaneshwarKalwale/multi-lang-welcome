@@ -383,7 +383,7 @@ const SettingsPage: React.FC = () => {
                 <div className="p-6 border rounded-lg bg-neutral-lightest">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-[#0a66c2] rounded-lg flex items-center justify-center">
+                      <div className="w-12 h-12 bg-[#0088FF] rounded-lg flex items-center justify-center">
                         <LinkedinIcon className="text-white" size={24} />
                       </div>
                       <div>
@@ -406,7 +406,7 @@ const SettingsPage: React.FC = () => {
                       </Button>
                     ) : (
                       <Button 
-                        className="bg-[#0a66c2] text-white hover:bg-[#084482]"
+                        className="bg-[#0088FF] text-white hover:bg-[#0066CC]"
                         onClick={reconnectLinkedIn}
                       >
                         Connect
