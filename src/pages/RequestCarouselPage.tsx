@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Info, Upload, Search, LayoutGrid } from "lucide-react";
+import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -52,7 +52,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "6EEW-9NDM5k",
     title: "The Ultimate Guide to LinkedIn Content Strategy",
     channelName: "LinkedIn Marketing Solutions",
-    thumbnailUrl: "https://placehold.co/640x360/3b82f6/ffffff?text=LinkedIn+Strategy",
+    thumbnailUrl: "https://img.youtube.com/vi/6EEW-9NDM5k/maxresdefault.jpg",
     views: "1.2M",
     date: "2 weeks ago",
     duration: "12:45"
@@ -61,7 +61,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "mTz0GXj8NN0",
     title: "How to Grow Your Personal Brand on LinkedIn",
     channelName: "GaryVee",
-    thumbnailUrl: "https://placehold.co/640x360/6366f1/ffffff?text=Personal+Brand",
+    thumbnailUrl: "https://img.youtube.com/vi/mTz0GXj8NN0/maxresdefault.jpg",
     views: "856K",
     date: "1 month ago",
     duration: "18:23"
@@ -70,7 +70,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "dW7WjA-heYw",
     title: "LinkedIn Content That Gets 10x Engagement",
     channelName: "Social Media Examiner",
-    thumbnailUrl: "https://placehold.co/640x360/8b5cf6/ffffff?text=10x+Engagement",
+    thumbnailUrl: "https://img.youtube.com/vi/dW7WjA-heYw/maxresdefault.jpg",
     views: "543K",
     date: "3 weeks ago",
     duration: "15:19"
@@ -79,7 +79,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "vN4jQKk-MZI",
     title: "B2B Marketing Strategies for LinkedIn",
     channelName: "B2B Marketing Insights",
-    thumbnailUrl: "https://placehold.co/640x360/ec4899/ffffff?text=B2B+Marketing",
+    thumbnailUrl: "https://img.youtube.com/vi/vN4jQKk-MZI/maxresdefault.jpg",
     views: "328K",
     date: "2 months ago",
     duration: "22:37"
@@ -88,7 +88,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "pQFo8JWgHEU",
     title: "Creating Video Content for Professional Audiences",
     channelName: "Video Creators",
-    thumbnailUrl: "https://placehold.co/640x360/f43f5e/ffffff?text=Video+Content",
+    thumbnailUrl: "https://img.youtube.com/vi/pQFo8JWgHEU/maxresdefault.jpg",
     views: "421K",
     date: "5 weeks ago",
     duration: "14:52"
@@ -97,7 +97,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "lD3FfI7zNc4",
     title: "LinkedIn Ads: Complete 2023 Tutorial",
     channelName: "Digital Marketing Pro",
-    thumbnailUrl: "https://placehold.co/640x360/f97316/ffffff?text=LinkedIn+Ads",
+    thumbnailUrl: "https://img.youtube.com/vi/lD3FfI7zNc4/maxresdefault.jpg",
     views: "612K",
     date: "3 months ago",
     duration: "26:14"
@@ -106,7 +106,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "X9YmkKbTgmk",
     title: "How to Write LinkedIn Posts That Convert",
     channelName: "Content Masters",
-    thumbnailUrl: "https://placehold.co/640x360/facc15/ffffff?text=Writing+Posts",
+    thumbnailUrl: "https://img.youtube.com/vi/X9YmkKbTgmk/maxresdefault.jpg",
     views: "287K",
     date: "4 weeks ago",
     duration: "19:08"
@@ -115,7 +115,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "aW7lJMroT2c",
     title: "LinkedIn Algorithm: What Works in 2023",
     channelName: "Social Media Today",
-    thumbnailUrl: "https://placehold.co/640x360/84cc16/ffffff?text=Algorithm+Tips",
+    thumbnailUrl: "https://img.youtube.com/vi/aW7lJMroT2c/maxresdefault.jpg",
     views: "732K",
     date: "1 week ago",
     duration: "16:47"
@@ -234,6 +234,7 @@ const RequestCarouselPage: React.FC = () => {
   const [generatedTranscript, setGeneratedTranscript] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -257,6 +258,20 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
+  // Handle next slide
+  const nextSlide = () => {
+    if (generatedTranscript.length > 0) {
+      setCurrentSlide((prev) => (prev === generatedTranscript.length - 1 ? 0 : prev + 1));
+    }
+  };
+
+  // Handle previous slide
+  const prevSlide = () => {
+    if (generatedTranscript.length > 0) {
+      setCurrentSlide((prev) => (prev === 0 ? generatedTranscript.length - 1 : prev - 1));
+    }
+  };
+
   // Handle video selection
   const handleVideoSelect = (video: YouTubeVideo) => {
     setSelectedVideo(video);
@@ -266,6 +281,7 @@ const RequestCarouselPage: React.FC = () => {
     const transcript = generateDummyTranscript(video.id);
     setGeneratedTranscript(transcript);
     setShowTranscript(true);
+    setCurrentSlide(0);
     
     toast({
       title: "Video selected",
@@ -570,36 +586,55 @@ const RequestCarouselPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-4">
-                  {/* Show the first transcript point as the current slide */}
-                  <div className="rounded-lg border border-gray-200 p-4 mb-3 bg-white shadow-sm">
+                  {/* Show the current transcript point as the current slide */}
+                  <div className="rounded-lg border border-gray-200 p-4 mb-3 bg-white shadow-sm min-h-[120px] relative">
                     <div className="flex justify-between mb-2">
-                      <span className="text-xs font-semibold text-blue-600">SLIDE 1 OF {generatedTranscript.length}</span>
+                      <span className="text-xs font-semibold text-blue-600">SLIDE {currentSlide + 1} OF {generatedTranscript.length}</span>
                     </div>
-                    <p className="text-base font-medium">{generatedTranscript[0]}</p>
+                    <p className="text-base font-medium">{generatedTranscript[currentSlide]}</p>
+                    
+                    {/* Navigation buttons */}
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-1">
+                      <Button 
+                        onClick={prevSlide} 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7 rounded-full bg-gray-200/80 hover:bg-gray-300/80 text-gray-700"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous slide</span>
+                      </Button>
+                      <Button 
+                        onClick={nextSlide} 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7 rounded-full bg-gray-200/80 hover:bg-gray-300/80 text-gray-700"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next slide</span>
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="flex justify-between mt-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                        1
-                      </div>
-                      <div className="h-1 w-6 bg-black rounded-full"></div>
-                      {generatedTranscript.slice(1, 5).map((_, index) => (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {generatedTranscript.map((_, index) => (
                         <React.Fragment key={index}>
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                            {index + 2}
+                          <div 
+                            className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
+                              index === currentSlide ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                            onClick={() => setCurrentSlide(index)}
+                          >
+                            {index + 1}
                           </div>
-                          {index < 3 && <div className="h-1 w-6 bg-gray-300 rounded-full"></div>}
+                          {index < generatedTranscript.length - 1 && (
+                            <div className={`h-1 w-4 rounded-full ${
+                              index === currentSlide || index + 1 === currentSlide ? 'bg-black' : 'bg-gray-300'
+                            }`}></div>
+                          )}
                         </React.Fragment>
                       ))}
-                      {generatedTranscript.length > 5 && (
-                        <>
-                          <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs">
-                            +{generatedTranscript.length - 5}
-                          </div>
-                        </>
-                      )}
                     </div>
                   </div>
                 </div>
