@@ -37,8 +37,11 @@ const InvitationCheckRoute = () => {
       }
 
       try {
-        const token = localStorage.getItem('token');
+        const authMethod = localStorage.getItem('auth-method');
+        const token = authMethod ? localStorage.getItem(`${authMethod}-login-token`) : null;
+
         if (!token) {
+          console.error('No authentication token found');
           setHasInvitations(false);
           return;
         }
@@ -59,8 +62,9 @@ const InvitationCheckRoute = () => {
           } else {
             setHasInvitations(false);
           }
-        }).catch(() => {
+        }).catch((error) => {
           // If API call fails, assume no invitations and continue
+          console.error('Failed to check invitations:', error);
           setHasInvitations(false);
         });
       } catch (error) {

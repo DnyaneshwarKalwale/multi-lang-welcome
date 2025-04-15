@@ -131,9 +131,17 @@ export default function TeamsPage() {
   const fetchTeams = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      
+      // Get token using the auth method stored in localStorage
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? localStorage.getItem(`${authMethod}-login-token`) : null;
+      
       if (!token) {
-        navigate("/login");
+        console.error("No authentication token found");
+        toast.error("Authentication error. Please log in again.");
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 1500);
         return;
       }
 
@@ -149,9 +157,16 @@ export default function TeamsPage() {
         setSelectedTeam(teamData[0]);
         setActiveTab(teamData[0]._id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch teams:", error);
-      toast.error("Failed to load teams");
+      if (error.response?.status === 401) {
+        toast.error("Your session has expired. Please log in again.");
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 1500);
+      } else {
+        toast.error("Failed to load teams. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }

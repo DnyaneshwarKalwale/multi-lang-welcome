@@ -62,6 +62,11 @@ api.interceptors.request.use(
       token = tokenManager.getToken('linkedin');
     } else if (config.url?.includes('/google')) {
       token = tokenManager.getToken('google');
+    } else if (config.url?.includes('/teams') || config.url?.includes('/team')) {
+      // Explicitly handle team endpoints to ensure token is included
+      const authMethod = localStorage.getItem('auth-method');
+      token = tokenManager.getToken(authMethod || undefined);
+      console.log('Using token for team endpoint:', !!token);
     } else {
       // Use token based on current auth method
       token = tokenManager.getToken();
