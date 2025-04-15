@@ -75,7 +75,8 @@ import {
   Trash,
   Trash2,
   Upload,
-  UserRound
+  UserRound,
+  LayoutGrid
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -1078,143 +1079,157 @@ const CreatePostPage: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Template selection section */}
+                  {/* User's Carousels */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Choose a Template</label>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium">Your Carousels</label>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => navigate('/dashboard/my-carousels')}
+                      >
+                        View All
+                      </Button>
+                    </div>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {carouselTemplates.map(template => (
+                      {/* This would normally fetch from an API */}
+                      {[...Array(4)].map((_, index) => (
                         <div
-                          key={template.id}
-                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                            selectedTemplate === template.id 
-                              ? 'border-primary/50 bg-primary/5' 
-                              : 'border-border hover:border-primary/30'
-                          }`}
-                          onClick={() => applyTemplate(template.id)}
+                          key={index}
+                          className="p-3 border rounded-md cursor-pointer transition-colors hover:border-primary/30"
+                          onClick={() => {
+                            // Simulate selecting a carousel
+                            toast.success(`Selected carousel #${index + 1}`);
+                          }}
                         >
-                          <div className="font-medium mb-1">{template.name}</div>
-                          <div className="text-xs text-muted-foreground">{template.description}</div>
-                          <div className="text-xs mt-1 text-muted-foreground">{template.slideCount} slides</div>
+                          <div className="font-medium mb-1">User Carousel #{index + 1}</div>
+                          <div className="text-xs text-muted-foreground">Created {new Date().toLocaleDateString()}</div>
+                          <div className="text-xs mt-1 text-muted-foreground flex items-center gap-1">
+                            <LayoutGrid className="h-3 w-3" />
+                            {Math.floor(Math.random() * 5) + 3} slides
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                   
-                  {/* Show AI Generated Image if available */}
-                  {aiGeneratedImage && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium mb-2">AI Generated Image</label>
-                      <div className="relative rounded-md overflow-hidden mb-2 border border-gray-200 dark:border-gray-700">
-                        <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ minHeight: '300px' }}>
-                          <img 
-                            src={aiGeneratedImage} 
-                            alt="AI Generated"
-                            className="max-w-full max-h-[350px] object-contain"
-                            style={{ 
-                              padding: '12px',
-                              display: 'block',
-                              margin: '0 auto'
-                            }}
-                          />
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
-                          onClick={() => setAiGeneratedImage(null)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <Separator />
                   
-                  {/* Rest of carousel editor */}
+                  {/* Slider Type Selection */}
+                  <div className="flex flex-col gap-3">
+                    <label className="text-sm font-medium">Slider Type</label>
+                    <Select 
+                      value={sliderType} 
+                      onValueChange={(value) => setSliderType(value as SliderVariant)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a slider type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sliderOptions.map(option => (
+                          <SelectItem key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)} Slider
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg text-sm flex items-start gap-2 mt-2">
+                    <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <strong>Tip:</strong> Choose from different slider styles to make your carousel more engaging. Each style offers unique animations and layouts to showcase your content effectively.
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/dashboard/templates')}
+                      className="gap-1 text-xs"
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      Browse Templates
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/dashboard/request-carousel')}
+                      className="gap-1 text-xs"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Request Carousel
+                    </Button>
+                  </div>
+                  
+                  <Separator />
+                  
+                  {/* Slides editor */}
                   <div className="space-y-4">
-                    <div className="flex flex-col gap-3">
-                      <label className="text-sm font-medium">Slider Type</label>
-                      <Select 
-                        value={sliderType} 
-                        onValueChange={(value) => setSliderType(value as SliderVariant)}
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-medium">Carousel Slides</h3>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={addSlide} 
+                        className="gap-1"
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a slider type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sliderOptions.map(option => (
-                            <SelectItem key={option} value={option}>
-                              {option.charAt(0).toUpperCase() + option.slice(1)} Slider
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <PlusCircle size={16} />
+                        Add Slide
+                      </Button>
                     </div>
                     
-                    <Separator />
-                    
-                    {/* Slides editor */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-base font-medium">Carousel Slides</h3>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={addSlide} 
-                          className="gap-1"
-                        >
-                          <PlusCircle size={16} />
-                          Add Slide
-                        </Button>
-                      </div>
-                      
-                      <ScrollArea className="h-[400px] pr-4">
-                        <div className="space-y-4">
-                          {slides.map((slide, index) => (
-                            <Card key={slide.id} className="relative">
-                              <CardHeader className="py-3">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-base">Slide {index + 1}</CardTitle>
-                                  {slides.length > 1 && (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => removeSlide(slide.id)}
-                                    >
-                                      <span className="sr-only">Remove slide</span>
-                                      ×
-                                    </Button>
-                                  )}
-                                </div>
-                              </CardHeader>
-                              <CardContent className="py-2">
-                                <Textarea
-                                  placeholder="Slide content here..."
-                                  className="min-h-[100px]"
-                                  value={slide.content}
-                                  onChange={(e) => {
-                                    updateSlide(slide.id, e.target.value);
-                                    // Add a small haptic-like visual feedback
-                                    const previewEl = document.querySelector('.preview-section');
-                                    if (previewEl) {
-                                      previewEl.classList.add('preview-pulse');
-                                      setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
-                                    }
-                                    showSaveIndicator();
-                                  }}
-                                />
-                                <div className="flex items-center gap-2 mt-3">
-                                  <Button variant="outline" size="sm" className="gap-1 text-xs">
-                                    <ImageIcon size={14} />
-                                    Add Image
+                    <ScrollArea className="h-[400px] pr-4">
+                      <div className="space-y-4">
+                        {slides.map((slide, index) => (
+                          <Card key={slide.id} className="relative">
+                            <CardHeader className="py-3">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Slide {index + 1}</CardTitle>
+                                {slides.length > 1 && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => removeSlide(slide.id)}
+                                  >
+                                    <span className="sr-only">Remove slide</span>
+                                    ×
                                   </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
+                                )}
+                              </div>
+                            </CardHeader>
+                            <CardContent className="py-2">
+                              <Textarea
+                                placeholder="Slide content here..."
+                                className="min-h-[100px]"
+                                value={slide.content}
+                                onChange={(e) => {
+                                  updateSlide(slide.id, e.target.value);
+                                  // Add a small haptic-like visual feedback
+                                  const previewEl = document.querySelector('.preview-section');
+                                  if (previewEl) {
+                                    previewEl.classList.add('preview-pulse');
+                                    setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
+                                  }
+                                  showSaveIndicator();
+                                }}
+                              />
+                              <div className="flex items-center gap-2 mt-3">
+                                <Button variant="outline" size="sm" className="gap-1 text-xs">
+                                  <ImageIcon size={14} />
+                                  Add Image
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
                 </CardContent>
               </Card>

@@ -5,7 +5,7 @@ import {
   ChevronRight, LayoutGrid, Sparkles, Calendar, 
   Edit3, Eye, Clock, PlusCircle, Download,
   Share2, MoreHorizontal, Trash2, Search,
-  FileText
+  FileText, ChevronLeft, ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +44,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { SliderVariant } from '@/types/LinkedInPost';
+import { CarouselPreview } from '@/components/CarouselPreview';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Carousel status type
 type CarouselStatus = 'draft' | 'scheduled' | 'published';
@@ -71,6 +80,23 @@ const MyCarouselsPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sliderVariant, setSliderVariant] = useState<SliderVariant>('basic');
+  
+  // Available slider variants
+  const sliderOptions: SliderVariant[] = [
+    'basic',
+    'pagination',
+    'gallery',
+    'looped',
+    'autoplay',
+    'responsive',
+    'grid',
+    'coverflow',
+    'fade',
+    'vertical',
+    'thumbs',
+    'parallax'
+  ];
   
   // Sample user carousels
   const userCarousels: UserCarousel[] = [
@@ -451,46 +477,40 @@ const MyCarouselsPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
+          {/* Slider Type Selection */}
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm">Preview Style:</div>
+            <Select value={sliderVariant} onValueChange={(value) => setSliderVariant(value as SliderVariant)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select style" />
+              </SelectTrigger>
+              <SelectContent>
+                {sliderOptions.map(option => (
+                  <SelectItem key={option} value={option}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           {/* Carousel Preview */}
-          <div className="relative overflow-hidden border-2 border-black rounded-xl my-4">
-            <div className="aspect-video bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
-              {/* Preview slide content - in a real app, use actual images */}
-              <div className="text-center p-8 max-w-md">
-                <h2 className="text-2xl font-bold mb-4 text-black">{selectedCarousel?.title}</h2>
-                <p className="text-black mb-3">
-                  {`Slide ${currentSlide + 1} of ${selectedCarousel?.slideCount || 0}`}
-                </p>
-                <div className="flex justify-center gap-2 mb-3">
-                  {selectedCarousel && Array.from({ length: selectedCarousel.slideCount }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`w-2 h-2 rounded-full ${i === currentSlide ? 'bg-blue-500' : 'bg-gray-300'}`}
-                    />
-          ))}
-        </div>
-                <p className="text-sm text-black">
-                  {selectedCarousel?.status === 'published' 
-                    ? 'This carousel has been published to LinkedIn' 
-                    : selectedCarousel?.status === 'scheduled'
-                    ? 'This carousel is scheduled for publishing'
-                    : 'This carousel is in draft mode'}
-                </p>
-              </div>
-            </div>
+          <div className="relative overflow-hidden rounded-xl my-4">
+            {selectedCarousel && (
+              <CarouselPreview
+                slides={selectedCarousel.slides.map((slide, index) => ({
+                  id: `slide-${index}`,
+                  content: `Slide ${index + 1}: ${selectedCarousel.title}`
+                }))}
+                variant={sliderVariant}
+              />
+            )}
             
-            {/* Navigation buttons */}
-            <button 
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
-              onClick={prevSlide}
-            >
-              <ChevronRight className="h-4 w-4 rotate-180" />
-            </button>
-            <button 
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
-              onClick={nextSlide}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            {sliderVariant !== 'basic' && (
+              <div className="text-xs text-center mt-2 text-muted-foreground bg-muted/30 rounded-md p-1">
+                <span className="font-medium capitalize">{sliderVariant}</span> slider style applied
+              </div>
+            )}
           </div>
           
           {/* Carousel details */}
@@ -514,9 +534,9 @@ const MyCarouselsPage: React.FC = () => {
                 <p className="text-sm text-black font-medium">
                   {formatDate(selectedCarousel.published)}
                 </p>
-        </div>
-      )}
-      
+              </div>
+            )}
+          
             <div className="bg-white border rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <LayoutGrid className="h-4 w-4 text-blue-500" />
@@ -532,7 +552,7 @@ const MyCarouselsPage: React.FC = () => {
                 <div className="flex items-center gap-2 mb-1">
                   <Eye className="h-4 w-4 text-blue-500" />
                   <h3 className="font-medium text-sm">Views</h3>
-        </div>
+                </div>
                 <p className="text-sm text-black font-medium">
                   {selectedCarousel.views.toLocaleString()}
                 </p>
@@ -564,8 +584,8 @@ const MyCarouselsPage: React.FC = () => {
               >
                 <Download className="h-3.5 w-3.5" />
                 Download
-          </Button>
-        </div>
+              </Button>
+            </div>
             <div className="flex gap-3 w-full sm:w-auto">
               <Button 
                 className="flex-1 sm:flex-auto"
@@ -578,7 +598,7 @@ const MyCarouselsPage: React.FC = () => {
                 <Edit3 className="h-4 w-4 mr-2" />
                 Create Post
               </Button>
-      </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

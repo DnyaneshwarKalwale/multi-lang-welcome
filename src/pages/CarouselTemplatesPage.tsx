@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronRight, LayoutGrid, Sparkles, Zap, Heart,
   CheckCircle, Download, PlusCircle, X, ExternalLink,
-  Edit3, Share2, Copy, MessageSquare
+  Edit3, Share2, Copy, MessageSquare, ChevronLeft, ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +34,15 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { SliderVariant } from '@/types/LinkedInPost';
+import { CarouselPreview } from '@/components/CarouselPreview';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Template categories
 type TemplateCategory = 'all' | 'trending' | 'business' | 'personal' | 'educational';
@@ -57,6 +66,23 @@ const CarouselTemplatesPage: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<CarouselTemplate | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all');
+  const [sliderVariant, setSliderVariant] = useState<SliderVariant>('basic');
+  
+  // Available slider variants
+  const sliderOptions: SliderVariant[] = [
+    'basic',
+    'pagination',
+    'gallery',
+    'looped',
+    'autoplay',
+    'responsive',
+    'grid',
+    'coverflow',
+    'fade',
+    'vertical',
+    'thumbs',
+    'parallax'
+  ];
   
   // Predefined carousel templates with more details
   const templates: CarouselTemplate[] = [
@@ -403,42 +429,40 @@ const CarouselTemplatesPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
+          {/* Slider Type Selection */}
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm">Preview Style:</div>
+            <Select value={sliderVariant} onValueChange={(value) => setSliderVariant(value as SliderVariant)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select style" />
+              </SelectTrigger>
+              <SelectContent>
+                {sliderOptions.map(option => (
+                  <SelectItem key={option} value={option}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           {/* Carousel Preview */}
-          <div className="relative overflow-hidden border-2 border-black rounded-xl my-4">
-            <div className="aspect-video bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
-              {/* Preview slide content - in a real app, use actual images */}
-              <div className="text-center p-8 max-w-md">
-                <h2 className="text-2xl font-bold mb-4 text-black">{selectedTemplate?.name}</h2>
-                <p className="text-black mb-3">
-                  {`Example slide ${currentSlide + 1} of ${selectedTemplate?.slideCount || 0}`}
-                </p>
-                <div className="flex justify-center gap-2 mb-3">
-                  {selectedTemplate && Array.from({ length: selectedTemplate.slideCount }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`w-2 h-2 rounded-full ${i === currentSlide ? 'bg-blue-500' : 'bg-gray-300'}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-black">
-                  Beautiful, professionally designed slides to showcase your content
-                </p>
-              </div>
-            </div>
+          <div className="relative overflow-hidden rounded-xl my-4">
+            {selectedTemplate && (
+              <CarouselPreview
+                slides={selectedTemplate.previewImages.map((slide, index) => ({
+                  id: `slide-${index}`,
+                  content: `Slide ${index + 1}: ${selectedTemplate.name}`
+                }))}
+                variant={sliderVariant}
+              />
+            )}
             
-            {/* Navigation buttons */}
-            <button 
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
-              onClick={prevSlide}
-            >
-              <ChevronRight className="h-4 w-4 rotate-180" />
-            </button>
-            <button 
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center"
-              onClick={nextSlide}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            {sliderVariant !== 'basic' && (
+              <div className="text-xs text-center mt-2 text-muted-foreground bg-muted/30 rounded-md p-1">
+                <span className="font-medium capitalize">{sliderVariant}</span> slider style applied
+              </div>
+            )}
           </div>
           
           {/* Template details */}
@@ -461,6 +485,15 @@ const CarouselTemplatesPage: React.FC = () => {
                 Used by {selectedTemplate?.popularity.toLocaleString()} professionals
               </p>
             </div>
+          </div>
+          
+          <div className="bg-blue-50 p-3 rounded-md mb-4">
+            <p className="text-sm flex items-start gap-2">
+              <span className="text-blue-500 mt-0.5"><MessageSquare size={16} /></span>
+              <span>
+                <strong>Tip:</strong> Select different slider styles above to preview how your carousel will appear with various animations and layouts. These styles can be applied when creating a post.
+              </span>
+            </p>
           </div>
           
           <DialogFooter className="flex sm:justify-between">
