@@ -83,8 +83,7 @@ import { SliderVariant } from '@/types/LinkedInPost';
 import { CarouselPreview } from '@/components/CarouselPreview';
 import ImageGalleryPicker from '@/components/ImageGalleryPicker';
 import ImageUploader from '@/components/ImageUploader';
-import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
-import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
+import { CloudinaryImage, saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersistentState, useAppState } from '@/contexts/StateContext';
@@ -99,6 +98,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import axios from 'axios';
+
+// Extend CloudinaryImage interface to include properties used in the component
+interface ExtendedCloudinaryImage extends CloudinaryImage {
+  secure_url?: string;
+  original_filename?: string;
+}
 
 const carouselTemplates = [
   {
@@ -214,11 +219,17 @@ const CreatePostPage: React.FC = () => {
   
   const [newHashtag, setNewHashtag] = useState('');
   const [aiGeneratedImage, setAiGeneratedImage] = usePersistentState<string | null>('createPost.aiGeneratedImage', null);
-  const [postImage, setPostImage] = usePersistentState<CloudinaryImage | null>('createPost.postImage', null);
+  const [postImage, setPostImage] = usePersistentState<ExtendedCloudinaryImage | null>('createPost.postImage', null);
   
   const [isPollActive, setIsPollActive] = usePersistentState('createPost.isPollActive', false);
   const [pollOptions, setPollOptions] = usePersistentState<string[]>('createPost.pollOptions', ['', '']);
   const [pollDuration, setPollDuration] = usePersistentState('createPost.pollDuration', 1); // days
+  
+  // Article states
+  const [hasArticle, setHasArticle] = usePersistentState('createPost.hasArticle', false);
+  const [articleUrl, setArticleUrl] = usePersistentState('createPost.articleUrl', '');
+  const [articleTitle, setArticleTitle] = usePersistentState('createPost.articleTitle', '');
+  const [articleDescription, setArticleDescription] = usePersistentState('createPost.articleDescription', '');
   
   // LinkedIn posting states
   const [isPublishing, setIsPublishing] = useState(false);
@@ -533,7 +544,8 @@ const CreatePostPage: React.FC = () => {
         isPollActive: isPollActive,
         pollOptions: pollOptions,
         pollDuration: pollDuration,
-        status: 'draft'
+        status: 'draft',
+        provider: 'linkedin'
       };
       
       // Save to backend
@@ -606,7 +618,8 @@ const CreatePostPage: React.FC = () => {
         isPollActive: isPollActive,
         pollOptions: pollOptions,
         pollDuration: pollDuration,
-        status: 'scheduled'
+        status: 'scheduled',
+        provider: 'linkedin'
       };
       
       // Try to save to backend

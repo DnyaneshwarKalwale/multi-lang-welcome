@@ -217,6 +217,70 @@ class LinkedInApi {
     }
   }
 
+  // Create a post with an image from Cloudinary
+  async createCloudinaryImagePost(
+    text: string, 
+    imageUrl: string, 
+    fileName: string = 'image', 
+    imageTitle: string = 'Shared image', 
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC'
+  ): Promise<LinkedInPostResponse> {
+    try {
+      // Create a post with the Cloudinary image URL
+      const postData = {
+        postContent: text,
+        imagePath: imageUrl,
+        imageTitle: imageTitle || fileName,
+        imageDescription: "Shared via Scripe"
+      };
+
+      // Send post request to our backend which will handle the LinkedIn API complexity
+      const response = await axios.post(`${this.API_URL}/post`, postData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error creating LinkedIn Cloudinary image post:', error);
+      throw error;
+    }
+  }
+
+  // Create a post with an article link
+  async createArticlePost(
+    text: string,
+    articleUrl: string,
+    articleTitle: string = '',
+    articleDescription: string = '',
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC'
+  ): Promise<LinkedInPostResponse> {
+    try {
+      // Create a post with the article link
+      const postData = {
+        postContent: text,
+        articleUrl: articleUrl,
+        articleTitle: articleTitle || articleUrl,
+        articleDescription: articleDescription
+      };
+
+      // Send post request to our backend which will handle the LinkedIn API complexity
+      const response = await axios.post(`${this.API_URL}/post`, postData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error creating LinkedIn article post:', error);
+      throw error;
+    }
+  }
+
   // Schedule a post for later
   async schedulePost(postData: LinkedInPostRequest, scheduledTime: Date): Promise<any> {
     try {
