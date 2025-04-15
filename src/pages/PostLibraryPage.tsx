@@ -370,7 +370,7 @@ const PostLibraryPage: React.FC = () => {
       
       // Check for LinkedIn authentication
       const authMethod = localStorage.getItem('auth-method');
-      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      const linkedInToken = tokenManager.getToken('linkedin');
       
       if (authMethod !== 'linkedin' || !linkedInToken) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
@@ -455,7 +455,7 @@ const PostLibraryPage: React.FC = () => {
       
       // Check for LinkedIn authentication
       const authMethod = localStorage.getItem('auth-method');
-      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      const linkedInToken = tokenManager.getToken('linkedin');
       
       if (authMethod !== 'linkedin' || !linkedInToken) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);

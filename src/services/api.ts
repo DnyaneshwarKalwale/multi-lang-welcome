@@ -60,7 +60,7 @@ api.interceptors.request.use(
     
     // First try to match token by endpoint
     if (config.url?.includes('/linkedin')) {
-      token = localStorage.getItem('linkedin-login-token');
+      token = tokenManager.getToken('linkedin');
     } else if (config.url?.includes('/google')) {
       token = localStorage.getItem('google-login-token');
     } else {

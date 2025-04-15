@@ -119,7 +119,7 @@ class LinkedInApi {
           errorType: 'auth_missing',
           details: {
             authMethod: localStorage.getItem('auth-method') || 'none',
-            hasLinkedInToken: !!localStorage.getItem('linkedin-login-token')
+            hasLinkedInToken: !!tokenManager.getToken('linkedin')
           }
         };
       }
