@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
-  Mic, Upload, Calendar, BarChart3, Linkedin, 
+  Mic, Upload, Calendar, 
   Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
   Maximize2, MessageSquare, ThumbsUp, Share2,
   LogOut, User, Settings, ChevronDown, Users, Bell,
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
   Layers, LayoutGrid, ArrowUp, CreditCard, Building, Loader2,
-  AlertCircle
+  AlertCircle, Linkedin
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -715,9 +715,9 @@ const DashboardPage: React.FC = () => {
                 variant="ghost" 
                     size="sm"
                 className="text-primary"
-                onClick={() => navigate('/dashboard/analytics')}
+                onClick={() => navigate('/dashboard/posts')}
                   >
-                View Analytics
+                View Posts
                   </Button>
                 </CardHeader>
             <CardContent className="px-0">
