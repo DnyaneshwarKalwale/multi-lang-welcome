@@ -1418,6 +1418,253 @@ const CreatePostPage: React.FC = () => {
         {/* Sidebar / AI Tools Panel */}
         {showSidebar && (
           <div className="md:col-span-1">
+            <Card className="mb-6">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Post Preview</CardTitle>
+                </div>
+                <CardDescription>
+                  Live preview of your {activeTab} post
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="preview-section rounded-lg border overflow-hidden">
+                  {/* User profile header */}
+                  <div className="bg-white p-3 flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+                      {user?.profilePicture ? (
+                        <img src={user.profilePicture} alt={user?.firstName || 'User'} className="w-full h-full object-cover" />
+                      ) : (
+                        <UserRound className="text-blue-500 h-6 w-6" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-black">
+                        {user?.firstName} {user?.lastName}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {user?.headline || 'LinkedIn Member'} • Just now
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Post content preview */}
+                  <div className="p-3 bg-white">
+                    {activeTab === 'text' && (
+                      <div className="space-y-4">
+                        <p className="text-sm whitespace-pre-wrap">
+                          {content || "Your post content will appear here..."}
+                        </p>
+                        
+                        {/* Preview hashtags */}
+                        {hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {hashtags.map(tag => (
+                              <span key={tag} className="text-sm text-blue-600">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Preview image */}
+                        {postImage && (
+                          <div className="mt-2 rounded-lg overflow-hidden border">
+                            <img 
+                              src={postImage.secure_url} 
+                              alt="Post" 
+                              className="w-full h-auto" 
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Preview poll */}
+                        {isPollActive && (
+                          <div className="mt-2 border rounded-lg p-3">
+                            <h4 className="text-sm font-medium mb-2">Poll</h4>
+                            <div className="space-y-2">
+                              {pollOptions.filter(option => option.trim()).map((option, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                  <div className="w-full h-8 bg-gray-100 rounded relative overflow-hidden">
+                                    <div className="absolute inset-0 flex items-center px-3">
+                                      <span className="text-xs">{option}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-2">
+                              Poll duration: {pollDuration} {pollDuration === 1 ? 'day' : 'days'}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Article preview */}
+                        {hasArticle && articleUrl && (
+                          <div className="mt-2 border rounded-lg overflow-hidden">
+                            <div className="h-32 bg-gray-200 flex items-center justify-center text-gray-400">
+                              <Globe className="h-8 w-8" />
+                            </div>
+                            <div className="p-3">
+                              <h3 className="font-medium text-sm">
+                                {articleTitle || "Article Title"}
+                              </h3>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                {articleDescription || "Article description will appear here"}
+                              </p>
+                              <div className="text-xs text-gray-400 mt-1 truncate">
+                                {articleUrl}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {activeTab === 'carousel' && (
+                      <div className="space-y-4">
+                        <div className="bg-gray-100 rounded-lg overflow-hidden">
+                          {slides.length > 0 ? (
+                            <div className="aspect-video relative">
+                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                <div className="text-center">
+                                  <h3 className="font-bold text-sm">
+                                    {slides[0].content.split(':')[1] || slides[0].content}
+                                  </h3>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Slide 1 of {slides.length}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Pagination indicator */}
+                              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                                {slides.map((_, index) => (
+                                  <div 
+                                    key={index} 
+                                    className={`w-2 h-2 rounded-full ${index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="aspect-video flex items-center justify-center">
+                              <p className="text-gray-500 text-sm">Add slides to preview</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-sm whitespace-pre-wrap">
+                          {content || "Your carousel description will appear here..."}
+                        </p>
+                        
+                        {/* Preview hashtags */}
+                        {hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {hashtags.map(tag => (
+                              <span key={tag} className="text-sm text-blue-600">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {activeTab === 'document' && (
+                      <div className="space-y-4">
+                        <div className="bg-gray-100 rounded-lg overflow-hidden">
+                          <div className="aspect-[4/5] flex flex-col items-center justify-center p-4">
+                            {postImage ? (
+                              <img 
+                                src={postImage.secure_url} 
+                                alt="Document preview" 
+                                className="max-h-full object-contain" 
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                                <p className="text-gray-500 text-sm">Upload document to preview</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm whitespace-pre-wrap">
+                          {content || "Your document description will appear here..."}
+                        </p>
+                        
+                        {/* Preview hashtags */}
+                        {hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {hashtags.map(tag => (
+                              <span key={tag} className="text-sm text-blue-600">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Engagement buttons */}
+                  <div className="border-t p-3 bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <button className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-700">
+                          <ThumbsUp className="h-4 w-4" />
+                          <span>Like</span>
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-700">
+                          <MessageCircle className="h-4 w-4" />
+                          <span>Comment</span>
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-700">
+                          <Share2 className="h-4 w-4" />
+                          <span>Share</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Quick tips based on active tab */}
+                <div className="mt-4 bg-blue-50 p-3 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-700 mb-1">
+                    {activeTab === 'text' ? 'Text Post Tips' : 
+                     activeTab === 'carousel' ? 'Carousel Post Tips' : 
+                     'Document Post Tips'}
+                  </h4>
+                  <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
+                    {activeTab === 'text' && (
+                      <>
+                        <li>Start with a compelling hook</li>
+                        <li>Break text into short paragraphs</li>
+                        <li>Add relevant hashtags (3-5 is ideal)</li>
+                      </>
+                    )}
+                    
+                    {activeTab === 'carousel' && (
+                      <>
+                        <li>Keep slides concise and visually clean</li>
+                        <li>Use consistent design across all slides</li>
+                        <li>Include a strong call-to-action in the last slide</li>
+                      </>
+                    )}
+                    
+                    {activeTab === 'document' && (
+                      <>
+                        <li>Add a clear cover page with your branding</li>
+                        <li>Keep document under 100MB for best performance</li>
+                        <li>Write a descriptive caption for better engagement</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+            
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
