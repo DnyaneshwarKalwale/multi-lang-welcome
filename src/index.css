@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Light theme colors */
+    /* Light theme colors simplified to white and blue */
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
     
@@ -19,16 +19,16 @@
     --primary: 213 100% 44%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 252 100% 68%;
+    --secondary: 213 100% 44%;
     --secondary-foreground: 0 0% 100%;
     
     --muted: 210 20% 94%;
     --muted-foreground: 215 16% 46%;
     
-    --accent: 152 81% 39%;
+    --accent: 213 100% 44%;
     --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 85% 60%;
+    --destructive: 213 100% 44%;
     --destructive-foreground: 0 0% 100%;
     
     --border: 214 32% 91%;
@@ -62,11 +62,11 @@
   }
   
   .nav-link {
-    @apply px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 hover:bg-primary-50 hover:text-primary-600;
+    @apply px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 hover:bg-blue-50 hover:text-blue-600;
   }
   
   .nav-link.active {
-    @apply bg-primary-50 text-primary-600;
+    @apply bg-blue-50 text-blue-600;
   }
   
   .form-container {
@@ -79,16 +79,16 @@
   
   .custom-button {
     @apply w-full py-2.5 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-[1.02]
-           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
            disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100;
   }
   
   .primary-button {
-    @apply custom-button bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:shadow-md;
+    @apply custom-button bg-blue-500 text-white hover:shadow-md hover:bg-blue-600;
   }
   
   .secondary-button {
-    @apply custom-button bg-gradient-to-r from-secondary-500 to-blue-400 text-white hover:shadow-md;
+    @apply custom-button bg-blue-400 text-white hover:shadow-md hover:bg-blue-500;
   }
   
   .outline-button {
@@ -108,7 +108,7 @@
   }
   
   .onboarding-header {
-    @apply px-6 py-6 bg-gradient-to-br from-primary-500/10 to-secondary-500/10;
+    @apply px-6 py-6 bg-blue-50;
   }
   
   .onboarding-content {
@@ -125,22 +125,22 @@
   
   .novus-input {
     @apply bg-white/70 border-gray-200 h-12 pl-4 
-           focus:border-primary-500 focus:ring-primary-500
+           focus:border-blue-500 focus:ring-blue-500
            transition-all rounded-md shadow-sm;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent;
+    @apply text-blue-500;
   }
   
   .text-gradient-blue {
-    @apply bg-gradient-to-r from-secondary-500 to-blue-500 bg-clip-text text-transparent;
+    @apply text-blue-500;
   }
   
   .text-gradient-alt {
-    @apply bg-gradient-to-r from-secondary-500 to-primary-400 bg-clip-text text-transparent;
+    @apply text-blue-500;
   }
   
   .animate-slide-up {
@@ -172,11 +172,11 @@
   }
   
   .bg-grid-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237C3AED' fill-opacity='0.05'%3E%3Cpath d='M0 0h40v40H0V0zm20 20h20v20H20V20zM0 20h20v20H0V20zm10 10h20v20H10V30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230057FF' fill-opacity='0.05'%3E%3Cpath d='M0 0h40v40H0V0zm20 20h20v20H20V20zM0 20h20v20H0V20zm10 10h20v20H10V30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
   
   .bg-dots-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%237C3AED' fill-opacity='0.05'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%230057FF' fill-opacity='0.05'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
   }
   
   .frosted-glass {
@@ -271,7 +271,7 @@ input, textarea, select {
 
 /* Focus styles */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500;
 }
 
 /* Subtle divider */
@@ -290,6 +290,6 @@ input, textarea, select {
   align-items: center;
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--background)));
+  background: white;
   color: hsl(var(--foreground));
 }
