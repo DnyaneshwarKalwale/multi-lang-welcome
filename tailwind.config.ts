@@ -26,20 +26,20 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         
-        // Primary Blues:
+        // Primary Reds (changed from Blues):
         primary: {
-          DEFAULT: "#0070E0", // Main
-          50: "#F0F6FF",
-          100: "#E1EEFF",
-          200: "#C3DDFF",
-          300: "#9BC3FF",
-          400: "#64A6FA",
-          500: "#0070E0", // Main
-          600: "#005FD1",
-          700: "#004CAD",
-          800: "#003C8A",
-          900: "#003087", // Dark
-          light: "#1A9CFF", // Light
+          DEFAULT: "#E0302C", // Main (changed from #0070E0)
+          50: "#FFF0F0",
+          100: "#FFE1E1",
+          200: "#FFC3C3",
+          300: "#FF9B9B",
+          400: "#FA6464",
+          500: "#E0302C", // Main
+          600: "#D1231F",
+          700: "#AD1C19",
+          800: "#8A1614",
+          900: "#871410", // Dark
+          light: "#FF3A36", // Light
         },
         
         // Secondary Purples:
