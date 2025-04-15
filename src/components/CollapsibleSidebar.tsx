@@ -6,7 +6,7 @@ import {
   LogOut, Bell, MessageSquare, Lightbulb,
   Heart, BookMarked, CreditCard, LayoutGrid,
   Search, Upload, Headphones, Youtube, Server,
-  Menu, X
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,10 +26,13 @@ interface NavItem {
   };
 }
 
-export function CollapsibleSidebar() {
-  const [expanded, setExpanded] = useState(true);
+interface CollapsibleSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSidebarProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -37,17 +40,7 @@ export function CollapsibleSidebar() {
   // Monitor window resize
   useEffect(() => {
     const handleResize = () => {
-      const isSmallScreen = window.innerWidth < 768;
-      setIsMobile(isSmallScreen);
-      
-      // Only expanded on desktop (always)
-      if (!isSmallScreen) {
-        setExpanded(true);
-        setIsOpen(true);
-      } else {
-        setExpanded(true);
-        setIsOpen(false);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
     
     // Set initial state
@@ -60,8 +53,8 @@ export function CollapsibleSidebar() {
   // Handle clicks outside the sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isMobile && isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (isMobile && isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node) && onClose) {
+        onClose();
       }
     };
     
@@ -69,7 +62,7 @@ export function CollapsibleSidebar() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isMobile, isOpen]);
+  }, [isMobile, isOpen, onClose]);
   
   const navItems: NavItem[] = [
     { title: 'Home', icon: Home, path: '/dashboard/home' },
@@ -91,27 +84,15 @@ export function CollapsibleSidebar() {
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
   };
   
-  // For desktop - always show the full sidebar
-  // For mobile - render a hamburger menu and show sidebar only when opened
-  
-  // Mobile sidebar with hamburger button
+  // Mobile sidebar that slides in from the right
   if (isMobile) {
     return (
       <>
-        {/* Hamburger Menu Button */}
-        <button 
-          className="fixed top-4 left-4 z-50 bg-white p-2 rounded-md shadow-md border border-gray-200"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
-        >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      
         {/* Sidebar Overlay */}
         {isOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-40"
-            onClick={() => setIsOpen(false)}
+            onClick={onClose}
           />
         )}
       
@@ -120,11 +101,11 @@ export function CollapsibleSidebar() {
           {isOpen && (
             <motion.div
               ref={sidebarRef}
-              initial={{ x: -240 }}
+              initial={{ x: 320 }}
               animate={{ x: 0 }}
-              exit={{ x: -240 }}
+              exit={{ x: 320 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed left-0 top-0 z-50 h-screen w-64 flex flex-col border-r border-gray-200 bg-white shadow-lg"
+              className="fixed right-0 top-0 z-50 h-screen w-64 flex flex-col border-l border-gray-200 bg-white shadow-lg"
             >
               {/* Sidebar Header */}
               <div className="flex h-16 items-center px-4 py-3 w-full justify-between">
@@ -132,7 +113,7 @@ export function CollapsibleSidebar() {
                   <BrandOutIcon className="w-8 h-8" />
                   <span className="font-semibold text-gray-900">BrandOut</span>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="text-gray-500">
+                <button onClick={onClose} className="text-gray-500">
                   <X size={20} />
                 </button>
               </div>
@@ -144,7 +125,7 @@ export function CollapsibleSidebar() {
                     <NavLink
                       key={index}
                       to={item.path}
-                      onClick={() => setIsOpen(false)}
+                      onClick={onClose}
                       className={({ isActive }) => cn(
                         'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full',
                         isActive 
@@ -202,7 +183,7 @@ export function CollapsibleSidebar() {
     );
   }
   
-  // Desktop sidebar - always expanded with full text
+  // Desktop sidebar - always visible on the left
   return (
     <div
       className="fixed left-0 top-0 z-40 h-screen w-64 flex flex-col border-r border-gray-200 bg-white shadow-sm"

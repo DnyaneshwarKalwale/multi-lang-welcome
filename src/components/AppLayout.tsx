@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
@@ -18,29 +18,39 @@ interface AppLayoutProps {
  */
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
 
   // Monitor window resize to determine if mobile view
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isSmallScreen);
+      
+      // Close sidebar on resize to mobile
+      if (isSmallScreen && sidebarOpen) {
+        setSidebarOpen(false);
+      }
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [sidebarOpen]);
 
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
   };
+  
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
       {/* Sidebar - CollapsibleSidebar handles responsive behavior internally */}
-      <CollapsibleSidebar />
+      <CollapsibleSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content container with proper margin */}
       <div className={cn(
@@ -50,7 +60,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Top header bar */}
         <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
-            {/* Mobile hamburger menu is now inside CollapsibleSidebar */}
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
@@ -64,7 +73,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </span>
             </Button>
             
-            <div className="md:flex">
+            <div className="flex items-center">
               <motion.div 
                 whileHover={{ scale: 1.05 }} 
                 className="cursor-pointer"
@@ -77,6 +86,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 </Avatar>
               </motion.div>
             </div>
+            
+            {/* Hamburger menu button - visible only on mobile/tablet */}
+            {isMobile && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="ml-2 text-gray-600 hover:bg-blue-100"
+                onClick={toggleSidebar}
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+              >
+                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              </Button>
+            )}
           </div>
         </header>
         
