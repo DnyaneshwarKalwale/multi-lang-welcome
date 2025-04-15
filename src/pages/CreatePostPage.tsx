@@ -1209,7 +1209,7 @@ const CreatePostPage: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xl mx-auto preview-section bg-white dark:bg-gray-900 shadow-sm">
+              <div className="rounded-lg border border-gray-200 p-4 max-w-xl mx-auto preview-section bg-white shadow-md">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center text-white font-bold ring-2 ring-white overflow-hidden">
                     {user?.profilePicture ? (
@@ -1241,13 +1241,13 @@ const CreatePostPage: React.FC = () => {
                 
                 {activeTab === 'text' && (
                   <div className="mb-4 transition-all duration-200">
-                    <p className="text-[14px] leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-line mb-3 transition-all duration-200">
+                    <p className="text-[14px] leading-relaxed text-gray-800 whitespace-pre-line mb-3 transition-all duration-200">
                       {content || "Your post content will appear here"}
                     </p>
                     
                     {/* Display post image in preview if selected */}
                     {(postImage || aiGeneratedImage) && (
-                      <div className="mb-3 rounded-lg overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800">
+                      <div className="mb-3 rounded-lg overflow-hidden transition-all duration-300 border border-gray-100">
                         <img 
                           src={postImage ? postImage.secure_url : aiGeneratedImage!} 
                           alt="Post image"
@@ -1263,7 +1263,7 @@ const CreatePostPage: React.FC = () => {
                     
                     {/* Display poll if active */}
                     {isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2 && (
-                      <div className="mb-3 border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                      <div className="mb-3 border rounded-lg p-3 bg-gray-50">
                         <p className="text-sm font-medium mb-2">Poll ({pollDuration} day{pollDuration > 1 ? 's' : ''})</p>
                         <div className="space-y-2">
                           {pollOptions.filter(opt => opt.trim()).map((option, index) => (
@@ -1278,7 +1278,7 @@ const CreatePostPage: React.FC = () => {
                     
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {hashtags.map(tag => (
-                        <span key={tag} className="text-blue-600 dark:text-blue-500 text-[13px] hover:underline cursor-pointer">#{tag}</span>
+                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer">#{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -1307,21 +1307,21 @@ const CreatePostPage: React.FC = () => {
                   <span className="text-xs">John Doe and 24 others</span> • <span className="text-xs">8 comments</span>
                 </div>
                 
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+                <div className="border-t border-gray-200 pt-1 mt-1">
                   <div className="flex items-center justify-between">
-                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-3 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-1">
+                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-3 rounded-md hover:bg-blue-50 flex-1">
                       <ThumbsUp size={18} />
                       <span className="text-xs font-medium">Like</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-green-600 transition-colors py-1 px-3 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 flex-1">
+                    <button className="flex flex-col items-center gap-1 hover:text-green-600 transition-colors py-1 px-3 rounded-md hover:bg-green-50 flex-1">
                       <MessageCircle size={18} />
                       <span className="text-xs font-medium">Comment</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-amber-600 transition-colors py-1 px-3 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-1">
+                    <button className="flex flex-col items-center gap-1 hover:text-amber-600 transition-colors py-1 px-3 rounded-md hover:bg-amber-50 flex-1">
                       <Share2 size={18} />
                       <span className="text-xs font-medium">Share</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 flex-1">
+                    <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 flex-1">
                       <Forward size={18} />
                       <span className="text-xs font-medium">Send</span>
                   </button>
