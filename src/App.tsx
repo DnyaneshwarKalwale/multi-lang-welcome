@@ -39,6 +39,7 @@ import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
 import ImageGalleryPage from "./pages/ImageGalleryPage";
+import TemplatesPage from "./pages/TemplatesPage";
 
 const queryClient = new QueryClient();
 
@@ -260,6 +261,7 @@ const AppRoutes = () => {
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/billing" element={<BillingPage />} />
           <Route path="/dashboard/images" element={<ImageGalleryPage />} />
+          <Route path="/templates" element={<TemplatesPage />} />
         </Route>
       </Route>
       

@@ -42,16 +42,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Monitor window resize to determine if mobile view
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth < 1024) {
-        setSidebarOpen(false);
-        localStorage.setItem('sidebarExpanded', 'false');
+      const newIsMobile = window.innerWidth < 1024;
+      setIsMobile(newIsMobile);
+      
+      // If transitioning from mobile to desktop, ensure sidebar is expanded
+      if (!newIsMobile && isMobile) {
+        setSidebarOpen(true);
+        localStorage.setItem('sidebarExpanded', 'true');
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isMobile]);
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -66,24 +69,38 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   // Content adjustment based on sidebar state
-  const contentMargin = !isMobile && sidebarOpen ? 'lg:ml-[180px]' : 'ml-0';
+  const contentMargin = !isMobile ? 'lg:ml-[250px]' : 'ml-0';
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar container with fixed positioning and high z-index */}
-      <div className="fixed top-0 left-0 z-50 h-full">
-        <CollapsibleSidebar />
-      </div>
+      {/* Fixed desktop sidebar on left */}
+      {!isMobile && (
+        <div className="fixed top-0 left-0 z-40 h-full">
+          <CollapsibleSidebar isOpen={true} isFixed={true} onClose={() => {}} />
+        </div>
+      )}
       
-      {/* Overlay for mobile when sidebar is open */}
+      {/* Mobile sidebar on right */}
       {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => {
-            setSidebarOpen(false);
-            localStorage.setItem('sidebarExpanded', 'false');
-          }}
-        />
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => {
+              setSidebarOpen(false);
+              localStorage.setItem('sidebarExpanded', 'false');
+            }}
+          />
+          <div className="fixed top-0 right-0 z-50 h-full">
+            <CollapsibleSidebar 
+              isOpen={sidebarOpen} 
+              isFixed={false}
+              onClose={() => {
+                setSidebarOpen(false);
+                localStorage.setItem('sidebarExpanded', 'false');
+              }} 
+            />
+          </div>
+        </>
       )}
       
       {/* Main content area with proper margin and wrapping */}
@@ -91,17 +108,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Top header bar */}
         <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
-            {/* Hamburger menu for mobile */}
-            {isMobile && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="lg:hidden"
-                onClick={toggleSidebar}
-              >
-                <Menu size={20} className="text-gray-700" />
-              </Button>
-            )}
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
@@ -128,6 +134,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 </Avatar>
               </motion.div>
             </div>
+            
+            {/* Hamburger menu for mobile only */}
+            {isMobile && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full hover:bg-blue-100"
+                onClick={toggleSidebar}
+              >
+                <Menu size={20} className="text-blue-600" />
+              </Button>
+            )}
           </div>
         </header>
         
