@@ -330,8 +330,94 @@ const RequestCarouselPage: React.FC = () => {
   return (
     <div className="container max-w-6xl py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Request a Carousel</h1>
+        <h1 className="text-3xl font-bold">Carousel Creator</h1>
         <p className="text-muted-foreground mt-1">
+          Create professional carousel posts for LinkedIn
+        </p>
+      </div>
+
+      {/* Two main options */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Option 1: Request Carousel */}
+        <Card className="cursor-pointer hover:border-primary transition-colors border-2 bg-white">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-black">
+              <Clock className="h-5 w-5 text-primary" />
+              Request a Custom Carousel
+            </CardTitle>
+            <CardDescription className="text-black">
+              Our team will create a professional carousel for you based on your content
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="aspect-video rounded-md border bg-white flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://picsum.photos/seed/custom/640/360" 
+                alt="Custom Carousel" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                <p className="text-white font-medium">Professional design by our team</p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button
+              size="lg"
+              className="w-full gap-2 bg-primary text-white"
+              onClick={() => {
+                const requestSection = document.getElementById('request-section');
+                if (requestSection) {
+                  requestSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Request Custom Carousel
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* Option 2: Browse Templates */}
+        <Card className="cursor-pointer hover:border-primary transition-colors border-2 bg-white">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-black">
+              <LayoutGrid className="h-5 w-5 text-primary" />
+              Browse Carousel Templates
+            </CardTitle>
+            <CardDescription className="text-black">
+              Choose from our library of ready-to-use carousel templates
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="aspect-video rounded-md border bg-white flex items-center justify-center overflow-hidden">
+              <img 
+                src="https://picsum.photos/seed/templates/640/360" 
+                alt="Carousel Templates" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                <p className="text-white font-medium">Multiple professional templates</p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button
+              size="lg"
+              className="w-full gap-2 bg-white text-black border-2"
+              onClick={() => navigate('/dashboard/templates')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Browse Templates
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      {/* Request Carousel Form Section */}
+      <div id="request-section" className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Request a Carousel</h2>
+        <p className="text-muted-foreground mb-6">
           Provide content from a YouTube video and we'll create a professional carousel for you
         </p>
       </div>
