@@ -80,7 +80,6 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { SliderVariant } from '@/types/LinkedInPost';
-import { CarouselPreview } from '@/components/CarouselPreview';
 import ImageGalleryPicker from '@/components/ImageGalleryPicker';
 import ImageUploader from '@/components/ImageUploader';
 import { CloudinaryImage, saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
@@ -1344,7 +1343,12 @@ const CreatePostPage: React.FC = () => {
                 
                 {activeTab === 'carousel' && (
                   <div className="mb-4">
-                    <CarouselPreview slides={slides} variant={sliderType} />
+                    <InlineCarouselPreview slides={slides} variant={sliderType} />
+                    {sliderType !== 'basic' && (
+                      <div className="text-xs text-center mt-2 text-muted-foreground bg-muted/30 rounded-md p-1">
+                        <span className="font-medium capitalize">{sliderType}</span> slider style applied
+                      </div>
+                    )}
                   </div>
                 )}
                 
@@ -1564,6 +1568,189 @@ const CreatePostPage: React.FC = () => {
               </select>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string}[], variant: SliderVariant }> = ({ slides, variant }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  useEffect(() => {
+    // Auto-advance slides if variant is autoplay
+    let interval: number | null = null;
+    if (variant === 'autoplay') {
+      interval = window.setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+      }, 3000);
+    }
+    
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [variant, slides.length]);
+  
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+  
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+  
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+  
+  // Get class names based on variant
+  const getContainerClasses = () => {
+    let classes = "relative rounded-md border overflow-hidden";
+    
+    if (variant === 'coverflow') {
+      classes += " perspective-1000";
+    } else if (variant === 'fade') {
+      classes += " fade-transition";
+    } else if (variant === 'vertical') {
+      classes += " vertical-slider";
+    }
+    
+    return classes;
+  };
+  
+  const getSlideClasses = (index: number) => {
+    const isActive = index === currentSlide;
+    let classes = "transition-all duration-300 bg-white";
+    
+    if (variant === 'fade') {
+      classes += ` absolute inset-0 opacity-0 ${isActive ? 'opacity-100 z-10' : ''}`;
+    } else if (variant === 'coverflow') {
+      const offset = index - currentSlide;
+      classes += ` absolute top-0 ${
+        offset === 0 
+          ? 'left-0 right-0 scale-100 z-10' 
+          : offset < 0 
+            ? 'left-[-100%] scale-90 origin-right rotate-3 z-0' 
+            : 'left-[100%] scale-90 origin-left -rotate-3 z-0'
+      }`;
+    } else if (variant === 'vertical') {
+      classes += ` absolute left-0 right-0 transform transition-transform ${
+        isActive ? 'translate-y-0 z-10' : index < currentSlide ? '-translate-y-full' : 'translate-y-full'
+      }`;
+    } else if (variant === 'thumbs') {
+      classes += isActive ? ' border-2 border-primary' : '';
+    } else if (variant === 'parallax') {
+      classes += ' bg-fixed';
+    } else if (variant === 'grid' && index === currentSlide) {
+      // Only apply special styling for current slide in grid view
+      classes += ' grid-item';
+    } else {
+      // Standard slide transition for other variants
+      classes += ` transform transition-transform ${
+        isActive ? 'translate-x-0' : index < currentSlide ? '-translate-x-full' : 'translate-x-full'
+      }`;
+      
+      if (variant === 'looped' && !isActive) {
+        classes += ' absolute top-0 left-0 right-0';
+      }
+    }
+    
+    return classes;
+  };
+  
+  return (
+    <div className="space-y-3">
+      <div className={getContainerClasses()} style={{ minHeight: '200px' }}>
+        {variant === 'grid' ? (
+          // Grid layout
+          <div className="grid grid-cols-2 gap-2 p-2">
+            {slides.slice(0, 4).map((slide, index) => (
+              <div 
+                key={slide.id} 
+                className={`p-3 text-sm bg-gray-50 rounded border ${index === currentSlide ? 'border-primary' : 'border-gray-200'}`}
+                onClick={() => goToSlide(index)}
+              >
+                {slide.content.length > 60 ? slide.content.substring(0, 60) + '...' : slide.content}
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Normal slide display
+          slides.map((slide, index) => (
+            <div 
+              key={slide.id} 
+              className={getSlideClasses(index)}
+              style={{ 
+                display: variant === 'fade' || variant === 'coverflow' || variant === 'vertical' || variant === 'looped' ? 'block' : index === currentSlide ? 'block' : 'none',
+                padding: '1rem'
+              }}
+            >
+              <p className="text-sm">{slide.content}</p>
+            </div>
+          ))
+        )}
+        
+        {/* Navigation arrows for non-grid layouts */}
+        {variant !== 'grid' && (
+          <>
+            <button 
+              className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-1 shadow"
+              onClick={prevSlide}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button 
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-1 shadow"
+              onClick={nextSlide}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </>
+        )}
+      </div>
+      
+      {/* Pagination indicators */}
+      {(variant === 'pagination' || variant === 'basic') && (
+        <div className="flex justify-center gap-1">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-2 h-2 rounded-full ${index === currentSlide ? 'bg-primary' : 'bg-gray-300'}`}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Thumbnail navigation for thumbs variant */}
+      {variant === 'thumbs' && (
+        <div className="flex overflow-x-auto gap-1 p-1">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-10 h-10 flex-shrink-0 bg-gray-100 rounded ${index === currentSlide ? 'ring-2 ring-primary' : ''}`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      {/* Gallery style for gallery variant */}
+      {variant === 'gallery' && (
+        <div className="grid grid-cols-4 gap-1">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`aspect-square bg-gray-100 text-xs flex items-center justify-center rounded ${
+                index === currentSlide ? 'ring-2 ring-primary' : ''
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
         </div>
       )}
     </div>
