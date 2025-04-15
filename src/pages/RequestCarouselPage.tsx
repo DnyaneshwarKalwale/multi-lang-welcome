@@ -28,6 +28,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Define the form schema for validation
 const formSchema = z.object({
@@ -235,6 +243,8 @@ const RequestCarouselPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const videosPerPage = 4;
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -296,6 +306,31 @@ const RequestCarouselPage: React.FC = () => {
         video.channelName.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : youtubeVideos;
+  
+  // Calculate pagination
+  const indexOfLastVideo = currentPage * videosPerPage;
+  const indexOfFirstVideo = indexOfLastVideo - videosPerPage;
+  const currentVideos = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
+  const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
+  
+  // Handle page change
+  const goToPage = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+  
+  // Handle next page
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // Handle previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   // Form submit handler
   const onSubmit = (data: z.infer<typeof formSchema>) => {
@@ -424,7 +459,7 @@ const RequestCarouselPage: React.FC = () => {
                 />
                 
                         <div className="grid grid-cols-2 gap-4 mt-4">
-                          {filteredVideos.map((video) => (
+                          {currentVideos.map((video) => (
                             <div 
                               key={video.id}
                               className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md relative ${
@@ -461,6 +496,38 @@ const RequestCarouselPage: React.FC = () => {
                             </div>
                           ))}
                         </div>
+                        
+                        {/* Pagination Controls */}
+                        {filteredVideos.length > videosPerPage && (
+                          <Pagination className="mt-4">
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious 
+                                  onClick={prevPage} 
+                                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                                />
+                              </PaginationItem>
+                              
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <PaginationItem key={page}>
+                                  <PaginationLink 
+                                    isActive={page === currentPage}
+                                    onClick={() => goToPage(page)}
+                                  >
+                                    {page}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              ))}
+                              
+                              <PaginationItem>
+                                <PaginationNext 
+                                  onClick={nextPage}
+                                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
+                        )}
                         
                         {showTranscript && selectedVideo && (
                           <div className="mt-4 border rounded-lg p-4">
