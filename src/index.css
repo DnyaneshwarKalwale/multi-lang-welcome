@@ -5,6 +5,11 @@
 @tailwind utilities;
 /* new changes */
 @layer base {
+  /* Force Poppins font throughout the entire website */
+  html, body, *, *::before, *::after {
+    font-family: 'Poppins', sans-serif !important;
+  }
+  
   :root {
     /* Light theme colors simplified to white and blue */
     --background: 210 40% 98%;
@@ -46,13 +51,20 @@
   body {
     @apply bg-white text-gray-900 font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Poppins', sans-serif !important;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-semibold tracking-tight;
+    font-family: 'Poppins', sans-serif !important;
   }
   
   .theme-transition {
     @apply transition-colors duration-300;
+  }
+  
+  /* Ensure inputs and buttons use the same font */
+  input, button, textarea, select {
+    font-family: 'Poppins', sans-serif !important;
   }
 }
 
