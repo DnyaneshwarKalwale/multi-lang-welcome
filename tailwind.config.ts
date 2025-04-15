@@ -111,7 +111,6 @@ export default {
       },
       fontFamily: {
         sans: ["Outfit", "var(--font-sans)", ...fontFamily.sans],
-        heading: ["Lexend", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
