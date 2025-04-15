@@ -171,7 +171,7 @@ const RequestCarouselPage: React.FC = () => {
           </div>
           
           <h1 className="text-2xl font-bold mb-3">Carousel Request Submitted!</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-lg mx-auto">
+          <p className="text-black mb-8 max-w-lg mx-auto">
             Our team will review your request and deliver your professional carousel within 24 hours.
             You'll receive a notification when it's ready.
           </p>
@@ -321,10 +321,10 @@ const RequestCarouselPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1" htmlFor="file-upload">
                     Upload Reference Material (Optional)
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center">
+                  <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center">
                     <div className="flex flex-col items-center">
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <Upload className="h-8 w-8 text-primary mb-2" />
+                      <p className="text-sm text-black mb-2">
                         {selectedFile ? selectedFile.name : 'PDF or image files up to 10MB'}
                       </p>
                       <Input
@@ -367,24 +367,24 @@ const RequestCarouselPage: React.FC = () => {
                           {templates.map(template => (
                             <div
                               key={template.id}
-                              className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                              className={`border rounded-lg p-3 cursor-pointer transition-all duration-200 ${
                                 field.value === template.id 
-                                  ? 'border-primary bg-primary-50 dark:bg-primary-900/20' 
-                                  : 'border-gray-200 dark:border-gray-800 hover:border-primary hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                  ? 'border-primary bg-white border-2 shadow-md' 
+                                  : 'border-black hover:border-primary hover:border-2 hover:shadow-md bg-white'
                               }`}
                               onClick={() => field.onChange(template.id)}
                             >
                               <div className="flex items-start gap-3">
-                                <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+                                <div className="w-20 h-20 bg-white border-2 border-blue-200 rounded-md flex items-center justify-center overflow-hidden">
                                   {/* If you have actual images, use them here */}
-                                  <LayoutGrid className="h-8 w-8 text-gray-400" />
+                                  <LayoutGrid className="h-8 w-8 text-primary" />
                                 </div>
                                 <div className="flex-1">
                                   <h3 className="font-medium">{template.name}</h3>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-1">
+                                  <p className="text-xs text-black mt-1 mb-1">
                                     {template.description}
                                   </p>
-                                  <div className="flex items-center text-xs text-gray-500">
+                                  <div className="flex items-center text-xs text-black">
                                     <LayoutGrid className="h-3 w-3 mr-1" />
                                     {template.slideCount} slides
                                   </div>
@@ -427,8 +427,8 @@ const RequestCarouselPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 pt-6">
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-between border-t border-blue-100 pt-6">
+            <div className="flex items-center text-sm text-black">
               <Calendar className="h-4 w-4 mr-1" />
               Estimated delivery: 24 hours
             </div>

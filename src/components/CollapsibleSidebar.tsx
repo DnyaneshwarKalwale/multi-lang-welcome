@@ -26,34 +26,22 @@ interface NavItem {
 }
 
 export function CollapsibleSidebar() {
-  const [expanded, setExpanded] = useState(localStorage.getItem('sidebarExpanded') !== 'false');
+  // Always expanded on large screens
+  const [expanded, setExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const { user, logout } = useAuth();
   const location = useLocation();
   
-  // Listen for changes to localStorage sidebarExpanded
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const isExpanded = localStorage.getItem('sidebarExpanded') !== 'false';
-      setExpanded(isExpanded);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Check every 500ms in case localStorage is updated without triggering storage event
-    const interval = setInterval(handleStorageChange, 500);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
-  
   // Monitor window resize
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth < 1024) {
+      const isSmallScreen = window.innerWidth < 1024;
+      setIsMobile(isSmallScreen);
+      
+      // Always expanded on large screens, collapsed on small screens
+      if (!isSmallScreen) {
+        setExpanded(true);
+      } else {
         setExpanded(false);
       }
     };
@@ -80,12 +68,6 @@ export function CollapsibleSidebar() {
     { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },
   ];
   
-  const toggleSidebar = () => {
-    const newState = !expanded;
-    setExpanded(newState);
-    localStorage.setItem('sidebarExpanded', newState.toString());
-  };
-
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
@@ -130,32 +112,12 @@ export function CollapsibleSidebar() {
       {/* Sidebar Header */}
       <div className={cn(
         'flex h-16 items-center px-4 py-3 w-full',
-        expanded ? 'justify-between' : 'justify-center'
+        expanded ? 'justify-start' : 'justify-center'
       )}>
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2 overflow-hidden"
-            >
-              <BrandOutIcon className="w-8 h-8" />
-              <span className="font-semibold text-gray-900">BrandOut</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
-          className="rounded-full h-8 w-8 hidden lg:flex text-blue-600 hover:bg-blue-100"
-        >
-          <span className="font-bold">
-            {expanded ? "←" : "→"}
-          </span>
-        </Button>
+        <div className="flex items-center gap-2 overflow-hidden">
+          <BrandOutIcon className="w-8 h-8" />
+          {expanded && <span className="font-semibold text-gray-900">BrandOut</span>}
+        </div>
       </div>
 
       {/* Navigation Menu */}
