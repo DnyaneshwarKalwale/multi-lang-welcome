@@ -319,7 +319,7 @@ const DashboardPage: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold mb-1 text-black">Welcome back, {user?.firstName || 'there'}!</h1>
-          <p className="text-black">
+          <p className="text-blue-600">
             You're in <span className="font-medium text-black">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -327,35 +327,35 @@ const DashboardPage: React.FC = () => {
         <div className="mt-4 md:mt-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 text-black border-black bg-white">
-                <Building className="h-4 w-4 text-black" />
+              <Button variant="outline" className="gap-2 border-black text-black">
+                <Building className="h-4 w-4" />
                 Workspaces
-                <ChevronDown className="h-4 w-4 text-black" />
+                <ChevronDown className="h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-white border-black">
+            <DropdownMenuContent align="end" className="w-56 bg-white">
               {workspaces.map(workspace => (
                 <DropdownMenuItem 
                   key={workspace.id}
-                  className={`flex items-center gap-2 text-black ${workspace.id === currentWorkspace.id ? 'bg-white border border-black' : ''}`}
+                  className={`flex items-center gap-2 ${workspace.id === currentWorkspace.id ? 'bg-blue-50' : ''} text-black`}
                   onClick={() => setCurrentWorkspace(workspace)}
                 >
                   {workspace.type === 'personal' ? (
-                    <User className="h-4 w-4 text-black" />
+                    <User className="h-4 w-4 text-blue-600" />
                   ) : (
-                    <Users className="h-4 w-4 text-black" />
+                    <Users className="h-4 w-4 text-blue-600" />
                   )}
                   <span>{workspace.name}</span>
                   {workspace.type === 'team' && (
-                    <Badge variant="outline" className="ml-auto text-xs text-black border-black">
+                    <Badge variant="outline" className="ml-auto text-xs border-blue-300 text-blue-700">
                       {workspace.memberCount} members
                     </Badge>
                   )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 text-black">
-                <PlusCircle className="h-4 w-4 text-black" />
+              <DropdownMenuItem className="flex items-center gap-2 text-blue-600">
+                <PlusCircle className="h-4 w-4" />
                 <span>Create New Workspace</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -365,59 +365,59 @@ const DashboardPage: React.FC = () => {
       
       {/* Quick Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-white border-black">
+        <Card className="bg-white border-2 border-blue-100">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-black">Total Posts</p>
+                <p className="text-sm font-medium text-blue-700">Total Posts</p>
                 <h3 className="text-2xl font-bold mt-1 text-black">12</h3>
               </div>
-              <div className="w-12 h-12 bg-white border-2 border-black rounded-full flex items-center justify-center">
-                <FileText className="h-6 w-6 text-black" />
+              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-4 text-black text-sm">
-              <ArrowUp className="h-3 w-3 text-black" />
+            <div className="flex items-center gap-1 mt-4 text-blue-600 text-sm">
+              <ArrowUp className="h-3 w-3" />
               <span>16%</span>
-              <span className="text-black ml-1">from last month</span>
+              <span className="text-blue-500 ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-black">
+        <Card className="bg-white border-2 border-blue-100">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-black">Avg. Engagement</p>
+                <p className="text-sm font-medium text-blue-700">Avg. Engagement</p>
                 <h3 className="text-2xl font-bold mt-1 text-black">4.8%</h3>
               </div>
-              <div className="w-12 h-12 bg-white border-2 border-black rounded-full flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-black" />
+              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                <MessageSquare className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-4 text-black text-sm">
-              <ArrowUp className="h-3 w-3 text-black" />
+            <div className="flex items-center gap-1 mt-4 text-blue-600 text-sm">
+              <ArrowUp className="h-3 w-3" />
               <span>3.2%</span>
-              <span className="text-black ml-1">from last month</span>
+              <span className="text-blue-500 ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-black">
+        <Card className="bg-white border-2 border-blue-100">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-black">Follower Growth</p>
+                <p className="text-sm font-medium text-blue-700">Follower Growth</p>
                 <h3 className="text-2xl font-bold mt-1 text-black">+47</h3>
               </div>
-              <div className="w-12 h-12 bg-white border-2 border-black rounded-full flex items-center justify-center">
-                <Users className="h-6 w-6 text-black" />
+              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-4 text-black text-sm">
-              <ArrowUp className="h-3 w-3 text-black" />
+            <div className="flex items-center gap-1 mt-4 text-blue-600 text-sm">
+              <ArrowUp className="h-3 w-3" />
               <span>8.7%</span>
-              <span className="text-black ml-1">from last month</span>
+              <span className="text-blue-500 ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
@@ -428,13 +428,13 @@ const DashboardPage: React.FC = () => {
         {/* Left column - Create Post & User Info */}
         <div className="lg:col-span-1 space-y-6">
           {/* Quick Actions Card */}
-          <Card className="bg-white border-black">
+          <Card className="bg-white border-2 border-blue-100">
             <CardHeader className="pb-3">
               <CardTitle className="text-base text-black">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button 
-                className="w-full justify-start bg-black hover:bg-black/90 text-white"
+                className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={() => navigate('/dashboard/post')}
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
@@ -443,7 +443,7 @@ const DashboardPage: React.FC = () => {
             
               <Button
                 variant="outline"
-                className="w-full justify-start border-black text-black"
+                className="w-full justify-start border-blue-300 text-blue-700"
                 onClick={() => navigate('/dashboard/request-carousel')}
               >
                 <LayoutGrid className="h-4 w-4 mr-2" />
@@ -452,7 +452,7 @@ const DashboardPage: React.FC = () => {
             
               <Button
                 variant="outline"
-                className="w-full justify-start border-black text-black"
+                className="w-full justify-start border-blue-300 text-blue-700"
                 onClick={() => navigate('/dashboard/scraper')}
               >
                 <FileText className="h-4 w-4 mr-2" />
@@ -462,10 +462,10 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* Weekly AI Tip */}
-          <Card className="bg-white border-black">
-            <CardHeader className="pb-2">
+          <Card className="bg-white border-2 border-blue-300">
+            <CardHeader className="pb-2 bg-blue-50">
               <CardTitle className="text-base flex items-center gap-2 text-black">
-                <Lightbulb className="h-5 w-5 text-black" />
+                <Lightbulb className="h-5 w-5 text-blue-600" />
                 <span>Weekly AI Tip</span>
               </CardTitle>
             </CardHeader>
@@ -479,11 +479,11 @@ const DashboardPage: React.FC = () => {
 
           {/* LinkedIn Connection Section - Show if no LinkedIn account is connected */}
           {(!isLinkedInConnected && !loading.profile) && (
-            <Card className="overflow-hidden border-black bg-white">
+            <Card className="overflow-hidden border-2 border-blue-300 bg-white">
               <CardContent className="p-0">
-                <div className="flex flex-col md:flex-row items-center bg-white p-6 border-b border-black">
+                <div className="flex flex-col md:flex-row items-center bg-blue-50 p-6">
                   <div className="flex-1 mb-4 md:mb-0 md:mr-6">
-                    <h3 className="text-xl font-bold text-black mb-2">
+                    <h3 className="text-xl font-bold text-blue-700 mb-2">
                       Connect Your LinkedIn Account
                     </h3>
                     <p className="text-black mb-4">
@@ -493,7 +493,7 @@ const DashboardPage: React.FC = () => {
                       onClick={handleConnectLinkedIn}
                       variant="default" 
                       size="lg"
-                      className="bg-black hover:bg-black/90 text-white"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <Linkedin className="w-5 h-5 mr-2" />
                       Connect LinkedIn
@@ -501,7 +501,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                   <div className="flex-shrink-0 w-32 h-32 md:w-48 md:h-48 relative">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Linkedin className="w-24 h-24 md:w-32 md:h-32 text-black" />
+                      <Linkedin className="w-24 h-24 md:w-32 md:h-32 text-blue-300" />
                     </div>
                   </div>
                 </div>
@@ -510,29 +510,29 @@ const DashboardPage: React.FC = () => {
           )}
           
           {/* User Profile Information */}
-          <Card className="bg-white border-black">
-            <CardHeader className="pb-3">
+          <Card className="bg-white border-2 border-blue-100">
+            <CardHeader className="pb-3 bg-blue-50">
               <CardTitle className="text-base flex items-center gap-2 text-black">
-                <User className="h-5 w-5 text-black" />
+                <User className="h-5 w-5 text-blue-600" />
                 {user?.authMethod === 'linkedin' ? 'LinkedIn Profile' : 'User Profile'}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {loading.profile ? (
                 <div className="flex flex-col items-center justify-center py-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-black mb-2" />
-                  <p className="text-sm text-black">Loading profile...</p>
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 mb-2" />
+                  <p className="text-sm text-blue-700">Loading profile...</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-16 w-16 border-2 border-black">
+                    <Avatar className="h-16 w-16 border-2 border-blue-300">
                       {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
                         <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
                       ) : user?.profilePicture ? (
                         <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
                       ) : (
-                        <AvatarFallback className="bg-white text-black">{getUserInitials()}</AvatarFallback>
+                        <AvatarFallback className="bg-blue-100 text-blue-700">{getUserInitials()}</AvatarFallback>
                       )}
                     </Avatar>
                     <div>
@@ -541,23 +541,23 @@ const DashboardPage: React.FC = () => {
                           linkedInProfile.name : 
                           getUserFullName()}
                       </h3>
-                      <p className="text-sm text-black mt-1">
+                      <p className="text-sm text-blue-700 mt-1">
                         {user?.email}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="pt-2 border-t border-black">
+                  <div className="pt-2 border-t border-blue-100">
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="w-6 h-6 rounded-full bg-white border border-black flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                         {user?.authMethod === 'linkedin' ? (
-                          <Linkedin className="h-3.5 w-3.5 text-black" />
+                          <Linkedin className="h-3.5 w-3.5 text-blue-600" />
                         ) : user?.authMethod === 'google' ? (
                           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#000000" />
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#000000" />
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#000000" />
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#000000" />
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#0088FF" />
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#0088FF" />
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#0088FF" />
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#0088FF" />
                           </svg>
                         ) : (
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -567,7 +567,7 @@ const DashboardPage: React.FC = () => {
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs text-black">Login Method</span>
+                        <span className="text-xs text-blue-600">Login Method</span>
                         <span className="text-sm font-medium capitalize text-black">{user?.authMethod || 'Email'}</span>
                       </div>
                     </div>
@@ -575,37 +575,37 @@ const DashboardPage: React.FC = () => {
                     {user?.authMethod === 'linkedin' && (
                       <>
                         <div className="flex items-center gap-2 mb-1 mt-3">
-                          <div className="w-6 h-6 rounded-full bg-white border border-black flex items-center justify-center flex-shrink-0">
-                            <UserCircle className="h-3.5 w-3.5 text-black" />
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <UserCircle className="h-3.5 w-3.5 text-blue-600" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-xs text-black">LinkedIn Username</span>
+                            <span className="text-xs text-blue-600">LinkedIn Username</span>
                             <span className="text-sm font-medium text-black">{linkedInProfile?.username || linkedInUsername || 'Not available'}</span>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-2 mt-3">
-                          <div className="w-6 h-6 rounded-full bg-white border border-black flex items-center justify-center flex-shrink-0">
-                            <CreditCard className="h-3.5 w-3.5 text-black" />
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <CreditCard className="h-3.5 w-3.5 text-blue-600" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-xs text-black">LinkedIn ID</span>
+                            <span className="text-xs text-blue-600">LinkedIn ID</span>
                             <span className="text-sm font-medium truncate max-w-[200px] text-black">{linkedInProfile?.id || user?.linkedinId || 'Not available'}</span>
                           </div>
                         </div>
                         
                         {linkedInProfile?.url && (
                           <div className="flex items-center gap-2 mt-3">
-                            <div className="w-6 h-6 rounded-full bg-white border border-black flex items-center justify-center flex-shrink-0">
-                              <Linkedin className="h-3.5 w-3.5 text-black" />
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Linkedin className="h-3.5 w-3.5 text-blue-600" />
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs text-black">LinkedIn Profile</span>
+                              <span className="text-xs text-blue-600">LinkedIn Profile</span>
                               <a 
                                 href={linkedInProfile.url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-sm font-medium text-black hover:underline"
+                                className="text-sm font-medium text-blue-600 hover:underline"
                               >
                                 View Profile
                               </a>
@@ -624,16 +624,16 @@ const DashboardPage: React.FC = () => {
         {/* Middle & Right columns - Scheduled Posts & Content Creation */}
         <div className="lg:col-span-2 space-y-6">
           {/* Scheduled Posts */}
-          <Card className="bg-white border-black">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <Card className="bg-white border-2 border-blue-100">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 bg-blue-50">
               <div>
                 <CardTitle className="text-black">Upcoming Posts</CardTitle>
-                <CardDescription className="text-black">Your scheduled content for publishing</CardDescription>
+                <CardDescription className="text-blue-700">Your scheduled content for publishing</CardDescription>
               </div>
               <Button
                 variant="ghost" 
                 size="sm"
-                className="text-black"
+                className="text-blue-600"
                 onClick={() => navigate('/dashboard/posts')}
               >
                 View All
@@ -642,18 +642,18 @@ const DashboardPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {scheduledPosts.slice(0, 3).map((post, index) => (
-                  <div key={index} className="flex gap-4 p-3 bg-white border border-black rounded-lg">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white border-2 border-black flex items-center justify-center">
+                  <div key={index} className="flex gap-4 p-3 bg-white border border-blue-100 rounded-lg">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
                       {post.isCarousel ? (
-                        <Layers className="w-5 h-5 text-black" />
+                        <Layers className="w-5 h-5 text-blue-600" />
                       ) : (
-                        <FileText className="w-5 h-5 text-black" />
+                        <FileText className="w-5 h-5 text-blue-600" />
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-black">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
-                        <div className="flex items-center text-black text-xs">
+                        <div className="flex items-center text-blue-600 text-xs">
                           <Clock className="h-3 w-3 mr-1" />
                           {post.scheduledTime}
                         </div>
@@ -669,39 +669,39 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* Content Creation Card */}
-          <Card className="bg-white border-black">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <Card className="bg-white border-2 border-blue-100">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 bg-blue-50">
               <div>
                 <CardTitle className="text-black">Content Creation</CardTitle>
-                <CardDescription className="text-black">Create and publish LinkedIn content</CardDescription>
+                <CardDescription className="text-blue-700">Create and publish LinkedIn content</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="flex flex-col gap-3">
                 <h3 className="text-sm font-medium text-black">Quick Post</h3>
                 <div className="flex gap-3">
-                  <Avatar className="w-10 h-10 border-2 border-black">
+                  <Avatar className="w-10 h-10 border-2 border-blue-300">
                     {user?.profilePicture || (linkedInProfile?.profileImage) ? (
                       <AvatarImage src={user?.profilePicture || linkedInProfile?.profileImage} alt={getUserFullName()} />
                     ) : (
-                      <AvatarFallback className="bg-white text-black">{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback className="bg-blue-100 text-blue-700">{getUserInitials()}</AvatarFallback>
                     )}
                   </Avatar>
                   <div className="flex-1">
                     <Textarea 
                       placeholder="Share your thoughts on LinkedIn..."
-                      className="min-h-[80px] resize-none border-black text-black"
+                      className="min-h-[80px] resize-none border-blue-200 text-black"
                     />
                     <div className="flex justify-between mt-3">
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-8 px-2 border-black text-black">
+                        <Button variant="outline" size="sm" className="h-8 px-2 border-blue-300 text-blue-700">
                           <Upload className="h-4 w-4 mr-1" />
                           Add Image
                         </Button>
                       </div>
                       <Button
                         size="sm"
-                        className="h-8 bg-black text-white"
+                        className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
                         onClick={() => navigate('/dashboard/post')}
                       >
                         <Edit3 className="h-4 w-4 mr-1" />
@@ -712,10 +712,10 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-black">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-blue-100">
                 <Button
                   variant="outline"
-                  className="justify-start h-auto py-3 border-black text-black"
+                  className="justify-start h-auto py-3 border-blue-300 text-blue-700"
                   onClick={() => navigate('/dashboard/post')}
                 >
                   <div className="flex flex-col items-start text-left">
@@ -723,7 +723,7 @@ const DashboardPage: React.FC = () => {
                       <FileText className="h-4 w-4 mr-2" />
                       Create Text Post
                     </span>
-                    <span className="text-xs text-black mt-1 ml-6">
+                    <span className="text-xs text-blue-500 mt-1 ml-6">
                       Write a simple text post
                     </span>
                   </div>
@@ -731,7 +731,7 @@ const DashboardPage: React.FC = () => {
                 
                 <Button
                   variant="outline"
-                  className="justify-start h-auto py-3 border-black text-black"
+                  className="justify-start h-auto py-3 border-blue-300 text-blue-700"
                   onClick={() => navigate('/dashboard/request-carousel')}
                 >
                   <div className="flex flex-col items-start text-left">
@@ -739,7 +739,7 @@ const DashboardPage: React.FC = () => {
                       <Layers className="h-4 w-4 mr-2" />
                       Create Carousel
                     </span>
-                    <span className="text-xs text-black mt-1 ml-6">
+                    <span className="text-xs text-blue-500 mt-1 ml-6">
                       Create slide deck posts
                     </span>
                   </div>
@@ -749,16 +749,16 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* AI Content Suggestions */}
-          <Card className="bg-white border-black">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <Card className="bg-white border-2 border-blue-100">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 bg-blue-50">
               <div>
                 <CardTitle className="text-black">Content Inspiration</CardTitle>
-                <CardDescription className="text-black">AI-powered content ideas</CardDescription>
+                <CardDescription className="text-blue-700">AI-powered content ideas</CardDescription>
               </div>
               <Button
                 variant="ghost" 
                 size="sm"
-                className="text-black"
+                className="text-blue-600"
                 onClick={() => navigate('/dashboard/templates')}
               >
                 View All
@@ -766,10 +766,10 @@ const DashboardPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-3 bg-white rounded-lg border-2 border-black">
+                <div className="p-3 bg-white border-2 border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-white p-1 rounded border border-black">
-                      <Sparkles className="h-4 w-4 text-black" />
+                    <span className="bg-blue-100 p-1 rounded">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
                     </span>
                     <h3 className="text-sm font-medium text-black">LinkedIn Success Story</h3>
                   </div>
@@ -779,17 +779,17 @@ const DashboardPage: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full border-black text-black"
+                    className="w-full border-blue-300 text-blue-700"
                     onClick={() => navigate('/dashboard/post?template=success-story')}
                   >
                     Use Template
                   </Button>
                 </div>
                           
-                <div className="p-3 bg-white rounded-lg border-2 border-black">
+                <div className="p-3 bg-white border-2 border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-white p-1 rounded border border-black">
-                      <Lightbulb className="h-4 w-4 text-black" />
+                    <span className="bg-blue-100 p-1 rounded">
+                      <Lightbulb className="h-4 w-4 text-blue-600" />
                     </span>
                     <h3 className="text-sm font-medium text-black">Industry Insight</h3>
                   </div>
@@ -799,7 +799,7 @@ const DashboardPage: React.FC = () => {
                   <Button 
                     variant="outline"
                     size="sm"
-                    className="w-full border-black text-black"
+                    className="w-full border-blue-300 text-blue-700"
                     onClick={() => navigate('/dashboard/post?template=industry-insight')}
                   >
                     Use Template
