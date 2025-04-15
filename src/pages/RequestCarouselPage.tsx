@@ -198,7 +198,7 @@ const RequestCarouselPage: React.FC = () => {
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Request Carousel Post</h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="">
           Share your requirements and our team will create a professional carousel for your LinkedIn profile
         </p>
       </div>
