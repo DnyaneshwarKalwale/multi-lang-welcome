@@ -391,7 +391,7 @@ const RequestCarouselPage: React.FC = () => {
                               View All Templates
                               <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
-                          </div>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

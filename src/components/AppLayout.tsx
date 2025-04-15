@@ -17,14 +17,14 @@ interface AppLayoutProps {
  * This serves as a wrapper for protected routes to ensure consistent navigation
  */
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
 
   // Monitor window resize to determine if mobile view
   useEffect(() => {
     const handleResize = () => {
-      const isSmallScreen = window.innerWidth < 768;
+      const isSmallScreen = window.innerWidth < 1024;
       setIsMobile(isSmallScreen);
       
       // Close sidebar on resize to mobile
@@ -87,18 +87,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </motion.div>
             </div>
             
-            {/* Hamburger menu button - visible only on mobile/tablet */}
-            {isMobile && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="ml-2 text-gray-600 hover:bg-blue-100"
-                onClick={toggleSidebar}
-                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
-              >
-                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-              </Button>
-            )}
+            {/* Hamburger menu button - Always show on tablet and mobile */}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className={cn(
+                "ml-2 flex items-center gap-1",
+                isMobile ? "flex" : "hidden md:hidden"
+              )}
+              onClick={toggleSidebar}
+              aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+            >
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              <span className="sr-only md:not-sr-only">Menu</span>
+            </Button>
           </div>
         </header>
         

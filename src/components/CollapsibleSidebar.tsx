@@ -32,7 +32,7 @@ interface CollapsibleSidebarProps {
 }
 
 export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSidebarProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const { user, logout } = useAuth();
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -40,7 +40,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
   // Monitor window resize
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     
     // Set initial state
@@ -105,7 +105,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
               animate={{ x: 0 }}
               exit={{ x: 320 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed right-0 top-0 z-50 h-screen w-64 flex flex-col border-l border-gray-200 bg-white shadow-lg"
+              className="fixed right-0 top-0 z-50 h-screen w-80 flex flex-col border-l border-gray-200 bg-white shadow-lg"
             >
               {/* Sidebar Header */}
               <div className="flex h-16 items-center px-4 py-3 w-full justify-between">
@@ -113,7 +113,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
                   <BrandOutIcon className="w-8 h-8" />
                   <span className="font-semibold text-gray-900">BrandOut</span>
                 </div>
-                <button onClick={onClose} className="text-gray-500">
+                <button onClick={onClose} className="text-gray-500 p-2 hover:bg-gray-100 rounded-full">
                   <X size={20} />
                 </button>
               </div>
@@ -127,7 +127,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
                       to={item.path}
                       onClick={onClose}
                       className={({ isActive }) => cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full',
+                        'flex items-center gap-3 rounded-lg px-3 py-3 transition-colors w-full',
                         isActive 
                           ? 'bg-primary-50 text-primary' 
                           : 'text-gray-600 hover:bg-gray-100'
@@ -149,7 +149,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
               </div>
               
               {/* User Profile Section */}
-              <div className="mt-auto border-t border-gray-200 p-3 w-full flex items-center gap-3">
+              <div className="mt-auto border-t border-gray-200 p-4 w-full flex items-center gap-3">
                 <Avatar className="h-9 w-9 border border-gray-200">
                   <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
                   <AvatarFallback className="bg-primary/10 text-primary">
