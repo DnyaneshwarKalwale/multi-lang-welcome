@@ -1314,12 +1314,12 @@ const CreatePostPage: React.FC = () => {
         
         {/* Right Side - Live Preview */}
         <div>
-          <Card className="border-primary/30">
+          <Card className="border-primary/30 bg-white">
             <CardHeader className="pb-2 bg-primary/5">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Live Preview</CardTitle>
-                  <CardDescription>Your post updates in real-time as you type</CardDescription>
+                  <CardTitle className="text-black">Live Preview</CardTitle>
+                  <CardDescription className="text-gray-800">Your post updates in real-time as you type</CardDescription>
                 </div>
                 <Badge variant="outline" className="bg-primary/10 text-primary">
                   Live
@@ -1341,16 +1341,16 @@ const CreatePostPage: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-[15px]">{user ? `${user.firstName} ${user.lastName}` : 'User Name'}</h4>
-                    <p className="text-xs text-neutral-medium">
+                    <h4 className="font-semibold text-[15px] text-black">{user ? `${user.firstName} ${user.lastName}` : 'User Name'}</h4>
+                    <p className="text-xs text-gray-800">
                       {user?.role || 'LinkedIn User'} {user?.role ? ' · ' : ''} 
                       <span className="text-blue-600">Follow</span>
                     </p>
-                    <div className="flex items-center gap-1 text-[11px] text-neutral-medium mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-gray-800 mt-0.5">
                       <span>Now</span>
                       <span>•</span>
                       <Globe className="h-3 w-3" />
-                      <span className="ml-auto text-[11px] text-neutral-medium">
+                      <span className="ml-auto text-[11px] text-gray-800">
                         <span className="text-blue-600">500+ connections</span>
                       </span>
                     </div>
@@ -1359,7 +1359,7 @@ const CreatePostPage: React.FC = () => {
                 
                 {activeTab === 'text' && (
                   <div className="mb-4 transition-all duration-200">
-                    <p className="text-[14px] leading-relaxed text-gray-800 whitespace-pre-line mb-3 transition-all duration-200">
+                    <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200">
                       {content || "Your post content will appear here"}
                     </p>
                     
@@ -1381,13 +1381,13 @@ const CreatePostPage: React.FC = () => {
                     
                     {/* Display poll if active */}
                     {isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2 && (
-                      <div className="mb-3 border rounded-lg p-3 bg-gray-50">
-                        <p className="text-sm font-medium mb-2">Poll ({pollDuration} day{pollDuration > 1 ? 's' : ''})</p>
+                      <div className="mb-3 border rounded-lg p-3 bg-white">
+                        <p className="text-sm font-medium mb-2 text-black">Poll ({pollDuration} day{pollDuration > 1 ? 's' : ''})</p>
                         <div className="space-y-2">
                           {pollOptions.filter(opt => opt.trim()).map((option, index) => (
                             <div key={index} className="flex items-center gap-2">
                               <div className="w-4 h-4 rounded-full border border-primary flex-shrink-0"></div>
-                              <span className="text-sm">{option || `Option ${index + 1}`}</span>
+                              <span className="text-sm text-black">{option || `Option ${index + 1}`}</span>
                             </div>
                           ))}
                         </div>
@@ -1459,17 +1459,17 @@ const CreatePostPage: React.FC = () => {
       {/* Tools Section Below */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* AI Tools */}
-        <Card>
+        <Card className="bg-white border-2">
           <CardHeader>
-            <CardTitle>AI Tools</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-black">AI Tools</CardTitle>
+            <CardDescription className="text-gray-800">
               Enhance your content with AI
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-1 text-black">
                   <Sparkles size={16} className="text-amber-500" />
                   AI Assistance
                 </h3>
@@ -1477,22 +1477,22 @@ const CreatePostPage: React.FC = () => {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="w-full justify-start text-sm"
+                    className="w-full justify-start text-sm bg-white text-black"
                     onClick={() => navigate('/dashboard/ai-writer')}
                   >
                     <Wand2 className="h-3.5 w-3.5 mr-2" />
                     Go to AI Writer
                   </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
                     Generate a professional post
                   </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
                     Improve writing style
                   </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
                     Create catchy hook
                   </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
                     Suggest hashtags
                   </Button>
                 </div>
@@ -1502,10 +1502,10 @@ const CreatePostPage: React.FC = () => {
         </Card>
         
         {/* Templates */}
-        <Card>
+        <Card className="bg-white border-2">
           <CardHeader>
-            <CardTitle>Templates & Tips</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-black">Templates & Tips</CardTitle>
+            <CardDescription className="text-gray-800">
               Content templates and best practices
             </CardDescription>
           </CardHeader>
@@ -1513,12 +1513,12 @@ const CreatePostPage: React.FC = () => {
             {activeTab === 'text' && (
               <div className="space-y-4">                
                 <div>
-                  <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
+                  <h3 className="text-sm font-medium mb-2 flex items-center gap-1 text-black">
                     <BarChart size={16} className="text-accent" />
                     Engagement Tips
                   </h3>
-                  <div className="bg-accent-50 rounded-lg p-3 text-sm">
-                    <ul className="list-disc list-inside space-y-1">
+                  <div className="bg-white border-2 rounded-lg p-3 text-sm">
+                    <ul className="list-disc list-inside space-y-1 text-black">
                       <li>Ask a question to encourage comments</li>
                       <li>Use 3-5 relevant hashtags</li>
                       <li>Keep paragraphs short and scannable</li>
@@ -1532,7 +1532,7 @@ const CreatePostPage: React.FC = () => {
             {activeTab === 'carousel' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium mb-2">Carousel Templates</h3>
+                  <h3 className="text-sm font-medium mb-2 text-black">Carousel Templates</h3>
                   <ScrollArea className="h-[200px]">
                     <div className="space-y-2 pr-4">
                       {carouselTemplates.map(template => (
@@ -1541,17 +1541,17 @@ const CreatePostPage: React.FC = () => {
                           className={`border rounded-lg p-3 cursor-pointer transition-colors ${
                             selectedTemplate === template.id 
                               ? 'bg-primary-50 border-primary' 
-                              : 'hover:bg-neutral-lightest'
+                              : 'hover:bg-white border-2'
                           }`}
                           onClick={() => applyTemplate(template.id)}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-medium">{template.name}</h4>
+                            <h4 className="font-medium text-black">{template.name}</h4>
                             <Badge variant="outline" className="text-xs">
                               {template.slideCount} slides
                             </Badge>
                           </div>
-                          <p className="text-xs text-neutral-medium">{template.description}</p>
+                          <p className="text-xs text-black">{template.description}</p>
                         </div>
                       ))}
                     </div>
@@ -1563,9 +1563,9 @@ const CreatePostPage: React.FC = () => {
             {activeTab === 'document' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium mb-2">Document Tips</h3>
-                  <div className="bg-primary-50 rounded-lg p-3 text-sm">
-                    <ul className="list-disc list-inside space-y-1">
+                  <h3 className="text-sm font-medium mb-2 text-black">Document Tips</h3>
+                  <div className="bg-white border-2 rounded-lg p-3 text-sm">
+                    <ul className="list-disc list-inside space-y-1 text-black">
                       <li>Use PDFs for best compatibility</li>
                       <li>Ensure document is under 100MB</li>
                       <li>Use landscape orientation for presentations</li>
@@ -1580,8 +1580,8 @@ const CreatePostPage: React.FC = () => {
       </div>
       
       {isPollActive && (
-        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-md">
-          <h3 className="text-sm font-medium mb-3">Poll Options</h3>
+        <div className="mt-4 p-4 bg-white border-2 rounded-md">
+          <h3 className="text-sm font-medium mb-3 text-black">Poll Options</h3>
           <div className="space-y-3">
             {pollOptions.map((option, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -1590,6 +1590,7 @@ const CreatePostPage: React.FC = () => {
                     placeholder={`Option ${index + 1}`}
                     value={option}
                     onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                    className="bg-white text-black"
                   />
                 </div>
                 {pollOptions.length > 2 && (
@@ -1609,16 +1610,16 @@ const CreatePostPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleAddPollOption}
-                className="w-full"
+                className="w-full bg-white text-black"
               >
                 Add Option
               </Button>
             )}
             
             <div className="mt-3">
-              <label className="block text-sm mb-1">Poll Duration</label>
+              <label className="block text-sm mb-1 text-black">Poll Duration</label>
               <select
-                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded"
+                className="w-full p-2 border border-gray-300 rounded bg-white text-black"
                 value={pollDuration}
                 onChange={(e) => setPollDuration(parseInt(e.target.value))}
               >
@@ -1755,7 +1756,7 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
   return (
     <div className="relative linkedin-post-preview">
       <div 
-        className={`${getContainerClass()} aspect-[3/2] bg-gradient-to-b from-blue-50/80 to-white flex items-center justify-center`}
+        className={`${getContainerClass()} aspect-[3/2] bg-white flex items-center justify-center`}
       >
         {/* Single slide display */}
         {!showMultipleSlides && (
@@ -1789,7 +1790,7 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
                   </span>
                   
                   {/* Content displayed in LinkedIn style */}
-                  <div className="text-md font-medium text-gray-800">
+                  <div className="text-md font-medium text-black">
                     {slides[currentSlide].content}
                   </div>
                 </div>
