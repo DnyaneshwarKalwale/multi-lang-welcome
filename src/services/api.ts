@@ -15,13 +15,64 @@ const api = axios.create({
   withCredentials: true, // Important for CORS with credentials
 });
 
+// Helper functions for token management
+export const tokenManager = {
+  // Store token by auth method
+  storeToken: (token: string, authMethod: 'email' | 'linkedin' | 'google'): void => {
+    // Store in method-specific storage
+    localStorage.setItem(`${authMethod}-login-token`, token);
+    
+    // Also store as generic token for backward compatibility
+    localStorage.setItem('token', token);
+    
+    // Record the auth method
+    localStorage.setItem('auth-method', authMethod);
+  },
+  
+  // Get token by auth method
+  getToken: (authMethod?: string): string | null => {
+    const currentAuthMethod = authMethod || localStorage.getItem('auth-method');
+    
+    // If we have a specific auth method, try to get that token first
+    if (currentAuthMethod) {
+      const specificToken = localStorage.getItem(`${currentAuthMethod}-login-token`);
+      if (specificToken) return specificToken;
+    }
+    
+    // Fall back to generic token
+    return localStorage.getItem('token');
+  },
+  
+  // Clear all tokens
+  clearAllTokens: (): void => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('email-login-token');
+    localStorage.removeItem('linkedin-login-token');
+    localStorage.removeItem('google-login-token');
+    localStorage.removeItem('auth-method');
+  }
+};
+
 // Add request interceptor to include auth token in requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Determine which token to use based on the API endpoint
+    let token;
+    
+    // First try to match token by endpoint
+    if (config.url?.includes('/linkedin')) {
+      token = localStorage.getItem('linkedin-login-token');
+    } else if (config.url?.includes('/google')) {
+      token = localStorage.getItem('google-login-token');
+    } else {
+      // Use token based on current auth method
+      token = tokenManager.getToken();
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => Promise.reject(error)

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { authApi } from "@/services/api";
+import { authApi, tokenManager } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -125,10 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.login(email, password);
       
-      // Store the token with a platform-specific key
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('email-login-token', response.token);
-      localStorage.setItem('auth-method', 'email');
+      // Store token using the tokenManager
+      tokenManager.storeToken(response.token, 'email');
       
       setToken(response.token);
       setUser(response.user);
@@ -152,10 +150,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.linkedinAuth(userData);
       
       if (response.token) {
-        // Store the token with platform-specific keys
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('linkedin-login-token', response.token);
-        localStorage.setItem('auth-method', 'linkedin');
+        // Store token using the tokenManager
+        tokenManager.storeToken(response.token, 'linkedin');
         
         setToken(response.token);
         setUser(response.user);
@@ -182,10 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.googleAuth(userData);
       
       if (response.token) {
-        // Store the token with platform-specific keys
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('google-login-token', response.token);
-        localStorage.setItem('auth-method', 'google');
+        // Store token using the tokenManager
+        tokenManager.storeToken(response.token, 'google');
         
         setToken(response.token);
         setUser(response.user);
@@ -205,12 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    // Clear all tokens stored in localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('email-login-token');
-    localStorage.removeItem('linkedin-login-token');
-    localStorage.removeItem('google-login-token');
-    localStorage.removeItem('auth-method');
+    // Clear all tokens using the tokenManager
+    tokenManager.clearAllTokens();
     
     setUser(null);
     setToken(null);

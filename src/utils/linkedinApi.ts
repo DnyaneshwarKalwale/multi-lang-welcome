@@ -1,7 +1,21 @@
 import axios from 'axios';
+import { tokenManager } from '@/services/api';
 
 // Import the API_URL from the services/api.ts file or define it here
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+
+// Helper function to get the best available LinkedIn token
+const getLinkedInToken = (accessToken?: string): string => {
+  // First try the provided access token (highest priority)
+  if (accessToken) return accessToken;
+  
+  // Then try LinkedIn-specific token from tokenManager
+  const linkedinToken = tokenManager.getToken('linkedin');
+  if (linkedinToken) return linkedinToken;
+  
+  // Last resort - use generic token
+  return tokenManager.getToken() || '';
+};
 
 // Types for LinkedIn API requests
 export interface LinkedInPostRequest {
@@ -95,26 +109,24 @@ class LinkedInApi {
   // Add a test connectivity method
   async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      // Check if token exists - first try LinkedIn-specific token, then fall back to generic token
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const genericToken = localStorage.getItem('token');
-      const authToken = linkedinToken || genericToken;
+      // Get the best available LinkedIn token
+      const token = getLinkedInToken();
       
-      if (!authToken) {
+      if (!token) {
         return { 
           success: false, 
           message: 'No authentication token found',
           details: {
             authMethod: localStorage.getItem('auth-method') || 'none',
-            hasLinkedInToken: !!linkedinToken,
-            hasGenericToken: !!genericToken
+            hasLinkedInToken: !!localStorage.getItem('linkedin-login-token'),
+            hasGenericToken: !!localStorage.getItem('token')
           }
         };
       }
       
       // Test the backend connectivity first
       const healthResponse = await axios.get(`${API_URL}/health`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
       // If backend is up, check LinkedIn connectivity
@@ -127,7 +139,11 @@ class LinkedInApi {
             backendStatus: healthResponse.status,
             linkedinId: linkedinProfile,
             authMethod: localStorage.getItem('auth-method') || 'unknown',
-            tokenType: linkedinToken ? 'linkedin-specific' : 'generic'
+            tokenType: token === localStorage.getItem('linkedin-login-token') 
+              ? 'linkedin-specific' 
+              : token === localStorage.getItem('token') 
+                ? 'generic' 
+                : 'custom'
           }
         };
       } catch (linkedinError) {
@@ -138,7 +154,11 @@ class LinkedInApi {
             backendStatus: healthResponse.status,
             error: linkedinError.message,
             authMethod: localStorage.getItem('auth-method') || 'unknown',
-            tokenType: linkedinToken ? 'linkedin-specific' : 'generic'
+            tokenType: token === localStorage.getItem('linkedin-login-token') 
+              ? 'linkedin-specific' 
+              : token === localStorage.getItem('token') 
+                ? 'generic' 
+                : 'custom'
           }
         };
       }
@@ -159,15 +179,11 @@ class LinkedInApi {
   // Get the current user's LinkedIn ID
   async getUserLinkedInId(accessToken?: string): Promise<string> {
     try {
-      // First try using the platform-specific LinkedIn token
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const genericToken = localStorage.getItem('token');
+      const token = getLinkedInToken(accessToken);
       
-      const headers = accessToken 
-        ? { 'Authorization': `Bearer ${accessToken}` }
-        : linkedinToken 
-          ? { 'Authorization': `Bearer ${linkedinToken}` } 
-          : { 'Authorization': `Bearer ${genericToken}` };
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
       
       const response = await axios.get(`${this.API_URL}/profile`, { headers });
       return response.data.id;
@@ -184,10 +200,7 @@ class LinkedInApi {
     accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
-      // Determine which token to use
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const genericToken = localStorage.getItem('token');
-      const authToken = accessToken || linkedinToken || genericToken;
+      const token = getLinkedInToken(accessToken);
 
       // Create a post with just text content
       const postData = {
@@ -199,7 +212,7 @@ class LinkedInApi {
       // Send post request to our backend which will handle the LinkedIn API
       const response = await axios.post(`${this.API_URL}/post`, postData, {
         headers: {
-          'Authorization': `Bearer ${authToken}`, // Use the determined token
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -304,10 +317,7 @@ class LinkedInApi {
     accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
-      // Determine which token to use
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const genericToken = localStorage.getItem('token');
-      const authToken = accessToken || linkedinToken || genericToken;
+      const token = getLinkedInToken(accessToken);
 
       // Create a post with the Cloudinary image URL
       const postData = {
@@ -322,7 +332,7 @@ class LinkedInApi {
       // Send post request to our backend which will handle the LinkedIn API complexity
       const response = await axios.post(`${this.API_URL}/post`, postData, {
         headers: {
-          'Authorization': `Bearer ${authToken}`, // Use the determined token
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -344,10 +354,7 @@ class LinkedInApi {
     accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
-      // Determine which token to use
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const genericToken = localStorage.getItem('token');
-      const authToken = accessToken || linkedinToken || genericToken;
+      const token = getLinkedInToken(accessToken);
 
       // Send article post data to our backend
       const postData = {
@@ -362,7 +369,7 @@ class LinkedInApi {
       // Use our backend endpoint for LinkedIn posting
       const response = await axios.post(`${this.API_URL}/post-article`, postData, {
         headers: {
-          'Authorization': `Bearer ${authToken}`, // Use the determined token
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -398,10 +405,7 @@ class LinkedInApi {
     accessToken?: string
   ): Promise<any> {
     try {
-      // Determine which token to use
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const genericToken = localStorage.getItem('token');
-      const authToken = accessToken || linkedinToken || genericToken;
+      const token = getLinkedInToken(accessToken);
 
       // Create poll data
       const postData = {
@@ -414,7 +418,7 @@ class LinkedInApi {
       // Send poll post to our backend
       const response = await axios.post(`${this.API_URL}/post-poll`, postData, {
         headers: {
-          'Authorization': `Bearer ${authToken}`, // Use the determined token
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
