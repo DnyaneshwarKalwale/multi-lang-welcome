@@ -1,285 +1,277 @@
-import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  LogOut, X, Home, LayoutGrid, BarChart2, Settings, Image, 
-  FileText, Users, CreditCard, Lightbulb, Bot, Globe
+  Home, FileText, BookOpen, Settings, Users, 
+  PlusCircle, BarChart3, Linkedin, 
+  LogOut, Bell, MessageSquare, Lightbulb,
+  Heart, BookMarked, CreditCard, LayoutGrid,
+  Search, Upload, Headphones, Youtube, Server,
+  Menu, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { BrandOutIcon } from './BrandOutIcon';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
 
 interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-}
-
-interface CollapsibleSidebarProps {
-  isOpen: boolean;
-  isFixed?: boolean;
-  deviceType?: 'mobile' | 'tablet' | 'desktop';
-  onClose: () => void;
-}
-
-export function CollapsibleSidebar({ 
-  isOpen, 
-  isFixed = false, 
-  deviceType = 'desktop',
-  onClose 
-}: CollapsibleSidebarProps) {
-  const location = useLocation();
-  const { user } = useAuth();
-
-  const navItems: NavItem[] = [
-    {
-      label: 'Dashboard',
-      href: '/dashboard/home',
-      icon: <Home className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Create Post',
-      href: '/dashboard/post',
-      icon: <FileText className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Post Library',
-      href: '/dashboard/posts',
-      icon: <LayoutGrid className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Request Carousel',
-      href: '/dashboard/request-carousel',
-      icon: <Image className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Scraper',
-      href: '/dashboard/scraper',
-      icon: <Globe className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Inspiration',
-      href: '/dashboard/inspiration',
-      icon: <Lightbulb className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'AI Writer',
-      href: '/dashboard/ai',
-      icon: <Bot className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Analytics',
-      href: '/dashboard/analytics',
-      icon: <BarChart2 className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Team',
-      href: '/dashboard/team',
-      icon: <Users className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Settings',
-      href: '/dashboard/settings',
-      icon: <Settings className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Billing',
-      href: '/dashboard/billing',
-      icon: <CreditCard className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Image Gallery',
-      href: '/dashboard/images',
-      icon: <Image className="h-4 w-4 mr-3" />
-    }
-  ];
-
-  // Determine responsive values based on device type
-  const sidebarWidth = deviceType === 'mobile' ? 'w-[85vw]' : 'w-[280px]';
-  const logoSize = deviceType === 'mobile' ? 'h-6' : 'h-7';
-  const textSize = deviceType === 'mobile' ? 'text-xs' : 'text-sm';
-  const navItemHeight = deviceType === 'mobile' ? 'h-10' : 'h-12';
-
-  // Active path handling - if we're on a carousel-related page, highlight Request Carousel
-  const isCarouselActive = (path: string) => {
-    if (path === '/dashboard/request-carousel') return true;
-    if (path === '/dashboard/carousels') return true;
-    if (path === '/dashboard/my-carousels') return true;
-    if (path === '/templates') return true;
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  title: string;
+  icon: React.ElementType;
+  path: string;
+  badge?: {
+    count: number;
+    variant: 'default' | 'outline' | 'primary' | 'secondary';
   };
+}
 
-  // For fixed desktop sidebar, render without animation wrapper
-  if (isFixed) {
+export function CollapsibleSidebar() {
+  const [expanded, setExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  
+  // Monitor window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isSmallScreen);
+      
+      // Only expanded on desktop (always)
+      if (!isSmallScreen) {
+        setExpanded(true);
+        setIsOpen(true);
+      } else {
+        setExpanded(true);
+        setIsOpen(false);
+      }
+    };
+    
+    // Set initial state
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Handle clicks outside the sidebar to close it on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobile && isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobile, isOpen]);
+  
+  const navItems: NavItem[] = [
+    { title: 'Home', icon: Home, path: '/dashboard/home' },
+    { title: 'Create Post', icon: PlusCircle, path: '/dashboard/post' },
+    { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: 3, variant: 'primary' } },
+    { title: 'Request Carousel', icon: Upload, path: '/dashboard/request-carousel' },
+    { title: 'My Carousels', icon: LayoutGrid, path: '/dashboard/my-carousels' },
+    { title: 'Team', icon: Users, path: '/dashboard/team' },
+    { title: 'Scraper', icon: Search, path: '/dashboard/scraper' },
+    { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
+    { title: 'AI Writer', icon: MessageSquare, path: '/dashboard/ai' },
+    { title: 'Analytics', icon: BarChart3, path: '/dashboard/analytics' },
+    { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
+    { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },
+  ];
+  
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
+  };
+  
+  // For desktop - always show the full sidebar
+  // For mobile - render a hamburger menu and show sidebar only when opened
+  
+  // Mobile sidebar with hamburger button
+  if (isMobile) {
     return (
-      <div className={cn("flex flex-col h-full border-r shadow-md bg-white", "w-[250px]")}>
-        {/* Sidebar Header */}
-        <div className="flex justify-between items-center h-16 px-4 border-b">
-          <Link to="/dashboard" className="flex items-center">
-            <img
-              src="/logo.svg"
-              alt="LinkedIn Carousel"
-              className="h-7 mr-2"
-            />
-            <span className="font-bold text-sm">Carousel Builder</span>
-          </Link>
-        </div>
-
-        {/* Navigation Links */}
-        <div className="flex-1 overflow-y-auto py-4">
-          <nav className="flex flex-col gap-1 px-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center h-12 px-4 rounded-md text-sm font-medium transition-colors",
-                  item.href === '/dashboard/request-carousel' && isCarouselActive(item.href)
-                    ? "bg-blue-50 text-blue-600 font-semibold"
-                    : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
-                      ? "bg-blue-50 text-blue-600 font-semibold"
-                      : "text-gray-600 hover:bg-gray-100"
-                )}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* User Section */}
-        {user && (
-          <div className="p-4 border-t mt-auto">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={user.profilePicture} alt={user.firstName} />
-                <AvatarFallback className="bg-blue-100 text-blue-600">
-                  {user.firstName?.[0]}{user.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.firstName} {user.lastName}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start mt-4 text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => {
-                // You would implement actual logout functionality here
-                console.log('Logging out...');
-              }}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Log out
-            </Button>
-          </div>
+      <>
+        {/* Hamburger Menu Button */}
+        <button 
+          className="fixed top-4 left-4 z-50 bg-white p-2 rounded-md shadow-md border border-gray-200"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
+        >
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      
+        {/* Sidebar Overlay */}
+        {isOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsOpen(false)}
+          />
         )}
-      </div>
+      
+        {/* Mobile Sidebar */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              ref={sidebarRef}
+              initial={{ x: -240 }}
+              animate={{ x: 0 }}
+              exit={{ x: -240 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="fixed left-0 top-0 z-50 h-screen w-64 flex flex-col border-r border-gray-200 bg-white shadow-lg"
+            >
+              {/* Sidebar Header */}
+              <div className="flex h-16 items-center px-4 py-3 w-full justify-between">
+                <div className="flex items-center gap-2">
+                  <BrandOutIcon className="w-8 h-8" />
+                  <span className="font-semibold text-gray-900">BrandOut</span>
+                </div>
+                <button onClick={() => setIsOpen(false)} className="text-gray-500">
+                  <X size={20} />
+                </button>
+              </div>
+    
+              {/* Navigation Menu */}
+              <div className="flex-1 w-full overflow-y-auto">
+                <div className="mt-2 flex flex-col gap-1 w-full px-3 py-2">
+                  {navItems.map((item, index) => (
+                    <NavLink
+                      key={index}
+                      to={item.path}
+                      onClick={() => setIsOpen(false)}
+                      className={({ isActive }) => cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full',
+                        isActive 
+                          ? 'bg-primary-50 text-primary' 
+                          : 'text-gray-600 hover:bg-gray-100'
+                      )}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="font-medium flex-1 whitespace-nowrap">{item.title}</span>
+                      {item.badge && (
+                        <Badge 
+                          variant="outline" 
+                          className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
+                        >
+                          {item.badge.count}
+                        </Badge>
+                      )}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+              
+              {/* User Profile Section */}
+              <div className="mt-auto border-t border-gray-200 p-3 w-full flex items-center gap-3">
+                <Avatar className="h-9 w-9 border border-gray-200">
+                  <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 overflow-hidden">
+                  <div className="truncate text-sm font-medium text-gray-900">
+                    {user?.firstName} {user?.lastName}
+                  </div>
+                  <div className="truncate text-xs text-gray-500">
+                    {user?.email}
+                  </div>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-500 hover:text-gray-700 rounded-full ml-auto"
+                  onClick={logout}
+                  title="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
   
-  // For mobile/tablet, use animated slide-in from right
+  // Desktop sidebar - always expanded with full text
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className={cn("flex flex-col h-full border-l shadow-lg bg-white", sidebarWidth)}
-          initial={{ x: 300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 300, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-          {/* Sidebar Header */}
-          <div className="flex justify-between items-center h-14 sm:h-16 px-3 sm:px-4 border-b">
-            <Link to="/dashboard" className="flex items-center">
-              <img
-                src="/logo.svg"
-                alt="LinkedIn Carousel"
-                className={cn(logoSize, "mr-2")}
-              />
-              <span className={cn("font-bold", textSize)}>Carousel Builder</span>
-            </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="ml-auto hover:bg-red-50"
+    <div
+      className="fixed left-0 top-0 z-40 h-screen w-64 flex flex-col border-r border-gray-200 bg-white shadow-sm"
+    >
+      {/* Sidebar Header */}
+      <div className="flex h-16 items-center px-4 py-3 w-full">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <BrandOutIcon className="w-8 h-8" />
+          <span className="font-semibold text-gray-900">BrandOut</span>
+        </div>
+      </div>
+
+      {/* Navigation Menu */}
+      <div className="flex-1 w-full overflow-y-auto">
+        <div className="mt-2 flex flex-col gap-1 w-full px-3 py-2">
+          {navItems.map((item, index) => (
+            <NavLink
+              key={index}
+              to={item.path}
+              className={({ isActive }) => cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full',
+                isActive 
+                  ? 'bg-primary-50 text-primary' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              )}
             >
-              <X size={deviceType === 'mobile' ? 16 : 18} className="text-red-500" />
-            </Button>
-          </div>
-
-          {/* Navigation Links */}
-          <div className="flex-1 overflow-y-auto py-3 sm:py-4">
-            <nav className="flex flex-col gap-1 px-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center px-3 sm:px-4 rounded-md font-medium transition-colors",
-                    navItemHeight,
-                    textSize,
-                    item.href === '/dashboard/request-carousel' && isCarouselActive(item.href)
-                      ? "bg-blue-50 text-blue-600 font-semibold"
-                      : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
-                        ? "bg-blue-50 text-blue-600 font-semibold"
-                        : "text-gray-600 hover:bg-gray-100"
-                  )}
-                  onClick={onClose}
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium flex-1 whitespace-nowrap">{item.title}</span>
+              {item.badge && (
+                <Badge 
+                  variant="outline" 
+                  className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
                 >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
+                  {item.badge.count}
+                </Badge>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </div>
+      
+      {/* User Profile Section */}
+      <div className="mt-auto border-t border-gray-200 p-3 w-full flex items-center gap-3">
+        <Avatar className="h-9 w-9 border border-gray-200">
+          <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
+          <AvatarFallback className="bg-primary/10 text-primary">
+            {getUserInitials()}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex-1 overflow-hidden">
+          <div className="truncate text-sm font-medium text-gray-900">
+            {user?.firstName} {user?.lastName}
           </div>
-
-          {/* User Section */}
-          {user && (
-            <div className="p-3 sm:p-4 border-t mt-auto">
-              <div className="flex items-center gap-3">
-                <Avatar className={cn(deviceType === 'mobile' ? "h-8 w-8" : "h-10 w-10", "flex-shrink-0")}>
-                  <AvatarImage src={user.profilePicture} alt={user.firstName} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
-                    {user.firstName?.[0]}{user.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className={cn("font-medium text-gray-900 truncate", textSize)}>
-                    {user.firstName} {user.lastName}
-                  </p>
-                  <p className={cn("text-gray-500 truncate", deviceType === 'mobile' ? "text-[10px]" : "text-xs")}>
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50",
-                  deviceType === 'mobile' ? "mt-3 text-xs" : "mt-4"
-                )}
-                onClick={() => {
-                  // You would implement actual logout functionality here
-                  console.log('Logging out...');
-                  onClose();
-                }}
-              >
-                <LogOut className={cn(deviceType === 'mobile' ? "h-3.5 w-3.5" : "h-4 w-4", "mr-2")} />
-                Log out
-              </Button>
-            </div>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+          <div className="truncate text-xs text-gray-500">
+            {user?.email}
+          </div>
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-gray-500 hover:text-gray-700 rounded-full ml-auto"
+          onClick={logout}
+          title="Logout"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
+    </div>
   );
 } 

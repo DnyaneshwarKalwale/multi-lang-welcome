@@ -222,30 +222,30 @@ const RequestCarouselPage: React.FC = () => {
         {/* Left Column - Content Source */}
         <div className="lg:w-1/2">
           <Card className="mb-6">
-            <CardHeader>
+              <CardHeader>
               <CardTitle>Content Source</CardTitle>
-              <CardDescription>
+                <CardDescription>
                 Choose how you want to provide your content
-              </CardDescription>
-            </CardHeader>
+                </CardDescription>
+              </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   {/* Title Field */}
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Carousel Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 5 Ways to Boost Team Productivity" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Carousel Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 5 Ways to Boost Team Productivity" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                   {/* Content Source Tabs */}
                   <Tabs 
                     defaultValue="youtube" 
@@ -266,30 +266,30 @@ const RequestCarouselPage: React.FC = () => {
                     
                     {/* YouTube Content Tab */}
                     <TabsContent value="youtube" className="mt-4 space-y-4">
-                      <FormField
-                        control={form.control}
+                <FormField
+                  control={form.control}
                         name="youtubeUrl"
-                        render={({ field }) => (
-                          <FormItem>
+                  render={({ field }) => (
+                    <FormItem>
                             <FormLabel>YouTube Video URL</FormLabel>
-                            <FormControl>
+                      <FormControl>
                               <div className="relative">
                                 <Input 
                                   placeholder="https://www.youtube.com/watch?v=..." 
-                                  {...field}
+                          {...field} 
                                   onChange={handleYoutubeUrlChange}
-                                />
+                        />
                                 <Youtube className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                               </div>
-                            </FormControl>
-                            <FormDescription>
+                      </FormControl>
+                      <FormDescription>
                               We'll automatically extract content from the video
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                       {form.watch('youtubeUrl') && (
                         <div className="p-4 bg-white border border-blue-200 rounded-lg mt-4">
                           <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -331,55 +331,55 @@ const RequestCarouselPage: React.FC = () => {
                             </>
                           )}
                           
-                          <Input
-                            id="file-upload"
-                            type="file"
+                      <Input
+                        id="file-upload"
+                        type="file"
                             accept=".pdf,.ppt,.pptx,.doc,.docx,image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => document.getElementById('file-upload')?.click()}
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('file-upload')?.click()}
                             className="border-blue-300"
-                          >
-                            {selectedFile ? 'Change File' : 'Select File'}
-                          </Button>
-                        </div>
-                      </div>
+                      >
+                        {selectedFile ? 'Change File' : 'Select File'}
+                      </Button>
+                    </div>
+                  </div>
                     </TabsContent>
                   </Tabs>
                   
                   {/* Template Selection */}
                   <div className="space-y-2 mt-6">
-                    <FormField
-                      control={form.control}
-                      name="templateId"
-                      render={({ field }) => (
-                        <FormItem>
+                  <FormField
+                    control={form.control}
+                    name="templateId"
+                    render={({ field }) => (
+                      <FormItem>
                           <FormLabel>Select Template Style</FormLabel>
                           <div className="grid grid-cols-2 gap-3 mt-2">
                             {templates.slice(0, 4).map(template => (
-                              <div
-                                key={template.id}
+                            <div
+                              key={template.id}
                                 className={`border rounded-lg p-2 cursor-pointer transition-all duration-200 ${
-                                  field.value === template.id 
+                                field.value === template.id 
                                     ? 'border-primary bg-white border-2 shadow-md' 
                                     : 'border-black hover:border-primary hover:border-2 hover:shadow-md bg-white'
-                                }`}
-                                onClick={() => field.onChange(template.id)}
-                              >
+                              }`}
+                              onClick={() => field.onChange(template.id)}
+                            >
                                 <div className="text-center">
                                   <div className="w-full h-20 bg-white border border-blue-200 rounded-md flex items-center justify-center overflow-hidden mb-2">
                                     <LayoutGrid className="h-6 w-6 text-blue-400" />
                                   </div>
                                   <p className="text-xs font-medium truncate">{template.name}</p>
-                                </div>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
+                        </div>
                           <div className="mt-2 flex justify-center">
                             <Button 
                               type="button" 
@@ -392,10 +392,10 @@ const RequestCarouselPage: React.FC = () => {
                               <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
                           </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   </div>
                   
                   {/* Action Buttons */}
@@ -417,20 +417,20 @@ const RequestCarouselPage: React.FC = () => {
                   </div>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
         </div>
-        
+              
         {/* Right Column - Preview */}
         <div className="lg:w-1/2">
-          <Card>
-            <CardHeader>
+              <Card>
+                <CardHeader>
               <CardTitle>Carousel Preview</CardTitle>
               <CardDescription>
                 Example of how your carousel might look
               </CardDescription>
-            </CardHeader>
-            <CardContent>
+                </CardHeader>
+                <CardContent>
               <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
                 {/* Sample carousel preview */}
                 <div className="relative">
@@ -468,9 +468,9 @@ const RequestCarouselPage: React.FC = () => {
                       5
                     </div>
                   </div>
-                </div>
-              </div>
-              
+            </div>
+          </div>
+          
               <div className="mt-6 space-y-4">
                 <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
                   <h3 className="font-medium flex items-center gap-2 mb-2">
@@ -491,8 +491,8 @@ const RequestCarouselPage: React.FC = () => {
                       Include a clear call-to-action in your final slide
                     </li>
                   </ul>
-                </div>
-                
+            </div>
+            
                 <div className="bg-white border-2 border-black rounded-lg p-4">
                   <h3 className="font-medium flex items-center gap-2 mb-2">
                     <Info className="h-4 w-4" />
@@ -505,8 +505,8 @@ const RequestCarouselPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+            </div>
+          </div>
     </div>
   );
 };

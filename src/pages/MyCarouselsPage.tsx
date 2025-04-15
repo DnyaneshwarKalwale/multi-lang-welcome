@@ -225,13 +225,13 @@ const MyCarouselsPage: React.FC = () => {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={() => navigate('/dashboard/request-carousel')}
-            className="gap-2"
-          >
+        <Button 
+          onClick={() => navigate('/dashboard/request-carousel')}
+          className="gap-2"
+        >
             <Sparkles className="h-4 w-4" />
             Request Carousel
-          </Button>
+        </Button>
           <Button 
             variant="outline"
             onClick={() => navigate('/dashboard/templates')}
@@ -295,8 +295,8 @@ const MyCarouselsPage: React.FC = () => {
               <LayoutGrid className="h-4 w-4" />
               Browse Templates
             </Button>
-          </div>
-        </div>
+              </div>
+            </div>
       )}
       
       {/* Carousels Grid */}
@@ -343,7 +343,7 @@ const MyCarouselsPage: React.FC = () => {
                   >
                     Preview
                   </Button>
-                </div>
+                      </div>
               </div>
               
               <CardContent className="py-4 flex-grow">
@@ -466,8 +466,8 @@ const MyCarouselsPage: React.FC = () => {
                       key={i} 
                       className={`w-2 h-2 rounded-full ${i === currentSlide ? 'bg-blue-500' : 'bg-gray-300'}`}
                     />
-                  ))}
-                </div>
+          ))}
+        </div>
                 <p className="text-sm text-black">
                   {selectedCarousel?.status === 'published' 
                     ? 'This carousel has been published to LinkedIn' 
@@ -514,9 +514,9 @@ const MyCarouselsPage: React.FC = () => {
                 <p className="text-sm text-black font-medium">
                   {formatDate(selectedCarousel.published)}
                 </p>
-              </div>
-            )}
-            
+        </div>
+      )}
+      
             <div className="bg-white border rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <LayoutGrid className="h-4 w-4 text-blue-500" />
@@ -532,7 +532,7 @@ const MyCarouselsPage: React.FC = () => {
                 <div className="flex items-center gap-2 mb-1">
                   <Eye className="h-4 w-4 text-blue-500" />
                   <h3 className="font-medium text-sm">Views</h3>
-                </div>
+        </div>
                 <p className="text-sm text-black font-medium">
                   {selectedCarousel.views.toLocaleString()}
                 </p>
@@ -564,8 +564,8 @@ const MyCarouselsPage: React.FC = () => {
               >
                 <Download className="h-3.5 w-3.5" />
                 Download
-              </Button>
-            </div>
+          </Button>
+        </div>
             <div className="flex gap-3 w-full sm:w-auto">
               <Button 
                 className="flex-1 sm:flex-auto"
@@ -578,7 +578,7 @@ const MyCarouselsPage: React.FC = () => {
                 <Edit3 className="h-4 w-4 mr-2" />
                 Create Post
               </Button>
-            </div>
+      </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

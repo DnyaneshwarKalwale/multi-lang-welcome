@@ -12,170 +12,77 @@ interface AppLayoutProps {
   children?: React.ReactNode;
 }
 
-// Device breakpoints
-const BREAKPOINTS = {
-  MOBILE: 640,  // sm
-  TABLET: 768,  // md
-  DESKTOP: 1024 // lg
-};
-
 /**
  * AppLayout component that includes a collapsible sidebar and renders children or Outlet
  * This serves as a wrapper for protected routes to ensure consistent navigation
  */
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(localStorage.getItem('sidebarExpanded') !== 'false');
-  const [deviceType, setDeviceType] = useState<'mobile'|'tablet'|'desktop'>(
-    window.innerWidth < BREAKPOINTS.MOBILE ? 'mobile' : 
-    window.innerWidth < BREAKPOINTS.DESKTOP ? 'tablet' : 'desktop'
-  );
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { user } = useAuth();
 
-  // Listen for changes to localStorage sidebarExpanded
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const isExpanded = localStorage.getItem('sidebarExpanded') !== 'false';
-      setSidebarOpen(isExpanded);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Check every 500ms in case localStorage is updated without triggering storage event
-    const interval = setInterval(handleStorageChange, 500);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Monitor window resize to determine device type
+  // Monitor window resize to determine if mobile view
   useEffect(() => {
     const handleResize = () => {
-      const width = window.innerWidth;
-      let newDeviceType: 'mobile'|'tablet'|'desktop';
-      
-      if (width < BREAKPOINTS.MOBILE) {
-        newDeviceType = 'mobile';
-      } else if (width < BREAKPOINTS.DESKTOP) {
-        newDeviceType = 'tablet';
-      } else {
-        newDeviceType = 'desktop';
-      }
-      
-      setDeviceType(newDeviceType);
-      
-      // If transitioning from smaller to desktop, ensure sidebar is expanded
-      if (newDeviceType === 'desktop' && deviceType !== 'desktop') {
-        setSidebarOpen(true);
-        localStorage.setItem('sidebarExpanded', 'true');
-      }
+      setIsMobile(window.innerWidth < 768);
     };
 
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [deviceType]);
+  }, []);
 
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
   };
 
-  // Toggle sidebar
-  const toggleSidebar = () => {
-    const newState = !sidebarOpen;
-    setSidebarOpen(newState);
-    localStorage.setItem('sidebarExpanded', String(newState));
-  };
-
-  // Content adjustment based on device type
-  const isDesktop = deviceType === 'desktop';
-  const contentMargin = isDesktop ? 'lg:ml-[250px]' : 'ml-0';
-
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Fixed desktop sidebar on left */}
-      {isDesktop && (
-        <div className="fixed top-0 left-0 z-40 h-full">
-          <CollapsibleSidebar isOpen={true} isFixed={true} onClose={() => {}} />
-        </div>
-      )}
-      
-      {/* Mobile/tablet sidebar on right */}
-      {!isDesktop && sidebarOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={() => {
-              setSidebarOpen(false);
-              localStorage.setItem('sidebarExpanded', 'false');
-            }}
-          />
-          <div className="fixed top-0 right-0 z-50 h-full">
-            <CollapsibleSidebar 
-              isOpen={sidebarOpen} 
-              isFixed={false}
-              deviceType={deviceType}
-              onClose={() => {
-                setSidebarOpen(false);
-                localStorage.setItem('sidebarExpanded', 'false');
-              }} 
-            />
-          </div>
-        </>
-      )}
-      
-      {/* Main content area with proper margin and wrapping */}
-      <div className={cn("flex flex-col flex-1 h-screen w-full transition-all duration-300", contentMargin)}>
+    <div className="flex min-h-screen bg-background overflow-hidden">
+      {/* Sidebar - CollapsibleSidebar handles responsive behavior internally */}
+      <CollapsibleSidebar />
+
+      {/* Main content container with proper margin */}
+      <div className={cn(
+        "flex-1 flex flex-col min-h-screen w-full transition-all duration-300",
+        isMobile ? "ml-0" : "ml-64" // Fixed margin for desktop to prevent content going under sidebar
+      )}>
         {/* Top header bar */}
-        <header className="h-14 sm:h-16 border-b border-gray-200 flex items-center justify-between px-3 sm:px-4 md:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <h1 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 truncate">
+        <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger menu is now inside CollapsibleSidebar */}
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100 h-8 w-8 sm:h-9 sm:w-9">
-              <Bell size={deviceType === 'mobile' ? 18 : 20} className="text-blue-600" />
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-blue-500 rounded-full text-white text-[8px] sm:text-[10px] flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100">
+              <Bell size={20} className="text-blue-600" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
                 3
               </span>
             </Button>
             
-            <div className="flex">
+            <div className="md:flex">
               <motion.div 
                 whileHover={{ scale: 1.05 }} 
                 className="cursor-pointer"
               >
-                <Avatar className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 border border-blue-200 shadow-sm">
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-blue-200 shadow-sm">
                   <AvatarImage src={user?.profilePicture || ''} alt={user?.firstName || 'User'} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs sm:text-sm">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
               </motion.div>
             </div>
-            
-            {/* Hamburger menu for non-desktop */}
-            {!isDesktop && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full hover:bg-blue-100 h-8 w-8 sm:h-9 sm:w-9"
-                onClick={toggleSidebar}
-              >
-                <Menu size={deviceType === 'mobile' ? 18 : 20} className="text-blue-600" />
-              </Button>
-            )}
           </div>
         </header>
         
-        {/* Main scrollable content */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-3 sm:p-4 md:p-6 min-h-full">
-            {children || <Outlet />}
-          </div>
+        {/* Main content */}
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+          {children || <Outlet />}
         </main>
       </div>
     </div>
