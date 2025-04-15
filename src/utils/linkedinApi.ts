@@ -107,7 +107,7 @@ class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
 
   // Add a test connectivity method
-  async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
+  async testConnection(): Promise<{ success: boolean; message: string; details?: any; errorType?: string }> {
     try {
       // Get the best available LinkedIn token
       const token = getLinkedInToken();
@@ -116,6 +116,7 @@ class LinkedInApi {
         return { 
           success: false, 
           message: 'No authentication token found',
+          errorType: 'auth_missing',
           details: {
             authMethod: localStorage.getItem('auth-method') || 'none',
             hasLinkedInToken: !!localStorage.getItem('linkedin-login-token')
@@ -123,39 +124,82 @@ class LinkedInApi {
         };
       }
       
-      // Test the backend connectivity first
-      const healthResponse = await axios.get(`${API_URL}/health`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      // If backend is up, check LinkedIn connectivity
+      // Skip health check since it may not exist on this backend
+      // Instead, directly test the LinkedIn profile endpoint
       try {
         const linkedinProfile = await this.getUserLinkedInId();
         return {
           success: true,
           message: 'LinkedIn connectivity working correctly',
           details: {
-            backendStatus: healthResponse.status,
             linkedinId: linkedinProfile,
             authMethod: localStorage.getItem('auth-method') || 'unknown'
           }
         };
-      } catch (linkedinError) {
-        return {
-          success: false,
-          message: 'Backend available but LinkedIn API connection failed',
-          details: {
-            backendStatus: healthResponse.status,
-            error: linkedinError.message,
-            authMethod: localStorage.getItem('auth-method') || 'unknown'
+      } catch (linkedinError: any) {
+        // Determine specific error type for LinkedIn errors
+        let errorType = 'linkedin_api_error';
+        let detailedMessage = 'LinkedIn API connection failed';
+        
+        if (linkedinError.response) {
+          const status = linkedinError.response.status;
+          
+          if (status === 401) {
+            errorType = 'linkedin_unauthorized';
+            detailedMessage = 'LinkedIn authentication failed. Your token may have expired.';
+          } else if (status === 403) {
+            errorType = 'linkedin_forbidden';
+            detailedMessage = 'LinkedIn access denied. You may need additional permissions.';
+          } else if (status === 404) {
+            errorType = 'linkedin_not_found';
+            detailedMessage = 'LinkedIn resource not found.';
+          } else if (status >= 500) {
+            errorType = 'linkedin_server_error';
+            detailedMessage = 'LinkedIn servers are experiencing issues.';
           }
-        };
+        } else if (linkedinError.message && linkedinError.message.includes('Network Error')) {
+          errorType = 'network_error';
+          detailedMessage = 'Network connection error. Please check your internet connection.';
+        }
+        
+        // Test if at least the base API is reachable
+        try {
+          // Try a simple request to the backend base URL
+          await axios.get(`${API_URL}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          // Base API is reachable but LinkedIn endpoints failed
+          return {
+            success: false,
+            message: detailedMessage,
+            errorType: errorType,
+            details: {
+              error: linkedinError.message,
+              status: linkedinError.response?.status,
+              authMethod: localStorage.getItem('auth-method') || 'unknown'
+            }
+          };
+        } catch (baseApiError: any) {
+          // Even the base API can't be reached
+          return {
+            success: false,
+            message: 'Backend server connection failed',
+            errorType: 'backend_unreachable',
+            details: {
+              error: baseApiError.message,
+              apiUrl: API_URL,
+              authMethod: localStorage.getItem('auth-method') || 'unknown'
+            }
+          };
+        }
       }
-    } catch (error) {
-      // Backend is unavailable or other error
+    } catch (error: any) {
+      // General error
       return {
         success: false,
         message: 'Backend server connection failed',
+        errorType: 'general_error',
         details: {
           error: error.message,
           apiUrl: API_URL,
