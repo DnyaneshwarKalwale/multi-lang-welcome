@@ -286,7 +286,7 @@ const RequestCarouselPage: React.FC = () => {
     setIsSubmitting(true);
     
     // Simulate API call
-    setTimeout(() => {
+      setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
       
@@ -534,7 +534,7 @@ const RequestCarouselPage: React.FC = () => {
                 </div>
                 </CardContent>
               </Card>
-
+            
             <div className="flex gap-3">
               <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? "Submitting..." : "Submit Carousel Request"}
@@ -548,9 +548,9 @@ const RequestCarouselPage: React.FC = () => {
                 <LayoutGrid className="h-4 w-4" />
                 Browse Templates
               </Button>
-            </div>
-          </form>
-        </Form>
+          </div>
+        </form>
+      </Form>
               
         <Card>
           <CardHeader>

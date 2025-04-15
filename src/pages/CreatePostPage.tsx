@@ -210,7 +210,7 @@ const CreatePostPage: React.FC = () => {
   const [activeTab, setActiveTab] = usePersistentState('createPost.activeTab', 'text');
   const [selectedTemplate, setSelectedTemplate] = usePersistentState<string | null>('createPost.selectedTemplate', null);
   const [sliderType, setSliderType] = usePersistentState<SliderVariant>('createPost.sliderType', 'basic');
-  const [slides, setSlides] = usePersistentState<{id: string, content: string, imageUrl?: string}[]>('createPost.slides', [
+  const [slides, setSlides] = usePersistentState<{id: string, content: string, imageUrl?: string, cloudinaryImage?: ExtendedCloudinaryImage}[]>('createPost.slides', [
     { id: '1', content: 'Slide 1: Introduction to your topic' },
     { id: '2', content: 'Slide 2: Key point or insight #1' },
     { id: '3', content: 'Slide 3: Key point or insight #2' },
@@ -1128,7 +1128,7 @@ const CreatePostPage: React.FC = () => {
                       <LayoutGrid className="h-3.5 w-3.5" />
                       Browse Templates
                     </Button>
-                  </div>
+                    </div>
                     
                     <Separator />
                     
@@ -1170,10 +1170,10 @@ const CreatePostPage: React.FC = () => {
                             <CardContent className="py-2 space-y-4">
                               {/* Image upload section */}
                               <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                                {slide.imageUrl ? (
+                                {slide.cloudinaryImage ? (
                                   <div className="relative">
                                     <img 
-                                      src={slide.imageUrl} 
+                                      src={slide.cloudinaryImage.secure_url} 
                                       alt="Slide" 
                                       className="mx-auto max-h-40 object-contain rounded-lg"
                                     />
@@ -1184,7 +1184,7 @@ const CreatePostPage: React.FC = () => {
                                       onClick={() => {
                                         // Remove image from slide
                                         const updatedSlides = slides.map(s => 
-                                          s.id === slide.id ? {...s, imageUrl: undefined} : s
+                                          s.id === slide.id ? {...s, cloudinaryImage: undefined, imageUrl: undefined} : s
                                         );
                                         setSlides(updatedSlides);
                                         showSaveIndicator();
@@ -1198,58 +1198,56 @@ const CreatePostPage: React.FC = () => {
                                     <Upload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
                                     <p className="text-sm text-gray-500 mb-3">Add an image to this slide</p>
                                     <div className="flex justify-center gap-2">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="gap-1"
-                                        onClick={() => {
-                                          // Open file upload dialog
-                                          const input = document.createElement('input');
-                                          input.type = 'file';
-                                          input.accept = 'image/*';
-                                          input.onchange = (e) => {
-                                            const file = (e.target as HTMLInputElement).files?.[0];
-                                            if (file) {
-                                              // Mock image upload (in a real app, you'd upload to server)
-                                              const imageUrl = URL.createObjectURL(file);
-                                              const updatedSlides = slides.map(s => 
-                                                s.id === slide.id ? {...s, imageUrl} : s
-                                              );
-                                              setSlides(updatedSlides);
-                                              showSaveIndicator();
-                                            }
-                                          };
-                                          input.click();
-                                        }}
-                                      >
-                                        <Upload size={14} />
-                                        Upload
-                                      </Button>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="gap-1"
-                                        onClick={() => {
-                                          // Open gallery selection dialog
-                                          toast.info("Gallery selection would open here");
-                                          // For demo, assign a random image
-                                          const demoImages = [
-                                            "https://picsum.photos/id/1/600/400",
-                                            "https://picsum.photos/id/20/600/400",
-                                            "https://picsum.photos/id/30/600/400",
-                                            "https://picsum.photos/id/40/600/400"
-                                          ];
-                                          const randomImg = demoImages[Math.floor(Math.random() * demoImages.length)];
+                                      <ImageUploader
+                                        onUploadComplete={(image: CloudinaryImage) => {
+                                          // Update slide with Cloudinary image
                                           const updatedSlides = slides.map(s => 
-                                            s.id === slide.id ? {...s, imageUrl: randomImg} : s
+                                            s.id === slide.id ? {
+                                              ...s, 
+                                              cloudinaryImage: image as ExtendedCloudinaryImage,
+                                              imageUrl: (image as ExtendedCloudinaryImage).secure_url
+                                            } : s
                                           );
                                           setSlides(updatedSlides);
                                           showSaveIndicator();
+                                          toast.success('Image uploaded to slide');
                                         }}
-                                      >
-                                        <Folder size={14} />
-                                        Gallery
-                                      </Button>
+                                        triggerButton={
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="gap-1"
+                                          >
+                                            <Upload size={14} />
+                                            Upload
+                                          </Button>
+                                        }
+                                      />
+                                      <ImageGalleryPicker
+                                        onSelectImage={(image: CloudinaryImage) => {
+                                          // Update slide with Cloudinary image from gallery
+                                          const updatedSlides = slides.map(s => 
+                                            s.id === slide.id ? {
+                                              ...s, 
+                                              cloudinaryImage: image as ExtendedCloudinaryImage,
+                                              imageUrl: (image as ExtendedCloudinaryImage).secure_url
+                                            } : s
+                                          );
+                                          setSlides(updatedSlides);
+                                          showSaveIndicator();
+                                          toast.success('Image added to slide');
+                                        }}
+                                        triggerButton={
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="gap-1"
+                                          >
+                                            <Folder size={14} />
+                                            Gallery
+                                          </Button>
+                                        }
+                                      />
                                     </div>
                                   </>
                                 )}
@@ -1644,7 +1642,7 @@ const CreatePostPage: React.FC = () => {
   );
 };
 
-const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, imageUrl?: string}[], variant: SliderVariant }> = ({ slides, variant }) => {
+const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, imageUrl?: string, cloudinaryImage?: ExtendedCloudinaryImage}[], variant: SliderVariant }> = ({ slides, variant }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoplay, setIsAutoplay] = useState(variant === 'autoplay');
   
@@ -1753,7 +1751,16 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
           >
             <div className="bg-white w-full h-full flex flex-col justify-between relative overflow-hidden">
               {/* Image display - takes up most of the slide */}
-              {slides[currentSlide].imageUrl ? (
+              {slides[currentSlide].cloudinaryImage ? (
+                <div className="w-full flex-grow overflow-hidden bg-gray-50">
+                  <img 
+                    src={slides[currentSlide].cloudinaryImage.secure_url} 
+                    alt={`Slide ${currentSlide + 1}`}
+                    className="w-full h-full object-contain" 
+                    style={{maxHeight: '350px'}}
+                  />
+                </div>
+              ) : slides[currentSlide].imageUrl ? (
                 <div className="w-full flex-grow overflow-hidden bg-gray-50">
                   <img 
                     src={slides[currentSlide].imageUrl} 

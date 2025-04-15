@@ -462,7 +462,7 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* Weekly AI Tip */}
-          <Card className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-900/30 border-primary/10">
+          <Card className="from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-900/30 border-primary/10">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
@@ -471,7 +471,7 @@ const DashboardPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <h4 className="font-medium mb-2">{weeklyTip.title}</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-black dark:black">
                 {weeklyTip.content}
               </p>
             </CardContent>

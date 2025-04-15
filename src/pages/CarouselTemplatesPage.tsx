@@ -354,19 +354,17 @@ const CarouselTemplatesPage: React.FC = () => {
                 </div>
                 
                 {/* Preview button */}
-                <div className="absolute bottom-3 right-3">
-                  <Button 
-                    size="sm" 
-                    variant="secondary"
-                    className="bg-white text-black border border-blue-200 hover:bg-blue-50"
+                <div className="absolute top-2 right-2">
+                  <button 
+                    className="p-1.5 rounded-full bg-black/70 hover:bg-black/90 text-white transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedTemplate(template);
                       setCurrentSlide(0);
                     }}
                   >
-                    Preview
-                  </Button>
+                    <ExternalLink size={14} />
+                  </button>
                 </div>
               </div>
               
@@ -447,21 +445,16 @@ const CarouselTemplatesPage: React.FC = () => {
           </div>
           
           {/* Carousel Preview */}
-          <div className="relative overflow-hidden rounded-xl my-4">
+          <div className="relative my-4">
             {selectedTemplate && (
               <CarouselPreview
                 slides={selectedTemplate.previewImages.map((slide, index) => ({
                   id: `slide-${index}`,
-                  content: `Slide ${index + 1}: ${selectedTemplate.name}`
+                  content: `Slide ${index + 1}: ${selectedTemplate.name} - Part ${index + 1}`
                 }))}
                 variant={sliderVariant}
+                showPreviewIcon={false}
               />
-            )}
-            
-            {sliderVariant !== 'basic' && (
-              <div className="text-xs text-center mt-2 text-muted-foreground bg-muted/30 rounded-md p-1">
-                <span className="font-medium capitalize">{sliderVariant}</span> slider style applied
-              </div>
             )}
           </div>
           

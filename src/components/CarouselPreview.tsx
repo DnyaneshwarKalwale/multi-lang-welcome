@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SliderVariant } from '@/types/LinkedInPost';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,9 +7,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface CarouselPreviewProps {
   slides: { id: string; content: string }[];
   variant: SliderVariant;
+  showPreviewIcon?: boolean;
+  onPreviewClick?: () => void;
 }
 
-export function CarouselPreview({ slides, variant }: CarouselPreviewProps) {
+export function CarouselPreview({ 
+  slides, 
+  variant, 
+  showPreviewIcon = false,
+  onPreviewClick
+}: CarouselPreviewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoplay, setIsAutoplay] = useState(variant === 'autoplay');
   
@@ -132,53 +139,64 @@ export function CarouselPreview({ slides, variant }: CarouselPreviewProps) {
   
   return (
     <div className="relative">
+      {/* LinkedIn-like dimensions */}
       <div 
-        className={`${getContainerClass()} aspect-[3/2] bg-gradient-to-b from-blue-50/80 to-white flex items-center justify-center`}
+        className={`${getContainerClass()} aspect-video max-w-[450px] mx-auto bg-gradient-to-b from-blue-50/80 to-white flex items-center justify-center`}
       >
+        {showPreviewIcon && (
+          <button
+            onClick={onPreviewClick}
+            className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white p-1.5 rounded-full transition-colors"
+            aria-label="Preview carousel"
+          >
+            <Eye size={14} />
+          </button>
+        )}
+        
         {/* Single slide display */}
         {!showMultipleSlides && (
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
-              className="absolute inset-0 p-6 flex items-center justify-center"
+              className="absolute inset-0 p-4 flex items-center justify-center"
               initial="enter"
               animate="center"
               exit="exit"
               variants={getSlideVariants()}
               transition={getTransitionSettings()}
             >
-              <div className="bg-white rounded-xl p-6 shadow-lg w-full h-full flex flex-col justify-center relative overflow-hidden border border-gray-100">
+              <div className="bg-white rounded-lg p-4 shadow-md w-full h-full flex flex-col justify-center relative overflow-hidden border border-gray-100">
                 {/* Style 1: Professional gradient header */}
                 {variant === 'basic' && (
-                  <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-xl"></div>
+                  <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-lg"></div>
                 )}
                 
                 {/* Style 2: Circular design element */}
                 {variant === 'coverflow' && (
-                  <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-indigo-100 rounded-full opacity-40"></div>
+                  <div className="absolute -bottom-16 -right-16 w-40 h-40 bg-indigo-100 rounded-full opacity-40"></div>
                 )}
                 
                 {/* Style 3: Corner accent */}
                 {variant === 'parallax' && (
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-400 to-amber-200 opacity-70 rounded-bl-full"></div>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-amber-400 to-amber-200 opacity-70 rounded-bl-full"></div>
                 )}
                 
                 {/* Modern slide content layout */}
-                <div className="z-10 flex flex-col h-full justify-center items-center text-center relative px-4">
+                <div className="z-10 flex flex-col h-full justify-center items-center text-center relative px-3">
                   {/* Slide number */}
-                  <span className={`text-xs uppercase font-medium tracking-wider mb-3 ${
+                  <span className={`text-xs uppercase font-medium tracking-wider mb-2 ${
                     variant === 'basic' ? 'text-white' : 'text-blue-600'
                   }`}>
-                    Slide {currentIndex + 1}
+                    {currentIndex + 1}/{slides.length}
                   </span>
                   
                   {/* Title part (first part of content) */}
-                  <div className="text-lg font-bold text-gray-800 mb-3">
+                  <div className="text-base font-bold text-gray-800 mb-2">
                     {slides[currentIndex].content.split(':')[0]}
                   </div>
                   
                   {/* Content part (after colon) */}
-                  <div className="text-md text-gray-600">
+                  <div className="text-sm text-gray-600">
                     {slides[currentIndex].content.split(':').length > 1 ? 
                       slides[currentIndex].content.split(':').slice(1).join(':') : ''}
                   </div>
@@ -190,112 +208,55 @@ export function CarouselPreview({ slides, variant }: CarouselPreviewProps) {
         
         {/* Multiple slides display (grid variant) */}
         {showMultipleSlides && (
-          <div className="grid grid-cols-2 gap-3 p-4 w-full h-full">
+          <div className="grid grid-cols-2 gap-2 p-3 w-full h-full">
             {slides.slice(0, 4).map((slide, index) => (
               <motion.div 
                 key={slide.id} 
-                className={`bg-white rounded-lg shadow-sm border p-3 text-sm overflow-hidden flex flex-col justify-center items-center text-center cursor-pointer transition-all
+                className={`bg-white rounded-lg shadow-sm border p-2 text-xs overflow-hidden flex flex-col justify-center items-center text-center cursor-pointer transition-all
                   ${index === currentIndex ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md'}`}
                 onClick={() => goToSlide(index)}
-                whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
               >
-                <span className="text-xs text-blue-600 font-medium mb-1">Slide {index + 1}</span>
-                <p className="text-gray-800">
-                  {slide.content.split(':')[0]}
-                </p>
+                {slide.content.split(':')[0]}
               </motion.div>
             ))}
           </div>
         )}
         
-        {/* Navigation arrows - with improved styling */}
-        {!showMultipleSlides && slides.length > 1 && (
+        {/* Navigation arrows */}
+        {slides.length > 1 && !showMultipleSlides && (
           <>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white hover:bg-white rounded-full h-8 w-8 shadow-md z-10 transition-transform hover:scale-110"
+            <button 
               onClick={prevSlide}
+              className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md z-10 transition-all"
             >
-              <ChevronLeft size={16} className="text-gray-700" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white hover:bg-white rounded-full h-8 w-8 shadow-md z-10 transition-transform hover:scale-110"
+              <ChevronLeft size={16} />
+            </button>
+            <button 
               onClick={nextSlide}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md z-10 transition-all"
             >
-              <ChevronRight size={16} className="text-gray-700" />
-            </Button>
+              <ChevronRight size={16} />
+            </button>
           </>
-        )}
-        
-        {/* Pagination dots for basic and pagination variants - with improved styling */}
-        {(variant === 'basic' || variant === 'pagination') && slides.length > 1 && (
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
-            {slides.map((_, index) => (
-              <motion.button
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentIndex ? 'bg-primary w-4' : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-                onClick={() => goToSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-                whileHover={{ scale: 1.2 }}
-              />
-            ))}
-          </div>
-        )}
-        
-        {/* Thumbnail navigation for thumbs variant */}
-        {variant === 'thumbs' && slides.length > 1 && (
-          <div className="absolute -bottom-14 left-0 right-0 flex justify-center gap-2 overflow-x-auto py-2 px-4">
-            {slides.map((_, index) => (
-              <motion.button
-                key={index}
-                className={`flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center text-xs font-medium ${
-                  index === currentIndex 
-                    ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                onClick={() => goToSlide(index)}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {index + 1}
-              </motion.button>
-            ))}
-          </div>
-        )}
-        
-        {/* Gallery thumbnails */}
-        {variant === 'gallery' && slides.length > 1 && (
-          <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-1.5 overflow-x-auto py-2">
-            {slides.map((_, index) => (
-              <motion.div
-                key={index}
-                className={`flex-shrink-0 w-12 h-8 rounded-sm cursor-pointer ${
-                  index === currentIndex 
-                    ? 'ring-2 ring-primary' 
-                    : 'ring-1 ring-gray-200'
-                }`}
-                style={{
-                  background: `linear-gradient(135deg, ${
-                    index % 3 === 0 ? '#e0f2fe' : index % 3 === 1 ? '#ede9fe' : '#fef3c7'
-                  } 0%, #ffffff 100%)`
-                }}
-                onClick={() => goToSlide(index)}
-                whileHover={{ y: -2 }}
-              />
-            ))}
-          </div>
         )}
       </div>
       
-      {/* Slide count indicator - with improved styling */}
-      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-medium z-10">
-        {currentIndex + 1} / {slides.length}
-      </div>
+      {/* Slide indicators */}
+      {slides.length > 1 && !showMultipleSlides && (
+        <div className="flex justify-center mt-2 gap-1">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentIndex ? 'bg-primary w-4' : 'bg-gray-300'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 } 
