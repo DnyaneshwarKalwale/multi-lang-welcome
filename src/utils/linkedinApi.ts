@@ -92,10 +92,65 @@ export interface ScheduledPostData {
 class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
 
-  // Get the current user's LinkedIn ID
-  async getUserLinkedInId(): Promise<string> {
+  // Add a test connectivity method
+  async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      const response = await axios.get(`${this.API_URL}/profile`);
+      // Check if token exists
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return { 
+          success: false, 
+          message: 'No authentication token found' 
+        };
+      }
+      
+      // Test the backend connectivity first
+      const healthResponse = await axios.get(`${API_URL}/health`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // If backend is up, check LinkedIn connectivity
+      try {
+        const linkedinProfile = await this.getUserLinkedInId();
+        return {
+          success: true,
+          message: 'LinkedIn connectivity working correctly',
+          details: {
+            backendStatus: healthResponse.status,
+            linkedinId: linkedinProfile
+          }
+        };
+      } catch (linkedinError) {
+        return {
+          success: false,
+          message: 'Backend available but LinkedIn API connection failed',
+          details: {
+            backendStatus: healthResponse.status,
+            error: linkedinError.message
+          }
+        };
+      }
+    } catch (error) {
+      // Backend is unavailable or other error
+      return {
+        success: false,
+        message: 'Backend server connection failed',
+        details: {
+          error: error.message,
+          apiUrl: API_URL
+        }
+      };
+    }
+  }
+
+  // Get the current user's LinkedIn ID
+  async getUserLinkedInId(accessToken?: string): Promise<string> {
+    try {
+      const headers = accessToken 
+        ? { 'Authorization': `Bearer ${accessToken}` } 
+        : { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+      
+      const response = await axios.get(`${this.API_URL}/profile`, { headers });
       return response.data.id;
     } catch (error) {
       console.error('Error getting LinkedIn user ID:', error);
@@ -104,29 +159,27 @@ class LinkedInApi {
   }
 
   // Create a simple text post
-  async createTextPost(text: string, visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC'): Promise<LinkedInPostResponse> {
+  async createTextPost(
+    text: string, 
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC',
+    accessToken?: string
+  ): Promise<LinkedInPostResponse> {
     try {
-      const userId = await this.getUserLinkedInId();
-      const postData: LinkedInPostRequest = {
-        author: `urn:li:person:${userId}`,
-        lifecycleState: 'PUBLISHED',
-        specificContent: {
-          'com.linkedin.ugc.ShareContent': {
-            shareCommentary: {
-              text: text
-            },
-            shareMediaCategory: 'NONE'
-          }
-        },
-        visibility: {
-          'com.linkedin.ugc.MemberNetworkVisibility': visibility
-        },
-        distribution: {
-          linkedInDistributionTarget: {}
-        }
+      // Create a post with just text content
+      const postData = {
+        postContent: text,
+        visibility: visibility,
+        accessToken: accessToken // Pass the token directly
       };
 
-      const response = await axios.post(`${this.API_URL}/posts`, postData);
+      // Send post request to our backend which will handle the LinkedIn API
+      const response = await axios.post(`${this.API_URL}/post`, postData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Keep this for backend auth
+          'Content-Type': 'application/json'
+        }
+      });
+      
       return response.data;
     } catch (error) {
       console.error('Error creating LinkedIn post:', error);
@@ -223,7 +276,8 @@ class LinkedInApi {
     imageUrl: string, 
     fileName: string = 'image', 
     imageTitle: string = 'Shared image', 
-    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC'
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC',
+    accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
       // Create a post with the Cloudinary image URL
@@ -231,13 +285,15 @@ class LinkedInApi {
         postContent: text,
         imagePath: imageUrl,
         imageTitle: imageTitle || fileName,
-        imageDescription: "Shared via Scripe"
+        imageDescription: "Shared via Scripe",
+        visibility: visibility,
+        accessToken: accessToken // Pass the token directly
       };
 
       // Send post request to our backend which will handle the LinkedIn API complexity
       const response = await axios.post(`${this.API_URL}/post`, postData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Keep this for backend auth
           'Content-Type': 'application/json'
         }
       });
@@ -255,28 +311,31 @@ class LinkedInApi {
     articleUrl: string,
     articleTitle: string = '',
     articleDescription: string = '',
-    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC'
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC',
+    accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
-      // Create a post with the article link
+      // Send article post data to our backend
       const postData = {
         postContent: text,
         articleUrl: articleUrl,
-        articleTitle: articleTitle || articleUrl,
-        articleDescription: articleDescription
+        articleTitle: articleTitle || 'Shared Article',
+        articleDescription: articleDescription || 'Shared via Scripe',
+        visibility: visibility,
+        accessToken: accessToken // Pass the token directly
       };
 
-      // Send post request to our backend which will handle the LinkedIn API complexity
-      const response = await axios.post(`${this.API_URL}/post`, postData, {
+      // Use our backend endpoint for LinkedIn posting
+      const response = await axios.post(`${this.API_URL}/post-article`, postData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Keep this for backend auth
           'Content-Type': 'application/json'
         }
       });
       
       return response.data;
     } catch (error) {
-      console.error('Error creating LinkedIn article post:', error);
+      console.error('Error publishing to LinkedIn:', error);
       throw error;
     }
   }
@@ -298,22 +357,29 @@ class LinkedInApi {
   }
 
   // Create a poll post
-  async createPollPost(text: string, pollOptions: string[], durationDays: number): Promise<any> {
+  async createPollPost(
+    text: string, 
+    pollOptions: string[], 
+    durationDays: number = 7,
+    accessToken?: string
+  ): Promise<any> {
     try {
-      const userId = await this.getUserLinkedInId();
-      
-      const pollData: LinkedInPollPostRequest = {
-        content: {
-          author: `urn:li:person:${userId}`,
-          commentary: text,
-          pollPlatformSettings: {
-            duration: durationDays * 24 * 60 * 60 // Convert days to seconds
-          },
-          pollOptions: pollOptions
-        }
+      // Create poll data
+      const postData = {
+        postContent: text,
+        pollOptions: pollOptions,
+        pollDuration: durationDays * 86400, // Convert days to seconds
+        accessToken: accessToken // Pass the token directly
       };
+
+      // Send poll post to our backend
+      const response = await axios.post(`${this.API_URL}/post-poll`, postData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Keep this for backend auth
+          'Content-Type': 'application/json'
+        }
+      });
       
-      const response = await axios.post(`${this.API_URL}/polls`, pollData);
       return response.data;
     } catch (error) {
       console.error('Error creating LinkedIn poll:', error);

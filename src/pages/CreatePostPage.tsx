@@ -437,6 +437,22 @@ const CreatePostPage: React.FC = () => {
         return;
       }
       
+      // First validate the LinkedIn connection
+      try {
+        const connectionTest = await linkedInApi.testConnection();
+        if (!connectionTest.success) {
+          toast.error(`LinkedIn connection error: ${connectionTest.message}`);
+          console.error('Connection details:', connectionTest.details);
+          setIsPublishing(false);
+          return;
+        }
+      } catch (connectionError) {
+        console.error('Connection test failed:', connectionError);
+        toast.error('LinkedIn connection check failed. Please try the test button first.');
+        setIsPublishing(false);
+        return;
+      }
+      
       let response;
       
       // Handle different post types
@@ -512,10 +528,30 @@ const CreatePostPage: React.FC = () => {
       
     } catch (error) {
       console.error('Error publishing to LinkedIn:', error);
+      
+      // Provide more specific error messages
       if (error.response) {
         console.error('LinkedIn API error response:', error.response.data);
+        
+        // Parse common error types
+        if (error.response.status === 401) {
+          toast.error('Authentication failed. Your LinkedIn token may have expired.');
+        } else if (error.response.status === 403) {
+          toast.error('Permission denied. You may not have proper LinkedIn permissions.');
+        } else if (error.response.status === 404) {
+          toast.error('API endpoint not found. The backend service might be unavailable.');
+        } else if (error.response.status >= 500) {
+          toast.error('LinkedIn server error. Please try again later.');
+        } else {
+          toast.error(`LinkedIn error: ${error.response.data.message || 'Unknown error'}`);
+        }
+      } else if (error.request) {
+        // No response received
+        toast.error('No response from server. Check your internet connection.');
+      } else {
+        // Error setting up the request
+        toast.error('Failed to publish: ' + error.message);
       }
-      toast.error('Failed to publish to LinkedIn. Please try again.');
     } finally {
       setIsPublishing(false);
     }
@@ -659,21 +695,35 @@ const CreatePostPage: React.FC = () => {
   const testLinkedInPosting = async () => {
     try {
       setIsPublishing(true);
-      console.log('Testing LinkedIn connection with a simple text post');
+      console.log('Testing LinkedIn connection');
       
+      // First run the comprehensive connection test
+      const connectionTest = await linkedInApi.testConnection();
+      console.log('Connection test results:', connectionTest);
+      
+      if (!connectionTest.success) {
+        toast.error(`Connection test failed: ${connectionTest.message}`);
+        console.error('Connection test details:', connectionTest.details);
+        setIsPublishing(false);
+        return;
+      }
+      
+      toast.success('Connection test successful! Now trying a test post...');
+      
+      // If connection test passes, try a test post
       const testPostContent = 'This is a test post from our application. ' + new Date().toISOString();
       const response = await linkedInApi.createTextPost(testPostContent, 'PUBLIC');
       
       console.log('Test post successful:', response);
-      toast.success('LinkedIn connection test successful!');
+      toast.success('LinkedIn test post successful!');
       
-      setIsPublishing(false);
     } catch (error) {
       console.error('LinkedIn test post failed:', error);
       if (error.response) {
         console.error('API response:', error.response.data);
       }
       toast.error('LinkedIn test failed: ' + (error.message || 'Unknown error'));
+    } finally {
       setIsPublishing(false);
     }
   };
