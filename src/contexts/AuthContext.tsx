@@ -18,6 +18,8 @@ export interface User {
   linkedinId?: string;
   linkedinAccessToken?: string;
   linkedinConnected?: boolean;
+  googleId?: string;
+  googleAccessToken?: string;
 }
 
 // Define the AuthContext type

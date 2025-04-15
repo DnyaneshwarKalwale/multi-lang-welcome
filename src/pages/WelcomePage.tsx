@@ -132,17 +132,17 @@ export default function WelcomePage() {
           initial="hidden"
           animate="show"
         >
-          <motion.div variants={item} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full">
+          <motion.div variants={item} className="bg-white p-5 rounded-xl border border-gray-200 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full">
             <div className="flex items-start mb-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white mr-3">
                 <Users size={20} />
               </div>
               <div>
-                <p className="font-bold text-gray-900 dark:text-white">John Smith</p>
+                <p className="font-bold text-gray-900">John Smith</p>
                 <p className="text-gray-500 text-sm">Marketing Director at TechGrowth Solutions</p>
               </div>
             </div>
-            <p className="text-gray-800 dark:text-gray-200 mb-3">
+            <p className="text-gray-800 mb-3">
               Just discovered an incredible platform for content creation! AI-powered posts that sound authentic and professional. Perfect for busy professionals looking to grow their brand. Engagement rates up 65% in just 2 weeks. #ContentTips #BrandGrowth
             </p>
             <div className="flex justify-between text-gray-500 text-sm">
@@ -153,24 +153,24 @@ export default function WelcomePage() {
             </div>
           </motion.div>
           
-          <motion.div variants={item} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full flex">
+          <motion.div variants={item} className="bg-white p-5 rounded-xl border border-gray-200 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full flex">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white mr-3">
               <Users size={20} />
             </div>
             <div className="flex-1">
               <div className="mb-2">
-                <p className="font-bold text-gray-900 dark:text-white">Sarah Johnson</p>
+                <p className="font-bold text-gray-900">Sarah Johnson</p>
                 <p className="text-gray-500 text-sm">Senior Product Manager • SaaS Technology</p>
               </div>
               <div className="mb-4">
-                <p className="text-gray-800 dark:text-gray-200 font-medium mb-2">5 ways BrandOut transformed my content strategy:</p>
+                <p className="text-gray-800 font-medium mb-2">5 ways BrandOut transformed my content strategy:</p>
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-300 text-sm">Professional Carousel Post</span>
+                  <div className="p-3 bg-gray-50 border-b flex items-center justify-between">
+                    <span className="text-gray-600 text-sm">Professional Carousel Post</span>
                     <FileText size={14} className="text-primary" />
                   </div>
                   <div className="p-6 text-center">
-                    <p className="text-gray-700 dark:text-gray-200 font-medium">Carousel Preview</p>
+                    <p className="text-gray-700 font-medium">Carousel Preview</p>
                     <div className="flex mt-3 justify-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-primary"></div>
                       <div className="w-2 h-2 rounded-full bg-gray-300"></div>

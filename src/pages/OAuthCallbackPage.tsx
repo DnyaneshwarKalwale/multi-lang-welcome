@@ -41,18 +41,59 @@ export default function OAuthCallbackPage() {
       
       // Determine auth method from URL path
       let authMethod = 'email';
+      console.log('OAuth callback - Full pathname:', location.pathname);
+      console.log('OAuth callback - Full URL:', window.location.href);
+      
       if (location.pathname.includes('linkedin')) {
         authMethod = 'linkedin';
       } else if (location.pathname.includes('google')) {
         authMethod = 'google';
+      } else if (location.pathname.includes('social-callback')) {
+        // For social-callback endpoints, try to determine from other means
+        const params = new URLSearchParams(location.search);
+        const provider = params.get('provider');
+        if (provider === 'linkedin') {
+          authMethod = 'linkedin';
+        } else if (provider === 'google') {
+          authMethod = 'google';
+        }
       }
+      
+      console.log('OAuth callback - Determined authMethod:', authMethod);
       
       // Set token using tokenManager instead of directly in localStorage
       tokenManager.storeToken(token, authMethod as 'email' | 'linkedin' | 'google');
       
       try {
         // Update user state in AuthContext
-        await fetchUser();
+        const userData = await fetchUser();
+        
+        // Update authMethod based on user data if available
+        if (userData) {
+          console.log('OAuth callback - User data received:', {
+            id: userData.id,
+            authMethod: userData.authMethod,
+            hasLinkedinId: !!userData.linkedinId,
+            hasGoogleId: !!userData.googleId
+          });
+          
+          if (userData.authMethod) {
+            console.log(`OAuth callback - Using authMethod from user data: ${userData.authMethod}`);
+            authMethod = userData.authMethod;
+            // Update the token storage with correct auth method from server
+            tokenManager.storeToken(token, userData.authMethod as 'email' | 'linkedin' | 'google');
+          } else if (userData.linkedinId) {
+            console.log('OAuth callback - Found linkedinId in user data, updating authMethod to linkedin');
+            authMethod = 'linkedin';
+            // Update the token storage with correct auth method
+            tokenManager.storeToken(token, 'linkedin');
+          } else if (userData.googleId) {
+            console.log('OAuth callback - Found googleId in user data, updating authMethod to google');
+            authMethod = 'google';
+            // Update the token storage with correct auth method
+            tokenManager.storeToken(token, 'google');
+          }
+        }
         
         // Check for pending invitation token
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
