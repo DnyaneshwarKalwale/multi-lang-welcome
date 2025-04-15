@@ -930,30 +930,16 @@ const CreatePostPage: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Main Editor */}
-        <div className={showSidebar ? "md:col-span-2" : "md:col-span-3"}>
+      {/* Main layout with editor on left and preview on right */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Side - Post Editor */}
+        <div>
           <Tabs defaultValue="text" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="text">Text Post</TabsTrigger>
               <TabsTrigger value="carousel">Carousel</TabsTrigger>
               <TabsTrigger value="document">Document</TabsTrigger>
             </TabsList>
-            
-            {/* Show open sidebar button when sidebar is closed */}
-            {!showSidebar && (
-              <div className="hidden md:flex justify-end mt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={toggleSidebar}
-                  className="flex items-center gap-1"
-                >
-                  <PanelLeftOpen size={16} />
-                  <span>Open Tools</span>
-                </Button>
-              </div>
-            )}
             
             <TabsContent value="text" className="mt-4">
               <Card>
@@ -1264,9 +1250,11 @@ const CreatePostPage: React.FC = () => {
               </Card>
             </TabsContent>
           </Tabs>
-          
-          {/* Live Preview Section */}
-          <Card className="mt-6 border-primary/30">
+        </div>
+        
+        {/* Right Side - Live Preview */}
+        <div>
+          <Card className="border-primary/30">
             <CardHeader className="pb-2 bg-primary/5">
               <div className="flex items-center justify-between">
                 <div>
@@ -1394,606 +1382,175 @@ const CreatePostPage: React.FC = () => {
                     <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 flex-1">
                       <Forward size={18} />
                       <span className="text-xs font-medium">Send</span>
-                  </button>
+                    </button>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Additional open sidebar button at the bottom when sidebar is closed */}
-          {!showSidebar && (
-            <div className="hidden md:flex justify-end mt-4">
-              <Button 
-                onClick={toggleSidebar}
-                className="flex items-center gap-1"
-              >
-                <PanelLeftOpen size={16} />
-                <span>Open Tools & Templates</span>
-              </Button>
-            </div>
-          )}
         </div>
-        
-        {/* Sidebar / AI Tools Panel */}
-        {showSidebar && (
-          <div className="md:col-span-1">
-            <Card className="mb-6">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Post Preview</CardTitle>
-                </div>
-                <CardDescription>
-                  Live preview of your {activeTab} post
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="preview-section rounded-lg border overflow-hidden">
-                  {/* User profile header */}
-                  <div className="bg-white p-3 flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-                      {user?.profilePicture ? (
-                        <img src={user.profilePicture} alt={user?.firstName || 'User'} className="w-full h-full object-cover" />
-                      ) : (
-                        <UserRound className="text-blue-500 h-6 w-6" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-medium text-black">
-                        {user?.firstName} {user?.lastName}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {user?.headline || 'LinkedIn Member'} • Just now
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Post content preview */}
-                  <div className="p-3 bg-white">
-                    {activeTab === 'text' && (
-                      <div className="space-y-4">
-                        <p className="text-sm whitespace-pre-wrap">
-                          {content || "Your post content will appear here..."}
-                        </p>
-                        
-                        {/* Preview hashtags */}
-                        {hashtags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {hashtags.map(tag => (
-                              <span key={tag} className="text-sm text-blue-600">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Preview image */}
-                        {postImage && (
-                          <div className="mt-2 rounded-lg overflow-hidden border">
-                            <img 
-                              src={postImage.secure_url} 
-                              alt="Post" 
-                              className="w-full h-auto" 
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Preview poll */}
-                        {isPollActive && (
-                          <div className="mt-2 border rounded-lg p-3">
-                            <h4 className="text-sm font-medium mb-2">Poll</h4>
-                            <div className="space-y-2">
-                              {pollOptions.filter(option => option.trim()).map((option, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                  <div className="w-full h-8 bg-gray-100 rounded relative overflow-hidden">
-                                    <div className="absolute inset-0 flex items-center px-3">
-                                      <span className="text-xs">{option}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-2">
-                              Poll duration: {pollDuration} {pollDuration === 1 ? 'day' : 'days'}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Article preview */}
-                        {hasArticle && articleUrl && (
-                          <div className="mt-2 border rounded-lg overflow-hidden">
-                            <div className="h-32 bg-gray-200 flex items-center justify-center text-gray-400">
-                              <Globe className="h-8 w-8" />
-                            </div>
-                            <div className="p-3">
-                              <h3 className="font-medium text-sm">
-                                {articleTitle || "Article Title"}
-                              </h3>
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                                {articleDescription || "Article description will appear here"}
-                              </p>
-                              <div className="text-xs text-gray-400 mt-1 truncate">
-                                {articleUrl}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {activeTab === 'carousel' && (
-                      <div className="space-y-4">
-                        <div className="bg-gray-100 rounded-lg overflow-hidden">
-                          {slides.length > 0 ? (
-                            <div className="aspect-video relative">
-                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                                <div className="text-center">
-                                  <h3 className="font-bold text-sm">
-                                    {slides[0].content.split(':')[1] || slides[0].content}
-                                  </h3>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Slide 1 of {slides.length}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Pagination indicator */}
-                              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                                {slides.map((_, index) => (
-                                  <div 
-                                    key={index} 
-                                    className={`w-2 h-2 rounded-full ${index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="aspect-video flex items-center justify-center">
-                              <p className="text-gray-500 text-sm">Add slides to preview</p>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <p className="text-sm whitespace-pre-wrap">
-                          {content || "Your carousel description will appear here..."}
-                        </p>
-                        
-                        {/* Preview hashtags */}
-                        {hashtags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {hashtags.map(tag => (
-                              <span key={tag} className="text-sm text-blue-600">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {activeTab === 'document' && (
-                      <div className="space-y-4">
-                        <div className="bg-gray-100 rounded-lg overflow-hidden">
-                          <div className="aspect-[4/5] flex flex-col items-center justify-center p-4">
-                            {postImage ? (
-                              <img 
-                                src={postImage.secure_url} 
-                                alt="Document preview" 
-                                className="max-h-full object-contain" 
-                              />
-                            ) : (
-                              <div className="text-center">
-                                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                                <p className="text-gray-500 text-sm">Upload document to preview</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm whitespace-pre-wrap">
-                          {content || "Your document description will appear here..."}
-                        </p>
-                        
-                        {/* Preview hashtags */}
-                        {hashtags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {hashtags.map(tag => (
-                              <span key={tag} className="text-sm text-blue-600">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Engagement buttons */}
-                  <div className="border-t p-3 bg-white">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-700">
-                          <ThumbsUp className="h-4 w-4" />
-                          <span>Like</span>
-                        </button>
-                        <button className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-700">
-                          <MessageCircle className="h-4 w-4" />
-                          <span>Comment</span>
-                        </button>
-                        <button className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-700">
-                          <Share2 className="h-4 w-4" />
-                          <span>Share</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Quick tips based on active tab */}
-                <div className="mt-4 bg-blue-50 p-3 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-700 mb-1">
-                    {activeTab === 'text' ? 'Text Post Tips' : 
-                     activeTab === 'carousel' ? 'Carousel Post Tips' : 
-                     'Document Post Tips'}
-                  </h4>
-                  <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-                    {activeTab === 'text' && (
-                      <>
-                        <li>Start with a compelling hook</li>
-                        <li>Break text into short paragraphs</li>
-                        <li>Add relevant hashtags (3-5 is ideal)</li>
-                      </>
-                    )}
-                    
-                    {activeTab === 'carousel' && (
-                      <>
-                        <li>Keep slides concise and visually clean</li>
-                        <li>Use consistent design across all slides</li>
-                        <li>Include a strong call-to-action in the last slide</li>
-                      </>
-                    )}
-                    
-                    {activeTab === 'document' && (
-                      <>
-                        <li>Add a clear cover page with your branding</li>
-                        <li>Keep document under 100MB for best performance</li>
-                        <li>Write a descriptive caption for better engagement</li>
-                      </>
-                    )}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Tools & Templates</CardTitle>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={toggleSidebar}
-                    className="hidden md:flex"
-                  >
-                    <PanelLeftClose size={16} />
-                  </Button>
-                </div>
-                <CardDescription>
-                  Enhance your content with these tools
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {activeTab === 'text' && (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
-                        <Sparkles size={16} className="text-amber-500" />
-                        AI Assistance
-                      </h3>
-                      <div className="space-y-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="w-full justify-start text-sm"
-                          onClick={() => navigate('/dashboard/ai-writer')}
-                        >
-                          <Wand2 className="h-3.5 w-3.5 mr-2" />
-                          Go to AI Writer
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Generate a professional post
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Improve writing style
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Create catchy hook
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Suggest hashtags
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
-                        <Users size={16} className="text-primary" />
-                        Audience Targeting
-                      </h3>
-                      <Select defaultValue="professionals">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select target audience" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professionals">General Professionals</SelectItem>
-                          <SelectItem value="recruiters">Recruiters & HR</SelectItem>
-                          <SelectItem value="tech">Tech Industry</SelectItem>
-                          <SelectItem value="marketing">Marketing Professionals</SelectItem>
-                          <SelectItem value="executives">Executives & Leaders</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
-                        <BarChart size={16} className="text-accent" />
-                        Engagement Tips
-                      </h3>
-                      <div className="bg-accent-50 rounded-lg p-3 text-sm">
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>Ask a question to encourage comments</li>
-                          <li>Use 3-5 relevant hashtags</li>
-                          <li>Keep paragraphs short and scannable</li>
-                          <li>Include a clear call-to-action</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'carousel' && (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Carousel Templates</h3>
-                      <ScrollArea className="h-[330px]">
-                        <div className="space-y-2 pr-4">
-                          {carouselTemplates.map(template => (
-                            <div 
-                              key={template.id}
-                              className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                                selectedTemplate === template.id 
-                                  ? 'bg-primary-50 border-primary' 
-                                  : 'hover:bg-neutral-lightest'
-                              }`}
-                              onClick={() => applyTemplate(template.id)}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="font-medium">{template.name}</h4>
-                                <Badge variant="outline" className="text-xs">
-                                  {template.slideCount} slides
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-neutral-medium">{template.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
-                        <Sparkles size={16} className="text-amber-500" />
-                        AI Carousel Helper
-                      </h3>
-                      <div className="space-y-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="w-full justify-start text-sm"
-                          onClick={() => navigate('/dashboard/ai-writer')}
-                        >
-                          <Wand2 className="h-3.5 w-3.5 mr-2" />
-                          Go to AI Writer
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Generate carousel content
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Improve slide formatting
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start text-sm">
-                          Optimize for readability
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'document' && (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Document Tips</h3>
-                      <div className="bg-primary-50 rounded-lg p-3 text-sm">
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>Use PDFs for best compatibility</li>
-                          <li>Ensure document is under 100MB</li>
-                          <li>Use landscape orientation for presentations</li>
-                          <li>Add your branding and contact info</li>
-                        </ul>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Post Settings</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm">Add description</label>
-                          <Switch defaultChecked />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm">First page as thumbnail</label>
-                          <Switch defaultChecked />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm">Show document pages</label>
-                          <Switch defaultChecked />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Scheduling Card */}
-            <Card className="mt-6">
-              <CardHeader className="pb-2">
-                <CardTitle>Schedule Post</CardTitle>
-                <CardDescription>
-                  Choose when to publish your content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-sm font-medium">Date</label>
-                      <Input type="date" className="mt-1" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Time</label>
-                      <Input type="time" className="mt-1" />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
-                      <BarChart size={16} className="text-primary" />
-                      Best Time To Post
-                    </h3>
-                    <div className="bg-primary-50 rounded-lg p-3 text-sm">
-                      <p>Based on your audience, the best times to post are:</p>
-                      <ul className="list-disc list-inside mt-2">
-                        <li>Tuesday 9-11 AM</li>
-                        <li>Wednesday 1-3 PM</li>
-                        <li>Thursday 8-10 AM</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
       
-      {isPollActive && (
-        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-md">
-          <h3 className="text-sm font-medium mb-3">Poll Options</h3>
-          <div className="space-y-3">
-            {pollOptions.map((option, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div className="flex-1">
-                  <Input
-                    placeholder={`Option ${index + 1}`}
-                    value={option}
-                    onChange={(e) => handlePollOptionChange(index, e.target.value)}
-                  />
-                </div>
-                {pollOptions.length > 2 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemovePollOption(index)}
+      {/* Tools Section Below */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* AI Tools */}
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Tools</CardTitle>
+            <CardDescription>
+              Enhance your content with AI
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
+                  <Sparkles size={16} className="text-amber-500" />
+                  AI Assistance
+                </h3>
+                <div className="space-y-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start text-sm"
+                    onClick={() => navigate('/dashboard/ai-writer')}
                   >
-                    <X size={14} />
+                    <Wand2 className="h-3.5 w-3.5 mr-2" />
+                    Go to AI Writer
                   </Button>
-                )}
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                    Generate a professional post
+                  </Button>
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                    Improve writing style
+                  </Button>
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                    Create catchy hook
+                  </Button>
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm">
+                    Suggest hashtags
+                  </Button>
+                </div>
               </div>
-            ))}
-            
-            {pollOptions.length < 4 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddPollOption}
-                className="w-full"
-              >
-                Add Option
-              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Templates */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Templates & Tips</CardTitle>
+            <CardDescription>
+              Content templates and best practices
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {activeTab === 'text' && (
+              <div className="space-y-4">                
+                <div>
+                  <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
+                    <BarChart size={16} className="text-accent" />
+                    Engagement Tips
+                  </h3>
+                  <div className="bg-accent-50 rounded-lg p-3 text-sm">
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Ask a question to encourage comments</li>
+                      <li>Use 3-5 relevant hashtags</li>
+                      <li>Keep paragraphs short and scannable</li>
+                      <li>Include a clear call-to-action</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             )}
             
-            <div className="mt-3">
-              <label className="block text-sm mb-1">Poll Duration</label>
-              <select
-                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded"
-                value={pollDuration}
-                onChange={(e) => setPollDuration(parseInt(e.target.value))}
-              >
-                <option value={1}>1 day</option>
-                <option value={3}>3 days</option>
-                <option value={7}>1 week</option>
-                <option value={14}>2 weeks</option>
-              </select>
+            {activeTab === 'carousel' && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Carousel Templates</h3>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-2 pr-4">
+                      {carouselTemplates.map(template => (
+                        <div 
+                          key={template.id}
+                          className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                            selectedTemplate === template.id 
+                              ? 'bg-primary-50 border-primary' 
+                              : 'hover:bg-neutral-lightest'
+                          }`}
+                          onClick={() => applyTemplate(template.id)}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-medium">{template.name}</h4>
+                            <Badge variant="outline" className="text-xs">
+                              {template.slideCount} slides
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-neutral-medium">{template.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'document' && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Document Tips</h3>
+                  <div className="bg-primary-50 rounded-lg p-3 text-sm">
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Use PDFs for best compatibility</li>
+                      <li>Ensure document is under 100MB</li>
+                      <li>Use landscape orientation for presentations</li>
+                      <li>Add your branding and contact info</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Scheduling Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>Schedule Post</CardTitle>
+            <CardDescription>
+              Choose when to publish your content
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Date</label>
+                  <Input type="date" className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Time</label>
+                  <Input type="time" className="mt-1" />
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
+                  <BarChart size={16} className="text-primary" />
+                  Best Time To Post
+                </h3>
+                <div className="bg-primary-50 rounded-lg p-3 text-sm">
+                  <p>Based on your audience, the best times to post are:</p>
+                  <ul className="list-disc list-inside mt-2">
+                    <li>Tuesday 9-11 AM</li>
+                    <li>Wednesday 1-3 PM</li>
+                    <li>Thursday 8-10 AM</li>
+                  </ul>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-3 mt-6">
-        {/* Publishing actions */}
-        <Button 
-          type="button"
-          variant="outline"
-          onClick={saveAsDraft}
-          disabled={isPublishing || isSavingDraft || !content.trim()}
-          className="flex items-center gap-2"
-        >
-          {isSavingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save as Draft
-        </Button>
-        
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowScheduleDialog(true)}
-          disabled={isPublishing || isSavingDraft || !content.trim()}
-          className="flex items-center gap-2"
-        >
-          <Clock className="w-4 h-4" />
-          Schedule
-        </Button>
-        
-        <Button 
-          type="button"
-          onClick={publishToLinkedIn}
-          disabled={isPublishing || isSavingDraft || !content.trim()}
-          className="flex-1 flex items-center gap-2"
-        >
-          {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpCircle className="w-4 h-4" />}
-          {isPublishing ? 'Publishing...' : 'Publish Now'}
-        </Button>
-        
-        {/* Add a test button for LinkedIn posting */}
-        <Button 
-          type="button"
-          variant="secondary"
-          onClick={testLinkedInPosting}
-          disabled={isPublishing}
-          className="flex items-center gap-2"
-          title="Test LinkedIn connection"
-        >
-          <Linkedin className="w-4 h-4" />
-          Test LinkedIn
-        </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

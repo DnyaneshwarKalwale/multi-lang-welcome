@@ -311,30 +311,30 @@ const RequestCarouselPage: React.FC = () => {
                     
                     {/* YouTube Content Tab */}
                     <TabsContent value="youtube" className="mt-4 space-y-4">
-                      <FormField
-                        control={form.control}
+                <FormField
+                  control={form.control}
                         name="youtubeUrl"
-                        render={({ field }) => (
-                          <FormItem>
+                  render={({ field }) => (
+                    <FormItem>
                             <FormLabel>YouTube Video URL</FormLabel>
-                            <FormControl>
+                      <FormControl>
                               <div className="relative">
                                 <Input 
                                   placeholder="https://www.youtube.com/watch?v=..." 
-                                  {...field} 
+                          {...field} 
                                   onChange={handleYoutubeUrlChange}
-                                />
+                        />
                                 <Youtube className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                               </div>
-                            </FormControl>
-                            <FormDescription>
+                      </FormControl>
+                      <FormDescription>
                               We'll automatically extract content from the video
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                       {/* Select from Recent Videos Section */}
                       <div className="mt-6">
                         <h3 className="text-sm font-medium mb-3">Or select from recent videos:</h3>
@@ -437,24 +437,24 @@ const RequestCarouselPage: React.FC = () => {
                             </>
                           )}
                           
-                          <Input
-                            id="file-upload"
-                            type="file"
+                      <Input
+                        id="file-upload"
+                        type="file"
                             accept=".pdf,.ppt,.pptx,.doc,.docx,image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => document.getElementById('file-upload')?.click()}
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('file-upload')?.click()}
                             className="border-blue-300"
-                          >
-                            {selectedFile ? 'Change File' : 'Select File'}
-                          </Button>
-                        </div>
-                      </div>
+                      >
+                        {selectedFile ? 'Change File' : 'Select File'}
+                      </Button>
+                    </div>
+                  </div>
                     </TabsContent>
                   </Tabs>
                   
@@ -474,23 +474,23 @@ const RequestCarouselPage: React.FC = () => {
                     >
                       See Templates
                     </Button>
-                  </div>
+                </div>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </div>
-              
+            
         {/* Right Column - Preview */}
         <div className="lg:w-1/2">
-          <Card>
-            <CardHeader>
+              <Card>
+                <CardHeader>
               <CardTitle>Carousel Preview</CardTitle>
-              <CardDescription>
+                  <CardDescription>
                 Example of how your carousel might look
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
               {selectedVideo ? (
                 <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
                   {/* Sample carousel preview based on selected video */}
@@ -523,14 +523,14 @@ const RequestCarouselPage: React.FC = () => {
                       <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                         4
-                      </div>
+                                </div>
                       <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                         5
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
               ) : (
                 <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
                   {/* Generic carousel preview */}
@@ -564,9 +564,9 @@ const RequestCarouselPage: React.FC = () => {
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                         5
                       </div>
-                    </div>
-                  </div>
-                </div>
+                        </div>
+            </div>
+          </div>
               )}
           
               <div className="mt-6 space-y-4">
@@ -589,7 +589,7 @@ const RequestCarouselPage: React.FC = () => {
                       Include a clear call-to-action in your final slide
                     </li>
                   </ul>
-                </div>
+            </div>
             
                 <div className="bg-white border-2 border-black rounded-lg p-4">
                   <h3 className="font-medium flex items-center gap-2 mb-2">
@@ -603,8 +603,8 @@ const RequestCarouselPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+            </div>
+          </div>
     </div>
   );
 };
