@@ -35,11 +35,100 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useAuth } from '@/contexts/AuthContext';
-import axios from 'axios';
-import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+// Generate mock data
+const generateMockData = () => {
+  // Generate random array of data points
+  const generateRandomData = (min: number, max: number, length: number, trend: 'up' | 'down' | 'stable' = 'up') => {
+    return Array.from({ length }, (_, i) => {
+      const base = min + Math.random() * (max - min);
+      const trendFactor = trend === 'up' ? (i / length) * (max - min) * 0.5 :
+                         trend === 'down' ? ((length - i) / length) * (max - min) * 0.5 : 0;
+      return Math.round(base + trendFactor + (Math.random() - 0.5) * (max - min) * 0.2);
+    });
+  };
+
+  // Generate dates for the last 30 days
+  const getDates = (days: number) => {
+    return Array.from({ length: days }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - i - 1));
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+  };
+
+  const dates = getDates(30);
+  
+  return {
+    impressions: {
+      data: generateRandomData(2000, 6000, 30, 'up'),
+      labels: dates,
+      increase: 17.8,
+      timeframe: '30 days'
+    },
+    engagement: {
+      data: generateRandomData(100, 700, 30, 'up'),
+      labels: dates,
+      increase: 24.3,
+      timeframe: '30 days'
+    },
+    followers: {
+      data: generateRandomData(2500, 3000, 30, 'up'),
+      labels: dates,
+      increase: 8.4,
+      timeframe: '30 days'
+    },
+    summary: {
+      totalImpressions: 42340,
+      averageEngagement: 8.78,
+      followerGrowth: 225,
+      bestPerformingPost: {
+        text: "10 AI Tools Every Marketing Professional Should Know About",
+        impressions: 8632,
+        engagement: 12.4
+      }
+    }
+  };
+};
+
+// Generate mock posts
+const generateMockPosts = () => {
+  const posts = [
+    {
+      id: 'post-1',
+      text: "10 AI Tools Every Marketing Professional Should Know About in 2023",
+      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      public_metrics: {
+        shares: 45,
+        comments: 32,
+        likes: 378,
+        impressions: 8632
+      }
+    },
+    {
+      id: 'post-2',
+      text: "How We Increased Our Conversion Rate by 156% in Just Three Months",
+      created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+      public_metrics: {
+        shares: 38,
+        comments: 24,
+        likes: 256,
+        impressions: 5241
+      }
+    },
+    {
+      id: 'post-3',
+      text: "The Future of Remote Work: 5 Trends to Watch in 2023 and Beyond",
+      created_at: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+      public_metrics: {
+        shares: 29,
+        comments: 18,
+        likes: 187,
+        impressions: 4125
+      }
+    },
+    {
 // Interface for LinkedIn analytics data
 interface LinkedInAnalytics {
   impressions: {
