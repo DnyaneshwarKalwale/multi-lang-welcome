@@ -461,90 +461,8 @@ const DashboardPage: React.FC = () => {
       
       {/* Main content area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column - LinkedIn Profile & Create Post */}
+        {/* Left column - Create Post & User Info */}
         <div className="lg:col-span-1 space-y-6">
-          {/* LinkedIn Profile Card */}
-          <Card>
-            <CardHeader className="pb-0">
-              <CardTitle className="flex items-center gap-2">
-                <Linkedin className="h-5 w-5 text-primary" />
-                LinkedIn Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              {loading.profile && (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
-                  <p className="text-sm text-gray-500">Loading LinkedIn profile...</p>
-                </div>
-              )}
-              
-              {!loading.profile && linkedInProfile ? (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Avatar className="h-16 w-16 border-2 border-primary/10">
-                      <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name} />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold">{linkedInProfile.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{linkedInProfile.bio || 'LinkedIn Profile'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-3 text-center">
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-xl font-bold">{linkedInProfile.connections.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Connections</p>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-xl font-bold">{linkedInProfile.followers.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Followers</p>
-                    </div>
-                  </div>
-                  
-                  {/* Show sample data notice if needed */}
-                  {linkedInProfile.verified === false && (
-                    <div className="mt-4 p-2 bg-amber-50 border border-amber-200 rounded-md">
-                      <p className="text-xs text-amber-600 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Sample data displayed. API token may be expired.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2 w-full text-xs border-amber-200 text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-300"
-                        onClick={handleConnectLinkedIn}
-                      >
-                        Reconnect LinkedIn
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                !loading.profile && (
-                  <div className="text-center py-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                      <Linkedin className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium mb-2">Connect LinkedIn Account</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      Link your LinkedIn profile to enable powerful content creation features
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="w-full border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-600 group"
-                      onClick={handleConnectLinkedIn}
-                    >
-                      <Linkedin className="h-4 w-4 mr-2 text-blue-600" />
-                      Connect LinkedIn
-                    </Button>
-                  </div>
-                )
-              )}
-            </CardContent>
-          </Card>
-          
           {/* Quick Actions Card */}
           <Card>
             <CardHeader className="pb-3">
@@ -596,7 +514,7 @@ const DashboardPage: React.FC = () => {
           </Card>
 
           {/* LinkedIn Connection Section - Show if no LinkedIn account is connected */}
-          {(!isLinkedInConnected && !linkedInProfile && !loading.profile) && (
+          {(!isLinkedInConnected && !loading.profile) && (
             <Card className="overflow-hidden border-blue-100 dark:border-blue-900">
               <CardContent className="p-0">
                 <div className="flex flex-col md:flex-row items-center bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-6">
@@ -627,32 +545,95 @@ const DashboardPage: React.FC = () => {
             </Card>
           )}
           
-          {/* Login method indicator */}
+          {/* User Profile Information */}
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                  {user?.authMethod === 'linkedin' ? (
-                    <Linkedin className="h-5 w-5 text-blue-500" />
-                  ) : user?.authMethod === 'google' ? (
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  )}
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                User Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading.profile ? (
+                <div className="flex flex-col items-center justify-center py-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-500 mb-2" />
+                  <p className="text-sm text-gray-500">Loading profile...</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">Logged in with</p>
-                  <p className="text-base font-semibold capitalize">{user?.authMethod || 'Email'}</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-16 w-16 border-2 border-primary/10">
+                      {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
+                        <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
+                      ) : user?.profilePicture ? (
+                        <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
+                      ) : (
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">
+                        {user?.authMethod === 'linkedin' && linkedInProfile?.name ? 
+                          linkedInProfile.name : 
+                          getUserFullName()}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        {user?.authMethod === 'linkedin' ? (
+                          <Linkedin className="h-3.5 w-3.5 text-blue-500" />
+                        ) : user?.authMethod === 'google' ? (
+                          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500">Login Method</span>
+                        <span className="text-sm font-medium capitalize">{user?.authMethod || 'Email'}</span>
+                      </div>
+                    </div>
+                    
+                    {user?.authMethod === 'linkedin' && (
+                      <>
+                        <div className="flex items-center gap-2 mb-1 mt-3">
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <UserCircle className="h-3.5 w-3.5 text-gray-500" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-500">LinkedIn Username</span>
+                            <span className="text-sm font-medium">{linkedInProfile?.username || 'Not available'}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-3">
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <CreditCard className="h-3.5 w-3.5 text-gray-500" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-500">LinkedIn ID</span>
+                            <span className="text-sm font-medium truncate max-w-[200px]">{linkedInProfile?.id || user?.linkedinId || 'Not available'}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
