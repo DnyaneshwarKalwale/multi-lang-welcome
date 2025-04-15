@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Filter, 
-  LayoutGrid, 
-  Check, 
-  Star, 
-  Clock, 
-  ChevronRight, 
-  EyeIcon 
-} from 'lucide-react';
-
 import {
   Card,
   CardContent,
@@ -20,52 +9,46 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  LayoutGrid,
+  Search,
+  Plus,
+  Filter,
+  CheckCircle,
+  ChevronRight,
+  Tag,
+  Clock,
+  Eye,
+  BookOpen,
+  SlidersHorizontal
+} from 'lucide-react';
+import { SliderVariant } from '@/types/LinkedInPost';
 
-// Template category type
-type TemplateCategory = 
-  | 'all'
-  | 'listicle' 
-  | 'how-to' 
-  | 'case-study' 
-  | 'industry-insights' 
-  | 'educational' 
-  | 'promotional';
-
-// Template interface
+// Template interfaces
 interface CarouselTemplate {
   id: string;
   name: string;
   description: string;
-  category: TemplateCategory;
+  category: string;
   slideCount: number;
-  imageUrl: string;
-  tags: string[];
-  isPremium: boolean;
-  isNew?: boolean;
+  previewImage?: string;
+  popularity: 'high' | 'medium' | 'low';
+  new?: boolean;
 }
 
 const TemplatesPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all');
-  const [sortBy, setSortBy] = useState('popular');
+  const [activeCategory, setActiveCategory] = useState('all');
   
-  // Sample templates data
+  // Simulated carousel templates
   const templates: CarouselTemplate[] = [
     {
       id: 'template-1',
@@ -73,10 +56,9 @@ const TemplatesPage: React.FC = () => {
       description: 'Share valuable insights and trends in your industry with data visualization',
       category: 'industry-insights',
       slideCount: 8,
-      imageUrl: '/carousel-templates/industry-insights.png',
-      tags: ['professional', 'data', 'trends'],
-      isPremium: false,
-      isNew: true
+      previewImage: '/carousel-templates/industry-insights.png',
+      popularity: 'high',
+      new: true
     },
     {
       id: 'template-2',
@@ -84,9 +66,8 @@ const TemplatesPage: React.FC = () => {
       description: 'Step-by-step instructions with clear visuals and actionable tips',
       category: 'how-to',
       slideCount: 10,
-      imageUrl: '/carousel-templates/how-to-guide.png',
-      tags: ['instructional', 'guide', 'tutorial'],
-      isPremium: false
+      previewImage: '/carousel-templates/how-to-guide.png',
+      popularity: 'high'
     },
     {
       id: 'template-3',
@@ -94,9 +75,8 @@ const TemplatesPage: React.FC = () => {
       description: 'Present a business challenge, solution, and results with compelling storytelling',
       category: 'case-study',
       slideCount: 7,
-      imageUrl: '/carousel-templates/case-study.png',
-      tags: ['business', 'results', 'storytelling'],
-      isPremium: true
+      previewImage: '/carousel-templates/case-study.png',
+      popularity: 'medium'
     },
     {
       id: 'template-4',
@@ -104,226 +84,177 @@ const TemplatesPage: React.FC = () => {
       description: 'Present key points in a numbered list format with supporting visuals',
       category: 'listicle',
       slideCount: 6,
-      imageUrl: '/carousel-templates/list-post.png',
-      tags: ['list', 'points', 'concise'],
-      isPremium: false
+      previewImage: '/carousel-templates/list-post.png',
+      popularity: 'high'
     },
     {
       id: 'template-5',
-      name: 'Product Showcase',
-      description: 'Highlight product features and benefits in a visually appealing format',
+      name: 'Product Launch',
+      description: 'Announce your new product with engaging visuals and key features',
       category: 'promotional',
       slideCount: 8,
-      imageUrl: '/carousel-templates/product-showcase.png',
-      tags: ['product', 'promotional', 'features'],
-      isPremium: true,
-      isNew: true
+      previewImage: '/carousel-templates/product-launch.png',
+      popularity: 'medium',
+      new: true
     },
     {
       id: 'template-6',
-      name: 'Data Story',
-      description: 'Transform complex data into a compelling visual narrative',
-      category: 'educational',
-      slideCount: 9,
-      imageUrl: '/carousel-templates/data-story.png',
-      tags: ['data', 'visualization', 'story'],
-      isPremium: true
+      name: 'Market Trends',
+      description: 'Highlight key market trends with data visualizations and insights',
+      category: 'industry-insights',
+      slideCount: 7,
+      previewImage: '/carousel-templates/market-trends.png',
+      popularity: 'low'
     },
     {
       id: 'template-7',
-      name: 'Team Spotlight',
-      description: 'Showcase your team members and their accomplishments',
-      category: 'promotional',
-      slideCount: 5,
-      imageUrl: '/carousel-templates/team-spotlight.png',
-      tags: ['team', 'culture', 'people'],
-      isPremium: false
+      name: 'FAQ Series',
+      description: 'Answer common questions in your industry with clear explanations',
+      category: 'educational',
+      slideCount: 9,
+      previewImage: '/carousel-templates/faq.png',
+      popularity: 'medium'
     },
     {
       id: 'template-8',
-      name: 'Event Recap',
-      description: 'Share highlights and key takeaways from industry events or webinars',
-      category: 'industry-insights',
-      slideCount: 7,
-      imageUrl: '/carousel-templates/event-recap.png',
-      tags: ['event', 'recap', 'highlights'],
-      isPremium: false
+      name: 'Portfolio Showcase',
+      description: 'Showcase your work with beautiful visuals and key achievements',
+      category: 'promotional',
+      slideCount: 6,
+      previewImage: '/carousel-templates/portfolio.png',
+      popularity: 'low'
     }
   ];
   
-  // Filter templates by search query and category
+  // Filter templates based on search and category
   const filteredTemplates = templates.filter(template => {
-    const matchesSearch = 
-      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+    const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         template.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === 'all' || template.category === activeCategory;
-    
     return matchesSearch && matchesCategory;
   });
   
-  // Sort templates
-  const sortedTemplates = [...filteredTemplates].sort((a, b) => {
-    if (sortBy === 'newest') {
-      return (a.isNew ? -1 : 1) - (b.isNew ? -1 : 1);
-    } else if (sortBy === 'a-z') {
-      return a.name.localeCompare(b.name);
-    } else if (sortBy === 'slide-count') {
-      return b.slideCount - a.slideCount;
-    } 
-    // Default: 'popular'
-    return (a.isPremium ? -1 : 1) - (b.isPremium ? -1 : 1);
-  });
-  
-  // Handle template selection
-  const handleTemplateSelect = (templateId: string) => {
-    navigate(`/dashboard/request-carousel?template=${templateId}`);
+  // Select a template and go to create carousel page
+  const handleSelectTemplate = (templateId: string) => {
+    navigate(`/dashboard/create-carousel?template=${templateId}`);
   };
   
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">LinkedIn Carousel Templates</h1>
-        <p className="text-black">
-          Choose from our collection of professionally designed templates to create high-impact LinkedIn carousels
-        </p>
+  // Template preview display
+  const TemplateCard = ({ template }: { template: CarouselTemplate }) => (
+    <Card className="overflow-hidden border hover:border-blue-400 hover:shadow-md transition-all">
+      <div className="aspect-video bg-gray-100 flex items-center justify-center border-b relative">
+        {template.previewImage ? (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            <LayoutGrid className="w-12 h-12 text-blue-400" />
+          </div>
+        ) : (
+          <LayoutGrid className="w-12 h-12 text-blue-400" />
+        )}
+        
+        {template.new && (
+          <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+            NEW
+          </div>
+        )}
       </div>
       
-      {/* Search and filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-lg">{template.name}</CardTitle>
+        <CardDescription className="line-clamp-2 text-xs">
+          {template.description}
+        </CardDescription>
+      </CardHeader>
+      
+      <CardFooter className="p-4 pt-2 flex justify-between items-center">
+        <div className="flex items-center text-xs text-gray-500">
+          <LayoutGrid className="h-3 w-3 mr-1" />
+          {template.slideCount} slides
+        </div>
+        
+        <Button 
+          size="sm" 
+          onClick={() => handleSelectTemplate(template.id)}
+          className="text-xs h-8"
+        >
+          Use Template
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+  
+  return (
+    <div className="container px-4 py-8 mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Carousel Templates</h1>
+          <p className="text-black text-sm">
+            Choose from our professionally designed templates to create your LinkedIn carousel
+          </p>
+        </div>
+        
+        <Button onClick={() => navigate('/dashboard/create-carousel')} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Custom Template
+        </Button>
+      </div>
+      
+      {/* Search and filters */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            type="text"
             placeholder="Search templates..."
-            className="pl-10"
+            className="pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         
-        <div className="flex gap-3">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="popular">Most Popular</SelectItem>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="a-z">A-Z</SelectItem>
-              <SelectItem value="slide-count">Slide Count</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" className="gap-2">
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1">
             <Filter className="h-4 w-4" />
             Filters
+          </Button>
+          
+          <Button variant="outline" size="sm" className="gap-1">
+            <SlidersHorizontal className="h-4 w-4" />
+            Sort
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
       {/* Category tabs */}
-      <Tabs 
-        defaultValue="all" 
-        value={activeCategory} 
-        onValueChange={(value) => setActiveCategory(value as TemplateCategory)}
-        className="mb-8"
-      >
-        <TabsList className="w-full overflow-x-auto flex flex-nowrap justify-start max-w-full">
-          <TabsTrigger value="all" className="flex-shrink-0">All Templates</TabsTrigger>
-          <TabsTrigger value="listicle" className="flex-shrink-0">List Posts</TabsTrigger>
-          <TabsTrigger value="how-to" className="flex-shrink-0">How-To Guides</TabsTrigger>
-          <TabsTrigger value="case-study" className="flex-shrink-0">Case Studies</TabsTrigger>
-          <TabsTrigger value="industry-insights" className="flex-shrink-0">Industry Insights</TabsTrigger>
-          <TabsTrigger value="educational" className="flex-shrink-0">Educational</TabsTrigger>
-          <TabsTrigger value="promotional" className="flex-shrink-0">Promotional</TabsTrigger>
+      <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">All Categories</TabsTrigger>
+          <TabsTrigger value="how-to">How-To</TabsTrigger>
+          <TabsTrigger value="listicle">Listicles</TabsTrigger>
+          <TabsTrigger value="case-study">Case Studies</TabsTrigger>
+          <TabsTrigger value="industry-insights">Industry Insights</TabsTrigger>
+          <TabsTrigger value="promotional">Promotional</TabsTrigger>
+          <TabsTrigger value="educational">Educational</TabsTrigger>
         </TabsList>
       </Tabs>
       
       {/* Templates grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {sortedTemplates.map((template) => (
-          <Card key={template.id} className="overflow-hidden flex flex-col h-full">
-            <div className="relative overflow-hidden h-40 bg-slate-100">
-              {/* Image placeholder - in a real app, use actual template images */}
-              <div className="absolute inset-0 flex items-center justify-center bg-blue-50">
-                <LayoutGrid className="h-10 w-10 text-blue-300" />
-              </div>
-              
-              {/* Template badges */}
-              <div className="absolute top-2 left-2 flex gap-2">
-                {template.isPremium && (
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-200">
-                    <Star className="h-3 w-3 mr-1 text-amber-500" />
-                    Premium
-                  </Badge>
-                )}
-                {template.isNew && (
-                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-                    <Clock className="h-3 w-3 mr-1 text-emerald-500" />
-                    New
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Preview button */}
-              <Button 
-                size="sm" 
-                variant="secondary" 
-                className="absolute bottom-2 right-2 bg-white/70 hover:bg-white"
-              >
-                <EyeIcon className="h-3 w-3 mr-1" />
-                Preview
-              </Button>
-            </div>
-            
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">{template.name}</CardTitle>
-              <CardDescription className="line-clamp-2">{template.description}</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="pb-4 pt-0">
-              <div className="flex flex-wrap gap-1 mb-3">
-                {template.tags.map((tag, i) => (
-                  <Badge key={i} variant="outline" className="text-xs px-1 py-0 h-5">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              
-              <div className="flex items-center text-xs text-black">
-                <LayoutGrid className="h-3 w-3 mr-1" />
-                {template.slideCount} slides
-              </div>
-            </CardContent>
-            
-            <CardFooter className="pt-0 mt-auto">
-              <Button 
-                className="w-full gap-1" 
-                onClick={() => handleTemplateSelect(template.id)}
-              >
-                Use Template
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {filteredTemplates.map(template => (
+          <TemplateCard key={template.id} template={template} />
         ))}
       </div>
       
-      {/* Empty state if no templates match the filters */}
-      {sortedTemplates.length === 0 && (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <div className="w-16 h-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-4">
-            <Search className="h-6 w-6 text-slate-400" />
+      {filteredTemplates.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <Search className="h-6 w-6 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium mb-2">No templates found</h3>
-          <p className="text-black mb-4">No templates match your current filters.</p>
-          <Button onClick={() => {
-            setSearchQuery('');
-            setActiveCategory('all');
-          }}>
-            Clear Filters
+          <p className="text-black text-sm mb-4">
+            We couldn't find any templates matching your search criteria.
+          </p>
+          <Button variant="outline" onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}>
+            Clear filters
           </Button>
         </div>
       )}
