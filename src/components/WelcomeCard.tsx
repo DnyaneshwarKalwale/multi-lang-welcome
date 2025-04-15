@@ -22,28 +22,28 @@ export function WelcomeCard({
 }: WelcomeCardProps) {
   return (
     <motion.div
-      className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-gray-100 dark:border-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+      className="bg-white dark:bg-blue-950 backdrop-blur-sm border border-blue-100 dark:border-blue-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay, type: "spring", stiffness: 50 }}
       viewport={{ once: true }}
     >
       <div className="flex flex-col h-full">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-violet-600/20 flex items-center justify-center mb-5 animate-spin-slow">
-          <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-600/30 flex items-center justify-center mb-5 animate-spin-slow">
+          <div className="w-10 h-10 rounded-full bg-white dark:bg-blue-900 flex items-center justify-center">
             {icon}
           </div>
         </div>
         
-        <h3 className="text-xl font-semibold mb-3 text-gradient">{title}</h3>
+        <h3 className="text-xl font-bold mb-3 text-blue-700 dark:text-white">{title}</h3>
         
-        <p className="text-gray-600 dark:text-gray-300 mb-6 flex-grow">{description}</p>
+        <p className="text-gray-800 dark:text-gray-100 mb-6 flex-grow font-medium">{description}</p>
         
         {ctaText && ctaAction && (
           <Button 
             variant="ghost" 
             onClick={ctaAction}
-            className="justify-start p-0 hover:bg-transparent text-cyan-600 dark:text-cyan-400 hover:text-violet-600 dark:hover:text-violet-400 group"
+            className="justify-start p-0 hover:bg-transparent text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 group font-semibold"
           >
             <span>{ctaText}</span>
             <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -62,20 +62,20 @@ export function WelcomeFeatureCard({
 }: Omit<WelcomeCardProps, 'ctaText' | 'ctaAction'>) {
   return (
     <motion.div
-      className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300"
+      className="bg-gradient-to-br from-white to-blue-50 dark:from-blue-900 dark:to-blue-800 border border-blue-100 dark:border-blue-700 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, type: "spring" }}
       viewport={{ once: true }}
     >
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-violet-600 flex-shrink-0 flex items-center justify-center text-white">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-white">
           {icon}
         </div>
         
         <div>
-          <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">{title}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
+          <h3 className="text-lg font-bold mb-2 text-blue-700 dark:text-white">{title}</h3>
+          <p className="text-sm text-gray-800 dark:text-gray-100 font-medium">{description}</p>
         </div>
       </div>
     </motion.div>
@@ -97,23 +97,23 @@ export function WelcomeStatCard({
 }) {
   return (
     <motion.div
-      className="glass-card rounded-xl p-5 hover:translate-y-[-2px] transition-all duration-300"
+      className="bg-white dark:bg-blue-900 border border-blue-100 dark:border-blue-800 rounded-xl p-5 hover:translate-y-[-2px] transition-all duration-300 shadow-md"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, type: "spring" }}
       viewport={{ once: true }}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-500 dark:text-gray-400">{title}</span>
-        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 flex items-center justify-center text-white">
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{title}</span>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white">
           {icon}
         </div>
       </div>
       
       <div className="flex items-end gap-3">
-        <div className="text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
+        <div className="text-2xl font-bold text-blue-700 dark:text-white">{value}</div>
         {trend && (
-          <div className={`text-xs ${trend.positive ? 'text-emerald-500' : 'text-rose-500'} flex items-center`}>
+          <div className={`text-xs font-bold ${trend.positive ? 'text-emerald-500' : 'text-rose-500'} flex items-center`}>
             {trend.positive ? '↑' : '↓'} {trend.value}
           </div>
         )}
