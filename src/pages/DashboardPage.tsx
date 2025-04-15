@@ -84,10 +84,8 @@ const DashboardPage: React.FC = () => {
   
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
-  const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState({
     profile: false,
-    posts: false
   });
   
   // Track shown toasts
@@ -166,7 +164,7 @@ const DashboardPage: React.FC = () => {
     content: "When sharing achievements, focus on the lessons learned rather than the accolade itself. This approach creates more value for your audience and increases engagement."
   });
 
-  // Load LinkedIn data from extension if available
+  // Load LinkedIn profile data from extension if available
   useEffect(() => {
     // Check if extension API is available
     if (window.linkedBoostExtension && window.linkedBoostExtension.getLinkedInData) {
@@ -179,10 +177,6 @@ const DashboardPage: React.FC = () => {
           // Update state with LinkedIn data from extension
           if (linkedInData.profile) {
             setLinkedInProfile(linkedInData.profile);
-          }
-          
-          if (linkedInData.posts) {
-            setRecentPosts(linkedInData.posts);
           }
         })
         .catch((error: Error) => {
@@ -200,10 +194,6 @@ const DashboardPage: React.FC = () => {
       
       if (linkedInData.profile) {
         setLinkedInProfile(linkedInData.profile);
-      }
-      
-      if (linkedInData.posts) {
-        setRecentPosts(linkedInData.posts);
       }
     });
     
@@ -225,7 +215,6 @@ const DashboardPage: React.FC = () => {
     // Set loading states
     setLoading({
       profile: true,
-      posts: true
     });
     
     const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -239,125 +228,61 @@ const DashboardPage: React.FC = () => {
       console.log('Fetching basic LinkedIn profile data');
       const basicProfilePromise = axios.get(`${apiBaseUrl}/linkedin/basic-profile`, { headers });
       
-      // Fetch recent posts
-      console.log('Fetching LinkedIn posts data');
-      const postsPromise = axios.get(`${apiBaseUrl}/linkedin/posts`, { headers })
-        .catch(error => {
-          console.log('LinkedIn posts fetch failed, will use empty array', error);
-          // Return a resolved promise with empty posts
-          return Promise.resolve({ 
-            data: { 
-              success: true, 
-              data: [], 
-              usingRealData: false,
-              error: 'Posts could not be fetched'
-            } 
-          });
-        });
-      
-      // Execute both requests in parallel
-      const [basicProfileRes, postsRes] = await Promise.allSettled([
-        basicProfilePromise,
-        postsPromise
-      ]);
+      // Execute request
+      const basicProfileRes = await basicProfilePromise;
       
       // Check if basic profile fetch was successful
-      if (basicProfileRes.status === 'fulfilled') {
+      if (basicProfileRes.data) {
         console.log('Basic LinkedIn profile data fetched successfully');
-        setLinkedInProfile(basicProfileRes.value.data.data);
-        setLoading(prev => ({ ...prev, profile: false }));
-      } else {
-        console.error('Basic profile fetch failed, trying regular profile endpoint');
-        
-        try {
-          // If basic profile failed, try the standard profile endpoint (with LinkedIn API)
-          const profileRes = await axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
-          console.log('Standard LinkedIn profile fetch result:', profileRes.data);
-          setLinkedInProfile(profileRes.data.data);
-          setLoading(prev => ({ ...prev, profile: false }));
-          
-          // Show toast if using sample data
-          if (profileRes.data.usingRealData === false) {
-            console.warn('Using sample LinkedIn profile data:', profileRes.data.error);
-            
-            let errorMessage = 'Some LinkedIn data could not be fetched.';
-            let errorDescription = profileRes.data.errorDetails || 'Try reconnecting your LinkedIn account.';
-            
-            // Only show token expiry messages, not permission errors which can be confusing
-            if (profileRes.data.errorType === 'token_expired') {
-              toast.warning(errorMessage, {
-                description: errorDescription,
-                duration: 5000
-              });
-              
-              // Mark toast as shown
-              setShownToasts(prev => [...prev, 'profile-warning']);
-            }
-          } else if (profileRes.data.usingRealData === true) {
-            console.log('Using real LinkedIn profile data');
-            toast.success('Successfully connected to LinkedIn', {
-              description: 'Your profile data has been loaded.',
-              duration: 3000
-            });
-          }
-        } catch (error) {
-          console.error('All LinkedIn profile fetch methods failed:', error);
-          setLoading(prev => ({ ...prev, profile: false }));
-          
-          // Don't show error toasts for permission issues as they're expected now
-          if (!error.response || error.response.status !== 403) {
-            toast.error('Failed to load LinkedIn profile', {
-              description: error.response?.data?.message || error.message || 'Unknown error',
-              duration: 5000
-            });
-          }
-        }
+        setLinkedInProfile(basicProfileRes.data.data);
+        setLoading({ profile: false });
       }
+    } catch (error) {
+      console.error('Basic profile fetch failed, trying regular profile endpoint');
       
-      // Handle posts response
-      if (postsRes.status === 'fulfilled') {
-        console.log('Posts data received:', postsRes.value.data);
-        if (Array.isArray(postsRes.value.data.data)) {
-          setRecentPosts(postsRes.value.data.data);
-        } else {
-          console.log('Posts data is not an array, setting empty array');
-          setRecentPosts([]);
-        }
-        setLoading(prev => ({ ...prev, posts: false }));
+      try {
+        // If basic profile failed, try the standard profile endpoint (with LinkedIn API)
+        const profileRes = await axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
+        console.log('Standard LinkedIn profile fetch result:', profileRes.data);
+        setLinkedInProfile(profileRes.data.data);
+        setLoading({ profile: false });
         
-        // Only show toast for sample posts data if we haven't shown one for the profile
-        if (postsRes.value.data.usingRealData === false && !shownToasts.includes('sample-posts')) {
-          console.warn('Using sample LinkedIn posts data:', postsRes.value.data.error);
+        // Show toast if using sample data
+        if (profileRes.data.usingRealData === false) {
+          console.warn('Using sample LinkedIn profile data:', profileRes.data.error);
           
-          // Don't show another toast if we already showed one for the profile
-          if (!shownToasts.includes('profile-warning')) {
-            toast.warning('Using sample LinkedIn posts data', {
-              id: 'sample-posts',
-              description: 'LinkedIn API limitations prevent loading your real posts.',
+          let errorMessage = 'Some LinkedIn data could not be fetched.';
+          let errorDescription = profileRes.data.errorDetails || 'Try reconnecting your LinkedIn account.';
+          
+          // Only show token expiry messages, not permission errors which can be confusing
+          if (profileRes.data.errorType === 'token_expired') {
+            toast.warning(errorMessage, {
+              description: errorDescription,
               duration: 5000
             });
             
             // Mark toast as shown
-            setShownToasts(prev => [...prev, 'sample-posts']);
+            setShownToasts(prev => [...prev, 'profile-warning']);
           }
+        } else if (profileRes.data.usingRealData === true) {
+          console.log('Using real LinkedIn profile data');
+          toast.success('Successfully connected to LinkedIn', {
+            description: 'Your profile data has been loaded.',
+            duration: 3000
+          });
         }
-      } else {
-        console.error('Failed to fetch posts:', postsRes.reason);
-        setRecentPosts([]);
-        setLoading(prev => ({ ...prev, posts: false }));
+      } catch (error) {
+        console.error('All LinkedIn profile fetch methods failed:', error);
+        setLoading({ profile: false });
+        
+        // Don't show error toasts for permission issues as they're expected now
+        if (!error.response || error.response.status !== 403) {
+          toast.error('Failed to load LinkedIn profile', {
+            description: error.response?.data?.message || error.message || 'Unknown error',
+            duration: 5000
+          });
+        }
       }
-    } catch (error) {
-      console.error('Error fetching LinkedIn data:', error);
-      setLoading({
-        profile: false,
-        posts: false
-      });
-      
-      // Show error toast
-      toast.error('Failed to load LinkedIn data', {
-        description: error.response?.data?.message || error.message || 'Network error',
-        duration: 5000
-      });
     }
   };
 
@@ -445,7 +370,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Posts</p>
-                <h3 className="text-2xl font-bold mt-1">{recentPosts.length || 12}</h3>
+                <h3 className="text-2xl font-bold mt-1">12</h3>
               </div>
               <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                 <FileText className="h-6 w-6 text-blue-500" />
@@ -696,7 +621,7 @@ const DashboardPage: React.FC = () => {
           </Card>
         </div>
         
-        {/* Middle & Right columns - Scheduled Posts & Recent Activity */}
+        {/* Middle & Right columns - Scheduled Posts & Content Creation */}
         <div className="lg:col-span-2 space-y-6">
           {/* Scheduled Posts */}
           <Card>
@@ -743,81 +668,146 @@ const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Recent Activity */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <div>
-                <CardTitle>Recent LinkedIn Activity</CardTitle>
-                <CardDescription>Your recent posts and engagement</CardDescription>
-                  </div>
-                  <Button
-                variant="ghost" 
-                    size="sm"
-                className="text-primary"
-                onClick={() => navigate('/dashboard/posts')}
-                  >
-                View Posts
-                  </Button>
-                </CardHeader>
-            <CardContent className="px-0">
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {recentPosts.length > 0 ? (
-                  recentPosts.slice(0, 2).map((post, index) => (
-                    <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={linkedInProfile?.profileImage || ''} alt={linkedInProfile?.name || ''} />
-                          <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-sm">{linkedInProfile?.name || getUserFullName()}</span>
-                            <span className="text-xs text-gray-500">• {new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                          
-                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{post.text.substring(0, 150)}...</p>
-                          
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <ThumbsUp className="w-4 h-4" />
-                              <span className="text-xs">{post.public_metrics.likes}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <MessageSquare className="w-4 h-4" />
-                              <span className="text-xs">{post.public_metrics.comments}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-500">
-                              <Share2 className="w-4 h-4" />
-                              <span className="text-xs">{post.public_metrics.shares}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                  ) : (
-                    <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">No recent posts</p>
-                    <Button 
-                      variant="outline"
-                      className="mt-4 gap-2"
-                      onClick={() => navigate('/dashboard/post')}
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      Create Your First Post
-                    </Button>
-                  </div>
-                )}
+          {/* Content Creation Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle>Content Creation</CardTitle>
+                <CardDescription>Create and publish LinkedIn content</CardDescription>
               </div>
-              </CardContent>
-            <CardFooter className="border-t border-gray-100 dark:border-gray-800 flex justify-center py-3">
-              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate('/dashboard/posts')}>
-                See All Posts
-                <ChevronRight className="h-4 w-4" />
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-medium text-gray-700">Quick Post</h3>
+                <div className="flex gap-3">
+                  <Avatar className="w-10 h-10">
+                    {user?.profilePicture || (linkedInProfile?.profileImage) ? (
+                      <AvatarImage src={user?.profilePicture || linkedInProfile?.profileImage} alt={getUserFullName()} />
+                    ) : (
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex-1">
+                    <Textarea 
+                      placeholder="Share your thoughts on LinkedIn..."
+                      className="min-h-[80px] resize-none"
+                    />
+                    <div className="flex justify-between mt-3">
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="h-8 px-2">
+                          <Upload className="h-4 w-4 mr-1" />
+                          Add Image
+                        </Button>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="h-8"
+                        onClick={() => navigate('/dashboard/post')}
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        Create Post
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+                <Button
+                  variant="outline"
+                  className="justify-start h-auto py-3"
+                  onClick={() => navigate('/dashboard/post')}
+                >
+                  <div className="flex flex-col items-start text-left">
+                    <span className="flex items-center text-sm font-medium">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Create Text Post
+                    </span>
+                    <span className="text-xs text-gray-500 mt-1 ml-6">
+                      Write a simple text post
+                    </span>
+                  </div>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="justify-start h-auto py-3"
+                  onClick={() => navigate('/dashboard/request-carousel')}
+                >
+                  <div className="flex flex-col items-start text-left">
+                    <span className="flex items-center text-sm font-medium">
+                      <Layers className="h-4 w-4 mr-2" />
+                      Create Carousel
+                    </span>
+                    <span className="text-xs text-gray-500 mt-1 ml-6">
+                      Create slide deck posts
+                    </span>
+                  </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* AI Content Suggestions */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle>Content Inspiration</CardTitle>
+                <CardDescription>AI-powered content ideas</CardDescription>
+              </div>
+              <Button
+                variant="ghost" 
+                size="sm"
+                className="text-primary"
+                onClick={() => navigate('/dashboard/templates')}
+              >
+                View All
               </Button>
-            </CardFooter>
-            </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-blue-100 p-1 rounded">
+                      <Sparkles className="h-4 w-4 text-blue-500" />
+                    </span>
+                    <h3 className="text-sm font-medium">LinkedIn Success Story</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Share a professional challenge you overcame and what you learned from the experience.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/dashboard/post?template=success-story')}
+                  >
+                    Use Template
+                  </Button>
+                </div>
+                
+                <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-indigo-100 p-1 rounded">
+                      <Lightbulb className="h-4 w-4 text-indigo-500" />
+                    </span>
+                    <h3 className="text-sm font-medium">Industry Insight</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Share your perspective on a recent trend or news item in your industry.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/dashboard/post?template=industry-insight')}
+                  >
+                    Use Template
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
