@@ -61,12 +61,14 @@ export default function OAuthCallbackPage() {
       
       console.log('OAuth callback - Determined authMethod:', authMethod);
       
-      // Set token using tokenManager instead of directly in localStorage
-      tokenManager.storeToken(token, authMethod as 'email' | 'linkedin' | 'google');
+      // Don't set the token yet, wait until we get user data to confirm the auth method
       
       try {
         // Update user state in AuthContext
         const userData = await fetchUser();
+        
+        // Determine the correct auth method based on user data
+        let finalAuthMethod = authMethod;
         
         // Update authMethod based on user data if available
         if (userData) {
@@ -79,21 +81,19 @@ export default function OAuthCallbackPage() {
           
           if (userData.authMethod) {
             console.log(`OAuth callback - Using authMethod from user data: ${userData.authMethod}`);
-            authMethod = userData.authMethod;
-            // Update the token storage with correct auth method from server
-            tokenManager.storeToken(token, userData.authMethod as 'email' | 'linkedin' | 'google');
+            finalAuthMethod = userData.authMethod;
           } else if (userData.linkedinId) {
             console.log('OAuth callback - Found linkedinId in user data, updating authMethod to linkedin');
-            authMethod = 'linkedin';
-            // Update the token storage with correct auth method
-            tokenManager.storeToken(token, 'linkedin');
+            finalAuthMethod = 'linkedin';
           } else if (userData.googleId) {
             console.log('OAuth callback - Found googleId in user data, updating authMethod to google');
-            authMethod = 'google';
-            // Update the token storage with correct auth method
-            tokenManager.storeToken(token, 'google');
+            finalAuthMethod = 'google';
           }
         }
+        
+        // Now set the token with the correct auth method
+        console.log(`OAuth callback - Setting token with finalAuthMethod: ${finalAuthMethod}`);
+        tokenManager.storeToken(token, finalAuthMethod as 'email' | 'linkedin' | 'google');
         
         // Check for pending invitation token
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');

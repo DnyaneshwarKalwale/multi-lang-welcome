@@ -8,6 +8,7 @@ import { CheckCircle, Loader2, Share2, Twitter, RefreshCw, ChevronRight, CloudIc
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
+import { tokenManager } from "@/services/api";
 
 export default function CompletionPage() {
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ export default function CompletionPage() {
 
   const markOnboardingComplete = async () => {
     if (!user) {
+      console.log("Cannot mark onboarding complete - no user data available");
       return;
     }
     
@@ -83,7 +85,20 @@ export default function CompletionPage() {
     try {
       // Get API URL from env or fallback
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const token = localStorage.getItem('token');
+      
+      // Get the token using tokenManager instead of direct localStorage access
+      const authMethod = localStorage.getItem('auth-method');
+      console.log("CompletionPage - Auth method from localStorage:", authMethod);
+      
+      // Log all available tokens for debugging
+      console.log("CompletionPage - Available tokens:", {
+        linkedinToken: localStorage.getItem('linkedin-login-token') ? 'Present' : 'None',
+        emailToken: localStorage.getItem('email-login-token') ? 'Present' : 'None',
+        googleToken: localStorage.getItem('google-login-token') ? 'Present' : 'None',
+      });
+      
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
+      console.log("CompletionPage - Token retrieved:", token ? 'Present' : 'None');
       
       if (!token) {
         throw new Error("No authentication token found");

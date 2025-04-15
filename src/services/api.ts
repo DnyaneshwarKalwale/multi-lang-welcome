@@ -19,6 +19,11 @@ const api = axios.create({
 export const tokenManager = {
   // Store token by auth method
   storeToken: (token: string, authMethod: 'email' | 'linkedin' | 'google'): void => {
+    // Clear any existing tokens for other auth methods first
+    if (authMethod !== 'email') localStorage.removeItem('email-login-token');
+    if (authMethod !== 'linkedin') localStorage.removeItem('linkedin-login-token');
+    if (authMethod !== 'google') localStorage.removeItem('google-login-token');
+    
     // Store in method-specific storage only
     localStorage.setItem(`${authMethod}-login-token`, token);
     
