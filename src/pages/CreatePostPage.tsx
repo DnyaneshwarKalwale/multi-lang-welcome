@@ -1011,7 +1011,7 @@ const CreatePostPage: React.FC = () => {
                         <h3 className="text-md font-medium mb-2">Post Image</h3>
                         {postImage ? (
                           <div className="relative rounded-md overflow-hidden mb-2 border border-gray-200 dark:border-gray-700">
-                            <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center" style={{ minHeight: '300px' }}>
+                            <div className="bg-white flex items-center justify-center" style={{ minHeight: '300px' }}>
                               <img 
                                 src={postImage.secure_url} 
                                 alt="Post image"
@@ -1176,6 +1176,7 @@ const CreatePostPage: React.FC = () => {
                                       src={slide.cloudinaryImage.secure_url} 
                                       alt="Slide" 
                                       className="mx-auto max-h-40 object-contain rounded-lg"
+                                      style={{ backgroundColor: 'white' }}
                                     />
                                     <Button
                                       variant="destructive"
@@ -1776,7 +1777,7 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
             <div className="bg-white w-full h-full flex flex-col justify-between relative overflow-hidden">
               {/* Image display - takes up most of the slide */}
               {slides[currentSlide].cloudinaryImage ? (
-                <div className="w-full flex-grow overflow-hidden bg-gray-50">
+                <div className="w-full flex-grow overflow-hidden bg-white">
                   <img 
                     src={slides[currentSlide].cloudinaryImage.secure_url} 
                     alt={`Slide ${currentSlide + 1}`}
@@ -1785,7 +1786,7 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
                   />
                 </div>
               ) : slides[currentSlide].imageUrl ? (
-                <div className="w-full flex-grow overflow-hidden bg-gray-50">
+                <div className="w-full flex-grow overflow-hidden bg-white">
                   <img 
                     src={slides[currentSlide].imageUrl} 
                     alt={`Slide ${currentSlide + 1}`}
@@ -1794,7 +1795,7 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
                   />
                 </div>
               ) : (
-                <div className="w-full flex-grow bg-gray-50 flex items-center justify-center p-4">
+                <div className="w-full flex-grow bg-white flex items-center justify-center p-4">
                   <p className="text-center text-gray-400">
                     {slides[currentSlide].content || "Add content to this slide"}
                   </p>

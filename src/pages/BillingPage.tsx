@@ -573,11 +573,12 @@ const BillingPage: React.FC = () => {
                           <Badge 
                             variant={
                               invoice.status === 'paid' 
-                                ? 'success' 
+                                ? 'default' 
                                 : invoice.status === 'pending'
                                   ? 'outline'
                                   : 'destructive'
                             }
+                            className={invoice.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
                           >
                             {invoice.status === 'paid' 
                               ? 'Paid' 

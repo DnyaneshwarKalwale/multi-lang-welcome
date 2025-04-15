@@ -602,7 +602,7 @@ const PostLibraryPage: React.FC = () => {
           
           {/* Post Image (if available) */}
           {post.postImage && (
-            <div className="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <div className="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
               <img 
                 src={post.postImage.secure_url} 
                 alt="Post image"
