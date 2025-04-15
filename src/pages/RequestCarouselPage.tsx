@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, ChevronRight, Upload, CheckCircle,
-  Lightbulb, AlertCircle, Info, Calendar
+  Lightbulb, AlertCircle, Info, Calendar, Youtube,
+  FileText, Image, Link, PlusCircle, Eye, Pencil
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -27,12 +28,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -41,12 +41,8 @@ import { toast } from 'sonner';
 // Form schema for carousel request
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title can't exceed 100 characters"),
-  topic: z.string().min(10, "Please provide more details about your topic"),
-  audience: z.string().min(5, "Please specify your target audience"),
-  tone: z.enum(['professional', 'casual', 'inspirational', 'educational', 'conversational']),
-  callToAction: z.string().optional(),
-  templateId: z.string().optional(),
-  additionalNotes: z.string().optional()
+  youtubeUrl: z.string().url("Please enter a valid YouTube URL").optional(),
+  templateId: z.string().min(1, "Please select a template")
 });
 
 type CarouselRequestForm = z.infer<typeof formSchema>;
@@ -65,6 +61,7 @@ const RequestCarouselPage: React.FC = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('youtube');
   const [success, setSuccess] = useState(false);
   
   // Predefined carousel templates
@@ -104,14 +101,24 @@ const RequestCarouselPage: React.FC = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      topic: '',
-      audience: '',
-      tone: 'professional',
-      callToAction: '',
-      templateId: '',
-      additionalNotes: ''
+      youtubeUrl: '',
+      templateId: ''
     }
   });
+
+  // YouTube URL validation and scraping
+  const handleYoutubeUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    form.setValue('youtubeUrl', url);
+    
+    // Just basic URL validation for now
+    if (url && url.includes('youtube.com/watch?v=') || url.includes('youtu.be/')) {
+      // Simulate scraping - in a real app, you'd call your backend API to scrape the content
+      toast.info("Scraping content from YouTube...", {
+        duration: 1500
+      });
+    }
+  };
 
   // File change handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +126,7 @@ const RequestCarouselPage: React.FC = () => {
     if (file) {
       if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
         setSelectedFile(file);
+        toast.success(`File "${file.name}" uploaded successfully`);
       } else {
         toast.error('Please upload a PDF or image file');
       }
@@ -130,11 +138,18 @@ const RequestCarouselPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Add file info to the submission
+      const submissionData = {
+        ...data,
+        hasAttachment: !!selectedFile,
+        attachmentName: selectedFile?.name,
+        contentSource: activeTab
+      };
+      
       // Simulating API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('Form data submitted:', data);
-      console.log('File:', selectedFile);
+      console.log('Form data submitted:', submissionData);
       
       // Show success state
       setSuccess(true);
@@ -146,7 +161,7 @@ const RequestCarouselPage: React.FC = () => {
       
       // After a delay, redirect to carousels page
       setTimeout(() => {
-        navigate('/dashboard/carousels');
+        navigate('/dashboard/my-carousels');
       }, 3000);
     } catch (error) {
       console.error('Error submitting carousel request:', error);
@@ -177,7 +192,7 @@ const RequestCarouselPage: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button onClick={() => navigate('/dashboard/carousels')} className="gap-2">
+            <Button onClick={() => navigate('/dashboard/my-carousels')} className="gap-2">
               <LayoutGrid className="h-4 w-4" />
               View My Carousels
             </Button>
@@ -195,263 +210,303 @@ const RequestCarouselPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Request Carousel Post</h1>
+    <div className="max-w-6xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Create LinkedIn Carousel</h1>
         <p className="text-black">
-          Share your requirements and our team will create a professional carousel for your LinkedIn profile
+          Upload content or paste a YouTube URL to create a professional carousel for your LinkedIn profile
         </p>
       </div>
       
-      <div className="bg-white border-2 border-blue-300 rounded-lg p-4 mb-8 flex items-start gap-3">
-        <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-        <div>
-          <h3 className="font-medium text-black mb-1">About Carousel Requests</h3>
-          <p className="text-sm text-black">
-            Our team will design a professional LinkedIn carousel based on your brief. You can expect delivery within 24 hours.
-            Each request counts as 1 carousel credit from your subscription.
-          </p>
-        </div>
-      </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Carousel Brief Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Carousel Brief</CardTitle>
-                <CardDescription>
-                  Tell us about your carousel content
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carousel Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 5 Ways to Boost Team Productivity" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="topic"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Topic Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe the main topic and key points you want to cover" 
-                          className="min-h-[120px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The more details you provide, the better we can tailor your carousel
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="audience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Audience</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Marketing professionals, startup founders" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="tone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Content Tone</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Column - Content Source */}
+        <div className="lg:w-1/2">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Content Source</CardTitle>
+              <CardDescription>
+                Choose how you want to provide your content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Title Field */}
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Carousel Title</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tone" />
-                          </SelectTrigger>
+                          <Input placeholder="e.g., 5 Ways to Boost Team Productivity" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="inspirational">Inspirational</SelectItem>
-                          <SelectItem value="educational">Educational</SelectItem>
-                          <SelectItem value="conversational">Conversational</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="callToAction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Call To Action (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Download our free guide, Book a consultation" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="file-upload">
-                    Upload Reference Material (Optional)
-                  </label>
-                  <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center bg-white">
-                    <div className="flex flex-col items-center">
-                      <Upload className="h-8 w-8 text-black mb-2" />
-                      <p className="text-sm text-black mb-2">
-                        {selectedFile ? selectedFile.name : 'PDF or image files up to 10MB'}
-                      </p>
-                      <Input
-                        id="file-upload"
-                        type="file"
-                        accept=".pdf,image/*"
-                        className="hidden"
-                        onChange={handleFileChange}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Content Source Tabs */}
+                  <Tabs 
+                    defaultValue="youtube" 
+                    className="w-full"
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                  >
+                    <TabsList className="grid grid-cols-2 w-full">
+                      <TabsTrigger value="youtube" className="flex items-center gap-2">
+                        <Youtube className="h-4 w-4" />
+                        YouTube
+                      </TabsTrigger>
+                      <TabsTrigger value="upload" className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        Upload File
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    {/* YouTube Content Tab */}
+                    <TabsContent value="youtube" className="mt-4 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="youtubeUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>YouTube Video URL</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  placeholder="https://www.youtube.com/watch?v=..." 
+                                  {...field}
+                                  onChange={handleYoutubeUrlChange}
+                                />
+                                <Youtube className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              We'll automatically extract content from the video
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('file-upload')?.click()}
-                      >
-                        {selectedFile ? 'Change File' : 'Select File'}
-                      </Button>
+
+                      {form.watch('youtubeUrl') && (
+                        <div className="p-4 bg-white border border-blue-200 rounded-lg mt-4">
+                          <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <Info className="h-4 w-4 text-blue-500" />
+                            Content will be scraped from video
+                          </h3>
+                          <p className="text-xs text-black">
+                            Our AI will extract key points from your video and create carousel slides based on the content.
+                          </p>
+                        </div>
+                      )}
+                    </TabsContent>
+                    
+                    {/* File Upload Tab */}
+                    <TabsContent value="upload" className="mt-4">
+                      <div className="border-2 border-dashed border-blue-200 rounded-lg p-8 text-center bg-white">
+                        <div className="flex flex-col items-center">
+                          {!selectedFile ? (
+                            <>
+                              <Upload className="h-10 w-10 text-blue-400 mb-3" />
+                              <h3 className="text-lg font-medium mb-2">Upload Content</h3>
+                              <p className="text-sm text-black mb-4 max-w-md">
+                                Drag and drop your PDF, PowerPoint, or image files here, or click to browse
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="mb-3">
+                                {selectedFile.type.includes('image') ? (
+                                  <Image className="h-10 w-10 text-blue-400" />
+                                ) : (
+                                  <FileText className="h-10 w-10 text-blue-400" />
+                                )}
+                              </div>
+                              <h3 className="text-lg font-medium mb-1">{selectedFile.name}</h3>
+                              <p className="text-sm text-black mb-4">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </>
+                          )}
+                          
+                          <Input
+                            id="file-upload"
+                            type="file"
+                            accept=".pdf,.ppt,.pptx,.doc,.docx,image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('file-upload')?.click()}
+                            className="border-blue-300"
+                          >
+                            {selectedFile ? 'Change File' : 'Select File'}
+                          </Button>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                  
+                  {/* Template Selection */}
+                  <div className="space-y-2 mt-6">
+                    <FormField
+                      control={form.control}
+                      name="templateId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Template Style</FormLabel>
+                          <div className="grid grid-cols-2 gap-3 mt-2">
+                            {templates.slice(0, 4).map(template => (
+                              <div
+                                key={template.id}
+                                className={`border rounded-lg p-2 cursor-pointer transition-all duration-200 ${
+                                  field.value === template.id 
+                                    ? 'border-primary bg-white border-2 shadow-md' 
+                                    : 'border-black hover:border-primary hover:border-2 hover:shadow-md bg-white'
+                                }`}
+                                onClick={() => field.onChange(template.id)}
+                              >
+                                <div className="text-center">
+                                  <div className="w-full h-20 bg-white border border-blue-200 rounded-md flex items-center justify-center overflow-hidden mb-2">
+                                    <LayoutGrid className="h-6 w-6 text-blue-400" />
+                                  </div>
+                                  <p className="text-xs font-medium truncate">{template.name}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-2 flex justify-center">
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => navigate('/dashboard/templates')}
+                              className="text-sm font-medium text-blue-500"
+                            >
+                              View All Templates
+                              <ChevronRight className="h-4 w-4 ml-1" />
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-6">
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting || !form.formState.isValid} 
+                      className="min-w-[150px]"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Request Carousel'}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => navigate('/dashboard/templates')}
+                    >
+                      See Templates
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Right Column - Preview */}
+        <div className="lg:w-1/2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Carousel Preview</CardTitle>
+              <CardDescription>
+                Example of how your carousel might look
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
+                {/* Sample carousel preview */}
+                <div className="relative">
+                  <div className="aspect-video bg-gradient-to-r from-blue-50 to-white border-b-2 border-black flex items-center justify-center">
+                    <div className="text-center p-4">
+                      <h3 className="text-xl font-bold text-black">5 Ways to Boost Team Productivity</h3>
+                      <p className="text-sm text-black mt-2">Slide 1 of 5</p>
+                    </div>
+                  </div>
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <button className="w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center">
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-4 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      1
+                    </div>
+                    <div className="h-1 w-6 bg-black rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      2
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      3
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      4
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      5
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-            
-            {/* Template Selection Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Choose Template</CardTitle>
-                  <CardDescription>
-                    Select a design template for your carousel
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="templateId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="grid grid-cols-1 gap-4">
-                          {templates.map(template => (
-                            <div
-                              key={template.id}
-                              className={`border rounded-lg p-3 cursor-pointer transition-all duration-200 ${
-                                field.value === template.id 
-                                  ? 'border-primary bg-white border-2 shadow-md' 
-                                  : 'border-black hover:border-primary hover:border-2 hover:shadow-md bg-white'
-                              }`}
-                              onClick={() => field.onChange(template.id)}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="w-20 h-20 bg-white border border-blue-200 rounded-md flex items-center justify-center overflow-hidden">
-                                  {/* If you have actual images, use them here */}
-                                  <LayoutGrid className="h-8 w-8 text-blue-400" />
-                                </div>
-                                <div className="flex-1">
-                                  <h3 className="font-medium">{template.name}</h3>
-                                  <p className="text-xs text-black mt-1 mb-1">
-                                    {template.description}
-                                  </p>
-                                  <div className="flex items-center text-xs text-black">
-                                    <LayoutGrid className="h-3 w-3 mr-1" />
-                                    {template.slideCount} slides
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+              </div>
               
-              <Card>
-                <CardHeader>
-                  <CardTitle>Additional Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="additionalNotes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Additional Notes (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Any other requirements or preferences" 
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between border-t border-blue-200 pt-6">
-            <div className="flex items-center text-sm text-black">
-              <Calendar className="h-4 w-4 mr-1" />
-              Estimated delivery: 24 hours
-            </div>
-            
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate('/dashboard/home')}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="min-w-[120px]"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
+              <div className="mt-6 space-y-4">
+                <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
+                  <h3 className="font-medium flex items-center gap-2 mb-2">
+                    <Lightbulb className="h-4 w-4 text-amber-500" />
+                    Carousel Best Practices
+                  </h3>
+                  <ul className="text-sm text-black space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 font-bold mt-0.5">•</span>
+                      Keep your content concise and focused on one main topic
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 font-bold mt-0.5">•</span>
+                      Use 5-10 slides for optimal engagement
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 font-bold mt-0.5">•</span>
+                      Include a clear call-to-action in your final slide
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="bg-white border-2 border-black rounded-lg p-4">
+                  <h3 className="font-medium flex items-center gap-2 mb-2">
+                    <Info className="h-4 w-4" />
+                    Carousel Delivery
+                  </h3>
+                  <p className="text-sm text-black">
+                    Your carousel will be ready within 24 hours. You'll receive an email notification when it's ready to view and publish.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
