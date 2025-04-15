@@ -110,7 +110,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Outfit", "var(--font-sans)", ...fontFamily.sans],
+        sans: ["Poppins", "var(--font-sans)", ...fontFamily.sans],
+        heading: ["Montserrat", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
