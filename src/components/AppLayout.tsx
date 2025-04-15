@@ -7,6 +7,7 @@ import { Bell, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -20,6 +21,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const location = useLocation();
 
   // Monitor window resize to determine if mobile view
   useEffect(() => {
@@ -37,6 +39,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [sidebarOpen]);
+
+  // Ensure the sidebar is closed when navigating on mobile
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  }, [location]);  // Use location from react-router to detect navigation changes
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -89,16 +98,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             
             {/* Hamburger menu button - Always show on tablet and mobile */}
             <Button 
-              variant="ghost" 
+              variant="secondary" 
               size="sm"
-              className={cn(
-                "ml-2 flex items-center gap-1",
-                isMobile ? "flex" : "hidden md:hidden"
-              )}
+              className="ml-2 flex items-center gap-1 md:flex lg:hidden relative z-50 shadow-sm"
               onClick={toggleSidebar}
               aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
             >
-              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              <motion.div
+                animate={{ rotate: sidebarOpen ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              </motion.div>
               <span className="sr-only md:not-sr-only">Menu</span>
             </Button>
           </div>

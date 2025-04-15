@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Home, FileText, BookOpen, Settings, Users, 
@@ -37,6 +37,11 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
   
+  // Stabilize the onClose handler with useCallback
+  const handleClose = useCallback(() => {
+    if (onClose) onClose();
+  }, [onClose]);
+  
   // Monitor window resize
   useEffect(() => {
     const handleResize = () => {
@@ -53,8 +58,8 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
   // Handle clicks outside the sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isMobile && isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node) && onClose) {
-        onClose();
+      if (isMobile && isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        handleClose();
       }
     };
     
@@ -62,7 +67,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isMobile, isOpen, onClose]);
+  }, [isMobile, isOpen, handleClose]);
   
   const navItems: NavItem[] = [
     { title: 'Home', icon: Home, path: '/dashboard/home' },
@@ -89,21 +94,27 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
     return (
       <>
         {/* Sidebar Overlay */}
-        {isOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={onClose}
-          />
-        )}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={handleClose}
+            />
+          )}
+        </AnimatePresence>
       
         {/* Mobile Sidebar */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isOpen && (
             <motion.div
               ref={sidebarRef}
-              initial={{ x: 320 }}
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: 320 }}
+              exit={{ x: "100%" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="fixed right-0 top-0 z-50 h-screen w-80 flex flex-col border-l border-gray-200 bg-white shadow-lg"
             >
@@ -113,7 +124,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
                   <BrandOutIcon className="w-8 h-8" />
                   <span className="font-semibold text-gray-900">BrandOut</span>
                 </div>
-                <button onClick={onClose} className="text-gray-500 p-2 hover:bg-gray-100 rounded-full">
+                <button onClick={handleClose} className="text-gray-500 p-2 hover:bg-gray-100 rounded-full">
                   <X size={20} />
                 </button>
               </div>
@@ -125,7 +136,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
                     <NavLink
                       key={index}
                       to={item.path}
-                      onClick={onClose}
+                      onClick={handleClose}
                       className={({ isActive }) => cn(
                         'flex items-center gap-3 rounded-lg px-3 py-3 transition-colors w-full',
                         isActive 
