@@ -98,11 +98,20 @@ const DashboardPage: React.FC = () => {
     user?.authMethod === 'linkedin' || !!user?.linkedinId || !!user?.linkedinConnected
   );
   
-  // Update LinkedIn connection status when user data changes
+  // Generate a LinkedIn username based on user's name
+  const [linkedInUsername, setLinkedInUsername] = useState<string>('');
+  
+  // Update LinkedIn connection status and username when user data changes
   useEffect(() => {
     setIsLinkedInConnected(
       user?.authMethod === 'linkedin' || !!user?.linkedinId || !!user?.linkedinConnected
     );
+    
+    if (user) {
+      setLinkedInUsername(
+        `${user.firstName.toLowerCase()}${user.lastName ? user.lastName.toLowerCase() : ''}`
+      );
+    }
   }, [user]);
   
   // State for workspaces
@@ -226,76 +235,105 @@ const DashboardPage: React.FC = () => {
     };
     
     try {
-      // Fetch LinkedIn profile
-      const profilePromise = axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
+      // Try to fetch basic LinkedIn profile first (doesn't rely on LinkedIn API tokens)
+      console.log('Fetching basic LinkedIn profile data');
+      const basicProfilePromise = axios.get(`${apiBaseUrl}/linkedin/basic-profile`, { headers });
       
       // Fetch recent posts
-      const postsPromise = axios.get(`${apiBaseUrl}/linkedin/posts`, { headers });
+      console.log('Fetching LinkedIn posts data');
+      const postsPromise = axios.get(`${apiBaseUrl}/linkedin/posts`, { headers })
+        .catch(error => {
+          console.log('LinkedIn posts fetch failed, will use empty array', error);
+          // Return a resolved promise with empty posts
+          return Promise.resolve({ 
+            data: { 
+              success: true, 
+              data: [], 
+              usingRealData: false,
+              error: 'Posts could not be fetched'
+            } 
+          });
+        });
       
-      // Execute all requests in parallel
-      const [profileRes, postsRes] = await Promise.allSettled([
-        profilePromise, 
+      // Execute both requests in parallel
+      const [basicProfileRes, postsRes] = await Promise.allSettled([
+        basicProfilePromise,
         postsPromise
       ]);
       
-      // Handle profile response
-      if (profileRes.status === 'fulfilled') {
-        setLinkedInProfile(profileRes.value.data.data);
+      // Check if basic profile fetch was successful
+      if (basicProfileRes.status === 'fulfilled') {
+        console.log('Basic LinkedIn profile data fetched successfully');
+        setLinkedInProfile(basicProfileRes.value.data.data);
         setLoading(prev => ({ ...prev, profile: false }));
-        
-        // Show toast if using sample data
-        if (profileRes.value.data.usingRealData === false) {
-          console.warn('Using sample LinkedIn profile data:', profileRes.value.data.error);
-          
-          let errorMessage = 'Some LinkedIn data could not be fetched.';
-          let errorDescription = profileRes.value.data.errorDetails || 'Try reconnecting your LinkedIn account.';
-          
-          // Customize message based on error type
-          if (profileRes.value.data.errorType === 'token_expired') {
-            errorMessage = 'LinkedIn access token expired';
-            errorDescription = 'Please reconnect your LinkedIn account to refresh your access.';
-          } else if (profileRes.value.data.errorType === 'permission_denied') {
-            errorMessage = 'LinkedIn permission denied';
-            errorDescription = 'Your account may need additional permissions. Try reconnecting.';
-          }
-          
-          toast.warning(errorMessage, {
-            description: errorDescription,
-            duration: 5000
-          });
-          
-          // Mark toast as shown
-          setShownToasts(prev => [...prev, 'profile-warning']);
-        } else if (profileRes.value.data.usingRealData === true) {
-          console.log('Using real LinkedIn profile data');
-          toast.success('Successfully connected to LinkedIn', {
-            description: 'Your profile data has been loaded.',
-            duration: 3000
-          });
-        }
       } else {
-        console.error('Failed to fetch LinkedIn profile:', profileRes.reason);
-        setLoading(prev => ({ ...prev, profile: false }));
-        toast.error('Failed to load LinkedIn profile', {
-          description: profileRes.reason?.response?.data?.message || profileRes.reason?.message || 'Unknown error',
-          duration: 5000
-        });
+        console.error('Basic profile fetch failed, trying regular profile endpoint');
+        
+        try {
+          // If basic profile failed, try the standard profile endpoint (with LinkedIn API)
+          const profileRes = await axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
+          console.log('Standard LinkedIn profile fetch result:', profileRes.data);
+          setLinkedInProfile(profileRes.data.data);
+          setLoading(prev => ({ ...prev, profile: false }));
+          
+          // Show toast if using sample data
+          if (profileRes.data.usingRealData === false) {
+            console.warn('Using sample LinkedIn profile data:', profileRes.data.error);
+            
+            let errorMessage = 'Some LinkedIn data could not be fetched.';
+            let errorDescription = profileRes.data.errorDetails || 'Try reconnecting your LinkedIn account.';
+            
+            // Only show token expiry messages, not permission errors which can be confusing
+            if (profileRes.data.errorType === 'token_expired') {
+              toast.warning(errorMessage, {
+                description: errorDescription,
+                duration: 5000
+              });
+              
+              // Mark toast as shown
+              setShownToasts(prev => [...prev, 'profile-warning']);
+            }
+          } else if (profileRes.data.usingRealData === true) {
+            console.log('Using real LinkedIn profile data');
+            toast.success('Successfully connected to LinkedIn', {
+              description: 'Your profile data has been loaded.',
+              duration: 3000
+            });
+          }
+        } catch (error) {
+          console.error('All LinkedIn profile fetch methods failed:', error);
+          setLoading(prev => ({ ...prev, profile: false }));
+          
+          // Don't show error toasts for permission issues as they're expected now
+          if (!error.response || error.response.status !== 403) {
+            toast.error('Failed to load LinkedIn profile', {
+              description: error.response?.data?.message || error.message || 'Unknown error',
+              duration: 5000
+            });
+          }
+        }
       }
       
       // Handle posts response
       if (postsRes.status === 'fulfilled') {
-        setRecentPosts(postsRes.value.data.data);
+        console.log('Posts data received:', postsRes.value.data);
+        if (Array.isArray(postsRes.value.data.data)) {
+          setRecentPosts(postsRes.value.data.data);
+        } else {
+          console.log('Posts data is not an array, setting empty array');
+          setRecentPosts([]);
+        }
         setLoading(prev => ({ ...prev, posts: false }));
         
-        // Show toast if using sample data
+        // Only show toast for sample posts data if we haven't shown one for the profile
         if (postsRes.value.data.usingRealData === false && !shownToasts.includes('sample-posts')) {
           console.warn('Using sample LinkedIn posts data:', postsRes.value.data.error);
           
           // Don't show another toast if we already showed one for the profile
-          if (profileRes.status === 'fulfilled' && profileRes.value.data.usingRealData !== false) {
+          if (!shownToasts.includes('profile-warning')) {
             toast.warning('Using sample LinkedIn posts data', {
               id: 'sample-posts',
-              description: postsRes.value.data.errorDetails || 'LinkedIn API limitations prevent loading your real posts.',
+              description: 'LinkedIn API limitations prevent loading your real posts.',
               duration: 5000
             });
             
@@ -305,6 +343,7 @@ const DashboardPage: React.FC = () => {
         }
       } else {
         console.error('Failed to fetch posts:', postsRes.reason);
+        setRecentPosts([]);
         setLoading(prev => ({ ...prev, posts: false }));
       }
     } catch (error) {
@@ -550,7 +589,7 @@ const DashboardPage: React.FC = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
-                User Profile
+                {user?.authMethod === 'linkedin' ? 'LinkedIn Profile' : 'User Profile'}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -616,7 +655,7 @@ const DashboardPage: React.FC = () => {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-xs text-gray-500">LinkedIn Username</span>
-                            <span className="text-sm font-medium">{linkedInProfile?.username || 'Not available'}</span>
+                            <span className="text-sm font-medium">{linkedInProfile?.username || linkedInUsername || 'Not available'}</span>
                           </div>
                         </div>
                         
@@ -629,6 +668,25 @@ const DashboardPage: React.FC = () => {
                             <span className="text-sm font-medium truncate max-w-[200px]">{linkedInProfile?.id || user?.linkedinId || 'Not available'}</span>
                           </div>
                         </div>
+                        
+                        {linkedInProfile?.url && (
+                          <div className="flex items-center gap-2 mt-3">
+                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                              <Linkedin className="h-3.5 w-3.5 text-blue-500" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs text-gray-500">LinkedIn Profile</span>
+                              <a 
+                                href={linkedInProfile.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-blue-500 hover:underline"
+                              >
+                                View Profile
+                              </a>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>

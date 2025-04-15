@@ -3,7 +3,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+/* new changes */
 @layer base {
   :root {
     /* Light theme colors simplified to white and blue */
