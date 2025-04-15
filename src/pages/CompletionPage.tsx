@@ -93,7 +93,6 @@ export default function CompletionPage() {
       // Log all available tokens for debugging
       console.log("CompletionPage - Available tokens:", {
         linkedinToken: tokenManager.getToken('linkedin') ? 'Present' : 'None',
-        emailToken: localStorage.getItem('email-login-token') ? 'Present' : 'None',
         googleToken: localStorage.getItem('google-login-token') ? 'Present' : 'None',
       });
       

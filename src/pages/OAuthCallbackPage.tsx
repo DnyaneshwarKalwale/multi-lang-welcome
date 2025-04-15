@@ -40,7 +40,7 @@ export default function OAuthCallbackPage() {
       }
       
       // Determine auth method from URL path
-      let authMethod = 'email';
+      let authMethod = 'linkedin'; // Default to LinkedIn instead of email
       console.log('OAuth callback - Full pathname:', location.pathname);
       console.log('OAuth callback - Full URL:', window.location.href);
       
@@ -96,7 +96,13 @@ export default function OAuthCallbackPage() {
         
         // Now set the token with the correct auth method
         console.log(`OAuth callback - Setting token with finalAuthMethod: ${finalAuthMethod}`);
-        tokenManager.storeToken(token, finalAuthMethod as 'email' | 'linkedin' | 'google');
+        
+        // Ensure finalAuthMethod is only 'linkedin' or 'google'
+        if (finalAuthMethod !== 'linkedin' && finalAuthMethod !== 'google') {
+          finalAuthMethod = 'linkedin'; // Default to LinkedIn if not a valid type
+        }
+        
+        tokenManager.storeToken(token, finalAuthMethod as 'linkedin' | 'google');
         
         // Check for pending invitation token
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');

@@ -18,9 +18,8 @@ const api = axios.create({
 // Helper functions for token management
 export const tokenManager = {
   // Store token by auth method
-  storeToken: (token: string, authMethod: 'email' | 'linkedin' | 'google'): void => {
+  storeToken: (token: string, authMethod: 'linkedin' | 'google'): void => {
     // Clear any existing tokens for other auth methods first
-    if (authMethod !== 'email') localStorage.removeItem('email-login-token');
     if (authMethod !== 'linkedin') localStorage.removeItem('linkedin-login-token');
     if (authMethod !== 'google') localStorage.removeItem('google-login-token');
     
@@ -45,7 +44,6 @@ export const tokenManager = {
   
   // Clear all tokens
   clearAllTokens: (): void => {
-    localStorage.removeItem('email-login-token');
     localStorage.removeItem('linkedin-login-token');
     localStorage.removeItem('google-login-token');
     localStorage.removeItem('auth-method');
@@ -80,22 +78,25 @@ api.interceptors.request.use(
 
 // Auth services
 export const authApi = {
-  // Register with email and password
+  // Register with email and password (switched to use LinkedIn auth)
   register: async (firstName: string, lastName: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', {
+    // Instead of directly storing email credentials, we'll redirect to LinkedIn auth
+    // This is just a mock implementation since we're removing email auth
+    const response = await api.post('/auth/register-redirect', {
       firstName,
       lastName,
       email,
-      password,
+      redirectToLinkedIn: true
     });
     return response.data;
   },
 
-  // Login with email and password
+  // Login with LinkedIn instead of email/password
   login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', {
-      email,
-      password,
+    // Redirect to LinkedIn auth instead of email login
+    // This is just a mock implementation since we're removing email auth
+    const response = await api.post('/auth/login-redirect', {
+      redirectToLinkedIn: true
     });
     return response.data;
   },

@@ -112,11 +112,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.register(firstName, lastName, email, password);
       
-      setUser(response.user);
+      // Check if we need to redirect to LinkedIn
+      if (response.redirectToLinkedIn) {
+        // This would normally redirect to LinkedIn
+        setError('Please use LinkedIn to register');
+        return;
+      }
       
-      localStorage.setItem('pendingVerificationEmail', email);
-      
-      navigate('/verify-email');
+      // For backwards compatibility, handle response if it contains user data
+      if (response.user) {
+        setUser(response.user);
+        localStorage.setItem('pendingVerificationEmail', email);
+        navigate('/verify-email');
+      }
       
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -131,17 +139,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
+      // Instead of email login, redirect to LinkedIn auth
       const response = await authApi.login(email, password);
       
-      // Store token using the tokenManager
-      tokenManager.storeToken(response.token, 'email');
+      // We no longer store email tokens - this would be handled by LinkedIn OAuth
+      if (response.redirectToLinkedIn) {
+        // This would normally redirect to LinkedIn
+        setError('Please use LinkedIn to log in');
+        return;
+      }
       
-      setToken(response.token);
-      setUser(response.user);
+      // For backwards compatibility, handle response if it contains user data
+      if (response.user) {
+        setUser(response.user);
+        localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
+        return response.user;
+      }
       
-      localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
-      
-      return response.user;
+      return;
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
       console.error('Login error:', err);
