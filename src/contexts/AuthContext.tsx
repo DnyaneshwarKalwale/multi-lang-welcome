@@ -30,6 +30,7 @@ export interface AuthContextType {
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void | User>;
   linkedinAuth: (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => Promise<void>;
+  googleAuth: (userData: { name: string; googleId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   fetchUser: () => Promise<User | undefined>;
@@ -124,7 +125,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const response = await authApi.login(email, password);
       
+      // Store the token with a platform-specific key
       localStorage.setItem('token', response.token);
+      localStorage.setItem('email-login-token', response.token);
+      localStorage.setItem('auth-method', 'email');
+      
+      setToken(response.token);
       setUser(response.user);
       
       localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
@@ -146,7 +152,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.linkedinAuth(userData);
       
       if (response.token) {
+        // Store the token with platform-specific keys
         localStorage.setItem('token', response.token);
+        localStorage.setItem('linkedin-login-token', response.token);
+        localStorage.setItem('auth-method', 'linkedin');
+        
         setToken(response.token);
         setUser(response.user);
         
@@ -164,9 +174,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Add Google authentication method
+  const googleAuth = async (userData: { name: string; googleId: string; email: string; profileImage?: string }) => {
+    setLoading(true);
+    
+    try {
+      const response = await authApi.googleAuth(userData);
+      
+      if (response.token) {
+        // Store the token with platform-specific keys
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('google-login-token', response.token);
+        localStorage.setItem('auth-method', 'google');
+        
+        setToken(response.token);
+        setUser(response.user);
+        
+        if (response.user) {
+          localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted ? 'true' : 'false');
+        }
+      } else {
+        setError('Failed to authenticate with Google');
+      }
+    } catch (error) {
+      console.error('Google Auth Error:', error);
+      setError('Failed to authenticate with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
+    // Clear all tokens stored in localStorage
     localStorage.removeItem('token');
+    localStorage.removeItem('email-login-token');
+    localStorage.removeItem('linkedin-login-token');
+    localStorage.removeItem('google-login-token');
+    localStorage.removeItem('auth-method');
+    
     setUser(null);
+    setToken(null);
     navigate('/', { replace: true });
   };
 
@@ -191,6 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         login,
         linkedinAuth,
+        googleAuth,
         logout,
         clearError,
         fetchUser,

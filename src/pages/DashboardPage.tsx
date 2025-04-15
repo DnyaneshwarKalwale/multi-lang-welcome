@@ -256,13 +256,13 @@ const DashboardPage: React.FC = () => {
           
           // Only show token expiry messages, not permission errors which can be confusing
           if (profileRes.data.errorType === 'token_expired') {
-            toast.warning(errorMessage, {
-              description: errorDescription,
-              duration: 5000
-            });
-            
-            // Mark toast as shown
-            setShownToasts(prev => [...prev, 'profile-warning']);
+          toast.warning(errorMessage, {
+            description: errorDescription,
+            duration: 5000
+          });
+          
+          // Mark toast as shown
+          setShownToasts(prev => [...prev, 'profile-warning']);
           }
         } else if (profileRes.data.usingRealData === true) {
           console.log('Using real LinkedIn profile data');
@@ -279,8 +279,8 @@ const DashboardPage: React.FC = () => {
         if (!error.response || error.response.status !== 403) {
           toast.error('Failed to load LinkedIn profile', {
             description: error.response?.data?.message || error.message || 'Unknown error',
-            duration: 5000
-          });
+              duration: 5000
+            });
         }
       }
     }
@@ -525,7 +525,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                     <Avatar className="h-16 w-16 border-2 border-primary/10">
                       {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
                         <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
@@ -550,22 +550,22 @@ const DashboardPage: React.FC = () => {
                   <div className="pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        {user?.authMethod === 'linkedin' ? (
+                  {user?.authMethod === 'linkedin' ? (
                           <Linkedin className="h-3.5 w-3.5 text-primary" />
-                        ) : user?.authMethod === 'google' ? (
+                  ) : user?.authMethod === 'google' ? (
                           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#0088FF" />
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#0088FF" />
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#0088FF" />
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#0088FF" />
-                          </svg>
-                        ) : (
+                    </svg>
+                  ) : (
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                        )}
-                      </div>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  )}
+                </div>
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-500">Login Method</span>
                         <span className="text-sm font-medium capitalize">{user?.authMethod || 'Email'}</span>
@@ -669,9 +669,9 @@ const DashboardPage: React.FC = () => {
           </Card>
           
           {/* Content Creation Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div>
                 <CardTitle>Content Creation</CardTitle>
                 <CardDescription>Create and publish LinkedIn content</CardDescription>
               </div>
@@ -754,10 +754,10 @@ const DashboardPage: React.FC = () => {
               <div>
                 <CardTitle>Content Inspiration</CardTitle>
                 <CardDescription>AI-powered content ideas</CardDescription>
-              </div>
-              <Button
+                  </div>
+                  <Button
                 variant="ghost" 
-                size="sm"
+                    size="sm"
                 className="text-primary"
                 onClick={() => navigate('/dashboard/templates')}
               >
@@ -784,30 +784,30 @@ const DashboardPage: React.FC = () => {
                   >
                     Use Template
                   </Button>
-                </div>
-                
+                    </div>
+                          
                 <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-indigo-100 p-1 rounded">
                       <Lightbulb className="h-4 w-4 text-indigo-500" />
                     </span>
                     <h3 className="text-sm font-medium">Industry Insight</h3>
-                  </div>
+                            </div>
                   <p className="text-sm text-gray-700 mb-3">
                     Share your perspective on a recent trend or news item in your industry.
                   </p>
-                  <Button
-                    variant="outline"
+                    <Button 
+                      variant="outline"
                     size="sm"
                     className="w-full"
                     onClick={() => navigate('/dashboard/post?template=industry-insight')}
-                  >
+                    >
                     Use Template
-                  </Button>
-                </div>
+                    </Button>
+                  </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>
