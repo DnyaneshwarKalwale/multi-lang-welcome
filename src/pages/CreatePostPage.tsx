@@ -1198,30 +1198,54 @@ const CreatePostPage: React.FC = () => {
                                     <Upload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
                                     <p className="text-sm text-gray-500 mb-3">Add an image to this slide</p>
                                     <div className="flex justify-center gap-2">
-                                      <ImageUploader
-                                        onUploadComplete={(image: CloudinaryImage) => {
-                                          // Update slide with Cloudinary image
-                                          const updatedSlides = slides.map(s => 
-                                            s.id === slide.id ? {
-                                              ...s, 
-                                              cloudinaryImage: image as ExtendedCloudinaryImage,
-                                              imageUrl: (image as ExtendedCloudinaryImage).secure_url
-                                            } : s
-                                          );
-                                          setSlides(updatedSlides);
-                                          showSaveIndicator();
-                                          toast.success('Image uploaded to slide');
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="gap-1"
+                                        onClick={() => document.getElementById("file-upload-" + slide.id)?.click()}
+                                      >
+                                        <Upload size={14} />
+                                        Upload
+                                      </Button>
+                                      <input
+                                        id={"file-upload-" + slide.id}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            // Handle upload directly when file is selected
+                                            const uploadToCloudinary = async () => {
+                                              try {
+                                                toast.info("Uploading image...");
+                                                // Import dynamically to avoid circular deps
+                                                const { uploadToCloudinaryDirect } = await import('@/utils/cloudinaryDirectUpload');
+                                                const image = await uploadToCloudinaryDirect(file, {
+                                                  folder: 'linkedin_uploads',
+                                                  tags: ['carousel', 'slide'],
+                                                  type: 'uploaded'
+                                                });
+                                                
+                                                // Update slide with Cloudinary image
+                                                const updatedSlides = slides.map(s => 
+                                                  s.id === slide.id ? {
+                                                    ...s, 
+                                                    cloudinaryImage: image as ExtendedCloudinaryImage,
+                                                    imageUrl: (image as ExtendedCloudinaryImage).secure_url
+                                                  } : s
+                                                );
+                                                setSlides(updatedSlides);
+                                                showSaveIndicator();
+                                                toast.success('Image uploaded to slide');
+                                              } catch (error) {
+                                                console.error('Upload error:', error);
+                                                toast.error('Failed to upload image');
+                                              }
+                                            };
+                                            uploadToCloudinary();
+                                          }
                                         }}
-                                        triggerButton={
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="gap-1"
-                                          >
-                                            <Upload size={14} />
-                                            Upload
-                                          </Button>
-                                        }
                                       />
                                       <ImageGalleryPicker
                                         onSelectImage={(image: CloudinaryImage) => {

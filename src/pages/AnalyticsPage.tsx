@@ -270,7 +270,7 @@ const AnalyticsPage: React.FC = () => {
       
       {/* Sample data notice */}
       {usingSampleData && !loading && !error && (
-        <Alert variant="warning" className="mb-6 bg-amber-50 border-amber-200">
+        <Alert variant="default" className="mb-6 bg-amber-50 border-amber-200">
           <div className="flex flex-col w-full">
             <div className="flex items-start">
               <AlertCircle className="h-4 w-4 mr-2 text-amber-600 mt-0.5" />

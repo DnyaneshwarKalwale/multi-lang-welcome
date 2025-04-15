@@ -577,65 +577,104 @@ const RequestCarouselPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             {selectedVideo && generatedTranscript.length > 0 ? (
-              <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
-                {/* Show AI content from transcript instead of video */}
-                <div className="border-b-2 border-black">
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-white">
-                    <h3 className="font-bold text-lg mb-2">{selectedVideo.title}</h3>
-                    <p className="text-sm text-gray-700">AI-generated carousel from your video</p>
+              <div className="bg-white border rounded-lg overflow-hidden shadow-md">
+                {/* LinkedIn-style header */}
+                <div className="p-3 border-b">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                      <span className="font-semibold text-blue-600">YT</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Your LinkedIn Profile</h4>
+                      <p className="text-xs text-gray-500">Content Creator • Just now</p>
+                    </div>
                   </div>
                 </div>
-                <div className="p-4">
-                  {/* Show the current transcript point as the current slide */}
-                  <div className="rounded-lg border border-gray-200 p-4 mb-3 bg-white shadow-sm min-h-[120px] relative">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-xs font-semibold text-blue-600">SLIDE {currentSlide + 1} OF {generatedTranscript.length}</span>
-                    </div>
-                    <p className="text-base font-medium">{generatedTranscript[currentSlide]}</p>
-                    
-                    {/* Navigation buttons */}
-                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-1">
-                      <Button 
-                        onClick={prevSlide} 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7 rounded-full bg-gray-200/80 hover:bg-gray-300/80 text-gray-700"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="sr-only">Previous slide</span>
-                      </Button>
-                      <Button 
-                        onClick={nextSlide} 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7 rounded-full bg-gray-200/80 hover:bg-gray-300/80 text-gray-700"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">Next slide</span>
-                      </Button>
+                
+                {/* Post content */}
+                <div className="p-3">
+                  <p className="text-sm mb-3">{selectedVideo.title}</p>
+                </div>
+                
+                {/* Carousel slide with 1:1 aspect ratio */}
+                <div className="relative">
+                  <div className="aspect-square w-full relative">
+                    <div className="absolute inset-0 flex flex-col">
+                      {/* Slide content with LinkedIn styling */}
+                      <div className="flex-1 flex flex-col justify-center p-6 bg-gradient-to-br from-blue-50 to-white">
+                        <div className="absolute top-3 right-3 bg-white/80 text-xs px-2 py-1 rounded-full text-gray-700 font-medium">
+                          {currentSlide + 1}/{generatedTranscript.length}
+                        </div>
+                        
+                        <div className="mx-auto max-w-[90%] text-center">
+                          <p className="text-lg font-semibold leading-tight">{generatedTranscript[currentSlide]}</p>
+                        </div>
+                        
+                        {/* LinkedIn logo overlay */}
+                        <div className="absolute bottom-3 left-3">
+                          <div className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded flex items-center">
+                            <span className="font-bold">in</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Navigation buttons */}
+                      <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
+                        <Button 
+                          onClick={prevSlide} 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                          <span className="sr-only">Previous slide</span>
+                        </Button>
+                        <Button 
+                          onClick={nextSlide} 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                          <span className="sr-only">Next slide</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between mt-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {generatedTranscript.map((_, index) => (
-                        <React.Fragment key={index}>
-                          <div 
-                            className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
-                              index === currentSlide ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                            }`}
-                            onClick={() => setCurrentSlide(index)}
-                          >
-                            {index + 1}
-                          </div>
-                          {index < generatedTranscript.length - 1 && (
-                            <div className={`h-1 w-4 rounded-full ${
-                              index === currentSlide || index + 1 === currentSlide ? 'bg-black' : 'bg-gray-300'
-                            }`}></div>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </div>
+                </div>
+                
+                {/* Slide indicators */}
+                <div className="flex justify-center p-3 gap-1 border-t">
+                  {generatedTranscript.map((_, index) => (
+                    <div 
+                      key={index}
+                      className={`h-1.5 rounded-full cursor-pointer transition-all ${
+                        index === currentSlide ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                      onClick={() => setCurrentSlide(index)}
+                    />
+                  ))}
+                </div>
+                
+                {/* LinkedIn-style engagement actions */}
+                <div className="border-t">
+                  <div className="flex items-center justify-around p-1">
+                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                      Like
+                    </Button>
+                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      Comment
+                    </Button>
+                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                      Repost
+                    </Button>
+                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+                      Send
+                    </Button>
                   </div>
                 </div>
               </div>
