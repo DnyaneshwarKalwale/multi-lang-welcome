@@ -51,16 +51,6 @@ export function CollapsibleSidebar({
     {
       label: 'Request Carousel',
       href: '/dashboard/request-carousel',
-      icon: <Globe className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Carousels',
-      href: '/dashboard/carousels',
-      icon: <Image className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'My Carousels',
-      href: '/dashboard/my-carousels',
       icon: <Image className="h-4 w-4 mr-3" />
     },
     {
@@ -102,11 +92,6 @@ export function CollapsibleSidebar({
       label: 'Image Gallery',
       href: '/dashboard/images',
       icon: <Image className="h-4 w-4 mr-3" />
-    },
-    {
-      label: 'Templates',
-      href: '/templates',
-      icon: <LayoutGrid className="h-4 w-4 mr-3" />
     }
   ];
 
@@ -115,6 +100,15 @@ export function CollapsibleSidebar({
   const logoSize = deviceType === 'mobile' ? 'h-6' : 'h-7';
   const textSize = deviceType === 'mobile' ? 'text-xs' : 'text-sm';
   const navItemHeight = deviceType === 'mobile' ? 'h-10' : 'h-12';
+
+  // Active path handling - if we're on a carousel-related page, highlight Request Carousel
+  const isCarouselActive = (path: string) => {
+    if (path === '/dashboard/request-carousel') return true;
+    if (path === '/dashboard/carousels') return true;
+    if (path === '/dashboard/my-carousels') return true;
+    if (path === '/templates') return true;
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
 
   // For fixed desktop sidebar, render without animation wrapper
   if (isFixed) {
@@ -141,9 +135,11 @@ export function CollapsibleSidebar({
                 to={item.href}
                 className={cn(
                   "flex items-center h-12 px-4 rounded-md text-sm font-medium transition-colors",
-                  location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+                  item.href === '/dashboard/request-carousel' && isCarouselActive(item.href)
                     ? "bg-blue-50 text-blue-600 font-semibold"
-                    : "text-gray-600 hover:bg-gray-100"
+                    : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+                      ? "bg-blue-50 text-blue-600 font-semibold"
+                      : "text-gray-600 hover:bg-gray-100"
                 )}
               >
                 {item.icon}
@@ -230,9 +226,11 @@ export function CollapsibleSidebar({
                     "flex items-center px-3 sm:px-4 rounded-md font-medium transition-colors",
                     navItemHeight,
                     textSize,
-                    location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+                    item.href === '/dashboard/request-carousel' && isCarouselActive(item.href)
                       ? "bg-blue-50 text-blue-600 font-semibold"
-                      : "text-gray-600 hover:bg-gray-100"
+                      : location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+                        ? "bg-blue-50 text-blue-600 font-semibold"
+                        : "text-gray-600 hover:bg-gray-100"
                   )}
                   onClick={onClose}
                 >
