@@ -39,6 +39,7 @@ import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
 import ImageGalleryPage from "./pages/ImageGalleryPage";
+import TemplatesPage from "./pages/TemplatesPage";
 
 const queryClient = new QueryClient();
 
@@ -250,6 +251,7 @@ const AppRoutes = () => {
           <Route path="/dashboard/post" element={<CreatePostPage />} />
           <Route path="/dashboard/posts" element={<PostLibraryPage />} />
           <Route path="/dashboard/request-carousel" element={<RequestCarouselPage />} />
+          <Route path="/dashboard/templates" element={<TemplatesPage />} />
           <Route path="/dashboard/carousels" element={<CarouselsPage />} />
           <Route path="/dashboard/my-carousels" element={<MyCarouselsPage />} />
           <Route path="/dashboard/scraper" element={<ScraperPage />} />
