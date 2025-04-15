@@ -1094,29 +1094,29 @@ const CreatePostPage: React.FC = () => {
                       }}
                     />
                     <p className="text-xs text-muted-foreground">This text will appear above your carousel in the LinkedIn post</p>
-                  </div>
+                        </div>
 
                   <Separator />
                   
                   {/* Slider Type Selection */}
-                  <div className="flex flex-col gap-3">
-                    <label className="text-sm font-medium">Slider Type</label>
-                    <Select 
-                      value={sliderType} 
-                      onValueChange={(value) => setSliderType(value as SliderVariant)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a slider type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sliderOptions.map(option => (
-                          <SelectItem key={option} value={option}>
-                            {option.charAt(0).toUpperCase() + option.slice(1)} Slider
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="flex flex-col gap-3">
+                      <label className="text-sm font-medium">Slider Type</label>
+                      <Select 
+                        value={sliderType} 
+                        onValueChange={(value) => setSliderType(value as SliderVariant)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a slider type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sliderOptions.map(option => (
+                            <SelectItem key={option} value={option}>
+                              {option.charAt(0).toUpperCase() + option.slice(1)} Slider
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   
                   <div className="flex justify-between">
                     <Button
@@ -1129,44 +1129,44 @@ const CreatePostPage: React.FC = () => {
                       Browse Templates
                     </Button>
                   </div>
-                  
-                  <Separator />
-                  
-                  {/* Slides editor */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-medium">Carousel Slides</h3>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={addSlide} 
-                        className="gap-1"
-                      >
-                        <PlusCircle size={16} />
-                        Add Slide
-                      </Button>
-                    </div>
                     
-                    <ScrollArea className="h-[400px] pr-4">
-                      <div className="space-y-4">
-                        {slides.map((slide, index) => (
-                          <Card key={slide.id} className="relative">
-                            <CardHeader className="py-3">
-                              <div className="flex items-center justify-between">
-                                <CardTitle className="text-base">Slide {index + 1}</CardTitle>
-                                {slides.length > 1 && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => removeSlide(slide.id)}
-                                  >
-                                    <span className="sr-only">Remove slide</span>
-                                    ×
-                                  </Button>
-                                )}
-                              </div>
-                            </CardHeader>
+                    <Separator />
+                    
+                    {/* Slides editor */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base font-medium">Carousel Slides</h3>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={addSlide} 
+                          className="gap-1"
+                        >
+                          <PlusCircle size={16} />
+                          Add Slide
+                        </Button>
+                      </div>
+                      
+                      <ScrollArea className="h-[400px] pr-4">
+                        <div className="space-y-4">
+                          {slides.map((slide, index) => (
+                            <Card key={slide.id} className="relative">
+                              <CardHeader className="py-3">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle className="text-base">Slide {index + 1}</CardTitle>
+                                  {slides.length > 1 && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => removeSlide(slide.id)}
+                                    >
+                                      <span className="sr-only">Remove slide</span>
+                                      ×
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardHeader>
                             <CardContent className="py-2 space-y-4">
                               {/* Image upload section */}
                               <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
@@ -1256,26 +1256,26 @@ const CreatePostPage: React.FC = () => {
                               </div>
 
                               {/* Text content */}
-                              <Textarea
+                                <Textarea
                                 placeholder="Add text for this slide..."
                                 className="min-h-[80px]"
-                                value={slide.content}
-                                onChange={(e) => {
-                                  updateSlide(slide.id, e.target.value);
-                                  // Add a small haptic-like visual feedback
-                                  const previewEl = document.querySelector('.preview-section');
-                                  if (previewEl) {
-                                    previewEl.classList.add('preview-pulse');
-                                    setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
-                                  }
-                                  showSaveIndicator();
-                                }}
-                              />
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </ScrollArea>
+                                  value={slide.content}
+                                  onChange={(e) => {
+                                    updateSlide(slide.id, e.target.value);
+                                    // Add a small haptic-like visual feedback
+                                    const previewEl = document.querySelector('.preview-section');
+                                    if (previewEl) {
+                                      previewEl.classList.add('preview-pulse');
+                                      setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
+                                    }
+                                    showSaveIndicator();
+                                  }}
+                                />
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </ScrollArea>
                   </div>
                 </CardContent>
               </Card>
@@ -1311,7 +1311,7 @@ const CreatePostPage: React.FC = () => {
             </TabsContent>
           </Tabs>
         </div>
-        
+          
         {/* Right Side - Live Preview */}
         <div>
           <Card className="border-primary/30 bg-white">
@@ -1404,12 +1404,20 @@ const CreatePostPage: React.FC = () => {
                 
                 {activeTab === 'carousel' && (
                   <div className="mb-4">
-                    <InlineCarouselPreview slides={slides} variant={sliderType} />
-                    {sliderType !== 'basic' && (
-                      <div className="text-xs text-center mt-2 text-muted-foreground bg-muted/30 rounded-md p-1">
-                        <span className="font-medium capitalize">{sliderType}</span> slider style applied
-                      </div>
+                    {/* Show the post text above the carousel like in a real LinkedIn post */}
+                    {content && (
+                      <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200">
+                        {content}
+                      </p>
                     )}
+                    
+                    <InlineCarouselPreview slides={slides} variant={sliderType} />
+                    
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {hashtags.map(tag => (
+                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer">#{tag}</span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 
@@ -1447,57 +1455,57 @@ const CreatePostPage: React.FC = () => {
                     <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 flex-1">
                       <Forward size={18} />
                       <span className="text-xs font-medium">Send</span>
-                    </button>
+                  </button>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
+            </div>
         </div>
-      </div>
-      
+        
       {/* Tools Section Below */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* AI Tools */}
         <Card className="bg-white border-2">
-          <CardHeader>
+              <CardHeader>
             <CardTitle className="text-black">AI Tools</CardTitle>
             <CardDescription className="text-gray-800">
               Enhance your content with AI
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="space-y-4">
+                    <div>
                 <h3 className="text-sm font-medium mb-2 flex items-center gap-1 text-black">
-                  <Sparkles size={16} className="text-amber-500" />
-                  AI Assistance
-                </h3>
-                <div className="space-y-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                        <Sparkles size={16} className="text-amber-500" />
+                        AI Assistance
+                      </h3>
+                      <div className="space-y-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
                     className="w-full justify-start text-sm bg-white text-black"
-                    onClick={() => navigate('/dashboard/ai-writer')}
-                  >
-                    <Wand2 className="h-3.5 w-3.5 mr-2" />
-                    Go to AI Writer
-                  </Button>
+                          onClick={() => navigate('/dashboard/ai-writer')}
+                        >
+                          <Wand2 className="h-3.5 w-3.5 mr-2" />
+                          Go to AI Writer
+                        </Button>
                   <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                    Generate a professional post
-                  </Button>
+                          Generate a professional post
+                        </Button>
                   <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                    Improve writing style
-                  </Button>
+                          Improve writing style
+                        </Button>
                   <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                    Create catchy hook
-                  </Button>
+                          Create catchy hook
+                        </Button>
                   <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                    Suggest hashtags
-                  </Button>
-                </div>
-              </div>
-            </div>
+                          Suggest hashtags
+                        </Button>
+                      </div>
+                    </div>
+                    </div>
           </CardContent>
         </Card>
         
@@ -1512,71 +1520,71 @@ const CreatePostPage: React.FC = () => {
           <CardContent>
             {activeTab === 'text' && (
               <div className="space-y-4">                
-                <div>
+                    <div>
                   <h3 className="text-sm font-medium mb-2 flex items-center gap-1 text-black">
-                    <BarChart size={16} className="text-accent" />
-                    Engagement Tips
-                  </h3>
+                        <BarChart size={16} className="text-accent" />
+                        Engagement Tips
+                      </h3>
                   <div className="bg-white border-2 rounded-lg p-3 text-sm">
                     <ul className="list-disc list-inside space-y-1 text-black">
-                      <li>Ask a question to encourage comments</li>
-                      <li>Use 3-5 relevant hashtags</li>
-                      <li>Keep paragraphs short and scannable</li>
-                      <li>Include a clear call-to-action</li>
-                    </ul>
+                          <li>Ask a question to encourage comments</li>
+                          <li>Use 3-5 relevant hashtags</li>
+                          <li>Keep paragraphs short and scannable</li>
+                          <li>Include a clear call-to-action</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'carousel' && (
-              <div className="space-y-4">
-                <div>
+                )}
+                
+                {activeTab === 'carousel' && (
+                  <div className="space-y-4">
+                    <div>
                   <h3 className="text-sm font-medium mb-2 text-black">Carousel Templates</h3>
                   <ScrollArea className="h-[200px]">
-                    <div className="space-y-2 pr-4">
-                      {carouselTemplates.map(template => (
-                        <div 
-                          key={template.id}
-                          className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                            selectedTemplate === template.id 
-                              ? 'bg-primary-50 border-primary' 
+                        <div className="space-y-2 pr-4">
+                          {carouselTemplates.map(template => (
+                            <div 
+                              key={template.id}
+                              className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                                selectedTemplate === template.id 
+                                  ? 'bg-primary-50 border-primary' 
                               : 'hover:bg-white border-2'
-                          }`}
-                          onClick={() => applyTemplate(template.id)}
-                        >
-                          <div className="flex items-center justify-between mb-1">
+                              }`}
+                              onClick={() => applyTemplate(template.id)}
+                            >
+                              <div className="flex items-center justify-between mb-1">
                             <h4 className="font-medium text-black">{template.name}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {template.slideCount} slides
-                            </Badge>
-                          </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {template.slideCount} slides
+                                </Badge>
+                              </div>
                           <p className="text-xs text-black">{template.description}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </ScrollArea>
                     </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'document' && (
-              <div className="space-y-4">
-                <div>
+                  </div>
+                )}
+                
+                {activeTab === 'document' && (
+                  <div className="space-y-4">
+                    <div>
                   <h3 className="text-sm font-medium mb-2 text-black">Document Tips</h3>
                   <div className="bg-white border-2 rounded-lg p-3 text-sm">
                     <ul className="list-disc list-inside space-y-1 text-black">
-                      <li>Use PDFs for best compatibility</li>
-                      <li>Ensure document is under 100MB</li>
-                      <li>Use landscape orientation for presentations</li>
-                      <li>Add your branding and contact info</li>
-                    </ul>
+                          <li>Use PDFs for best compatibility</li>
+                          <li>Ensure document is under 100MB</li>
+                          <li>Use landscape orientation for presentations</li>
+                          <li>Add your branding and contact info</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
       </div>
       
       {isPollActive && (
@@ -1692,34 +1700,15 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
         };
       case 'coverflow':
         return {
-          enter: { opacity: 0, scale: 0.85, rotateY: -25, z: -200, boxShadow: "0 5px 15px rgba(0,0,0,0.05)" },
-          center: { opacity: 1, scale: 1, rotateY: 0, z: 0, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" },
-          exit: { opacity: 0, scale: 0.85, rotateY: 25, z: -200, boxShadow: "0 5px 15px rgba(0,0,0,0.05)" }
+          enter: { opacity: 0, scale: 0.85, rotateY: -25, z: -200 },
+          center: { opacity: 1, scale: 1, rotateY: 0, z: 0 },
+          exit: { opacity: 0, scale: 0.85, rotateY: 25, z: -200 }
         };
       case 'vertical':
         return {
           enter: { opacity: 0, y: 60, scale: 0.95 },
           center: { opacity: 1, y: 0, scale: 1 },
           exit: { opacity: 0, y: -60, scale: 0.95 }
-        };
-      case 'parallax':
-        return {
-          enter: { opacity: 0, scale: 1.2, x: 100 },
-          center: { opacity: 1, scale: 1, x: 0 },
-          exit: { opacity: 0, scale: 0.8, x: -100 }
-        };
-      case 'thumbs':
-      case 'gallery':  
-        return {
-          enter: { opacity: 0, scale: 0.9 },
-          center: { opacity: 1, scale: 1 },
-          exit: { opacity: 0, scale: 0.9 }
-        };
-      case 'looped':
-        return {
-          enter: { opacity: 0, x: "100%", scale: 0.85 },
-          center: { opacity: 1, x: "0%", scale: 1 },
-          exit: { opacity: 0, x: "-100%", scale: 0.85, transition: { duration: 0.3 } }
         };
       default:
         return {
@@ -1737,70 +1726,95 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
         return { duration: 0.7, ease: "easeInOut" };
       case 'coverflow':
         return { duration: 0.7, ease: [0.4, 0.0, 0.2, 1] };
-      case 'looped':
-        return { duration: 0.4, ease: "easeOut" };
-      case 'parallax':
-        return { duration: 0.8, ease: [0.4, 0.0, 0.2, 1] };
       default:
         return { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] };
     }
   };
   
-  // For grid or multi-slide variants
-  const showMultipleSlides = variant === 'grid' || variant === 'responsive';
-  
   if (slides.length === 0) {
-    return <div className="text-center p-8 text-neutral-medium">No slides to display</div>;
+    return <div className="text-center p-8 text-gray-400">No slides to display</div>;
   }
   
   return (
     <div className="relative linkedin-post-preview">
       <div 
-        className={`${getContainerClass()} aspect-[3/2] bg-white flex items-center justify-center`}
+        className={`${getContainerClass()} aspect-video bg-white flex items-center justify-center`}
       >
         {/* Single slide display */}
-        {!showMultipleSlides && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentSlide}
-              className="absolute inset-0 p-6 flex items-center justify-center"
-              initial="enter"
-              animate="center"
-              exit="exit"
-              variants={getSlideVariants()}
-              transition={getTransitionSettings()}
-            >
-              <div className="bg-white rounded-xl shadow-lg w-full h-full flex flex-col justify-between relative overflow-hidden border border-gray-100">
-                {/* Image display - takes up most of the slide */}
-                {slides[currentSlide].imageUrl && (
-                  <div className="w-full h-3/4 overflow-hidden">
-                    <img 
-                      src={slides[currentSlide].imageUrl} 
-                      alt={`Slide ${currentSlide + 1}`}
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            className="absolute inset-0 flex items-center justify-center"
+            initial="enter"
+            animate="center"
+            exit="exit"
+            variants={getSlideVariants()}
+            transition={getTransitionSettings()}
+          >
+            <div className="bg-white w-full h-full flex flex-col justify-between relative overflow-hidden">
+              {/* Image display - takes up most of the slide */}
+              {slides[currentSlide].imageUrl ? (
+                <div className="w-full flex-grow overflow-hidden bg-gray-50">
+                  <img 
+                    src={slides[currentSlide].imageUrl} 
+                    alt={`Slide ${currentSlide + 1}`}
+                    className="w-full h-full object-contain" 
+                    style={{maxHeight: '350px'}}
+                  />
+                </div>
+              ) : (
+                <div className="w-full flex-grow bg-gray-50 flex items-center justify-center p-4">
+                  <p className="text-center text-gray-400">
+                    {slides[currentSlide].content || "Add content to this slide"}
+                  </p>
+                </div>
+              )}
+              
+              {/* Text content at the bottom */}
+              <div className="p-3 bg-white border-t">
+                {/* Content displayed in LinkedIn style */}
+                <div className="text-sm font-medium text-black">
+                  {slides[currentSlide].content}
+                </div>
                 
-                {/* Text content at the bottom */}
-                <div className="p-4 bg-white z-10">
-                  {/* Slide number */}
-                  <span className="text-xs uppercase font-medium tracking-wider mb-1 text-blue-600 block">
-                    Slide {currentSlide + 1} of {slides.length}
-                  </span>
-                  
-                  {/* Content displayed in LinkedIn style */}
-                  <div className="text-md font-medium text-black">
-                    {slides[currentSlide].content}
-                  </div>
+                {/* Slide indicators */}
+                <div className="flex mt-2 gap-1">
+                  {slides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => goToSlide(idx)}
+                      className={`h-1.5 rounded-full ${idx === currentSlide ? 'bg-blue-600 w-6' : 'bg-gray-300 w-3'} transition-all`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+        
+        {/* Navigation arrows */}
+        {slides.length > 1 && (
+          <>
+            <button 
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-8 w-8 shadow-md z-10 flex items-center justify-center"
+              onClick={prevSlide}
+            >
+              <ChevronLeft size={16} className="text-gray-700" />
+            </button>
+            <button 
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-8 w-8 shadow-md z-10 flex items-center justify-center"
+              onClick={nextSlide}
+            >
+              <ChevronRight size={16} className="text-gray-700" />
+            </button>
+          </>
         )}
         
-        {/* The rest of the component remains the same */}
-        {/* ... existing code ... */}
+        {/* Current slide indicator */}
+        <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
+          {currentSlide + 1} / {slides.length}
+        </div>
       </div>
     </div>
   );

@@ -1,23 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import {
-  LayoutGrid, ChevronRight, Upload, CheckCircle,
-  Lightbulb, AlertCircle, Info, Calendar, Youtube,
-  FileText, Image, Link, PlusCircle, Eye, Pencil,
-  Play, Clock, Video, Check, PlayCircle, Download,
-  ExternalLink, Search
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Info, Upload, Search, LayoutGrid } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -26,185 +13,205 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { CarouselPreview } from "@/components/CarouselPreview";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Avatar } from "@/components/ui/avatar";
-import { useToast } from "../components/ui/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Form schema for carousel request
+// Define the form schema for validation
 const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
+  title: z.string().min(1, "Title is required"),
   youtubeUrl: z.string().optional(),
 });
 
-type CarouselRequestForm = z.infer<typeof formSchema>;
-
-// YouTube video interface
+// Interface for YouTube video
 interface YouTubeVideo {
   id: string;
   title: string;
   channelName: string;
   thumbnailUrl: string;
-  duration: string;
   views: string;
   date: string;
+  duration: string;
 }
 
 // Sample YouTube videos
 const youtubeVideos: YouTubeVideo[] = [
   {
-    id: "vid1",
-    title: "10 Productivity Tips to Transform Your Daily Work Routine",
-    channelName: "ProductivityMasters",
-    thumbnailUrl: "https://picsum.photos/seed/prod1/640/360",
-    duration: "12:45",
-    views: "345K",
-    date: "2 weeks ago"
-  },
-  {
-    id: "vid2",
-    title: "Why AI is Changing Everything in 2023",
-    channelName: "Tech Insights",
-    thumbnailUrl: "https://picsum.photos/seed/ai1/640/360",
-    duration: "18:32",
+    id: "6EEW-9NDM5k",
+    title: "The Ultimate Guide to LinkedIn Content Strategy",
+    channelName: "LinkedIn Marketing Solutions",
+    thumbnailUrl: "https://placehold.co/640x360/3b82f6/ffffff?text=LinkedIn+Strategy",
     views: "1.2M",
-    date: "3 weeks ago"
+    date: "2 weeks ago",
+    duration: "12:45"
   },
   {
-    id: "vid3",
-    title: "The Future of Remote Work: Trends to Watch",
-    channelName: "Future of Work",
-    thumbnailUrl: "https://picsum.photos/seed/remote1/640/360",
-    duration: "22:17",
-    views: "567K",
-    date: "1 month ago"
+    id: "mTz0GXj8NN0",
+    title: "How to Grow Your Personal Brand on LinkedIn",
+    channelName: "GaryVee",
+    thumbnailUrl: "https://placehold.co/640x360/6366f1/ffffff?text=Personal+Brand",
+    views: "856K",
+    date: "1 month ago",
+    duration: "18:23"
   },
   {
-    id: "vid4",
-    title: "Building a Personal Brand That Stands Out",
-    channelName: "Marketing Mastery",
-    thumbnailUrl: "https://picsum.photos/seed/brand1/640/360",
-    duration: "15:09",
-    views: "289K",
-    date: "2 months ago"
+    id: "dW7WjA-heYw",
+    title: "LinkedIn Content That Gets 10x Engagement",
+    channelName: "Social Media Examiner",
+    thumbnailUrl: "https://placehold.co/640x360/8b5cf6/ffffff?text=10x+Engagement",
+    views: "543K",
+    date: "3 weeks ago",
+    duration: "15:19"
   },
   {
-    id: "vid5",
-    title: "Sustainable Business Practices for the Modern Company",
-    channelName: "Green Business",
-    thumbnailUrl: "https://picsum.photos/seed/sustain1/640/360",
-    duration: "25:40",
-    views: "178K",
-    date: "3 weeks ago"
+    id: "vN4jQKk-MZI",
+    title: "B2B Marketing Strategies for LinkedIn",
+    channelName: "B2B Marketing Insights",
+    thumbnailUrl: "https://placehold.co/640x360/ec4899/ffffff?text=B2B+Marketing",
+    views: "328K",
+    date: "2 months ago",
+    duration: "22:37"
   },
   {
-    id: "vid6",
-    title: "Digital Marketing Strategies That Actually Work",
-    channelName: "Digital Marketers",
-    thumbnailUrl: "https://picsum.photos/seed/market1/640/360",
-    duration: "28:15",
-    views: "412K",
-    date: "1 week ago"
+    id: "pQFo8JWgHEU",
+    title: "Creating Video Content for Professional Audiences",
+    channelName: "Video Creators",
+    thumbnailUrl: "https://placehold.co/640x360/f43f5e/ffffff?text=Video+Content",
+    views: "421K",
+    date: "5 weeks ago",
+    duration: "14:52"
+  },
+  {
+    id: "lD3FfI7zNc4",
+    title: "LinkedIn Ads: Complete 2023 Tutorial",
+    channelName: "Digital Marketing Pro",
+    thumbnailUrl: "https://placehold.co/640x360/f97316/ffffff?text=LinkedIn+Ads",
+    views: "612K",
+    date: "3 months ago",
+    duration: "26:14"
+  },
+  {
+    id: "X9YmkKbTgmk",
+    title: "How to Write LinkedIn Posts That Convert",
+    channelName: "Content Masters",
+    thumbnailUrl: "https://placehold.co/640x360/facc15/ffffff?text=Writing+Posts",
+    views: "287K",
+    date: "4 weeks ago",
+    duration: "19:08"
+  },
+  {
+    id: "aW7lJMroT2c",
+    title: "LinkedIn Algorithm: What Works in 2023",
+    channelName: "Social Media Today",
+    thumbnailUrl: "https://placehold.co/640x360/84cc16/ffffff?text=Algorithm+Tips",
+    views: "732K",
+    date: "1 week ago",
+    duration: "16:47"
   }
 ];
 
 // Function to generate dummy transcript based on video ID
 const generateDummyTranscript = (videoId: string): string[] => {
   switch (videoId) {
-    case "vid1":
+    case "6EEW-9NDM5k":
       return [
-        "Welcome to our video on productivity tips that can transform your daily work routine.",
-        "The first tip is to use time-blocking for focused work sessions.",
-        "Second, minimize distractions by turning off notifications during deep work.",
-        "Third, implement the two-minute rule: if a task takes less than two minutes, do it immediately.",
-        "Fourth, use the Pomodoro technique with 25-minute work sessions followed by 5-minute breaks.",
-        "Fifth, prepare your to-do list the night before so you can start working immediately.",
-        "Sixth, batch similar tasks together to reduce context switching.",
-        "Seventh, take regular breaks to maintain high energy levels throughout the day.",
-        "Eighth, use keyboard shortcuts to save time on repetitive tasks.",
-        "Ninth, automate recurring tasks whenever possible using tools and scripts.",
-        "Finally, end each day with a review of what you accomplished and what needs attention tomorrow."
+        "LinkedIn's algorithm favors content that generates meaningful engagement.",
+        "Create content that educates, inspires, or solves specific problems.",
+        "Consistency is key - develop a sustainable posting cadence.",
+        "Utilize LinkedIn's native content formats for maximum reach.",
+        "Text-only posts often outperform those with external links.",
+        "Analytics should guide your content strategy refinements.",
+        "Personal stories and experiences create authentic connections.",
+        "Industry insights and thought leadership position you as an expert."
       ];
-    case "vid2":
+    case "mTz0GXj8NN0":
       return [
-        "AI is revolutionizing every industry in unprecedented ways.",
-        "Deep learning models are now capable of generating human-quality content in seconds.",
-        "Natural language processing has advanced to understand context and nuance in human communication.",
-        "Computer vision systems can now identify objects and patterns better than humans in many scenarios.",
-        "AI automation is changing workforce dynamics across manufacturing, service, and knowledge work.",
-        "Ethical considerations around AI use are becoming increasingly important for businesses.",
-        "Personalization powered by AI is transforming marketing and customer experience.",
-        "Healthcare diagnostics and treatment planning are being enhanced by AI systems.",
-        "Financial services use AI for fraud detection and automated trading strategies.",
-        "The democratization of AI tools means smaller businesses can now leverage this technology."
+        "Your personal brand is how people perceive you when you're not in the room.",
+        "Authenticity trumps perfection when building your brand on LinkedIn.",
+        "Define your unique value proposition and ensure it's reflected in all content.",
+        "Engagement with others' content boosts your own visibility.",
+        "Strategic use of hashtags can expand your content reach significantly.",
+        "Your profile should tell a compelling story, not just list achievements.",
+        "Consistency in visual elements strengthens brand recognition.",
+        "Building a network of advocates amplifies your brand message."
       ];
-    case "vid3":
+    case "dW7WjA-heYw":
       return [
-        "Remote work has evolved from a temporary solution to a permanent strategic advantage.",
-        "Companies are now building their culture and processes around distributed teams.",
-        "Asynchronous communication is becoming the preferred method for global teams.",
-        "Work-life integration rather than work-life balance is the new paradigm.",
-        "Digital nomadism is on the rise as remote workers choose lifestyle flexibility.",
-        "Co-working spaces are evolving to meet the needs of remote workers seeking community.",
-        "Organizations are implementing hybrid models with flexible in-office requirements.",
-        "Remote work technology is focusing on recreating spontaneous collaboration.",
-        "International hiring is accelerating as geography becomes less restrictive.",
-        "Mental health support is becoming essential for remote team management."
+        "Content that generates conversations receives preferential algorithm treatment.",
+        "Ask thought-provoking questions that encourage meaningful responses.",
+        "Timing your posts to match your audience's active hours boosts engagement.",
+        "Share contrarian perspectives to stand out from industry echo chambers.",
+        "Break complex ideas into digestible, easily-shareable content pieces.",
+        "Document your professional journey rather than curating a perfect image.",
+        "Create content frameworks that can be repurposed across different topics.",
+        "Analyze high-performing content to identify patterns and replicate success."
       ];
-    case "vid4":
+    case "vN4jQKk-MZI":
       return [
-        "Building a personal brand requires consistency across all your platforms and communications.",
-        "Start by identifying your unique value proposition - what makes you different from others.",
-        "Choose 1-3 core topics that you'll become known for and focus your content there.",
-        "Develop a distinctive visual identity including colors, fonts, and imagery styles.",
-        "Create valuable content regularly that addresses your audience's most pressing problems.",
-        "Engage authentically with your community by responding to comments and questions.",
-        "Collaborate with complementary brands and individuals to expand your reach.",
-        "Share your personal journey, including setbacks, to build genuine connections.",
-        "Measure your brand growth with metrics like engagement rate and audience growth.",
-        "Adjust your strategy based on feedback and changing market conditions."
+        "B2B marketing on LinkedIn requires targeting decision-makers directly.",
+        "Educational content establishes credibility with B2B audiences.",
+        "Case studies and success stories provide powerful social proof.",
+        "Employee advocacy programs amplify your B2B content reach.",
+        "Account-based marketing strategies work effectively on LinkedIn.",
+        "Thought leadership content should address industry challenges and trends.",
+        "LinkedIn Live and Events provide opportunities for deeper engagement.",
+        "Analytics should focus on quality leads rather than vanity metrics."
       ];
-    case "vid5":
+    case "pQFo8JWgHEU":
       return [
-        "Sustainable business is no longer optional but essential for long-term success.",
-        "Start with an environmental audit to understand your company's current impact.",
-        "Implement energy efficiency measures to reduce consumption and costs.",
-        "Develop sustainable sourcing policies for all materials and services.",
-        "Create a circular economy model for your products to minimize waste.",
-        "Engage employees in sustainability initiatives to build internal commitment.",
-        "Communicate your sustainability story transparently to build consumer trust.",
-        "Measure and report on sustainability metrics to track progress.",
-        "Collaborate with industry partners on larger sustainability challenges.",
-        "Integrate sustainability into your core business strategy rather than treating it as separate."
+        "Professional video content must deliver value in the first 3-5 seconds.",
+        "Captions are essential as most LinkedIn videos are watched without sound.",
+        "Vertical video formats are increasingly effective on LinkedIn.",
+        "Authentic, less-polished videos often outperform high-production content.",
+        "Educational video series build anticipation and regular engagement.",
+        "Behind-the-scenes content humanizes your brand and builds connection.",
+        "LinkedIn Live generates 7x more engagement than standard video content.",
+        "Repurpose long-form videos into multiple short-form content pieces."
       ];
-    case "vid6":
+    case "lD3FfI7zNc4":
       return [
-        "Today's digital marketing requires an integrated approach across multiple channels.",
-        "Start with customer research to understand where your audience spends their time online.",
-        "Content marketing remains the foundation of effective digital strategy.",
-        "SEO techniques have evolved to focus on user intent rather than keyword density.",
-        "Social media success comes from community building, not just promotional content.",
-        "Email marketing delivers the highest ROI when personalized and segmented properly.",
-        "Paid advertising works best when targeting specific stages of the customer journey.",
-        "Video content consistently outperforms other formats for engagement and conversion.",
-        "Data analysis should drive continuous optimization of your marketing efforts.",
-        "Marketing automation allows for personalization at scale across customer touchpoints."
+        "LinkedIn ads offer unparalleled B2B targeting capabilities.",
+        "Sponsored content achieves the highest engagement among ad formats.",
+        "Lead gen forms can reduce friction in the conversion process.",
+        "Audience segmentation improves campaign performance significantly.",
+        "Video ads under 15 seconds see the highest completion rates.",
+        "Retargeting website visitors on LinkedIn delivers strong ROI.",
+        "A/B testing ad creative is essential for optimizing performance.",
+        "Campaign objectives should align with specific funnel stages."
+      ];
+    case "X9YmkKbTgmk":
+      return [
+        "Compelling hooks in the first line are crucial for LinkedIn post success.",
+        "Breaking text into short paragraphs improves readability and engagement.",
+        "Posts that share personal insights generate more authentic connections.",
+        "Call-to-actions should feel natural, not forced or overly promotional.",
+        "Storytelling frameworks create emotional resonance with readers.",
+        "Data-backed claims establish credibility and encourage sharing.",
+        "Using the 'broetry' format increases the odds of algorithm visibility.",
+        "Testing different content styles reveals what resonates with your audience."
+      ];
+    case "aW7lJMroT2c":
+      return [
+        "LinkedIn's algorithm prioritizes relevant content over recency.",
+        "Initial engagement velocity determines a post's broader distribution.",
+        "Comments hold more algorithmic weight than reactions or shares.",
+        "Native document posts receive preferential reach over external links.",
+        "Creator mode enables additional tools for increased visibility.",
+        "Algorithm changes now favor expertise-based content over viral tactics.",
+        "Hashtag effectiveness depends on specificity and audience alignment.",
+        "The 'golden hour' after posting determines long-term content performance."
       ];
     default:
       return [
@@ -330,100 +337,14 @@ const RequestCarouselPage: React.FC = () => {
   return (
     <div className="container max-w-6xl py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Carousel Creator</h1>
+        <h1 className="text-3xl font-bold">Request a Carousel</h1>
         <p className="text-muted-foreground mt-1">
-          Create professional carousel posts for LinkedIn
-        </p>
-      </div>
-
-      {/* Two main options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Option 1: Request Carousel */}
-        <Card className="cursor-pointer hover:border-primary transition-colors border-2 bg-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-black">
-              <Clock className="h-5 w-5 text-primary" />
-              Request a Custom Carousel
-            </CardTitle>
-            <CardDescription className="text-black">
-              Our team will create a professional carousel for you based on your content
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="aspect-video rounded-md border bg-white flex items-center justify-center overflow-hidden">
-              <img 
-                src="https://picsum.photos/seed/custom/640/360" 
-                alt="Custom Carousel" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                <p className="text-white font-medium">Professional design by our team</p>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              size="lg"
-              className="w-full gap-2 bg-primary text-white"
-              onClick={() => {
-                const requestSection = document.getElementById('request-section');
-                if (requestSection) {
-                  requestSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              <PlusCircle className="h-4 w-4" />
-              Request Custom Carousel
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        {/* Option 2: Browse Templates */}
-        <Card className="cursor-pointer hover:border-primary transition-colors border-2 bg-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-black">
-              <LayoutGrid className="h-5 w-5 text-primary" />
-              Browse Carousel Templates
-            </CardTitle>
-            <CardDescription className="text-black">
-              Choose from our library of ready-to-use carousel templates
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="aspect-video rounded-md border bg-white flex items-center justify-center overflow-hidden">
-              <img 
-                src="https://picsum.photos/seed/templates/640/360" 
-                alt="Carousel Templates" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                <p className="text-white font-medium">Multiple professional templates</p>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              size="lg"
-              className="w-full gap-2 bg-white text-black border-2"
-              onClick={() => navigate('/dashboard/templates')}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Browse Templates
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-      
-      {/* Request Carousel Form Section */}
-      <div id="request-section" className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">Request a Carousel</h2>
-        <p className="text-muted-foreground mb-6">
           Provide content from a YouTube video and we'll create a professional carousel for you
         </p>
       </div>
       
       <div className="grid lg:grid-cols-2 gap-8">
-        <Form {...form}>
+      <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
               <CardHeader>
@@ -463,11 +384,11 @@ const RequestCarouselPage: React.FC = () => {
                     
                     <TabsContent value="youtube" className="space-y-4">
                       <div>
-                        <FormField
-                          control={form.control}
+                <FormField
+                  control={form.control}
                           name="youtubeUrl"
-                          render={({ field }) => (
-                            <FormItem>
+                  render={({ field }) => (
+                    <FormItem>
                               <FormLabel>Search YouTube Videos</FormLabel>
                               <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -481,10 +402,10 @@ const RequestCarouselPage: React.FC = () => {
                               <FormDescription>
                                 Select a video to automatically extract content
                               </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           {filteredVideos.map((video) => (
@@ -611,12 +532,23 @@ const RequestCarouselPage: React.FC = () => {
                     </TabsContent>
                   </Tabs>
                 </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Submitting..." : "Submit Carousel Request"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? "Submitting..." : "Submit Carousel Request"}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex gap-1 items-center" 
+                onClick={() => navigate("/dashboard/templates")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Browse Templates
+              </Button>
+            </div>
           </form>
         </Form>
               
@@ -628,116 +560,77 @@ const RequestCarouselPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {selectedVideo ? (
+            {selectedVideo && generatedTranscript.length > 0 ? (
               <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
-                <div className="relative">
-                  <img 
-                    src={selectedVideo.thumbnailUrl} 
-                    alt={selectedVideo.title}
-                    className="w-full aspect-video object-cover border-b-2 border-black"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-black/60 rounded-full p-3">
-                      <PlayCircle className="h-12 w-12 text-white" />
-                    </div>
+                {/* Show AI content from transcript instead of video */}
+                <div className="border-b-2 border-black">
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-white">
+                    <h3 className="font-bold text-lg mb-2">{selectedVideo.title}</h3>
+                    <p className="text-sm text-gray-700">AI-generated carousel from your video</p>
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-medium text-lg">{selectedVideo.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedVideo.channelName}</p>
+                  {/* Show the first transcript point as the current slide */}
+                  <div className="rounded-lg border border-gray-200 p-4 mb-3 bg-white shadow-sm">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-xs font-semibold text-blue-600">SLIDE 1 OF {generatedTranscript.length}</span>
+                    </div>
+                    <p className="text-base font-medium">{generatedTranscript[0]}</p>
+                  </div>
                   
                   <div className="flex justify-between mt-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
                         1
                       </div>
                       <div className="h-1 w-6 bg-black rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        2
-                      </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        3
-                      </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        4
-                      </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        5
-                      </div>
+                      {generatedTranscript.slice(1, 5).map((_, index) => (
+                        <React.Fragment key={index}>
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            {index + 2}
+                          </div>
+                          {index < 3 && <div className="h-1 w-6 bg-gray-300 rounded-full"></div>}
+                        </React.Fragment>
+                      ))}
+                      {generatedTranscript.length > 5 && (
+                        <>
+                          <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs">
+                            +{generatedTranscript.length - 5}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
-                {/* Generic carousel preview */}
-                <div className="relative">
-                  <div className="aspect-video bg-gradient-to-r from-blue-50 to-white border-b-2 border-black flex items-center justify-center">
-                    <div className="text-center p-4 flex flex-col items-center">
-                      <Video className="h-12 w-12 text-blue-200 mb-2" />
-                      <h3 className="text-lg font-medium text-black">Select a YouTube video</h3>
-                      <p className="text-sm text-gray-500 mt-2">Preview will appear here</p>
-                    </div>
-                  </div>
+              <div className="bg-gray-50 rounded-xl p-6 text-center">
+                <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Info className="h-6 w-6 text-gray-500" />
                 </div>
-                <div className="p-4 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      1
-                    </div>
-                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      2
-                    </div>
-                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      3
-                    </div>
-                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      4
-                    </div>
-                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      5
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-lg font-medium mb-2">Select a YouTube video</h3>
+                <p className="text-sm text-muted-foreground">
+                  A preview of your carousel will appear here after selecting a video and generating content.
+                </p>
               </div>
             )}
-          
-            <div className="mt-6 space-y-4">
-              <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
-                <h3 className="font-medium flex items-center gap-2 mb-2">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
-                  Carousel Best Practices
-                </h3>
-                <ul className="text-sm text-black space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 font-bold mt-0.5">•</span>
-                    Keep your content concise and focused on one main topic
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 font-bold mt-0.5">•</span>
-                    Use 5-10 slides for optimal engagement
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-500 font-bold mt-0.5">•</span>
-                    Include a clear call-to-action in your final slide
-                  </li>
+            
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-2">Best Practices for Effective Carousels</h3>
+                <ul className="text-sm space-y-2 pl-5 list-disc text-muted-foreground">
+                  <li>Keep each slide focused on a single key point</li>
+                  <li>Use 5-8 slides for optimal engagement</li>
+                  <li>Include a clear call to action on the final slide</li>
+                  <li>Maintain consistent visual style across all slides</li>
                 </ul>
               </div>
-            
-              <div className="bg-white border-2 border-black rounded-lg p-4">
-                <h3 className="font-medium flex items-center gap-2 mb-2">
-                  <Info className="h-4 w-4" />
-                  Carousel Delivery
-                </h3>
-                <p className="text-sm text-black">
-                  Your carousel will be ready within 24 hours. You'll receive an email notification when it's ready to view and publish.
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-2">Delivery Timeline</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your carousel will be ready within 24 hours. You'll receive an email notification when it's complete and ready for review.
                 </p>
               </div>
             </div>
