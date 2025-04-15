@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Card, 
@@ -76,7 +76,9 @@ import {
   Trash2,
   Upload,
   UserRound,
-  LayoutGrid
+  LayoutGrid,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -1591,20 +1593,25 @@ const CreatePostPage: React.FC = () => {
 
 const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string}[], variant: SliderVariant }> = ({ slides, variant }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoplay, setIsAutoplay] = useState(variant === 'autoplay');
   
+  // Handle autoplay behavior
   useEffect(() => {
-    // Auto-advance slides if variant is autoplay
-    let interval: number | null = null;
-    if (variant === 'autoplay') {
-      interval = window.setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setIsAutoplay(variant === 'autoplay');
+    
+    let autoplayInterval: number | null = null;
+    if (isAutoplay && slides.length > 1) {
+      autoplayInterval = window.setInterval(() => {
+        setCurrentSlide((prevIndex) => (prevIndex + 1) % slides.length);
       }, 3000);
     }
     
     return () => {
-      if (interval) window.clearInterval(interval);
+      if (autoplayInterval) {
+        window.clearInterval(autoplayInterval);
+      }
     };
-  }, [variant, slides.length]);
+  }, [variant, isAutoplay, slides.length]);
   
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -1618,156 +1625,249 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string}[],
     setCurrentSlide(index);
   };
   
-  // Get class names based on variant
-  const getContainerClasses = () => {
-    let classes = "relative rounded-md border overflow-hidden";
+  // Get container class based on variant
+  const getContainerClass = () => {
+    let baseClass = "relative overflow-hidden rounded-lg border shadow-sm";
     
     if (variant === 'coverflow') {
-      classes += " perspective-1000";
-    } else if (variant === 'fade') {
-      classes += " fade-transition";
-    } else if (variant === 'vertical') {
-      classes += " vertical-slider";
+      baseClass += " perspective-1000";
     }
     
-    return classes;
+    return baseClass;
   };
   
-  const getSlideClasses = (index: number) => {
-    const isActive = index === currentSlide;
-    let classes = "transition-all duration-300 bg-white";
-    
-    if (variant === 'fade') {
-      classes += ` absolute inset-0 opacity-0 ${isActive ? 'opacity-100 z-10' : ''}`;
-    } else if (variant === 'coverflow') {
-      const offset = index - currentSlide;
-      classes += ` absolute top-0 ${
-        offset === 0 
-          ? 'left-0 right-0 scale-100 z-10' 
-          : offset < 0 
-            ? 'left-[-100%] scale-90 origin-right rotate-3 z-0' 
-            : 'left-[100%] scale-90 origin-left -rotate-3 z-0'
-      }`;
-    } else if (variant === 'vertical') {
-      classes += ` absolute left-0 right-0 transform transition-transform ${
-        isActive ? 'translate-y-0 z-10' : index < currentSlide ? '-translate-y-full' : 'translate-y-full'
-      }`;
-    } else if (variant === 'thumbs') {
-      classes += isActive ? ' border-2 border-primary' : '';
-    } else if (variant === 'parallax') {
-      classes += ' bg-fixed';
-    } else if (variant === 'grid' && index === currentSlide) {
-      // Only apply special styling for current slide in grid view
-      classes += ' grid-item';
-    } else {
-      // Standard slide transition for other variants
-      classes += ` transform transition-transform ${
-        isActive ? 'translate-x-0' : index < currentSlide ? '-translate-x-full' : 'translate-x-full'
-      }`;
-      
-      if (variant === 'looped' && !isActive) {
-        classes += ' absolute top-0 left-0 right-0';
-      }
+  // Slide transition variants based on selected variant
+  const getSlideVariants = () => {
+    switch (variant) {
+      case 'fade':
+        return {
+          enter: { opacity: 0 },
+          center: { opacity: 1 },
+          exit: { opacity: 0 }
+        };
+      case 'coverflow':
+        return {
+          enter: { opacity: 0, scale: 0.85, rotateY: -25, z: -200, boxShadow: "0 5px 15px rgba(0,0,0,0.05)" },
+          center: { opacity: 1, scale: 1, rotateY: 0, z: 0, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" },
+          exit: { opacity: 0, scale: 0.85, rotateY: 25, z: -200, boxShadow: "0 5px 15px rgba(0,0,0,0.05)" }
+        };
+      case 'vertical':
+        return {
+          enter: { opacity: 0, y: 60, scale: 0.95 },
+          center: { opacity: 1, y: 0, scale: 1 },
+          exit: { opacity: 0, y: -60, scale: 0.95 }
+        };
+      case 'parallax':
+        return {
+          enter: { opacity: 0, scale: 1.2, x: 100 },
+          center: { opacity: 1, scale: 1, x: 0 },
+          exit: { opacity: 0, scale: 0.8, x: -100 }
+        };
+      case 'thumbs':
+      case 'gallery':  
+        return {
+          enter: { opacity: 0, scale: 0.9 },
+          center: { opacity: 1, scale: 1 },
+          exit: { opacity: 0, scale: 0.9 }
+        };
+      case 'looped':
+        return {
+          enter: { opacity: 0, x: "100%", scale: 0.85 },
+          center: { opacity: 1, x: "0%", scale: 1 },
+          exit: { opacity: 0, x: "-100%", scale: 0.85, transition: { duration: 0.3 } }
+        };
+      default:
+        return {
+          enter: { opacity: 0, x: 75, scale: 0.95 },
+          center: { opacity: 1, x: 0, scale: 1 },
+          exit: { opacity: 0, x: -75, scale: 0.95 }
+        };
     }
-    
-    return classes;
   };
+  
+  // Get transition settings based on variant
+  const getTransitionSettings = () => {
+    switch(variant) {
+      case 'fade':
+        return { duration: 0.7, ease: "easeInOut" };
+      case 'coverflow':
+        return { duration: 0.7, ease: [0.4, 0.0, 0.2, 1] };
+      case 'looped':
+        return { duration: 0.4, ease: "easeOut" };
+      case 'parallax':
+        return { duration: 0.8, ease: [0.4, 0.0, 0.2, 1] };
+      default:
+        return { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] };
+    }
+  };
+  
+  // For grid or multi-slide variants
+  const showMultipleSlides = variant === 'grid' || variant === 'responsive';
+  
+  if (slides.length === 0) {
+    return <div className="text-center p-8 text-neutral-medium">No slides to display</div>;
+  }
   
   return (
-    <div className="space-y-3">
-      <div className={getContainerClasses()} style={{ minHeight: '200px' }}>
-        {variant === 'grid' ? (
-          // Grid layout
-          <div className="grid grid-cols-2 gap-2 p-2">
-            {slides.slice(0, 4).map((slide, index) => (
-              <div 
-                key={slide.id} 
-                className={`p-3 text-sm bg-gray-50 rounded border ${index === currentSlide ? 'border-primary' : 'border-gray-200'}`}
-                onClick={() => goToSlide(index)}
-              >
-                {slide.content.length > 60 ? slide.content.substring(0, 60) + '...' : slide.content}
-              </div>
-            ))}
-          </div>
-        ) : (
-          // Normal slide display
-          slides.map((slide, index) => (
-            <div 
-              key={slide.id} 
-              className={getSlideClasses(index)}
-              style={{ 
-                display: variant === 'fade' || variant === 'coverflow' || variant === 'vertical' || variant === 'looped' ? 'block' : index === currentSlide ? 'block' : 'none',
-                padding: '1rem'
-              }}
+    <div className="relative">
+      <div 
+        className={`${getContainerClass()} aspect-[3/2] bg-gradient-to-b from-blue-50/80 to-white flex items-center justify-center`}
+      >
+        {/* Single slide display */}
+        {!showMultipleSlides && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSlide}
+              className="absolute inset-0 p-6 flex items-center justify-center"
+              initial="enter"
+              animate="center"
+              exit="exit"
+              variants={getSlideVariants()}
+              transition={getTransitionSettings()}
             >
-              <p className="text-sm">{slide.content}</p>
-            </div>
-          ))
+              <div className="bg-white rounded-xl p-6 shadow-lg w-full h-full flex flex-col justify-center relative overflow-hidden border border-gray-100">
+                {/* Style 1: Professional gradient header */}
+                {variant === 'basic' && (
+                  <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-xl"></div>
+                )}
+                
+                {/* Style 2: Circular design element */}
+                {variant === 'coverflow' && (
+                  <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-indigo-100 rounded-full opacity-40"></div>
+                )}
+                
+                {/* Style 3: Corner accent */}
+                {variant === 'parallax' && (
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-400 to-amber-200 opacity-70 rounded-bl-full"></div>
+                )}
+                
+                {/* Modern slide content layout */}
+                <div className="z-10 flex flex-col h-full justify-center items-center text-center relative px-4">
+                  {/* Slide number */}
+                  <span className={`text-xs uppercase font-medium tracking-wider mb-3 ${
+                    variant === 'basic' ? 'text-white' : 'text-blue-600'
+                  }`}>
+                    Slide {currentSlide + 1}
+                  </span>
+                  
+                  {/* Content displayed in an elegant, formatted way */}
+                  <div className="text-lg font-bold text-gray-800 mb-3">
+                    {slides[currentSlide].content}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         )}
         
-        {/* Navigation arrows for non-grid layouts */}
-        {variant !== 'grid' && (
+        {/* Multiple slides display (grid variant) */}
+        {showMultipleSlides && (
+          <div className="grid grid-cols-2 gap-3 p-4 w-full h-full">
+            {slides.slice(0, 4).map((slide, index) => (
+              <motion.div 
+                key={slide.id} 
+                className={`bg-white rounded-lg shadow-sm border p-3 text-sm overflow-hidden flex flex-col justify-center items-center text-center cursor-pointer transition-all
+                  ${index === currentSlide ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md'}`}
+                onClick={() => goToSlide(index)}
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
+              >
+                <span className="text-xs text-blue-600 font-medium mb-1">Slide {index + 1}</span>
+                <p className="text-gray-800 line-clamp-3">
+                  {slide.content}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        )}
+        
+        {/* Navigation arrows - with improved styling */}
+        {!showMultipleSlides && slides.length > 1 && (
           <>
-            <button 
-              className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-1 shadow"
+            <motion.button 
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white hover:bg-white rounded-full h-8 w-8 shadow-md z-10 flex items-center justify-center"
               onClick={prevSlide}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </button>
-            <button 
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-1 shadow"
+              <ChevronLeft size={16} className="text-gray-700" />
+            </motion.button>
+            <motion.button 
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white hover:bg-white rounded-full h-8 w-8 shadow-md z-10 flex items-center justify-center"
               onClick={nextSlide}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
+              <ChevronRight size={16} className="text-gray-700" />
+            </motion.button>
           </>
+        )}
+        
+        {/* Pagination dots for basic and pagination variants - with improved styling */}
+        {(variant === 'basic' || variant === 'pagination') && slides.length > 1 && (
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
+            {slides.map((_, index) => (
+              <motion.button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentSlide ? 'bg-primary w-4' : 'bg-gray-300 hover:bg-gray-400'
+                }`}
+                onClick={() => goToSlide(index)}
+                aria-label={`Go to slide ${index + 1}`}
+                whileHover={{ scale: 1.2 }}
+              />
+            ))}
+          </div>
+        )}
+        
+        {/* Thumbnail navigation for thumbs variant */}
+        {variant === 'thumbs' && slides.length > 1 && (
+          <div className="absolute -bottom-14 left-0 right-0 flex justify-center gap-2 overflow-x-auto py-2 px-4">
+            {slides.map((_, index) => (
+              <motion.button
+                key={index}
+                className={`flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center text-xs font-medium ${
+                  index === currentSlide 
+                    ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                onClick={() => goToSlide(index)}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {index + 1}
+              </motion.button>
+            ))}
+          </div>
+        )}
+        
+        {/* Gallery thumbnails */}
+        {variant === 'gallery' && slides.length > 1 && (
+          <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-1.5 overflow-x-auto py-2">
+            {slides.map((_, index) => (
+              <motion.div
+                key={index}
+                className={`flex-shrink-0 w-12 h-8 rounded-sm cursor-pointer ${
+                  index === currentSlide 
+                    ? 'ring-2 ring-primary' 
+                    : 'ring-1 ring-gray-200'
+                }`}
+                style={{
+                  background: `linear-gradient(135deg, ${
+                    index % 3 === 0 ? '#e0f2fe' : index % 3 === 1 ? '#ede9fe' : '#fef3c7'
+                  } 0%, #ffffff 100%)`
+                }}
+                onClick={() => goToSlide(index)}
+                whileHover={{ y: -2 }}
+              />
+            ))}
+          </div>
         )}
       </div>
       
-      {/* Pagination indicators */}
-      {(variant === 'pagination' || variant === 'basic') && (
-        <div className="flex justify-center gap-1">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-2 h-2 rounded-full ${index === currentSlide ? 'bg-primary' : 'bg-gray-300'}`}
-            />
-          ))}
-        </div>
-      )}
-      
-      {/* Thumbnail navigation for thumbs variant */}
-      {variant === 'thumbs' && (
-        <div className="flex overflow-x-auto gap-1 p-1">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-10 h-10 flex-shrink-0 bg-gray-100 rounded ${index === currentSlide ? 'ring-2 ring-primary' : ''}`}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
-      )}
-      
-      {/* Gallery style for gallery variant */}
-      {variant === 'gallery' && (
-        <div className="grid grid-cols-4 gap-1">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`aspect-square bg-gray-100 text-xs flex items-center justify-center rounded ${
-                index === currentSlide ? 'ring-2 ring-primary' : ''
-              }`}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Slide count indicator - with improved styling */}
+      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-medium z-10">
+        {currentSlide + 1} / {slides.length}
+      </div>
     </div>
   );
 };
