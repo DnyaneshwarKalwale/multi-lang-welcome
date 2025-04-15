@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
@@ -58,8 +58,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
   };
 
-  // Content margin changes based on sidebar state and screen size
-  const contentMargin = !isMobile && sidebarOpen ? 'lg:ml-[240px]' : !isMobile ? 'lg:ml-[72px]' : 'ml-0';
+  // Toggle sidebar
+  const toggleSidebar = () => {
+    const newState = !sidebarOpen;
+    setSidebarOpen(newState);
+    localStorage.setItem('sidebarExpanded', String(newState));
+  };
+
+  // Content adjustment based on sidebar state
+  const contentMargin = !isMobile && sidebarOpen ? 'lg:ml-[180px]' : 'ml-0';
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -84,6 +91,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* Top header bar */}
         <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
+            {/* Hamburger menu for mobile */}
+            {isMobile && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="lg:hidden"
+                onClick={toggleSidebar}
+              >
+                <Menu size={20} className="text-gray-700" />
+              </Button>
+            )}
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
               {user?.firstName ? `Welcome, ${user.firstName}!` : 'Dashboard'}
             </h1>
