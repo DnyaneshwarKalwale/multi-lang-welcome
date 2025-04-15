@@ -314,12 +314,12 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full bg-white">
       {/* Welcome message and workspace switch */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-1">Welcome back, {user?.firstName || 'there'}!</h1>
-          <p className="text-gray-500 dark:text-gray-400">
+          <h1 className="text-2xl font-bold mb-1 text-black">Welcome back, {user?.firstName || 'there'}!</h1>
+          <p className="text-black">
             You're in <span className="font-medium">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -624,11 +624,11 @@ const DashboardPage: React.FC = () => {
         {/* Middle & Right columns - Scheduled Posts & Content Creation */}
         <div className="lg:col-span-2 space-y-6">
           {/* Scheduled Posts */}
-          <Card>
+          <Card className="bg-white border-2">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
-                <CardTitle>Upcoming Posts</CardTitle>
-                <CardDescription>Your scheduled content for publishing</CardDescription>
+                <CardTitle className="text-black">Upcoming Posts</CardTitle>
+                <CardDescription className="text-black">Your scheduled content for publishing</CardDescription>
               </div>
               <Button
                 variant="ghost" 
@@ -642,8 +642,8 @@ const DashboardPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {scheduledPosts.slice(0, 3).map((post, index) => (
-                  <div key={index} className="flex gap-4 p-3 bg-white-50 dark:bg-gray-800/50 rounded-lg">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+                  <div key={index} className="flex gap-4 p-3 bg-white border rounded-lg">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
                       {post.isCarousel ? (
                         <Layers className="w-5 h-5 text-primary" />
                       ) : (
@@ -652,13 +652,13 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
-                        <div className="flex items-center text-gray-500 text-xs">
+                        <p className="text-sm font-medium text-black">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
+                        <div className="flex items-center text-black text-xs">
                           <Clock className="h-3 w-3 mr-1" />
                           {post.scheduledTime}
                         </div>
                       </div>
-                      <p className="text-sm mt-1 text-gray-600 dark:text-gray-300 line-clamp-2">
+                      <p className="text-sm mt-1 text-black line-clamp-2">
                         {post.content}
                       </p>
                     </div>
