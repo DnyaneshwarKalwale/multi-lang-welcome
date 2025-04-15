@@ -33,6 +33,8 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { CarouselPreview } from '@/components/CarouselPreview';
+import { SliderVariant } from '@/types/LinkedInPost';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -42,7 +44,8 @@ import { toast } from 'sonner';
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title can't exceed 100 characters"),
   youtubeUrl: z.string().url("Please enter a valid YouTube URL").optional(),
-  templateId: z.string().min(1, "Please select a template")
+  templateId: z.string().min(1, "Please select a template"),
+  sliderVariant: z.string().optional()
 });
 
 type CarouselRequestForm = z.infer<typeof formSchema>;
@@ -64,6 +67,7 @@ const RequestCarouselPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<string>('youtube');
   const [success, setSuccess] = useState(false);
+  const [sliderVariant, setSliderVariant] = useState<SliderVariant>('basic');
   
   // Get template ID from URL if present
   const searchParams = new URLSearchParams(location.search);
@@ -101,13 +105,51 @@ const RequestCarouselPage: React.FC = () => {
     }
   ];
 
+  // Sample carousel slides based on template
+  const getSampleSlides = (templateId: string, title: string) => {
+    const slides = [];
+    const selectedTemplate = templates.find(t => t.id === templateId);
+    
+    if (!selectedTemplate) return [];
+    
+    // Generate slides based on template type
+    if (templateId === 'template-1') { // Industry Insights
+      slides.push({ id: '1', content: title || 'Key Industry Insights for 2023' });
+      slides.push({ id: '2', content: 'Market growth increased by 24% in Q2 2023' });
+      slides.push({ id: '3', content: '75% of companies are adopting AI solutions' });
+      slides.push({ id: '4', content: 'Remote work increased productivity by 22%' });
+      slides.push({ id: '5', content: 'Key trend: Sustainability initiatives growing by 45%' });
+    } else if (templateId === 'template-2') { // How-To Guide
+      slides.push({ id: '1', content: title || '5 Steps to Optimize Your LinkedIn Profile' });
+      slides.push({ id: '2', content: 'Step 1: Add a professional profile photo' });
+      slides.push({ id: '3', content: 'Step 2: Craft a compelling headline' });
+      slides.push({ id: '4', content: 'Step 3: Detail your experience with metrics' });
+      slides.push({ id: '5', content: 'Step 4: Add relevant skills and endorsements' });
+    } else if (templateId === 'template-3') { // Case Study
+      slides.push({ id: '1', content: title || 'How Company X Increased Conversions by 156%' });
+      slides.push({ id: '2', content: 'The Challenge: Low website engagement and conversions' });
+      slides.push({ id: '3', content: 'The Solution: Implemented personalized user journeys' });
+      slides.push({ id: '4', content: 'The Results: 156% increase in conversion rate' });
+      slides.push({ id: '5', content: 'Key Takeaway: Personalization drives results' });
+    } else { // List Post
+      slides.push({ id: '1', content: title || '5 Ways to Boost Team Productivity' });
+      slides.push({ id: '2', content: '1. Implement flexible work arrangements' });
+      slides.push({ id: '3', content: '2. Use project management software' });
+      slides.push({ id: '4', content: '3. Schedule regular team building activities' });
+      slides.push({ id: '5', content: '4. Recognize and reward achievements' });
+    }
+    
+    return slides;
+  };
+
   // Initialize form with template from URL if available
   const form = useForm<CarouselRequestForm>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
       youtubeUrl: '',
-      templateId: templateIdFromURL || ''
+      templateId: templateIdFromURL || '',
+      sliderVariant: 'basic'
     }
   });
 
@@ -145,6 +187,12 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
+  // Change slider variant
+  const handleSliderVariantChange = (variant: SliderVariant) => {
+    setSliderVariant(variant);
+    form.setValue('sliderVariant', variant);
+  };
+
   // Form submission handler
   const onSubmit = async (data: CarouselRequestForm) => {
     setIsSubmitting(true);
@@ -155,7 +203,8 @@ const RequestCarouselPage: React.FC = () => {
         ...data,
         hasAttachment: !!selectedFile,
         attachmentName: selectedFile?.name,
-        contentSource: activeTab
+        contentSource: activeTab,
+        sliderVariant
       };
       
       // Simulating API call
@@ -467,43 +516,68 @@ const RequestCarouselPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
-                  {/* Sample carousel preview */}
-                  <div className="relative">
-                    <div className="aspect-video bg-gradient-to-r from-blue-50 to-white border-b-2 border-black flex items-center justify-center">
-                      <div className="text-center p-4">
-                        <h3 className="text-xl font-bold text-black">{form.watch('title') || "5 Ways to Boost Team Productivity"}</h3>
-                        <p className="text-sm text-black mt-2">Slide 1 of 5</p>
-                      </div>
-                    </div>
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <button className="w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center">
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                        1
-                      </div>
-                      <div className="h-1 w-6 bg-black rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        2
-                      </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        3
-                      </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        4
-                      </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        5
-                      </div>
-                    </div>
+                <div className="bg-white border rounded-lg overflow-hidden shadow-lg mb-4">
+                  {/* Interactive carousel preview using CarouselPreview component */}
+                  {form.watch('templateId') && (
+                    <CarouselPreview 
+                      slides={getSampleSlides(form.watch('templateId'), form.watch('title'))} 
+                      variant={sliderVariant} 
+                    />
+                  )}
+                </div>
+                
+                {/* Carousel style options */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium mb-2">Carousel Style</h3>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                    <Button 
+                      variant={sliderVariant === 'basic' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSliderVariantChange('basic')}
+                      className="text-xs"
+                    >
+                      Basic
+                    </Button>
+                    <Button 
+                      variant={sliderVariant === 'fade' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSliderVariantChange('fade')}
+                      className="text-xs"
+                    >
+                      Fade
+                    </Button>
+                    <Button 
+                      variant={sliderVariant === 'coverflow' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSliderVariantChange('coverflow')}
+                      className="text-xs"
+                    >
+                      Coverflow
+                    </Button>
+                    <Button 
+                      variant={sliderVariant === 'vertical' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSliderVariantChange('vertical')}
+                      className="text-xs"
+                    >
+                      Vertical
+                    </Button>
+                    <Button 
+                      variant={sliderVariant === 'grid' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSliderVariantChange('grid')}
+                      className="text-xs"
+                    >
+                      Grid
+                    </Button>
+                    <Button 
+                      variant={sliderVariant === 'pagination' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSliderVariantChange('pagination')}
+                      className="text-xs"
+                    >
+                      With Pagination
+                    </Button>
                   </div>
                 </div>
                 
