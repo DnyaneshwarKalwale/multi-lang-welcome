@@ -315,7 +315,7 @@ const RequestCarouselPage: React.FC = () => {
               View My Carousels
             </Button>
             <Button 
-              variant="outline"
+              variant="outline" 
               onClick={() => navigate("/dashboard/templates")}
               className="w-full"
             >
@@ -335,7 +335,7 @@ const RequestCarouselPage: React.FC = () => {
           Provide content from a YouTube video and we'll create a professional carousel for you
         </p>
       </div>
-
+      
       <div className="grid lg:grid-cols-2 gap-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -363,7 +363,7 @@ const RequestCarouselPage: React.FC = () => {
                     </FormItem>
                   )}
                 />
-
+                
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-lg font-medium mb-2">Content Source</h3>
@@ -399,7 +399,7 @@ const RequestCarouselPage: React.FC = () => {
                             </FormItem>
                           )}
                         />
-                        
+                
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           {filteredVideos.map((video) => (
                             <div 
@@ -533,7 +533,7 @@ const RequestCarouselPage: React.FC = () => {
             </Button>
           </form>
         </Form>
-
+              
         <Card>
           <CardHeader>
             <CardTitle>Preview & Information</CardTitle>
@@ -542,67 +542,30 @@ const RequestCarouselPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-              {selectedVideo ? (
-                <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
-                  <div className="relative">
-                    <img 
-                      src={selectedVideo.thumbnailUrl} 
-                      alt={selectedVideo.title}
-                      className="w-full aspect-video object-cover border-b-2 border-black"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-black/60 rounded-full p-3">
-                        <PlayCircle className="h-12 w-12 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium text-lg">{selectedVideo.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedVideo.channelName}</p>
-                    
-                    <div className="flex justify-between mt-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          1
-                        </div>
-                        <div className="h-1 w-6 bg-black rounded-full"></div>
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                          2
-                        </div>
-                        <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                          3
-                        </div>
-                        <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                          4
-                        </div>
-                        <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                          5
-                        </div>
-                      </div>
+            {selectedVideo ? (
+              <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
+                <div className="relative">
+                  <img 
+                    src={selectedVideo.thumbnailUrl} 
+                    alt={selectedVideo.title}
+                    className="w-full aspect-video object-cover border-b-2 border-black"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black/60 rounded-full p-3">
+                      <PlayCircle className="h-12 w-12 text-white" />
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
-                  {/* Generic carousel preview */}
-                  <div className="relative">
-                    <div className="aspect-video bg-gradient-to-r from-blue-50 to-white border-b-2 border-black flex items-center justify-center">
-                      <div className="text-center p-4 flex flex-col items-center">
-                        <Video className="h-12 w-12 text-blue-200 mb-2" />
-                        <h3 className="text-lg font-medium text-black">Select a YouTube video</h3>
-                        <p className="text-sm text-gray-500 mt-2">Preview will appear here</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 flex justify-between items-center">
+                <div className="p-4">
+                  <h3 className="font-medium text-lg">{selectedVideo.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedVideo.channelName}</p>
+                  
+                  <div className="flex justify-between mt-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                         1
                       </div>
-                      <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                      <div className="h-1 w-6 bg-black rounded-full"></div>
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                         2
                       </div>
@@ -621,43 +584,79 @@ const RequestCarouselPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              )}
-          
-              <div className="mt-6 space-y-4">
-                <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
-                  <h3 className="font-medium flex items-center gap-2 mb-2">
-                    <Lightbulb className="h-4 w-4 text-amber-500" />
-                    Carousel Best Practices
-                  </h3>
-                  <ul className="text-sm text-black space-y-2">
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-500 font-bold mt-0.5">•</span>
-                      Keep your content concise and focused on one main topic
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-500 font-bold mt-0.5">•</span>
-                      Use 5-10 slides for optimal engagement
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-500 font-bold mt-0.5">•</span>
-                      Include a clear call-to-action in your final slide
-                    </li>
-                  </ul>
+              </div>
+            ) : (
+              <div className="bg-white border-2 border-black rounded-xl overflow-hidden shadow-lg">
+                {/* Generic carousel preview */}
+                <div className="relative">
+                  <div className="aspect-video bg-gradient-to-r from-blue-50 to-white border-b-2 border-black flex items-center justify-center">
+                    <div className="text-center p-4 flex flex-col items-center">
+                      <Video className="h-12 w-12 text-blue-200 mb-2" />
+                      <h3 className="text-lg font-medium text-black">Select a YouTube video</h3>
+                      <p className="text-sm text-gray-500 mt-2">Preview will appear here</p>
+                    </div>
+                  </div>
                 </div>
-            
-                <div className="bg-white border-2 border-black rounded-lg p-4">
-                  <h3 className="font-medium flex items-center gap-2 mb-2">
-                    <Info className="h-4 w-4" />
-                    Carousel Delivery
-                  </h3>
-                  <p className="text-sm text-black">
-                    Your carousel will be ready within 24 hours. You'll receive an email notification when it's ready to view and publish.
-                  </p>
+                <div className="p-4 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      1
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      2
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      3
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      4
+                    </div>
+                    <div className="h-1 w-6 bg-gray-300 rounded-full"></div>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      5
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          
+            <div className="mt-6 space-y-4">
+              <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
+                <h3 className="font-medium flex items-center gap-2 mb-2">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  Carousel Best Practices
+                </h3>
+                <ul className="text-sm text-black space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold mt-0.5">•</span>
+                    Keep your content concise and focused on one main topic
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold mt-0.5">•</span>
+                    Use 5-10 slides for optimal engagement
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 font-bold mt-0.5">•</span>
+                    Include a clear call-to-action in your final slide
+                  </li>
+                </ul>
+              </div>
+            
+              <div className="bg-white border-2 border-black rounded-lg p-4">
+                <h3 className="font-medium flex items-center gap-2 mb-2">
+                  <Info className="h-4 w-4" />
+                  Carousel Delivery
+                </h3>
+                <p className="text-sm text-black">
+                  Your carousel will be ready within 24 hours. You'll receive an email notification when it's ready to view and publish.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
