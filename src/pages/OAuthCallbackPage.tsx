@@ -44,16 +44,19 @@ export default function OAuthCallbackPage() {
       console.log('OAuth callback - Full pathname:', location.pathname);
       console.log('OAuth callback - Full URL:', window.location.href);
       
-      if (location.pathname.includes('linkedin')) {
+      // Check the URL path first - most reliable indicator
+      if (location.pathname.includes('linkedin') || window.location.href.includes('linkedin')) {
         authMethod = 'linkedin';
+        console.log('OAuth callback - Setting auth method to LinkedIn based on URL path');
       } else if (location.pathname.includes('google')) {
         authMethod = 'google';
       } else if (location.pathname.includes('social-callback')) {
         // For social-callback endpoints, try to determine from other means
         const params = new URLSearchParams(location.search);
         const provider = params.get('provider');
-        if (provider === 'linkedin') {
+        if (provider === 'linkedin' || provider?.toLowerCase().includes('linkedin')) {
           authMethod = 'linkedin';
+          console.log('OAuth callback - Setting auth method to LinkedIn based on provider param');
         } else if (provider === 'google') {
           authMethod = 'google';
         }

@@ -439,10 +439,9 @@ const CreatePostPage: React.FC = () => {
       }
       
       // Check for LinkedIn authentication
-      const authMethod = localStorage.getItem('auth-method');
       const token = tokenManager.getToken('linkedin');
       
-      if (authMethod !== 'linkedin' || !token) {
+      if (!token) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
         setIsPublishing(false);
         return;
@@ -709,12 +708,11 @@ const CreatePostPage: React.FC = () => {
       console.log('Testing LinkedIn connection');
       
       // Check for LinkedIn authentication using tokenManager
-      const authMethod = localStorage.getItem('auth-method');
       const token = tokenManager.getToken('linkedin');
       
-      if (authMethod !== 'linkedin' || !token) {
+      if (!token) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
-        console.error('Auth method:', authMethod, 'LinkedIn token exists:', !!token);
+        console.error('LinkedIn token not found');
         setIsPublishing(false);
         return;
       }

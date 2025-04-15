@@ -60,9 +60,10 @@ api.interceptors.request.use(
     
     // First try to match token by endpoint
     if (config.url?.includes('/linkedin')) {
+      // Always use LinkedIn token for LinkedIn endpoints regardless of auth method
       token = tokenManager.getToken('linkedin');
     } else if (config.url?.includes('/google')) {
-      token = localStorage.getItem('google-login-token');
+      token = tokenManager.getToken('google');
     } else {
       // Use token based on current auth method
       token = tokenManager.getToken();
