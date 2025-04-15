@@ -234,7 +234,7 @@ const CreatePostPage: React.FC = () => {
   
   // LinkedIn posting states
   const [isPublishing, setIsPublishing] = useState(false);
-  const [publishingPlatform, setPublishingPlatform] = useState<'linkedin' | 'twitter' | 'facebook'>('linkedin');
+  const [publishingPlatform, setPublishingPlatform] = useState<'linkedin' | 'facebook'>('linkedin');
   const [visibility, setVisibility] = usePersistentState<'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN'>('createPost.visibility', 'PUBLIC');
   
   // Scheduling states

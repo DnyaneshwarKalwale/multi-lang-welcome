@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ interface BackButtonProps {
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
-  variant?: "default" | "twitter" | "subtle";
+  variant?: "default" | "subtle";
   absolute?: boolean;
 }
 
@@ -48,9 +47,7 @@ export function BackButton({
   let buttonVariant: "outline" | "ghost" = "outline";
   let textColorClass = "text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500/30";
   
-  if (variant === "twitter") {
-    textColorClass = "text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:border-blue-500/30";
-  } else if (variant === "subtle") {
+  if (variant === "subtle") {
     buttonVariant = "ghost";
     textColorClass = "text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300";
   }

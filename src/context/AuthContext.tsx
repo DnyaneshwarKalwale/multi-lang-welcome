@@ -6,7 +6,7 @@ export interface User {
   name: string;
   email: string;
   photoURL: string;
-  provider: 'google' | 'twitter' | 'linkedin';
+  provider: 'google' | 'linkedin';
 }
 
 interface AuthContextType {

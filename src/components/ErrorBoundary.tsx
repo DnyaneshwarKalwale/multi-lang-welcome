@@ -103,7 +103,7 @@ class ErrorBoundary extends Component<Props, State> {
             >
               <Button
                 onClick={this.handleReload}
-                variant="twitter"
+                variant="default"
                 rounded="full"
                 className="py-6 px-8 gap-2 w-full sm:w-auto"
               >
