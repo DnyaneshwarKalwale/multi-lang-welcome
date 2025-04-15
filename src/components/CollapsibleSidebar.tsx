@@ -70,7 +70,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
     { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: 3, variant: 'primary' } },
     { title: 'Request Carousel', icon: Upload, path: '/dashboard/request-carousel' },
     { title: 'My Carousels', icon: LayoutGrid, path: '/dashboard/my-carousels' },
-    { title: 'Team', icon: Users, path: '/dashboard/teams' },
+    { title: 'Team', icon: Users, path: '/dashboard/team' },
     { title: 'Scraper', icon: Search, path: '/dashboard/scraper' },
     { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
     { title: 'AI Writer', icon: MessageSquare, path: '/dashboard/ai' },
