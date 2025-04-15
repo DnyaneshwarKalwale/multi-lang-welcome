@@ -88,6 +88,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersistentState, useAppState } from '@/contexts/StateContext';
 import { linkedInApi } from '@/utils/linkedinApi';
+import { tokenManager } from '@/services/api';
 import { 
   Dialog,
   DialogContent,
@@ -437,6 +438,16 @@ const CreatePostPage: React.FC = () => {
         return;
       }
       
+      // Check for LinkedIn authentication
+      const authMethod = localStorage.getItem('auth-method');
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      
+      if (authMethod !== 'linkedin' || !linkedInToken) {
+        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
+        setIsPublishing(false);
+        return;
+      }
+      
       // First validate the LinkedIn connection
       try {
         const connectionTest = await linkedInApi.testConnection();
@@ -696,6 +707,17 @@ const CreatePostPage: React.FC = () => {
     try {
       setIsPublishing(true);
       console.log('Testing LinkedIn connection');
+      
+      // Check for LinkedIn authentication
+      const authMethod = localStorage.getItem('auth-method');
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      
+      if (authMethod !== 'linkedin' || !linkedInToken) {
+        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
+        console.error('Auth method:', authMethod, 'LinkedIn token exists:', !!linkedInToken);
+        setIsPublishing(false);
+        return;
+      }
       
       // First run the comprehensive connection test
       const connectionTest = await linkedInApi.testConnection();

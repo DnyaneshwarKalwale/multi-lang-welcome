@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -44,6 +43,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { tokenManager } from '@/services/api';
 
 // Define interfaces for post types
 interface BasePost {
@@ -368,6 +368,17 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
+      // Check for LinkedIn authentication
+      const authMethod = localStorage.getItem('auth-method');
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      
+      if (authMethod !== 'linkedin' || !linkedInToken) {
+        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
+        setIsPublishing(false);
+        setLinkedInAuthError(true);
+        return;
+      }
+      
       // Prepare content with hashtags
       let postContent = draft.content || '';
       if (draft.hashtags && draft.hashtags.length > 0) {
@@ -441,6 +452,17 @@ const PostLibraryPage: React.FC = () => {
     
     try {
       setIsPublishing(true);
+      
+      // Check for LinkedIn authentication
+      const authMethod = localStorage.getItem('auth-method');
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      
+      if (authMethod !== 'linkedin' || !linkedInToken) {
+        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
+        setIsPublishing(false);
+        setLinkedInAuthError(true);
+        return;
+      }
       
       // Prepare content with hashtags
       let postContent = post.content || '';
