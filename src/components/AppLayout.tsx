@@ -62,14 +62,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const contentMargin = !isMobile && sidebarOpen ? 'lg:ml-[240px]' : !isMobile ? 'lg:ml-[72px]' : 'ml-0';
 
   return (
-    <div className="min-h-screen bg-background flex overflow-hidden">
-      {/* Single Collapsible sidebar instance */}
-      <CollapsibleSidebar />
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Sidebar container with fixed positioning and high z-index */}
+      <div className="fixed top-0 left-0 z-50 h-full">
+        <CollapsibleSidebar />
+      </div>
       
       {/* Overlay for mobile when sidebar is open */}
       {isMobile && sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30"
+          className="fixed inset-0 bg-black/50 z-40"
           onClick={() => {
             setSidebarOpen(false);
             localStorage.setItem('sidebarExpanded', 'false');
@@ -77,8 +79,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         />
       )}
       
-      {/* Main content area */}
-      <div className={cn("flex-1 flex flex-col min-h-screen w-full transition-all duration-300", contentMargin)}>
+      {/* Main content area with proper margin and wrapping */}
+      <div className={cn("flex flex-col flex-1 h-screen w-full transition-all duration-300", contentMargin)}>
         {/* Top header bar */}
         <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-blue-50 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
@@ -111,9 +113,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
-          {children || <Outlet />}
+        {/* Main scrollable content */}
+        <main className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 min-h-full">
+            {children || <Outlet />}
+          </div>
         </main>
       </div>
     </div>

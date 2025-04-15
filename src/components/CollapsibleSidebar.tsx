@@ -5,7 +5,8 @@ import {
   PlusCircle, BarChart3, Linkedin, 
   LogOut, Bell, MessageSquare, Lightbulb,
   Heart, BookMarked, CreditCard, LayoutGrid,
-  Search, Upload, Headphones, Youtube, Server
+  Search, Upload, Headphones, Youtube, Server,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,8 +27,9 @@ interface NavItem {
 }
 
 export function CollapsibleSidebar() {
-  // Always expanded on large screens
-  const [expanded, setExpanded] = useState(true);
+  // Get initial state from localStorage
+  const initialExpanded = localStorage.getItem('sidebarExpanded') !== 'false';
+  const [expanded, setExpanded] = useState(initialExpanded);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -38,10 +40,10 @@ export function CollapsibleSidebar() {
       const isSmallScreen = window.innerWidth < 1024;
       setIsMobile(isSmallScreen);
       
-      // Always expanded on large screens, collapsed on small screens
-      if (!isSmallScreen) {
+      // Always expanded on large screens, unless explicitly collapsed
+      if (!isSmallScreen && localStorage.getItem('sidebarExpanded') !== 'false') {
         setExpanded(true);
-      } else {
+      } else if (isSmallScreen) {
         setExpanded(false);
       }
     };
@@ -52,6 +54,13 @@ export function CollapsibleSidebar() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Toggle sidebar expanded state
+  const toggleSidebar = () => {
+    const newState = !expanded;
+    setExpanded(newState);
+    localStorage.setItem('sidebarExpanded', String(newState));
+  };
   
   const navItems: NavItem[] = [
     { title: 'Home', icon: Home, path: '/dashboard/home' },
@@ -59,6 +68,7 @@ export function CollapsibleSidebar() {
     { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: 3, variant: 'primary' } },
     { title: 'Request Carousel', icon: Upload, path: '/dashboard/request-carousel' },
     { title: 'My Carousels', icon: LayoutGrid, path: '/dashboard/my-carousels' },
+    { title: 'Templates', icon: LayoutGrid, path: '/dashboard/templates' },
     { title: 'Team', icon: Users, path: '/dashboard/team' },
     { title: 'Scraper', icon: Search, path: '/dashboard/scraper' },
     { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
@@ -105,25 +115,52 @@ export function CollapsibleSidebar() {
       initial={expanded ? 'expanded' : 'collapsed'}
       animate={expanded ? 'expanded' : 'collapsed'}
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-gray-200 bg-white',
+        'h-screen flex flex-col border-r border-gray-200 bg-white shadow-md',
         expanded ? 'items-start' : 'items-center'
       )}
     >
       {/* Sidebar Header */}
       <div className={cn(
         'flex h-16 items-center px-4 py-3 w-full',
-        expanded ? 'justify-start' : 'justify-center'
+        expanded ? 'justify-between' : 'justify-center'
       )}>
         <div className="flex items-center gap-2 overflow-hidden">
           <BrandOutIcon className="w-8 h-8" />
           {expanded && <span className="font-semibold text-gray-900">BrandOut</span>}
         </div>
+        
+        {/* Toggle Button */}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className={cn(
+              "w-6 h-6 p-0 rounded-full",
+              !expanded && "opacity-0"
+            )}
+          >
+            {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </Button>
+        )}
       </div>
 
+      {/* Mobile Toggle Button */}
+      {isMobile && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="absolute -right-3 top-4 h-6 w-6 rounded-full bg-white p-0 shadow-md flex items-center justify-center"
+          onClick={toggleSidebar}
+        >
+          <ChevronLeft size={14} />
+        </Button>
+      )}
+
       {/* Navigation Menu */}
-      <div className="flex-1 w-full overflow-y-auto">
+      <div className="flex-1 w-full overflow-y-auto py-2">
         <div className={cn(
-          'mt-2 flex flex-col gap-1 w-full px-3 py-2',
+          'mt-2 flex flex-col gap-1 w-full px-3',
           !expanded && 'items-center'
         )}>
           {navItems.map((item, index) => (
@@ -131,7 +168,7 @@ export function CollapsibleSidebar() {
               key={index}
               to={item.path}
               className={({ isActive }) => cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors relative',
                 isActive 
                   ? 'bg-primary-50 text-primary' 
                   : 'text-gray-600 hover:bg-gray-100',
