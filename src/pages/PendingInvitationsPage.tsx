@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { tokenManager } from "@/services/api";
 
 interface TeamInvitation {
   id: string;
@@ -72,7 +73,7 @@ export default function PendingInvitationsPage() {
       const invitationData = verifyResponse.data.data;
       
       // Get the user token
-      const userToken = localStorage.getItem('token');
+      const userToken = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       
       if (!userToken) {
         // If user is not logged in, redirect to login with returnUrl
@@ -135,7 +136,7 @@ export default function PendingInvitationsPage() {
   const fetchInvitations = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       if (!token) {
         // If no token, redirect to login
         navigate('/login');
@@ -163,7 +164,7 @@ export default function PendingInvitationsPage() {
   const handleAcceptInvitation = async (invitationId: string) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       if (!token) {
         navigate('/login');
         return;
@@ -204,7 +205,7 @@ export default function PendingInvitationsPage() {
   const handleDeclineInvitation = async (invitationId: string) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       if (!token) {
         navigate('/login');
         return;

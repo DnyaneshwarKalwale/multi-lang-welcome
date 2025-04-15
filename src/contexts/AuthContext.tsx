@@ -41,14 +41,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(tokenManager.getToken(localStorage.getItem('auth-method') || undefined));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Optimized fetch user function
   const fetchUser = async () => {
-    const token = localStorage.getItem('token');
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
     
     if (!token) {
       setLoading(false);
@@ -75,7 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const token = localStorage.getItem('token');
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
       
       if (!token) {
         setLoading(false);
@@ -88,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
       } catch (error) {
         console.error("Failed to get user data:", error);
-        localStorage.removeItem('token');
+        // Clear auth method token on failure
+        if (authMethod) {
+          localStorage.removeItem(`${authMethod}-login-token`);
+          localStorage.removeItem('auth-method');
+        }
       } finally {
         setLoading(false);
       }

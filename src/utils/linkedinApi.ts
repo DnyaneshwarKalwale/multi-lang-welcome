@@ -13,8 +13,8 @@ const getLinkedInToken = (accessToken?: string): string => {
   const linkedinToken = tokenManager.getToken('linkedin');
   if (linkedinToken) return linkedinToken;
   
-  // Last resort - use generic token
-  return tokenManager.getToken() || '';
+  // No token available
+  return '';
 };
 
 // Types for LinkedIn API requests
@@ -118,8 +118,7 @@ class LinkedInApi {
           message: 'No authentication token found',
           details: {
             authMethod: localStorage.getItem('auth-method') || 'none',
-            hasLinkedInToken: !!localStorage.getItem('linkedin-login-token'),
-            hasGenericToken: !!localStorage.getItem('token')
+            hasLinkedInToken: !!localStorage.getItem('linkedin-login-token')
           }
         };
       }
@@ -138,12 +137,7 @@ class LinkedInApi {
           details: {
             backendStatus: healthResponse.status,
             linkedinId: linkedinProfile,
-            authMethod: localStorage.getItem('auth-method') || 'unknown',
-            tokenType: token === localStorage.getItem('linkedin-login-token') 
-              ? 'linkedin-specific' 
-              : token === localStorage.getItem('token') 
-                ? 'generic' 
-                : 'custom'
+            authMethod: localStorage.getItem('auth-method') || 'unknown'
           }
         };
       } catch (linkedinError) {
@@ -153,12 +147,7 @@ class LinkedInApi {
           details: {
             backendStatus: healthResponse.status,
             error: linkedinError.message,
-            authMethod: localStorage.getItem('auth-method') || 'unknown',
-            tokenType: token === localStorage.getItem('linkedin-login-token') 
-              ? 'linkedin-specific' 
-              : token === localStorage.getItem('token') 
-                ? 'generic' 
-                : 'custom'
+            authMethod: localStorage.getItem('auth-method') || 'unknown'
           }
         };
       }

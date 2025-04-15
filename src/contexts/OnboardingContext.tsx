@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
+import { tokenManager } from "@/services/api";
 
 // Define types for our context
 type OnboardingStep = 
@@ -124,7 +125,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const loadOnboardingProgress = async () => {
       if (isAuthenticated && user && !user.onboardingCompleted && !isInitialized) {
         try {
-          const token = localStorage.getItem('token');
+          const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
           if (!token) return;
           
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -175,7 +176,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated || !user) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       if (!token) return;
       
       const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -287,7 +288,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       // Try to complete onboarding in database
       const completeOnboarding = async () => {
         try {
-          const token = localStorage.getItem('token');
+          const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
           if (!token) return;
           
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';

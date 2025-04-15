@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { tokenManager } from '@/services/api';
 
 export default function OAuthCallbackPage() {
   const navigate = useNavigate();
@@ -38,8 +39,16 @@ export default function OAuthCallbackPage() {
         return;
       }
       
-      // Set token in localStorage immediately
-      localStorage.setItem('token', token);
+      // Determine auth method from URL path
+      let authMethod = 'email';
+      if (location.pathname.includes('linkedin')) {
+        authMethod = 'linkedin';
+      } else if (location.pathname.includes('google')) {
+        authMethod = 'google';
+      }
+      
+      // Set token using tokenManager instead of directly in localStorage
+      tokenManager.storeToken(token, authMethod as 'email' | 'linkedin' | 'google');
       
       try {
         // Update user state in AuthContext
