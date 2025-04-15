@@ -817,7 +817,7 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               </Card>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {drafts.map((draft) => (
                 <div key={draft.id} className="h-full">
                   {renderPostCard(draft, 'draft')}
@@ -840,7 +840,7 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               </Card>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {scheduled.map((post) => (
                 <div key={post.id} className="h-full">
                   {renderPostCard(post, 'scheduled')}
@@ -859,17 +859,17 @@ const PostLibraryPage: React.FC = () => {
                 <p className="text-neutral-medium text-sm mb-4">Your published posts will appear here</p>
                 <Button onClick={() => navigate('/dashboard/post')}>
                   Create a Post
-                          </Button>
-                    </div>
+                </Button>
+              </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {published.map((post) => (
                 <div key={post.id} className="h-full">
                   {renderPostCard(post, 'published')}
                 </div>
-            ))}
-          </div>
+              ))}
+            </div>
           )}
         </TabsContent>
       </Tabs>
