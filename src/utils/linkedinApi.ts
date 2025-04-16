@@ -357,32 +357,51 @@ class LinkedInApi {
         throw new Error('Invalid Cloudinary image URL');
       }
 
-      // Get a direct image URL with no transformations if needed
+      // Ensure we're using the direct resource URL without transformations
+      // Format: https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}.{extension}
       let directImageUrl = imageUrl;
+      
+      // Extract the clean public ID to use as a direct URL
       if (imageUrl.includes('/upload/')) {
-        // Extract the base URL and file path to create a direct URL
-        const parts = imageUrl.split('/upload/');
-        if (parts.length === 2) {
-          // Remove any transformations in the URL
-          directImageUrl = `${parts[0]}/upload/${parts[1].split('/').pop()}`;
+        try {
+          // Split the URL to get the base and the public ID parts
+          const urlParts = imageUrl.split('/upload/');
+          if (urlParts.length === 2) {
+            // The base always stays the same
+            const baseUrl = urlParts[0];
+            
+            // For the public ID, take everything after the last '/' to ensure we get just the filename
+            let publicId = urlParts[1];
+            
+            // If there are any query parameters, remove them
+            if (publicId.includes('?')) {
+              publicId = publicId.split('?')[0];
+            }
+            
+            // Create a clean direct URL with no transformations
+            directImageUrl = `${baseUrl}/upload/${publicId}`;
+            
+            console.log('Cleaned Cloudinary URL:', directImageUrl);
+          }
+        } catch (urlError) {
+          console.error('Error processing Cloudinary URL:', urlError);
+          // If there's an error parsing the URL, try with the original URL
         }
       }
 
       console.log('Using direct image URL:', directImageUrl);
 
-      // Since backend expects local files but we have a Cloudinary URL,
-      // we'll use a text post fallback if the image post fails
-      try {
-        // Try directly with Cloudinary URL first
-        const imagePostData = {
-          postContent: text,
-          imagePath: directImageUrl,
-          imageTitle: imageTitle || fileName,
-          imageDescription: "Shared via Scripe",
-          isCloudinaryImage: true, // Flag to tell backend this is a Cloudinary URL
-          visibility: visibility
-        };
+      // Send the post with the Cloudinary image
+      const imagePostData = {
+        postContent: text,
+        imagePath: directImageUrl,
+        imageTitle: imageTitle || fileName,
+        imageDescription: "Shared via Scripe",
+        isCloudinaryImage: true, // Flag to tell backend this is a Cloudinary URL
+        visibility: visibility
+      };
 
+      try {
         // Send post request to our backend
         const response = await axios.post(`${this.API_URL}/post`, imagePostData, {
           headers: {
@@ -395,21 +414,26 @@ class LinkedInApi {
       } catch (imageError) {
         console.error('Error posting with Cloudinary image:', imageError);
         
-        // Fall back to text-only post if image fails
-        console.log('Falling back to text-only post');
-        const textPostData = {
-          postContent: `${text}\n\n${imageTitle}: ${directImageUrl}`,
-          visibility: visibility
-        };
+        // If we get a 422 error, it means the backend couldn't process the image
+        if (imageError.response && imageError.response.status === 422) {
+          console.log('Backend could not process the image, falling back to text-only post');
+          const textPostData = {
+            postContent: `${text}\n\n${imageTitle}: ${directImageUrl}`,
+            visibility: visibility
+          };
 
-        const textResponse = await axios.post(`${this.API_URL}/post`, textPostData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+          const textResponse = await axios.post(`${this.API_URL}/post`, textPostData, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          return textResponse.data;
+        }
         
-        return textResponse.data;
+        // For other errors, throw so they can be handled
+        throw imageError;
       }
     } catch (error: any) {
       console.error('Error creating LinkedIn Cloudinary image post:', error);
