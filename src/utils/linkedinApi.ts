@@ -119,7 +119,7 @@ export interface ScheduledPostData {
 }
 
 // Main API wrapper for LinkedIn API
-export class LinkedInApi {
+class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
 
   // Simplified test connectivity method that avoids unnecessary API calls
@@ -545,167 +545,120 @@ export class LinkedInApi {
     }
   }
 
-  // Get user's posts
-  async getUserPosts(limit: number = 10): Promise<any> {
+  // Delete a post
+  async deletePost(postId: string): Promise<void> {
     try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.get(`${this.API_URL}/posts?limit=${limit}`, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
+      await axios.delete(`${this.API_URL}/posts/${postId}`);
     } catch (error) {
-      console.error('Error getting LinkedIn user posts:', error);
+      console.error('Error deleting LinkedIn post:', error);
       throw error;
     }
   }
 
+  // Get user's posts
+  async getUserPosts(limit: number = 10): Promise<any> {
+    // Return an empty array instead of making API call - no analytics needed
+    return [];
+  }
+
   // Get drafts and scheduled posts
   async getDraftsAndScheduled(): Promise<any> {
+    // Load posts from localStorage
+    const drafts: any[] = [];
+    const scheduled: any[] = [];
+    
+    // Read from linkedinDrafts and linkedinScheduledPosts
     try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+      // Get drafts
+      const draftsString = localStorage.getItem('linkedinDrafts');
+      if (draftsString) {
+        const parsedDrafts = JSON.parse(draftsString);
+        if (Array.isArray(parsedDrafts)) {
+          drafts.push(...parsedDrafts);
+        }
       }
       
-      const response = await axios.get(`${this.API_URL}/posts/all`, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
+      // Get scheduled posts
+      const scheduledString = localStorage.getItem('linkedinScheduledPosts');
+      if (scheduledString) {
+        const parsedScheduled = JSON.parse(scheduledString);
+        if (Array.isArray(parsedScheduled)) {
+          scheduled.push(...parsedScheduled);
+        }
+      }
     } catch (error) {
-      console.error('Error getting drafts and scheduled posts:', error);
-      throw error;
+      console.error('Error loading posts from localStorage:', error);
     }
+    
+    return [...drafts, ...scheduled];
   }
 
   // Delete a draft
   async deleteDraft(draftId: string): Promise<boolean> {
     try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+      // Get existing drafts from localStorage
+      const draftsString = localStorage.getItem('linkedinDrafts');
+      if (draftsString) {
+        const drafts = JSON.parse(draftsString);
+        if (Array.isArray(drafts)) {
+          // Filter out the draft to delete
+          const updatedDrafts = drafts.filter((draft) => draft.id !== draftId);
+          // Save updated drafts back to localStorage
+          localStorage.setItem('linkedinDrafts', JSON.stringify(updatedDrafts));
+          return true;
+        }
       }
-      
-      await axios.delete(`${this.API_URL}/posts/draft/${draftId}`, {
-        withCredentials: true,
-        headers
-      });
-      return true;
+      return false;
     } catch (error) {
-      console.error('Error deleting draft:', error);
-      throw error;
+      console.error('Error deleting draft from localStorage:', error);
+      return false;
     }
   }
 
   // Delete a scheduled post
   async deleteScheduledPost(postId: string): Promise<boolean> {
     try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+      // Get existing scheduled posts from localStorage
+      const scheduledString = localStorage.getItem('linkedinScheduledPosts');
+      if (scheduledString) {
+        const scheduled = JSON.parse(scheduledString);
+        if (Array.isArray(scheduled)) {
+          // Filter out the post to delete
+          const updatedScheduled = scheduled.filter((post) => post.id !== postId);
+          // Save updated scheduled posts back to localStorage
+          localStorage.setItem('linkedinScheduledPosts', JSON.stringify(updatedScheduled));
+          return true;
+        }
       }
-      
-      await axios.delete(`${this.API_URL}/posts/scheduled/${postId}`, {
-        withCredentials: true,
-        headers
-      });
-      return true;
+      return false;
     } catch (error) {
-      console.error('Error deleting scheduled post:', error);
-      throw error;
+      console.error('Error deleting scheduled post from localStorage:', error);
+      return false;
     }
   }
 
   // Save a published post
   async savePublishedPost(post: any): Promise<any> {
-    try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.post(`${this.API_URL}/posts/published`, post, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error saving published post:', error);
-      throw error;
-    }
+    // Just return the post without making API call
+    return post;
   }
 
   // Save a draft post
   async saveDraft(postData: ScheduledPostData): Promise<any> {
-    try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.post(`${this.API_URL}/posts/draft`, postData, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      throw error;
-    }
+    // Just return the data without making API call
+    return postData;
   }
 
   // Save a scheduled post
   async saveScheduledPost(postData: ScheduledPostData): Promise<any> {
-    try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.post(`${this.API_URL}/posts/scheduled`, postData, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error scheduling post:', error);
-      throw error;
-    }
+    // Just return the data without making API call
+    return postData;
   }
 
   // Update a draft or scheduled post
   async updatePost(postId: string, updates: Partial<ScheduledPostData>): Promise<any> {
     try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.put(`${this.API_URL}/posts/${postId}`, updates, {
-        withCredentials: true,
-        headers
-      });
+      const response = await axios.put(`${this.API_URL}/posts/${postId}`, updates);
       return response.data;
     } catch (error) {
       console.error('Error updating post:', error);
@@ -713,67 +666,10 @@ export class LinkedInApi {
     }
   }
 
-  // Change post status (draft -> scheduled, draft -> published, etc.)
-  async changePostStatus(postId: string, newStatus: 'draft' | 'scheduled' | 'published', scheduledTime?: string): Promise<any> {
-    try {
-      const data: any = { status: newStatus };
-      if (scheduledTime && newStatus === 'scheduled') {
-        data.scheduledTime = scheduledTime;
-      }
-      
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.put(`${this.API_URL}/posts/${postId}/status`, data, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error changing post status to ${newStatus}:`, error);
-      throw error;
-    }
-  }
-  
-  // Delete a post
-  async deletePost(postId: string): Promise<any> {
-    try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.delete(`${this.API_URL}/posts/${postId}`, {
-        withCredentials: true,
-        headers
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      throw error;
-    }
-  }
-
   // Publish a draft or scheduled post immediately
   async publishNow(postId: string): Promise<any> {
     try {
-      // Add auth token from localStorage if available
-      const headers: any = {};
-      const authToken = localStorage.getItem('auth-token');
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-      
-      const response = await axios.post(`${this.API_URL}/posts/${postId}/publish`, {}, {
-        withCredentials: true,
-        headers
-      });
+      const response = await axios.post(`${this.API_URL}/posts/${postId}/publish`);
       return response.data;
     } catch (error) {
       console.error('Error publishing post:', error);

@@ -80,12 +80,6 @@ interface ScheduledPost extends BasePost {
 
 interface PublishedPost extends BasePost {
   publishedDate?: string;
-  stats?: {
-    impressions: number;
-    likes: number;
-    comments: number;
-    shares: number;
-  };
 }
 
 // Create a separate component for carousel slides
@@ -199,107 +193,55 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Get drafts and scheduled posts from API
-      try {
-        const apiData = await linkedInApi.getDraftsAndScheduled();
-        if (apiData && Array.isArray(apiData)) {
-          // Process drafts
-          const apiDrafts = apiData.filter((item: any) => item.status === 'draft');
-          const formattedDrafts: DraftPost[] = apiDrafts.map((item: any) => {
-            const post = item.postData || {};
-            return {
-              id: item._id || `draft_${Date.now()}`,
-              title: post.title || 'Untitled',
-              content: post.content || '',
-              createdAt: item.createdAt || new Date().toISOString(),
-              updatedAt: item.updatedAt || new Date().toISOString(),
-              slides: post.slides,
-              postData: post,
-              postImage: post.postImage,
-              hashtags: post.hashtags,
-              isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions,
-              isCarousel: post.slides && post.slides.length > 0,
-              slideCount: post.slides?.length || 0,
-              status: 'draft'
-            };
-          });
-          setDrafts(formattedDrafts);
-          
-          // Process scheduled posts
-          const apiScheduled = apiData.filter((item: any) => item.status === 'scheduled');
-          const formattedScheduled: ScheduledPost[] = apiScheduled.map((item: any) => {
-            const post = item.postData || {};
-            return {
-              id: item._id || `scheduled_${Date.now()}`,
-              title: post.title || 'Untitled',
-              content: post.content || '',
-              scheduledTime: item.scheduledTime,
-              createdAt: item.createdAt || new Date().toISOString(),
-              updatedAt: item.updatedAt || new Date().toISOString(),
-              slides: post.slides,
-              postData: post,
-              postImage: post.postImage,
-              hashtags: post.hashtags,
-              isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions,
-              isCarousel: post.slides && post.slides.length > 0,
-              slideCount: post.slides?.length || 0,
-              status: 'scheduled'
-            };
-          });
-          setScheduled(formattedScheduled);
-        }
-      } catch (error) {
-        console.error('Error loading drafts and scheduled posts from API:', error);
-        if ((error as any)?.response?.status === 401) {
-          setLinkedInAuthError(true);
-          toast.error('LinkedIn authentication required to load your content');
-        } else {
-          toast.error('Failed to load drafts and scheduled posts');
-        }
+      // Check for LinkedIn authentication directly from localStorage
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      
+      if (!linkedInToken) {
+        setLinkedInAuthError(true);
+        toast.error('LinkedIn authentication required to load your content');
+        return;
       }
       
-      // Get published posts from API
       try {
-        const publishedData = await linkedInApi.getUserPosts(20); // Fetch up to 20 published posts
-        if (publishedData && Array.isArray(publishedData)) {
-          const formattedPublished: PublishedPost[] = publishedData.map((item: any) => {
-            const post = item.postData || item;
-            return {
-              id: item._id || item.id || `published_${Date.now()}`,
-              title: post.title || 'Published Post',
-              content: post.content || '',
-              publishedAt: item.publishedAt || item.createdAt || new Date().toISOString(),
-              createdAt: item.createdAt || new Date().toISOString(),
-              updatedAt: item.updatedAt || new Date().toISOString(),
-              slides: post.slides,
-              postData: post,
-              postImage: post.postImage,
-              hashtags: post.hashtags,
-              isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions,
-              isCarousel: post.slides && post.slides.length > 0,
-              slideCount: post.slides?.length || 0,
-              status: 'published',
-              linkedInPostUrl: item.linkedInPostUrl || post.linkedInPostUrl
-            };
-          });
-          setPublished(formattedPublished);
-        }
-      } catch (error) {
-        console.error('Error loading published posts from API:', error);
-        if ((error as any)?.response?.status === 401) {
-          // LinkedIn auth error already handled in drafts/scheduled section
-          if (!linkedInAuthError) {
-            setLinkedInAuthError(true);
-            toast.error('LinkedIn authentication required to load your published content');
+        // Load drafts from localStorage
+        const localDrafts: DraftPost[] = [];
+        const scheduledPosts: ScheduledPost[] = [];
+        
+        // Scan localStorage for saved drafts and scheduled posts
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('draft_')) {
+            try {
+              const draftData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (draftData.id) {
+                localDrafts.push(draftData);
+              }
+            } catch (e) {
+              console.error('Error parsing draft:', e);
+            }
+          } else if (key?.startsWith('scheduled_')) {
+            try {
+              const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (scheduledData.id) {
+                scheduledPosts.push(scheduledData);
+              }
+            } catch (e) {
+              console.error('Error parsing scheduled post:', e);
+            }
           }
-        } else {
-          toast.error('Failed to load published posts');
         }
+        
+        // Update state with local storage data
+        setDrafts(localDrafts);
+        setScheduled(scheduledPosts);
+        
+        // Set empty published posts or could fetch from LinkedIn API
+        setPublished([]);
+        
+      } catch (apiError: any) {
+        console.error('Error loading content:', apiError);
+        toast.error('Failed to load your content');
       }
-      
     } catch (error) {
       console.error('Error in loadUserContent:', error);
       toast.error('Failed to load content');
@@ -333,7 +275,7 @@ const PostLibraryPage: React.FC = () => {
       setIsDeleting(true);
       
       // Delete from backend API
-      await linkedInApi.deletePost(draftId);
+      await linkedInApi.deleteDraft(draftId);
       
       // Update state
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
@@ -362,22 +304,15 @@ const PostLibraryPage: React.FC = () => {
     });
     
     try {
-      // Remove from drafts via API - instead of deleting, we'll update the post on scheduling
-      // We'll do this via the scheduling dialog in CreatePostPage
+      // Remove from drafts via backend API
+      await linkedInApi.deleteDraft(draftId);
       
       // Update local state after successful API call
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
       setDrafts(updatedDrafts);
     
       // Navigate to the create post page with schedule dialog open
-      navigate('/dashboard/post', { 
-        state: { 
-          openScheduleDialog: true, 
-          fromDraft: true, 
-          draftId: draftId,
-          fromLibrary: true
-        } 
-      });
+      navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
     } catch (error) {
       console.error('Error removing draft from backend:', error);
       toast.error('Failed to process draft. Please try again later.');
@@ -392,25 +327,13 @@ const PostLibraryPage: React.FC = () => {
     
     // Set up the form data in localStorage
     Object.entries(post).forEach(([key, value]) => {
-      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
+      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status' && key !== 'scheduledTime') {
         localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
       }
     });
     
-    // Store the scheduled time
-    if (post.scheduledTime) {
-      localStorage.setItem('state:createPost.scheduledTime', JSON.stringify(post.scheduledTime));
-    }
-    
     // Navigate to the create post page with schedule dialog open
-    navigate('/dashboard/post', { 
-      state: { 
-        openScheduleDialog: true,
-        fromScheduled: true,
-        scheduledPostId: postId,
-        fromLibrary: true
-      }
-    });
+    navigate('/dashboard/post', { state: { openScheduleDialog: true } });
   };
   
   // Delete a scheduled post
@@ -421,7 +344,7 @@ const PostLibraryPage: React.FC = () => {
       setIsDeleting(true);
       
       // Delete from backend API
-      await linkedInApi.deletePost(postId);
+      await linkedInApi.deleteScheduledPost(postId);
       
       // Update state
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
@@ -457,22 +380,37 @@ const PostLibraryPage: React.FC = () => {
         return;
       }
       
-      // Publish directly via API
-      const response = await linkedInApi.publishNow(draftId);
-      
-      if (response.success) {
-        // Update local state after successful API call
-        const updatedDrafts = drafts.filter(d => d.id !== draftId);
-        setDrafts(updatedDrafts);
-        
-        // Load published posts to refresh the list
-        await loadUserContent();
-        
-        toast.success('Post published to LinkedIn successfully');
-        setActiveTab('published');
-      } else {
-        throw new Error(response.error || 'Failed to publish post');
+      // Prepare content with hashtags
+      let postContent = draft.content || '';
+      if (draft.hashtags && draft.hashtags.length > 0) {
+        postContent += '\n\n' + draft.hashtags.map(tag => `#${tag}`).join(' ');
       }
+      
+      // Publish to LinkedIn
+      const response = await linkedInApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
+      
+      // Remove from drafts in local state
+      const updatedDrafts = drafts.filter(d => d.id !== draftId);
+      setDrafts(updatedDrafts);
+      
+      // Create a published post object for the UI
+      const publishedPost: PublishedPost = {
+        id: response?.id || `published_${Date.now()}`,
+        title: draft.title || 'Published Post',
+        excerpt: draft.content?.substring(0, 100) + '...',
+        publishedDate: new Date().toLocaleDateString(),
+        isCarousel: draft.slides && draft.slides.length > 0,
+        slideCount: draft.slides?.length || 0,
+        status: 'published',
+        postImage: draft.postImage,
+        hashtags: draft.hashtags,
+        isPollActive: draft.isPollActive,
+        pollOptions: draft.pollOptions
+      };
+      
+      setPublished([publishedPost, ...published]);
+      toast.success('Post published to LinkedIn successfully');
+      setActiveTab('published');
       
     } catch (error: any) {
       console.error('Error publishing draft:', error);
@@ -529,22 +467,37 @@ const PostLibraryPage: React.FC = () => {
         return;
       }
       
-      // Publish directly via API
-      const response = await linkedInApi.publishNow(postId);
-      
-      if (response.success) {
-        // Update local state after successful API call
-        const updatedScheduled = scheduled.filter(p => p.id !== postId);
-        setScheduled(updatedScheduled);
-        
-        // Load published posts to refresh the list
-        await loadUserContent();
-        
-        toast.success('Post published to LinkedIn successfully');
-        setActiveTab('published');
-      } else {
-        throw new Error(response.error || 'Failed to publish post');
+      // Prepare content with hashtags
+      let postContent = post.content || '';
+      if (post.hashtags && post.hashtags.length > 0) {
+        postContent += '\n\n' + post.hashtags.map(tag => `#${tag}`).join(' ');
       }
+      
+      // Publish to LinkedIn
+      const response = await linkedInApi.createTextPost(postContent, post.visibility || 'PUBLIC');
+      
+      // Remove from scheduled in local state
+      const updatedScheduled = scheduled.filter(p => p.id !== postId);
+      setScheduled(updatedScheduled);
+      
+      // Create a published post object for the UI
+      const publishedPost: PublishedPost = {
+        id: response?.id || `published_${Date.now()}`,
+        title: post.title || 'Published Post',
+        excerpt: post.content?.substring(0, 100) + '...',
+        publishedDate: new Date().toLocaleDateString(),
+        isCarousel: post.slides && post.slides.length > 0,
+        slideCount: post.slides?.length || 0,
+        status: 'published',
+        postImage: post.postImage,
+        hashtags: post.hashtags,
+        isPollActive: post.isPollActive,
+        pollOptions: post.pollOptions
+      };
+      
+      setPublished([publishedPost, ...published]);
+      toast.success('Post published to LinkedIn successfully');
+      setActiveTab('published');
       
     } catch (error: any) {
       console.error('Error publishing scheduled post:', error);
@@ -638,9 +591,6 @@ const PostLibraryPage: React.FC = () => {
                   <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
                     <Copy size={14} /> Duplicate
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                    <BarChart4 size={14} /> View Analytics
-                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -691,14 +641,8 @@ const PostLibraryPage: React.FC = () => {
                 {post.pollOptions.map((option, index) => (
                   <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 flex justify-between items-center">
                     <span>{option}</span>
-                    {type === 'published' && <span className="text-xs text-gray-500">{Math.floor(Math.random() * 50)}%</span>}
                   </div>
                 ))}
-                {type === 'published' && (
-                  <div className="text-xs text-center text-gray-500 mt-1">
-                    {Math.floor(Math.random() * 100) + 20} votes · {post.pollDuration || 7} days left
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -707,33 +651,16 @@ const PostLibraryPage: React.FC = () => {
         {/* Interaction Footer */}
         <CardFooter className="p-0 border-t dark:border-gray-700 mt-auto">
           {type === 'published' ? (
-            // For published posts, show LinkedIn-like engagement metrics
+            // For published posts, show basic actions
             <div className="w-full">
-              {/* Engagement stats */}
-              <div className="px-4 py-2 text-xs text-gray-500 border-b dark:border-gray-700 flex items-center">
-                <div className="flex items-center">
-                  <ThumbsUp className="h-3 w-3 text-blue-500 mr-1" />
-                  <span>{(post as PublishedPost).stats?.likes || Math.floor(Math.random() * 50)}</span>
-                </div>
-                <span className="mx-2">•</span>
-                <div>{(post as PublishedPost).stats?.comments || Math.floor(Math.random() * 20)} comments</div>
-                <span className="mx-2">•</span>
-                <div>{(post as PublishedPost).stats?.shares || Math.floor(Math.random() * 10)} shares</div>
-              </div>
-              
-              {/* Interaction buttons */}
               <div className="flex items-center justify-between p-1">
                 <Button variant="ghost" size="sm" className="flex-1 rounded-md gap-1">
-                  <ThumbsUp className="h-4 w-4" />
-                  <span className="text-xs">Like</span>
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="text-xs">View on LinkedIn</span>
                 </Button>
                 <Button variant="ghost" size="sm" className="flex-1 rounded-md gap-1">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="text-xs">Comment</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="flex-1 rounded-md gap-1">
-                  <Share2 className="h-4 w-4" />
-                  <span className="text-xs">Share</span>
+                  <Copy className="h-4 w-4" />
+                  <span className="text-xs">Duplicate</span>
                 </Button>
               </div>
             </div>

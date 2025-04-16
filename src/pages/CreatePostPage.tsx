@@ -475,37 +475,6 @@ const CreatePostPage: React.FC = () => {
         const filteredOptions = pollOptions.filter(opt => opt.trim());
         response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
         toast.success('Poll published to LinkedIn successfully!');
-        
-        // Save the published poll post to the backend database
-        try {
-          // Create a published post object
-          const publishedPost = {
-            title: content.split('\n')[0].substring(0, 50) || 'Poll Post',
-            content: content,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            publishedAt: new Date().toISOString(),
-            postImage: postImage,
-            hashtags: hashtags,
-            visibility: visibility,
-            isPollActive: true,
-            pollOptions: filteredOptions,
-            pollDuration: pollDuration,
-            status: 'published' as 'published',
-            provider: 'linkedin',
-            linkedInPostId: response?.id || response?.postId,
-            linkedInPostUrl: response?.shareUrl,
-            isCarousel: false,
-            postType: 'poll'
-          };
-          
-          // Save to backend
-          await linkedInApi.savePublishedPost(publishedPost);
-          console.log('Published poll post saved to backend successfully');
-        } catch (saveError) {
-          console.error('Error saving published poll post to backend:', saveError);
-          // Continue with the flow - we won't show an error as the post was published to LinkedIn
-        }
       } else if (postImage) {
         // Handle image post using Cloudinary image
         console.log('Publishing LinkedIn post with image:', postImage);
@@ -530,37 +499,26 @@ const CreatePostPage: React.FC = () => {
           
           console.log('LinkedIn image post response:', response);
           toast.success('Image post published to LinkedIn successfully!');
-          
-          // Save the published image post to the backend database
-          try {
-            // Create a published post object
-            const publishedPost = {
-              title: content.split('\n')[0].substring(0, 50) || 'Image Post',
-              content: content,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              publishedAt: new Date().toISOString(),
-              postImage: postImage,
-              hashtags: hashtags,
-              visibility: visibility,
-              isPollActive: false,
-              status: 'published' as 'published',
-              provider: 'linkedin',
-              linkedInPostId: response?.id || response?.postId,
-              linkedInPostUrl: response?.shareUrl,
-              isCarousel: false,
-              postType: 'image'
-            };
-            
-            // Save to backend
-            await linkedInApi.savePublishedPost(publishedPost);
-            console.log('Published image post saved to backend successfully');
-          } catch (saveError) {
-            console.error('Error saving published image post to backend:', saveError);
-            // Continue with the flow - we won't show an error as the post was published to LinkedIn
-          }
         } catch (imageError: any) {
-          // (existing error handling code)
+          console.error('Error publishing LinkedIn image post:', imageError);
+          
+          // Check if it's a token expiration issue
+          if (imageError.message && imageError.message.includes('authentication expired')) {
+            toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+            
+            if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+              handleReconnectLinkedIn();
+            }
+            setIsPublishing(false);
+            return;
+          }
+          
+          // Check for other specific errors
+          if (imageError.response && imageError.response.status === 422) {
+            toast.error('LinkedIn was unable to process the image. Publishing as text post instead.');
+          } else {
+            toast.error('Failed to publish image. Publishing as text post instead.');
+          }
           
           // Fallback to text post with image URL
           try {
@@ -571,35 +529,6 @@ const CreatePostPage: React.FC = () => {
             response = await linkedInApi.createTextPost(postWithImage, visibility);
             console.log('LinkedIn text post fallback response:', response);
             toast.success('Post published to LinkedIn as text with image link.');
-            
-            // Save the published text post with image link to the backend database
-            try {
-              // Create a published post object
-              const publishedPost = {
-                title: content.split('\n')[0].substring(0, 50) || 'Text Post with Image Link',
-                content: postWithImage,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                publishedAt: new Date().toISOString(),
-                postImage: postImage,
-                hashtags: hashtags,
-                visibility: visibility,
-                isPollActive: false,
-                status: 'published' as 'published',
-                provider: 'linkedin',
-                linkedInPostId: response?.id || response?.postId,
-                linkedInPostUrl: response?.shareUrl,
-                isCarousel: false,
-                postType: 'text'
-              };
-              
-              // Save to backend
-              await linkedInApi.savePublishedPost(publishedPost);
-              console.log('Published text post with image link saved to backend successfully');
-            } catch (saveError) {
-              console.error('Error saving published text post with image link to backend:', saveError);
-              // Continue with the flow - we won't show an error as the post was published to LinkedIn
-            }
           } catch (textError) {
             console.error('Even text fallback failed:', textError);
             throw textError; // Re-throw to be caught by outer catch
@@ -617,81 +546,12 @@ const CreatePostPage: React.FC = () => {
         );
         console.log('LinkedIn article post response:', response);
         toast.success('Article post published to LinkedIn successfully!');
-        
-        // Save the published article post to the backend database
-        try {
-          // Create a published post object
-          const publishedPost = {
-            title: articleTitle || content.split('\n')[0].substring(0, 50) || 'Article Post',
-            content: content,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            publishedAt: new Date().toISOString(),
-            postImage: postImage,
-            hashtags: hashtags,
-            visibility: visibility,
-            isPollActive: false,
-            status: 'published' as 'published',
-            provider: 'linkedin',
-            linkedInPostId: response?.id || response?.postId,
-            linkedInPostUrl: response?.shareUrl,
-            articleUrl: articleUrl,
-            articleTitle: articleTitle,
-            articleDescription: articleDescription,
-            isCarousel: false,
-            postType: 'article'
-          };
-          
-          // Save to backend
-          await linkedInApi.savePublishedPost(publishedPost);
-          console.log('Published article post saved to backend successfully');
-        } catch (saveError) {
-          console.error('Error saving published article post to backend:', saveError);
-          // Continue with the flow - we won't show an error as the post was published to LinkedIn
-        }
       } else {
         // Simple text post
         console.log('Publishing LinkedIn text post');
         response = await linkedInApi.createTextPost(content, visibility);
         console.log('LinkedIn text post response:', response);
         toast.success('Post published to LinkedIn successfully!');
-      }
-      
-      // Save the published post to the backend database
-      try {
-        // Create a published post object
-        const publishedPost = {
-          title: content.split('\n')[0].substring(0, 50) || 'Published Post',
-          content: content,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          publishedAt: new Date().toISOString(),
-          postImage: postImage,
-          hashtags: hashtags,
-          visibility: visibility,
-          isPollActive: isPollActive,
-          pollOptions: pollOptions,
-          pollDuration: pollDuration,
-          status: 'published' as 'published',
-          provider: 'linkedin',
-          linkedInPostId: response?.id || response?.postId,
-          linkedInPostUrl: response?.shareUrl,
-          slides: slides.map(slide => ({
-            id: slide.id,
-            content: slide.content,
-            imageUrl: slide.imageUrl,
-            cloudinaryImage: slide.cloudinaryImage
-          })),
-          isCarousel: activeTab === 'carousel',
-          slideCount: slides.length
-        };
-        
-        // Save to backend
-        await linkedInApi.savePublishedPost(publishedPost);
-        console.log('Published post saved to backend successfully');
-      } catch (saveError) {
-        console.error('Error saving published post to backend:', saveError);
-        // Continue with the flow - we won't show an error as the post was published to LinkedIn
       }
       
       // Clear the form after successful publishing
@@ -763,61 +623,39 @@ const CreatePostPage: React.FC = () => {
   
   // Function to save post as draft
   const saveAsDraft = async () => {
-    if (!content.trim()) {
-      toast.error("Can't save an empty post");
-      return;
-    }
-
-    setIsSavingDraft(true);
-    
     try {
-      // Create a draft post object with proper slides including cloudinaryImage data
-      const draft = {
-        id: `draft_${Date.now()}`,
-        title: content.split('\n')[0].substring(0, 50) || 'Untitled Draft',
+      setIsSavingDraft(true);
+      
+      // Save draft to localStorage
+      const newDraft = {
+        id: `draft-${Date.now()}`,
         content: content,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        postImage: postImage,
-        hashtags: hashtags,
-        visibility: visibility,
-        isPollActive: isPollActive,
-        pollOptions: pollOptions,
-        pollDuration: pollDuration,
-        status: 'draft' as 'draft',
-        provider: 'linkedin',
-        // Ensure the full slide data is included with cloudinaryImage property
-        slides: slides.map(slide => ({
-          id: slide.id,
-          content: slide.content,
-          imageUrl: slide.imageUrl,
-          cloudinaryImage: slide.cloudinaryImage
-        })),
-        isCarousel: activeTab === 'carousel',
-        slideCount: slides.length
+        language: 'en', // Default to English as selectedLanguage is not defined
+        created_at: new Date().toISOString(),
+        hashtags: hashtags, // Use existing hashtags state
+        saved_at: new Date().toISOString(),
+        status: 'draft',
       };
       
-      // Save to backend
-      try {
-        const savedDraft = await linkedInApi.saveDraft(draft);
-        // Update the local ID with the one from the backend
-        draft.id = savedDraft.id || draft.id;
-        toast.success('Draft saved successfully');
-      } catch (apiError) {
-        console.error('Error saving draft to backend:', apiError);
-        toast.error('Failed to save draft to database. Please try again later.');
-        return;
-      }
+      // Get existing drafts
+      const existingDraftsString = localStorage.getItem('linkedinDrafts');
+      const existingDrafts = existingDraftsString ? JSON.parse(existingDraftsString) : [];
       
-      // Clear form data from localStorage
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('state:createPost.')) {
-          localStorage.removeItem(key);
-        }
+      // Add new draft and save back to localStorage
+      localStorage.setItem('linkedinDrafts', JSON.stringify([...existingDrafts, newDraft]));
+      
+      // Success message
+      toast.success('Post saved as draft', {
+        description: 'You can find it in your Post Library'
       });
       
-      // Navigate back to library
-      navigate('/dashboard/posts', { state: { activeTab: 'drafts', newDraft: true, draftId: draft.id } });
+      // Navigate back to the dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Failed to save draft', {
+        description: error.message || 'Please try again later'
+      });
     } finally {
       setIsSavingDraft(false);
     }
@@ -825,87 +663,51 @@ const CreatePostPage: React.FC = () => {
   
   // Function to schedule post for later
   const schedulePost = async () => {
-    try {
-      if (!content.trim()) {
-        toast.error('Please add some content to your post');
-        return;
-      }
+    // Create a date from the scheduledDate state and scheduleTime state
+    const selectedDate = new Date(scheduledDate);
+    const [hours, minutes] = scheduleTime.split(':').map(Number);
+    selectedDate.setHours(hours, minutes, 0, 0);
 
+    if (!selectedDate) {
+      toast.error('Please select a date to schedule your post');
+      return;
+    }
+
+    try {
       setIsPublishing(true);
       
-      // Check for LinkedIn authentication directly from localStorage
-      const token = localStorage.getItem('linkedin-login-token');
-      
-      if (!token) {
-        toast.error(`LinkedIn authentication required. Please login with LinkedIn first.`);
-        setIsPublishing(false);
-        return;
-      }
-      
-      // Combine date and time
-      const scheduledDateTime = new Date(scheduledDate);
-      const [hours, minutes] = scheduleTime.split(':');
-      scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      
-      // Check if the scheduled time is in the past
-      if (scheduledDateTime <= new Date()) {
-        toast.error("Scheduled time must be in the future");
-        setIsPublishing(false);
-        return;
-      }
-      
-      // Create a scheduled post object with complete slides data including images
-      const scheduledPost = {
-        id: `scheduled_${Date.now()}`,
-        title: content.split('\n')[0].substring(0, 50) || 'Scheduled Post',
+      // Save scheduled post to localStorage
+      const newScheduledPost = {
+        id: `scheduled-${Date.now()}`,
         content: content,
-        createdAt: new Date().toISOString(),
-        scheduledTime: scheduledDateTime.toISOString(),
-        postImage: postImage,
-        hashtags: hashtags,
-        visibility: visibility,
-        isPollActive: isPollActive,
-        pollOptions: pollOptions,
-        pollDuration: pollDuration,
-        status: 'scheduled' as 'scheduled',
-        provider: 'linkedin',
-        // Ensure the full slide data is included with cloudinaryImage property
-        slides: slides.map(slide => ({
-          id: slide.id,
-          content: slide.content,
-          imageUrl: slide.imageUrl,
-          cloudinaryImage: slide.cloudinaryImage
-        })),
-        isCarousel: activeTab === 'carousel',
-        slideCount: slides.length
+        language: 'en', // Default to English as selectedLanguage is not defined
+        created_at: new Date().toISOString(),
+        hashtags: hashtags, // Use existing hashtags state
+        scheduled_at: selectedDate.toISOString(),
+        status: 'scheduled',
       };
       
-      // Try to save to backend
-      try {
-        const savedPost = await linkedInApi.saveScheduledPost(scheduledPost);
-        // Update the local ID with the one from the backend
-        scheduledPost.id = savedPost.id || scheduledPost.id;
-        toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
-      } catch (apiError) {
-        console.error('Backend scheduling failed:', apiError);
-        toast.error('Failed to schedule post. Please try again later.');
-        setIsPublishing(false);
-        setShowScheduleDialog(false);
-        return;
-      }
+      // Get existing scheduled posts
+      const existingScheduledString = localStorage.getItem('linkedinScheduledPosts');
+      const existingScheduled = existingScheduledString ? JSON.parse(existingScheduledString) : [];
       
-      // Clear form data from localStorage
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('state:createPost.')) {
-          localStorage.removeItem(key);
-        }
+      // Add new scheduled post and save back to localStorage
+      localStorage.setItem('linkedinScheduledPosts', JSON.stringify([...existingScheduled, newScheduledPost]));
+      
+      // Success message
+      toast.success('Post scheduled', {
+        description: `Your post will be published on ${selectedDate.toLocaleDateString()} at ${selectedDate.toLocaleTimeString()}`
       });
       
-      // Navigate back to library
-      navigate('/dashboard/posts', { state: { activeTab: 'scheduled', scheduled: true, scheduledTime: scheduledDateTime.toISOString(), scheduledPostId: scheduledPost.id } });
+      // Navigate back to the dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      toast.error('Failed to schedule post', {
+        description: error.message || 'Please try again later'
+      });
     } finally {
       setIsPublishing(false);
-      setShowScheduleDialog(false);
     }
   };
   

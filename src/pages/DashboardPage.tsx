@@ -58,12 +58,6 @@ interface Post {
   id: string;
   text: string;
   created_at: string;
-  public_metrics: {
-    shares: number;
-    comments: number;
-    likes: number;
-    impressions: number;
-  };
 }
 
 // Interface for a workspace
@@ -133,30 +127,8 @@ const DashboardPage: React.FC = () => {
   
   const [currentWorkspace, setCurrentWorkspace] = useState(workspaces[0]);
 
-  // Default fallback data
-  const fallbackScheduledPosts = [
-    {
-      id: 1,
-      content: "Just released our latest feature: AI-powered content suggestions! Create better LinkedIn content in half the time. #AI #ContentCreation",
-      scheduledTime: "Today, 3:30 PM",
-      isCarousel: false,
-    },
-    {
-      id: 2,
-      content: "5 ways to improve your LinkedIn engagement:\n\n1. Post consistently\n2. Use relevant hashtags\n3. Engage with your network\n4. Share valuable content\n5. Analyze your performance",
-      scheduledTime: "Tomorrow, 10:00 AM",
-      isCarousel: true,
-      slideCount: 5,
-    },
-    {
-      id: 3,
-      content: "How our team increased LinkedIn engagement by 300% in just 30 days. The results might surprise you!",
-      scheduledTime: "Apr 5, 1:15 PM",
-      isCarousel: false,
-    }
-  ];
-  
-  const [scheduledPosts, setScheduledPosts] = useState(fallbackScheduledPosts);
+  // For displaying scheduled posts (empty since scheduled post functionality is removed)
+  const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
 
   // Weekly AI tip
   const [weeklyTip, setWeeklyTip] = useState({
@@ -623,55 +595,10 @@ const DashboardPage: React.FC = () => {
         
         {/* Middle & Right columns - Scheduled Posts & Content Creation */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Scheduled Posts */}
-          <Card className="bg-white border-2">
+          {/* Content Creation Card */}
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
-                <CardTitle className="text-black">Upcoming Posts</CardTitle>
-                <CardDescription className="text-black">Your scheduled content for publishing</CardDescription>
-              </div>
-              <Button
-                variant="ghost" 
-                size="sm"
-                className="text-primary"
-                onClick={() => navigate('/dashboard/posts')}
-              >
-                View All
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {scheduledPosts.slice(0, 3).map((post, index) => (
-                  <div key={index} className="flex gap-4 p-3 bg-white border rounded-lg">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
-                      {post.isCarousel ? (
-                        <Layers className="w-5 h-5 text-primary" />
-                      ) : (
-                        <FileText className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-black">{post.isCarousel ? 'Carousel' : 'Text Post'}</p>
-                        <div className="flex items-center text-black text-xs">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {post.scheduledTime}
-                        </div>
-                      </div>
-                      <p className="text-sm mt-1 text-black line-clamp-2">
-                        {post.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Content Creation Card */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <div>
                 <CardTitle>Content Creation</CardTitle>
                 <CardDescription>Create and publish LinkedIn content</CardDescription>
               </div>
