@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { tokenManager } from '@/services/api';
+import { toast } from 'sonner';
 
 // Import the API_URL from the services/api.ts file or define it here
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -116,6 +117,19 @@ export interface ScheduledPostData {
   provider: string;
   userId?: string;
 }
+
+// Add helper to redirect to LinkedIn reconnection
+const redirectToLinkedInAuth = () => {
+  // Get the backend URL from environment variable or fallback to Render deployed URL
+  const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+  const baseUrl = baseApiUrl.replace('/api', '');
+  
+  // Store current URL in localStorage to redirect back after LinkedIn connection
+  localStorage.setItem('redirectAfterAuth', window.location.pathname);
+  
+  // Redirect to LinkedIn OAuth endpoint
+  window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+};
 
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
@@ -283,6 +297,12 @@ class LinkedInApi {
           console.error('Error fetching LinkedIn basic profile:', basicProfileError);
         }
         
+        // Check for token expiration in the profile error
+        if (profileError?.response?.status === 500 && 
+            profileError?.response?.data?.details?.includes('LinkedIn access token has expired')) {
+          this.handleApiError(profileError, 'fetching LinkedIn profile');
+        }
+        
         // If all API calls fail, use a default mock ID for development
         console.warn('Using mock LinkedIn ID for development purposes');
         return 'mock-linkedin-id-12345';
@@ -319,8 +339,7 @@ class LinkedInApi {
       
       return response.data;
     } catch (error) {
-      console.error('Error creating LinkedIn post:', error);
-      throw error;
+      return this.handleApiError(error, 'creating LinkedIn post');
     }
   }
 
@@ -698,6 +717,33 @@ class LinkedInApi {
       console.error('Error publishing to LinkedIn:', error);
       throw error;
     }
+  }
+
+  // Public method to reconnect LinkedIn
+  reconnectLinkedIn(): void {
+    redirectToLinkedInAuth();
+  }
+
+  // Add a method to handle expired token errors
+  private handleApiError(error: any, actionLabel: string = 'performing action'): never {
+    console.error(`Error ${actionLabel}:`, error);
+    
+    // Check if it's a token expiration error
+    if (error?.response?.status === 500 && 
+        error?.response?.data?.details?.includes('LinkedIn access token has expired')) {
+      
+      console.log('LinkedIn token expired, prompting for reconnection');
+      
+      // Show toast message using imported toast from sonner
+      toast.error('Your LinkedIn connection has expired. Redirecting to reconnect...');
+      
+      // Redirect after a small delay to allow the user to see the message
+      setTimeout(() => {
+        redirectToLinkedInAuth();
+      }, 2000);
+    }
+    
+    throw error;
   }
 }
 
