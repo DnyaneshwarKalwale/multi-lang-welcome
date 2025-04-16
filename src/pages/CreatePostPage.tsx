@@ -1054,103 +1054,133 @@ const CreatePostPage: React.FC = () => {
     }
   };
   
-  // Function to schedule post for later
+  // Function to schedule a post
   const schedulePost = async () => {
-    // Create a date from the scheduledDate state and scheduleTime state
-    const selectedDate = new Date(scheduledDate);
-    const [hours, minutes] = scheduleTime.split(':').map(Number);
-    selectedDate.setHours(hours, minutes, 0, 0);
-
-    console.log('Scheduling post for:', selectedDate, 'Time:', scheduleTime);
-
-    if (!selectedDate) {
-      toast.error('Please select a date to schedule your post');
-      return;
-    }
-
     try {
-      setIsPublishing(true);
+      setIsPublishing(true); // Using existing state variable for publishing status
+      toast.info('Preparing to schedule your post...');
+      
+      // Validate required fields
+      if (!scheduledDate || !scheduleTime) {
+        toast.error('Please select both date and time for scheduling');
+        return;
+      }
+      
+      // Validate content based on active tab
+      if (activeTab === 'text' && !content.trim()) {
+        toast.error('Please add some content to your post');
+        return;
+      } else if (activeTab === 'carousel' && slides.length === 0) {
+        toast.error('Please add at least one slide to your carousel');
+        return;
+      } else if (activeTab === 'document' && !documentFile) {
+        toast.error('Please upload a document');
+        return;
+      }
+      
+      // Create a Date object from the scheduled date and time
+      const scheduledDateTime = new Date(scheduledDate);
+      const [hours, minutes] = scheduleTime.split(':').map(Number);
+      scheduledDateTime.setHours(hours, minutes);
+      
+      // Check if the scheduled time is in the past
+      if (scheduledDateTime <= new Date()) {
+        toast.error('Please select a future date and time');
+        return;
+      }
+      
+      // Prepare post data - only include data relevant to the active tab
+      const postData: {
+        title: string;
+        content: string;
+        hashtags: string[];
+        visibility: string;
+        platform: string;
+        status: string;
+        scheduledTime: string;
+        mediaType?: string;
+        postImage?: any;
+        slides?: any[];
+        isPollActive?: boolean;
+        pollOptions?: string[];
+        pollDuration?: number;
+        documentDescription?: string;
+      } = {
+        title: 'Scheduled Post',
+        content: activeTab === 'text' ? content : '',
+        hashtags: hashtags,
+        visibility: visibility,
+        platform: 'linkedin',
+        status: 'scheduled',
+        scheduledTime: scheduledDateTime.toISOString()
+      };
+      
+      // Only include media data relevant to the selected tab
+      if (activeTab === 'text') {
+        // For text tab, include postImage if there is one
+        if (postImage) {
+          postData.postImage = postImage;
+          postData.mediaType = 'image';
+        } else {
+          postData.mediaType = 'none';
+        }
+        // Explicitly set slides to empty array for text posts
+        postData.slides = [];
+      } else if (activeTab === 'carousel') {
+        // For carousel tab, include the slides
+        postData.slides = slides;
+        postData.content = content; // Can still have content above carousel
+        postData.mediaType = 'carousel';
+      } else if (activeTab === 'document') {
+        // For document tab
+        postData.documentDescription = documentDescription;
+        postData.mediaType = 'document';
+      }
+      
+      // Add poll if active
+      if (isPollActive) {
+        postData.isPollActive = true;
+        postData.pollOptions = pollOptions.filter(opt => opt.trim());
+        postData.pollDuration = pollDuration;
+      }
+      
+      // Submit to the backend API
+      console.log('Scheduling post with data:', postData);
       
       // Check if we're editing an existing scheduled post
       const editingScheduledId = localStorage.getItem('editingScheduledId');
       
-      // Create scheduled post data
-      const scheduledId = editingScheduledId || `scheduled_${Date.now()}`;
-      const scheduledData = {
-        id: scheduledId,
-        title: 'Scheduled Post',
-        content: content,
-        excerpt: content.substring(0, 100) + '...',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        scheduledTime: selectedDate.toISOString(),
-        slides: slides.length > 0 ? slides : [],
-        postImage: postImage,
-        isPollActive: isPollActive,
-        pollOptions: pollOptions.filter(Boolean),
-        hashtags: hashtags,
-        visibility: visibility,
-        provider: 'linkedin',
-        status: 'scheduled',
-        scheduledDate: selectedDate.toLocaleDateString()
-      };
+      // Use different endpoint depending on whether we're using the local/backend API
+      const response = await linkedInApi.createDBPost({
+        ...postData,
+        status: 'scheduled'
+      });
       
-      console.log('Scheduling post with data:', scheduledData);
+      console.log('Schedule response:', response);
       
-      // Save directly to localStorage with the key matching the pattern expected by PostLibraryPage
-      localStorage.setItem(scheduledId, JSON.stringify(scheduledData));
-      
-      // Also try to save to backend if possible
-      try {
-        // Save to backend API - this will only work if the API is connected
-        const dbPostData = {
-          title: 'Scheduled Post',
-          content: content,
-          hashtags: hashtags,
-          mediaType: postImage ? 'image' : slides.length > 0 ? 'carousel' : 'none',
-          postImage: postImage,
-          slides: slides,
-          isPollActive: isPollActive,
-          pollOptions: pollOptions.filter(Boolean),
-          status: 'scheduled',
-          visibility: visibility,
-          scheduledTime: selectedDate.toISOString()
-        };
+      if (response && response.success) {
+        toast.success('Post scheduled successfully!');
         
-        console.log('Creating DB scheduled post with data:', dbPostData);
+        // Clear the editor state
+        localStorage.removeItem('editingScheduledId');
+        // Clear form data from localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('state:createPost.')) {
+            localStorage.removeItem(key);
+          }
+        });
         
-        const response = await linkedInApi.createDBPost(dbPostData);
-        console.log('DB post creation response:', response);
-      } catch (apiError) {
-        // Silently ignore backend API errors since we've already saved to localStorage
-        console.log('Note: Scheduled post saved to localStorage only, API save failed:', apiError);
+        // Navigate to the post library scheduled tab
+        navigate('/dashboard/library', { state: { scheduled: true, activeTab: 'scheduled' } });
+      } else {
+        toast.error('Failed to schedule post. Please try again.');
       }
-      
-      // Clear the editing state
-      localStorage.removeItem('editingScheduledId');
-      
-      // Close the schedule dialog explicitly
-      setShowScheduleDialog(false);
-      
-      // Success message
-      toast.success('Post scheduled', {
-        description: `Your post will be published on ${selectedDate.toLocaleDateString()} at ${selectedDate.toLocaleTimeString()}`
-      });
-      
-      // Navigate to the post library
-      navigate('/dashboard/posts', {
-        state: { 
-          scheduled: true,
-          activeTab: 'scheduled'
-        }
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error scheduling post:', error);
-      toast.error('Failed to schedule post', {
-        description: error.message || 'Please try again later'
-      });
+      toast.error('Error scheduling post: ' + (error?.message || 'Unknown error'));
     } finally {
       setIsPublishing(false);
+      setShowScheduleDialog(false);
     }
   };
   
