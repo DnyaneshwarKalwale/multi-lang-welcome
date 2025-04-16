@@ -1106,13 +1106,20 @@ const PostLibraryPage: React.FC = () => {
         return;
       }
       
+      // Make sure we capture the platformPostId for LinkedIn
+      const postData = response.data;
+      
       // Store the post data in localStorage for editing
       const formData = {
-        ...response.data,
+        ...postData,
         id: post.id,
         isEditing: true,
+        isPublishedEdit: true,
+        platformPostId: post.platformPostId || postData.platformPostId,
         originalPost: post
       };
+      
+      console.log('Editing published post with data:', formData);
       
       localStorage.setItem('linkedinPostFormData', JSON.stringify(formData));
       
@@ -1122,7 +1129,8 @@ const PostLibraryPage: React.FC = () => {
           fromEdit: true, 
           postId: post.id, 
           platform: 'linkedin',
-          isPublished: true 
+          isPublished: true,
+          platformPostId: post.platformPostId || postData.platformPostId
         } 
       });
     } catch (error) {

@@ -923,6 +923,34 @@ class LinkedInApi {
         throw new Error("Authentication token not available. Please login again.");
       }
       
+      console.log('Updating post:', postId, 'with data:', postData);
+      
+      // Check if this is a LinkedIn post that needs to be updated on LinkedIn as well
+      if (postData.platformPostId) {
+        console.log('This is a LinkedIn post with platformPostId:', postData.platformPostId);
+        
+        try {
+          // Call the backend endpoint that handles LinkedIn post updates
+          await axios.put(`${this.API_URL}/update-post`, {
+            platformPostId: postData.platformPostId,
+            content: postData.content,
+            visibility: postData.visibility || 'PUBLIC'
+          }, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log('Successfully sent LinkedIn post update request');
+        } catch (linkedinError) {
+          console.error('Failed to update post on LinkedIn:', linkedinError);
+          // We'll still update our database even if LinkedIn update fails
+          console.log('Continuing with database update despite LinkedIn API error');
+        }
+      }
+      
+      // Update in our database
       const response = await axios.put(`${this.POSTS_API_URL}/${postId}`, postData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -930,7 +958,11 @@ class LinkedInApi {
         }
       });
       
-      return response.data;
+      return {
+        success: true,
+        data: response.data,
+        message: 'Post updated successfully'
+      };
     } catch (error) {
       console.error('Error updating post:', error);
       throw error;
@@ -969,18 +1001,25 @@ class LinkedInApi {
         });
         
         const post = postResponse.data?.data;
+        console.log('Retrieved post data for deletion:', post);
         
         // If this is a published post with a LinkedIn platformPostId, try to delete it from LinkedIn first
         if (post && post.status === 'published' && post.platformPostId) {
           try {
             console.log('Attempting to delete post from LinkedIn:', post.platformPostId);
-            // Call LinkedIn API to delete the post
-            await axios.delete(`${this.API_URL}/posts/${post.platformPostId}`, {
+            
+            // Call our backend endpoint that handles LinkedIn deletion
+            await axios.delete(`${this.API_URL}/delete-linkedin-post`, {
               headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              data: {
+                postId: post.platformPostId
               }
             });
-            console.log('Successfully deleted post from LinkedIn');
+            
+            console.log('Successfully sent LinkedIn post deletion request');
           } catch (linkedinError) {
             console.error('Failed to delete post from LinkedIn:', linkedinError);
             // Continue with database deletion even if LinkedIn deletion fails
