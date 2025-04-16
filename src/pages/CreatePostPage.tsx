@@ -662,18 +662,11 @@ const CreatePostPage: React.FC = () => {
         const savedDraft = await linkedInApi.saveDraft(draft);
         // Update the local ID with the one from the backend
         draft.id = savedDraft.id || draft.id;
-        toast.success('Draft saved to backend');
+        toast.success('Draft saved successfully');
       } catch (apiError) {
         console.error('Error saving draft to backend:', apiError);
-        // Fallback to localStorage if API fails
-        console.log('Backend save failed, using localStorage');
-        
-        // Get existing drafts from localStorage
-        const existingDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
-        
-        // Add new draft to beginning of array
-        localStorage.setItem('post_drafts', JSON.stringify([draft, ...existingDrafts]));
-        toast.error('Failed to save to database, draft saved locally');
+        toast.error('Failed to save draft to database. Please try again later.');
+        return;
       }
       
       // Clear form data from localStorage
@@ -754,15 +747,11 @@ const CreatePostPage: React.FC = () => {
         scheduledPost.id = savedPost.id || scheduledPost.id;
         toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
       } catch (apiError) {
-        console.error('Backend scheduling failed, using localStorage:', apiError);
-        
-        // Fallback to localStorage if API fails
-        // Get existing scheduled posts from localStorage
-        const existingScheduled = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
-        
-        // Add new scheduled post to beginning of array
-        localStorage.setItem('scheduled_posts', JSON.stringify([scheduledPost, ...existingScheduled]));
-        toast.error('Failed to save to database, scheduled post saved locally');
+        console.error('Backend scheduling failed:', apiError);
+        toast.error('Failed to schedule post. Please try again later.');
+        setIsPublishing(false);
+        setShowScheduleDialog(false);
+        return;
       }
       
       // Clear form data from localStorage

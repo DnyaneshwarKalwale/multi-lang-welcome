@@ -174,60 +174,8 @@ const PostLibraryPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(locationState?.activeTab || 'drafts');
   const [isLoading, setIsLoading] = useState(true);
   const [drafts, setDrafts] = useState<DraftPost[]>([]);
-  const [scheduled, setScheduled] = useState<ScheduledPost[]>([
-    {
-      id: '3',
-      title: 'Announcing Our New Product Launch',
-      content: 'Excited to share our latest innovation that will transform how you create content...',
-      excerpt: 'Excited to share our latest innovation that will transform how you create content...',
-      scheduledDate: 'Apr 15, 2023 • 10:30 AM',
-      isCarousel: false,
-      status: 'scheduled'
-    },
-    {
-      id: '4',
-      title: 'LinkedIn Engagement Masterclass',
-      content: 'Join me for a deep dive into LinkedIn engagement strategies that actually work...',
-      excerpt: 'Join me for a deep dive into LinkedIn engagement strategies that actually work...',
-      scheduledDate: 'Apr 18, 2023 • 2:00 PM',
-      isCarousel: false,
-      status: 'scheduled'
-    }
-  ]);
-  
-  const [published, setPublished] = useState<PublishedPost[]>([
-    {
-      id: '5',
-      title: 'How We Increased Conversions by 300%',
-      content: 'A case study on our recent campaign that shattered all expectations...',
-      excerpt: 'A case study on our recent campaign that shattered all expectations...',
-      publishedDate: 'Apr 5, 2023',
-      stats: {
-        impressions: 5420,
-        likes: 187,
-        comments: 43,
-        shares: 21
-      },
-      isCarousel: false,
-      status: 'published'
-    },
-    {
-      id: '6',
-      title: 'The Ultimate LinkedIn Profile Checklist',
-      content: 'Make sure your LinkedIn profile stands out with these essential elements...',
-      excerpt: 'Make sure your LinkedIn profile stands out with these essential elements...',
-      publishedDate: 'Mar 28, 2023',
-      stats: {
-        impressions: 7834,
-        likes: 312,
-        comments: 78,
-        shares: 94
-      },
-      isCarousel: true,
-      slideCount: 8,
-      status: 'published'
-    }
-  ]);
+  const [scheduled, setScheduled] = useState<ScheduledPost[]>([]);
+  const [published, setPublished] = useState<PublishedPost[]>([]);
   
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -246,69 +194,49 @@ const PostLibraryPage: React.FC = () => {
     window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
   };
   
-  // Load drafts and scheduled posts from API or localStorage
-  useEffect(() => {
-    const loadUserContent = async () => {
+  // Load user content from API
+  const loadUserContent = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get drafts and scheduled posts from API
       try {
-        setLinkedInAuthError(false);
-        // Try to load from API first
-        try {
-          const apiData = await linkedInApi.getDraftsAndScheduled();
-          
-          // Process data into our expected format
+        const apiData = await linkedInApi.getDraftsAndScheduled();
+        if (apiData && Array.isArray(apiData)) {
+          // Process drafts
           const apiDrafts = apiData.filter((item: any) => item.status === 'draft');
+          const formattedDrafts: DraftPost[] = apiDrafts.map((item: any) => {
+            const post = item.postData || {};
+            return {
+              id: item._id || `draft_${Date.now()}`,
+              title: post.title || 'Untitled',
+              content: post.content || '',
+              createdAt: item.createdAt || new Date().toISOString(),
+              updatedAt: item.updatedAt || new Date().toISOString(),
+              slides: post.slides,
+              postData: post,
+              postImage: post.postImage,
+              hashtags: post.hashtags,
+              isPollActive: post.isPollActive,
+              pollOptions: post.pollOptions,
+              isCarousel: post.slides && post.slides.length > 0,
+              slideCount: post.slides?.length || 0,
+              status: 'draft'
+            };
+          });
+          setDrafts(formattedDrafts);
+          
+          // Process scheduled posts
           const apiScheduled = apiData.filter((item: any) => item.status === 'scheduled');
-          
-          // Set state with API data
-          setDrafts(apiDrafts.map((item: any) => {
-            // Check if item.postData exists to prevent errors
-            if (!item || !item.postData) {
-              console.warn('Missing item or postData in API response for draft:', item);
-              return {
-                id: item?._id || `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                title: 'Untitled Draft',
-                content: '',
-                updatedAt: new Date().toISOString(),
-                status: 'draft'
-              };
-            }
-            
-            const post = item.postData;
+          const formattedScheduled: ScheduledPost[] = apiScheduled.map((item: any) => {
+            const post = item.postData || {};
             return {
-              id: item._id,
+              id: item._id || `scheduled_${Date.now()}`,
               title: post.title || 'Untitled',
-              content: post.content,
-              updatedAt: item.updatedAt,
-              slides: post.slides,
-              postData: post,
-              postImage: post.postImage,
-              hashtags: post.hashtags,
-              isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions,
-              isCarousel: post.slides && post.slides.length > 0,
-              slideCount: post.slides?.length || 0
-            };
-          }));
-          
-          setScheduled(apiScheduled.map((item: any) => {
-            // Check if item.postData exists to prevent errors
-            if (!item || !item.postData) {
-              console.warn('Missing item or postData in API response for scheduled post:', item);
-              return {
-                id: item?._id || `scheduled_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                title: 'Scheduled Post',
-                content: '',
-                scheduledTime: item?.scheduledTime || new Date().toISOString(),
-                status: 'scheduled'
-              };
-            }
-            
-            const post = item.postData;
-            return {
-              id: item._id,
-              title: post.title || 'Untitled',
-              content: post.content,
+              content: post.content || '',
               scheduledTime: item.scheduledTime,
+              createdAt: item.createdAt || new Date().toISOString(),
+              updatedAt: item.updatedAt || new Date().toISOString(),
               slides: post.slides,
               postData: post,
               postImage: post.postImage,
@@ -316,64 +244,31 @@ const PostLibraryPage: React.FC = () => {
               isPollActive: post.isPollActive,
               pollOptions: post.pollOptions,
               isCarousel: post.slides && post.slides.length > 0,
-              slideCount: post.slides?.length || 0
+              slideCount: post.slides?.length || 0,
+              status: 'scheduled'
             };
-          }));
-          
-        } catch (apiError: any) {
-          console.error('API load failed, using localStorage:', apiError);
-          
-          // Check if it's a LinkedIn auth error
-          if (apiError?.response?.status === 401) {
-            setLinkedInAuthError(true);
-            toast.error('LinkedIn authentication failed. Please reconnect your account.');
-          }
-          
-          // Fallback to localStorage if API fails
-          const savedDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
-          
-          // Ensure carousel properties are set correctly for localStorage drafts
-          const processedDrafts = savedDrafts.map((draft: any) => ({
-            ...draft,
-            isCarousel: draft.slides && draft.slides.length > 0 || draft.isCarousel,
-            slideCount: draft.slides?.length || draft.slideCount || 0
-          }));
-          
-          setDrafts(processedDrafts);
-          
-          const savedScheduled = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
-          
-          // Ensure carousel properties are set correctly for localStorage scheduled posts
-          const processedScheduled = savedScheduled.map((post: any) => ({
-            ...post,
-            isCarousel: post.slides && post.slides.length > 0 || post.isCarousel,
-            slideCount: post.slides?.length || post.slideCount || 0
-          }));
-          
-          setScheduled(processedScheduled.length > 0 ? processedScheduled : scheduled);
+          });
+          setScheduled(formattedScheduled);
         }
       } catch (error) {
-        console.error('Error loading user content:', error);
-        toast.error('Failed to load your content');
-      } finally {
-        setIsLoading(false);
+        console.error('Error loading drafts and scheduled posts from API:', error);
+        if ((error as any)?.response?.status === 401) {
+          setLinkedInAuthError(true);
+          toast.error('LinkedIn authentication required to load your content');
+        } else {
+          toast.error('Failed to load drafts and scheduled posts');
+        }
       }
-    };
-    
-    loadUserContent();
-    
-    // Handle location state for newly created draft/scheduled post
-    if (locationState?.newDraft) {
-      setActiveTab('drafts');
-      toast.success('Draft saved successfully');
-    } else if (locationState?.scheduled) {
-      setActiveTab('scheduled');
-      toast.success('Post scheduled successfully');
-    } else if (locationState?.newPost) {
-      setActiveTab('published');
-      toast.success('Post published successfully');
+      
+      // You could add code here to fetch published posts if needed
+      
+    } catch (error) {
+      console.error('Error in loadUserContent:', error);
+      toast.error('Failed to load content');
+    } finally {
+      setIsLoading(false);
     }
-  }, [locationState]);
+  };
   
   // Edit a draft
   const editDraft = (draftId: string) => {
@@ -393,14 +288,19 @@ const PostLibraryPage: React.FC = () => {
   };
   
   // Delete a draft
-  const deleteDraft = (draftId: string) => {
+  const deleteDraft = async (draftId: string) => {
     if (!window.confirm('Are you sure you want to delete this draft?')) return;
     
     try {
       setIsDeleting(true);
+      
+      // Delete from backend API
+      await linkedInApi.deleteDraft(draftId);
+      
+      // Update state
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
-      localStorage.setItem('post_drafts', JSON.stringify(updatedDrafts));
       setDrafts(updatedDrafts);
+      
       toast.success('Draft deleted successfully');
     } catch (error) {
       console.error('Error deleting draft:', error);
@@ -431,17 +331,11 @@ const PostLibraryPage: React.FC = () => {
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
       setDrafts(updatedDrafts);
     
-    // Navigate to the create post page with schedule dialog open
+      // Navigate to the create post page with schedule dialog open
       navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
     } catch (error) {
       console.error('Error removing draft from backend:', error);
-      // Fallback to localStorage if API fails
-      const updatedDrafts = drafts.filter(d => d.id !== draftId);
-      localStorage.setItem('post_drafts', JSON.stringify(updatedDrafts));
-      setDrafts(updatedDrafts);
-      
-      navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
-      toast.error('Failed to update database, changes saved locally');
+      toast.error('Failed to process draft. Please try again later.');
     }
   };
   
@@ -463,14 +357,19 @@ const PostLibraryPage: React.FC = () => {
   };
   
   // Delete a scheduled post
-  const deleteScheduledPost = (postId: string) => {
+  const deleteScheduledPost = async (postId: string) => {
     if (!window.confirm('Are you sure you want to cancel this scheduled post?')) return;
     
     try {
       setIsDeleting(true);
+      
+      // Delete from backend API
+      await linkedInApi.deleteScheduledPost(postId);
+      
+      // Update state
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
-      localStorage.setItem('scheduled_posts', JSON.stringify(updatedScheduled));
       setScheduled(updatedScheduled);
+      
       toast.success('Scheduled post cancelled');
     } catch (error) {
       console.error('Error cancelling scheduled post:', error);
@@ -680,15 +579,6 @@ const PostLibraryPage: React.FC = () => {
         }
       } else {
         toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
-      }
-      
-      // Fallback to localStorage if API fails
-      try {
-        const updatedScheduled = scheduled.filter(p => p.id !== postId);
-        localStorage.setItem('scheduled_posts', JSON.stringify(updatedScheduled));
-        setScheduled(updatedScheduled);
-      } catch (fallbackError) {
-        console.error('Error in localStorage fallback:', fallbackError);
       }
     } finally {
       setIsPublishing(false);
@@ -908,6 +798,23 @@ const PostLibraryPage: React.FC = () => {
       </Card>
     );
   };
+  
+  // Initialize data on component mount
+  useEffect(() => {
+    loadUserContent();
+    
+    // Handle location state for newly created draft/scheduled post
+    if (locationState?.newDraft) {
+      setActiveTab('drafts');
+      toast.success('Draft saved successfully');
+    } else if (locationState?.scheduled) {
+      setActiveTab('scheduled');
+      toast.success('Post scheduled successfully');
+    } else if (locationState?.newPost) {
+      setActiveTab('published');
+      toast.success('Post published successfully');
+    }
+  }, [locationState]);
   
   return (
     <div className="container mx-auto px-4 py-8">
