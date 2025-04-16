@@ -959,6 +959,39 @@ class LinkedInApi {
       }
       
       console.log('Deleting post from API:', postId);
+      
+      // First get the post data to check if it has a platformPostId (LinkedIn post ID)
+      try {
+        const postResponse = await axios.get(`${this.POSTS_API_URL}/${postId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const post = postResponse.data?.data;
+        
+        // If this is a published post with a LinkedIn platformPostId, try to delete it from LinkedIn first
+        if (post && post.status === 'published' && post.platformPostId) {
+          try {
+            console.log('Attempting to delete post from LinkedIn:', post.platformPostId);
+            // Call LinkedIn API to delete the post
+            await axios.delete(`${this.API_URL}/posts/${post.platformPostId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            console.log('Successfully deleted post from LinkedIn');
+          } catch (linkedinError) {
+            console.error('Failed to delete post from LinkedIn:', linkedinError);
+            // Continue with database deletion even if LinkedIn deletion fails
+          }
+        }
+      } catch (getPostError) {
+        console.error('Error fetching post before deletion:', getPostError);
+        // Continue with deletion even if we can't fetch the post details
+      }
+      
+      // Delete from our database
       const response = await axios.delete(`${this.POSTS_API_URL}/${postId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
