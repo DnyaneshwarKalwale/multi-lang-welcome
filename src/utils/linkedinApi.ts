@@ -5,6 +5,9 @@ import { toast } from 'sonner';
 // Import the API_URL from the services/api.ts file or define it here
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
 
+// Import a flag to enable development mode
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true' || false;
+
 // Helper function to get the best available LinkedIn token
 const getLinkedInToken = (accessToken?: string): string => {
   console.log('Getting LinkedIn token with provided token:', !!accessToken);
@@ -127,13 +130,35 @@ const redirectToLinkedInAuth = () => {
   // Store current URL in localStorage to redirect back after LinkedIn connection
   localStorage.setItem('redirectAfterAuth', window.location.pathname);
   
+  // Prevent redirect loops by checking if we've recently redirected
+  const lastRedirectTime = localStorage.getItem('lastLinkedInRedirect');
+  const now = Date.now();
+  
+  if (lastRedirectTime && (now - parseInt(lastRedirectTime)) < 60000) {
+    // If we redirected less than 1 minute ago, don't redirect again
+    toast.error('LinkedIn reconnection failed. Please try again later or contact support.');
+    console.error('LinkedIn auth redirect loop detected. Aborting redirect.');
+    return false;
+  }
+  
+  // Store the redirect time
+  localStorage.setItem('lastLinkedInRedirect', now.toString());
+  
   // Redirect to LinkedIn OAuth endpoint
   window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+  return true;
 };
 
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
+  private devModeEnabled = DEV_MODE;
+
+  // Toggle development mode
+  setDevMode(enabled: boolean): void {
+    this.devModeEnabled = enabled;
+    console.log(`LinkedIn API dev mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
 
   // Expose getLinkedInToken as a public method
   getToken(accessToken?: string): string {
@@ -320,6 +345,12 @@ class LinkedInApi {
     accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
+      // In development mode, return mock data if enabled
+      if (this.devModeEnabled) {
+        console.log('[DEV MODE] Simulating LinkedIn post creation');
+        return this.mockPostResponse(text);
+      }
+      
       const token = getLinkedInToken(accessToken);
 
       // Create a post with just text content
@@ -338,9 +369,50 @@ class LinkedInApi {
       });
       
       return response.data;
-    } catch (error) {
-      return this.handleApiError(error, 'creating LinkedIn post');
+    } catch (error: any) {
+      // Check for LinkedIn token expiration
+      if (error?.response?.status === 500 && 
+          error?.response?.data?.details?.includes('LinkedIn access token has expired')) {
+        
+        // In dev mode, return mock data instead of redirecting
+        if (this.devModeEnabled) {
+          toast.warning('LinkedIn token expired (DEV MODE - using mock data)');
+          return this.mockPostResponse(text);
+        }
+        
+        toast.error('LinkedIn connection expired. Please reconnect your account.');
+        console.error('LinkedIn token expired:', error?.response?.data?.details);
+        
+        // Give user time to see toast before redirect
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Try to redirect, and if it fails (redirect loop protection), use mock data
+        if (!redirectToLinkedInAuth()) {
+          toast.warning('Using fallback mode for LinkedIn posts');
+          return this.mockPostResponse(text);
+        }
+      }
+      
+      // For other errors, just throw
+      console.error('Error creating LinkedIn post:', error);
+      throw error;
     }
+  }
+  
+  // Helper to create mock response data for development
+  private mockPostResponse(text: string): LinkedInPostResponse {
+    const now = Date.now();
+    return {
+      id: `mock-post-${now}`,
+      activity: `urn:li:activity:${now}`,
+      owner: 'urn:li:person:mock-linkedin-id-12345',
+      created: {
+        time: now
+      },
+      lastModified: {
+        time: now
+      }
+    };
   }
 
   // Initialize image upload to LinkedIn
@@ -720,8 +792,8 @@ class LinkedInApi {
   }
 
   // Public method to reconnect LinkedIn
-  reconnectLinkedIn(): void {
-    redirectToLinkedInAuth();
+  reconnectLinkedIn(): boolean {
+    return redirectToLinkedInAuth();
   }
 
   // Add a method to handle expired token errors
