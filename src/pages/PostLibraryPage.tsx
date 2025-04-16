@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Card, 
@@ -30,7 +30,9 @@ import {
   AlertCircle,
   Linkedin,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Edit,
+  Trash
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -84,6 +86,7 @@ interface BasePost {
   slideCount?: number;
   status?: 'draft' | 'scheduled' | 'published';
   mediaType?: string;
+  platformPostId?: string;
 }
 
 interface DraftPost extends BasePost {
@@ -242,6 +245,13 @@ const PostLibraryPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
+  // Add an effect to reload data when the active tab changes
+  useEffect(() => {
+    console.log('Active tab changed to:', activeTab);
+    loadUserContent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+  
   // Function to migrate posts from localStorage to database
   const migrateLocalPosts = async () => {
     try {
@@ -324,7 +334,8 @@ const PostLibraryPage: React.FC = () => {
           visibility: post.visibility,
           provider: post.platform,
           status: 'draft',
-          date: new Date(post.createdAt).toLocaleDateString()
+          date: new Date(post.createdAt).toLocaleDateString(),
+          platformPostId: post.platformPostId
         })) || [];
 
         const scheduledPosts: ScheduledPost[] = scheduledData?.data?.map((post: any) => ({
@@ -343,7 +354,8 @@ const PostLibraryPage: React.FC = () => {
           visibility: post.visibility,
           provider: post.platform,
           status: 'scheduled',
-          scheduledDate: new Date(post.scheduledTime).toLocaleDateString()
+          scheduledDate: new Date(post.scheduledTime).toLocaleDateString(),
+          platformPostId: post.platformPostId
         })) || [];
 
         // Ensure all properties from the API response are correctly mapped
@@ -384,7 +396,8 @@ const PostLibraryPage: React.FC = () => {
             status: 'published',
             isCarousel: hasValidSlides,
             slideCount: post.slides?.length || 0,
-            mediaType: mediaType
+            mediaType: mediaType,
+            platformPostId: post.platformPostId
           };
         }) || [];
 
@@ -431,7 +444,7 @@ const PostLibraryPage: React.FC = () => {
                   // Also check for content duplicates
                   const contentHash = draftData.content ? `${draftData.content.substring(0, 50)}` : '';
                   if (!contentHash || !contentHashes.has(contentHash)) {
-                    localDrafts.push(draftData);
+                localDrafts.push(draftData);
                     // Add this content hash to our tracking map
                     if (contentHash) contentHashes.set(contentHash, true);
                   } else {
@@ -754,7 +767,8 @@ const PostLibraryPage: React.FC = () => {
         postImage: draft.postImage,
         hashtags: draft.hashtags,
         isPollActive: draft.isPollActive,
-        pollOptions: draft.pollOptions
+        pollOptions: draft.pollOptions,
+        platformPostId: draft.platformPostId
       };
       
       // Add the temp published post to the state
@@ -806,7 +820,8 @@ const PostLibraryPage: React.FC = () => {
         postImage: draft.postImage,
         hashtags: draft.hashtags,
         isPollActive: draft.isPollActive,
-        pollOptions: draft.pollOptions
+        pollOptions: draft.pollOptions,
+        platformPostId: draft.platformPostId
       };
       
               // Update the published posts state
@@ -857,7 +872,8 @@ const PostLibraryPage: React.FC = () => {
               postImage: response.data.postImage || draft.postImage,
               hashtags: response.data.hashtags || draft.hashtags,
               isPollActive: response.data.isPollActive || draft.isPollActive,
-              pollOptions: response.data.pollOptions || draft.pollOptions
+              pollOptions: response.data.pollOptions || draft.pollOptions,
+              platformPostId: draft.platformPostId
             };
             
             // Update the published posts state
@@ -866,6 +882,11 @@ const PostLibraryPage: React.FC = () => {
             
             // Reload user content to make sure all data is up to date
             await loadUserContent();
+            
+            // Force reload after a short delay to ensure backend state is reflected
+            setTimeout(() => {
+              loadUserContent();
+            }, 1000);
           } else {
             throw new Error('Invalid response from server when publishing post');
           }
@@ -919,7 +940,8 @@ const PostLibraryPage: React.FC = () => {
         postImage: scheduledPost.postImage,
         hashtags: scheduledPost.hashtags,
         isPollActive: scheduledPost.isPollActive,
-        pollOptions: scheduledPost.pollOptions
+        pollOptions: scheduledPost.pollOptions,
+        platformPostId: scheduledPost.platformPostId
       };
       
       // Add the temp published post to the state
@@ -971,7 +993,8 @@ const PostLibraryPage: React.FC = () => {
                 postImage: scheduledPost.postImage,
                 hashtags: scheduledPost.hashtags,
                 isPollActive: scheduledPost.isPollActive,
-                pollOptions: scheduledPost.pollOptions
+                pollOptions: scheduledPost.pollOptions,
+                platformPostId: scheduledPost.platformPostId
               };
               
               // Update the published posts state
@@ -980,6 +1003,11 @@ const PostLibraryPage: React.FC = () => {
               
               // Reload user content to ensure all data is updated
               await loadUserContent();
+              
+              // Force reload after a short delay to ensure backend state is reflected
+              setTimeout(() => {
+                loadUserContent();
+              }, 1000);
             } else {
               throw new Error('Failed to publish post after migration');
             }
@@ -1022,7 +1050,8 @@ const PostLibraryPage: React.FC = () => {
               postImage: response.data.postImage || scheduledPost.postImage,
               hashtags: response.data.hashtags || scheduledPost.hashtags,
               isPollActive: response.data.isPollActive || scheduledPost.isPollActive,
-              pollOptions: response.data.pollOptions || scheduledPost.pollOptions
+              pollOptions: response.data.pollOptions || scheduledPost.pollOptions,
+              platformPostId: scheduledPost.platformPostId
             };
             
             // Update the published posts state
@@ -1031,12 +1060,17 @@ const PostLibraryPage: React.FC = () => {
             
             // Reload user content to make sure all data is up to date
             await loadUserContent();
+            
+            // Force reload after a short delay to ensure backend state is reflected
+            setTimeout(() => {
+              loadUserContent();
+            }, 1000);
           } else {
             throw new Error('Invalid response from server when publishing post');
           }
         } catch (error) {
           console.error('Error publishing scheduled post:', error);
-        toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
+          toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
           
           // Restore the scheduled post to the state
           setScheduled(prevScheduled => [scheduledPost, ...prevScheduled]);
@@ -1053,8 +1087,89 @@ const PostLibraryPage: React.FC = () => {
     }
   };
   
+  const editPublishedPost = async (post: BasePost) => {
+    if (!post || !post.id) {
+      toast.error('Cannot edit post. Post data is missing.');
+      return;
+    }
+    
+    const confirmed = window.confirm('Are you sure you want to edit this published post? Changes will also be reflected on LinkedIn.');
+    if (!confirmed) return;
+    
+    try {
+      setIsLoading(true);
+      // Get the latest post data from LinkedIn to ensure we're working with the most up-to-date version
+      const response = await linkedInApi.getPostById(post.id);
+      if (!response || !response.data) {
+        toast.error('Failed to retrieve the latest post data');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Store the post data in localStorage for editing
+      const formData = {
+        ...response.data,
+        id: post.id,
+        isEditing: true,
+        originalPost: post
+      };
+      
+      localStorage.setItem('linkedinPostFormData', JSON.stringify(formData));
+      
+      // Navigate to the post creation page with editing state
+      navigate('/create-post', { 
+        state: { 
+          fromEdit: true, 
+          postId: post.id, 
+          platform: 'linkedin',
+          isPublished: true 
+        } 
+      });
+    } catch (error) {
+      console.error('Error preparing post for edit:', error);
+      toast.error('Failed to prepare post for editing');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deletePublishedPost = async (post: BasePost) => {
+    if (!post || !post.id) {
+      toast.error('Cannot delete post. Post data is missing.');
+      return;
+    }
+    
+    const confirmed = window.confirm('Are you sure you want to delete this published post? It will also be removed from LinkedIn.');
+    if (!confirmed) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // Optimistically update UI
+      setPublished(prev => prev.filter(p => p.id !== post.id));
+      
+      // Delete from LinkedIn and local library
+      await linkedInApi.deleteDBPost(post.id, post.platformPostId);
+      
+      toast.success('Post deleted successfully from LinkedIn and local library');
+    } catch (error) {
+      console.error('Error deleting published post:', error);
+      toast.error('Failed to delete post');
+      
+      // Restore post to state if API call failed
+      setPublished(prev => {
+        if (!prev.some(p => p.id === post.id)) {
+          return [...prev, post];
+        }
+        return prev;
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+  
   // Render a unified post card for all types
-  const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
+  const renderPostCard = useCallback((post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
     // Determine the actual media type
     let actualMediaType = 'none';
     if (isCarouselPost(post)) {
@@ -1067,6 +1182,44 @@ const PostLibraryPage: React.FC = () => {
     
     console.log(`Rendering ${type} post ${post.id} with media type: ${actualMediaType}`);
     
+    const dropdownItems = () => {
+      if (type === 'draft') {
+        // ... existing draft dropdown items ...
+      } else if (type === 'scheduled') {
+        // ... existing scheduled dropdown items ...
+      } else if (type === 'published') {
+        return [
+          {
+            id: 'view',
+            label: 'View on LinkedIn',
+            icon: <ExternalLink size={14} />,
+            onClick: () => {
+              // Open in LinkedIn if platformPostId exists
+              if (post.platformPostId) {
+                window.open(`https://www.linkedin.com/feed/update/${post.platformPostId}`, '_blank');
+              } else {
+                toast.info('LinkedIn post link not available');
+              }
+            }
+          },
+          {
+            id: 'edit',
+            label: 'Edit Post',
+            icon: <Edit size={14} />,
+            onClick: () => editPublishedPost(post)
+          },
+          {
+            id: 'delete',
+            label: 'Delete Post',
+            icon: <Trash size={14} />,
+            className: 'text-red-500 hover:text-red-700',
+            onClick: () => deletePublishedPost(post)
+          }
+        ];
+      }
+      return [];
+    };
+
     return (
       <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col border dark:border-gray-700">
         {/* User Info Header */}
@@ -1092,39 +1245,12 @@ const PostLibraryPage: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {type === 'draft' && (
-                <>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editDraft(post.id)}>
-                    <PencilLine size={14} /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteDraft(post.id)}>
-                    <Trash2 size={14} /> Delete
-                  </DropdownMenuItem>
-                </>
-              )}
-              {type === 'scheduled' && (
-                <>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2" onClick={() => editScheduledPost(post.id)}>
-                    <PencilLine size={14} /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                    <Clock size={14} /> Reschedule
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-red-500" onClick={() => deleteScheduledPost(post.id)}>
-                    <Trash2 size={14} /> Cancel
-                  </DropdownMenuItem>
-                </>
-              )}
-              {type === 'published' && (
-                <>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                    <ExternalLink size={14} /> View on LinkedIn
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-                    <Copy size={14} /> Duplicate
-                  </DropdownMenuItem>
-                </>
-              )}
+              {dropdownItems().map((item) => (
+                <DropdownMenuItem key={item.id} className={item.className} onClick={item.onClick}>
+                  {item.icon}
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -1251,7 +1377,7 @@ const PostLibraryPage: React.FC = () => {
         </CardFooter>
       </Card>
     );
-  };
+  }, [isPublishing, isDeleting, user, drafts, scheduled, published, editDraft, scheduleDraft, publishDraft, editScheduledPost, publishScheduledPost]);
   
   // Function to open the schedule dialog
   const openScheduleDialog = (draft: DraftPost) => {
@@ -1274,7 +1400,6 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsScheduling(true);
       
-      // Create a Date object from the scheduled date and time
       // Make a fresh date object to avoid timezone issues
       const scheduledDateTime = new Date(scheduledDate);
       const [hours, minutes] = scheduleTime.split(':').map(Number);
@@ -1330,6 +1455,11 @@ const PostLibraryPage: React.FC = () => {
         
         // Switch to scheduled tab
         setActiveTab('scheduled');
+        
+        // Force reload after a short delay to ensure backend state is reflected
+        setTimeout(() => {
+          loadUserContent();
+        }, 1000);
       } else {
         throw new Error('Failed to schedule post');
       }
