@@ -984,8 +984,11 @@ const CreatePostPage: React.FC = () => {
     try {
       setIsSavingDraft(true);
       
+      // Check if we're editing an existing draft
+      const editingDraftId = localStorage.getItem('editingDraftId');
+      
       // Create draft data
-      const draftId = `draft_${Date.now()}`;
+      const draftId = editingDraftId || `draft_${Date.now()}`;
       const draftData = {
         id: draftId,
         title: 'Draft Post',
@@ -1027,6 +1030,9 @@ const CreatePostPage: React.FC = () => {
         console.log('Note: Draft saved to localStorage only, API save failed:', apiError);
       }
       
+      // Clear the editing state
+      localStorage.removeItem('editingDraftId');
+      
       // Success message
       toast.success('Post saved as draft', {
         description: 'You can find it in your Post Library'
@@ -1066,8 +1072,11 @@ const CreatePostPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
+      // Check if we're editing an existing scheduled post
+      const editingScheduledId = localStorage.getItem('editingScheduledId');
+      
       // Create scheduled post data
-      const scheduledId = `scheduled_${Date.now()}`;
+      const scheduledId = editingScheduledId || `scheduled_${Date.now()}`;
       const scheduledData = {
         id: scheduledId,
         title: 'Scheduled Post',
@@ -1117,6 +1126,9 @@ const CreatePostPage: React.FC = () => {
         // Silently ignore backend API errors since we've already saved to localStorage
         console.log('Note: Scheduled post saved to localStorage only, API save failed:', apiError);
       }
+      
+      // Clear the editing state
+      localStorage.removeItem('editingScheduledId');
       
       // Close the schedule dialog explicitly
       setShowScheduleDialog(false);
@@ -1234,6 +1246,36 @@ const CreatePostPage: React.FC = () => {
     console.log('Explicitly closing dialog');
     setShowScheduleDialog(false);
   }, []);
+  
+  // Add a cleanup function to prevent duplicate posts when navigating back without saving
+  useEffect(() => {
+    // Check if we have a post to create or if we're editing an existing one
+    const isEditing = !!localStorage.getItem('editingDraftId') || !!localStorage.getItem('editingScheduledId');
+    
+    // Function to handle beforeunload event
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (content.trim() || slides.some(slide => slide.content.trim())) {
+        // Show a confirmation dialog if there's unsaved content
+        const confirmationMessage = 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue = confirmationMessage;
+        return confirmationMessage;
+      }
+    };
+    
+    // Add the event listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      // Remove the event listener
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      
+      // Clean up edit IDs if the user navigates away without saving
+      if (!isEditing) {
+        localStorage.removeItem('editingDraftId');
+        localStorage.removeItem('editingScheduledId');
+      }
+    };
+  }, [content, slides]);
   
   return (
     <div className="container mx-auto px-4 py-8">

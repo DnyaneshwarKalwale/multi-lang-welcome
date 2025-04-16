@@ -67,6 +67,7 @@ interface BasePost {
   isCarousel?: boolean;
   slideCount?: number;
   status?: 'draft' | 'scheduled' | 'published';
+  mediaType?: string;
 }
 
 interface DraftPost extends BasePost {
@@ -212,6 +213,14 @@ const PostLibraryPage: React.FC = () => {
     window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
   };
   
+  // Separate function to determine if a post is actually a carousel post
+  const isCarouselPost = (post: BasePost): boolean => {
+    return post.slides !== undefined && 
+           Array.isArray(post.slides) && 
+           post.slides.length > 0 && 
+           post.slides.some(slide => slide.cloudinaryImage?.secure_url || slide.imageUrl);
+  };
+  
   // Load user content from API
   const loadUserContent = async () => {
     try {
@@ -273,27 +282,46 @@ const PostLibraryPage: React.FC = () => {
         })) || [];
 
         // Ensure all properties from the API response are correctly mapped
-        const publishedPosts: PublishedPost[] = publishedData?.data?.map((post: any) => ({
-          id: post._id,
-          title: post.title || 'Published Post',
-          content: post.content,
-          excerpt: post.content?.substring(0, 100) + '...',
-          createdAt: post.createdAt,
-          updatedAt: post.updatedAt,
-          publishedDate: post.publishedTime 
-            ? new Date(post.publishedTime).toLocaleDateString() 
-            : new Date(post.updatedAt).toLocaleDateString(),
-          slides: post.slides || [],
-          postImage: post.postImage,
-          isPollActive: post.isPollActive,
-          pollOptions: post.pollOptions,
-          hashtags: post.hashtags,
-          visibility: post.visibility,
-          provider: post.platform,
-          status: 'published',
-          isCarousel: post.slides && post.slides.length > 0,
-          slideCount: post.slides?.length || 0
-        })) || [];
+        const publishedPosts: PublishedPost[] = publishedData?.data?.map((post: any) => {
+          // Determine if this is actually a carousel post by checking slides
+          const hasValidSlides = post.slides && 
+                                 Array.isArray(post.slides) && 
+                                 post.slides.length > 0 && 
+                                 post.slides.some(slide => slide.cloudinaryImage?.secure_url || slide.imageUrl);
+                                 
+          // Determine the media type
+          let mediaType = 'none';
+          if (hasValidSlides) {
+            mediaType = 'carousel';
+          } else if (post.postImage && post.postImage.secure_url) {
+            mediaType = 'image';
+          }
+          
+          console.log(`Post ${post._id} media type: ${mediaType}, hasValidSlides: ${hasValidSlides}`);
+          
+          return {
+            id: post._id,
+            title: post.title || 'Published Post',
+            content: post.content,
+            excerpt: post.content?.substring(0, 100) + '...',
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+            publishedDate: post.publishedTime 
+              ? new Date(post.publishedTime).toLocaleDateString() 
+              : new Date(post.updatedAt).toLocaleDateString(),
+            slides: post.slides || [],
+            postImage: post.postImage,
+            isPollActive: post.isPollActive,
+            pollOptions: post.pollOptions,
+            hashtags: post.hashtags,
+            visibility: post.visibility,
+            provider: post.platform,
+            status: 'published',
+            isCarousel: hasValidSlides,
+            slideCount: post.slides?.length || 0,
+            mediaType: mediaType
+          };
+        }) || [];
 
         console.log('Processed published posts:', publishedPosts);
 
@@ -399,7 +427,7 @@ const PostLibraryPage: React.FC = () => {
     if (localScheduledPosts.length > 0) setScheduled(localScheduledPosts);
   };
   
-  // Edit a draft
+  // Edit a draft - delete old draft when navigating to edit
   const editDraft = (draftId: string) => {
     // Find the draft
     const draft = drafts.find(d => d.id === draftId);
@@ -412,6 +440,9 @@ const PostLibraryPage: React.FC = () => {
       }
     });
     
+    // Store the original draft ID so we can delete it when saving the edited version
+    localStorage.setItem('editingDraftId', draftId);
+    
     // Navigate to the create post page
     navigate('/dashboard/post');
   };
@@ -423,17 +454,29 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsDeleting(true);
       
-      // Delete from backend API
-      await linkedInApi.deleteDBPost(draftId);
-      
-      // Update state
+      // Immediately update UI by removing from state
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
       setDrafts(updatedDrafts);
       
-      toast.success('Draft deleted successfully');
+      // Check if it's a local draft
+      if (draftId.startsWith('draft_')) {
+        // Remove from localStorage
+        localStorage.removeItem(draftId);
+        toast.success('Draft deleted successfully');
+      } else {
+        // Delete from backend API
+        await linkedInApi.deleteDBPost(draftId);
+        toast.success('Draft deleted successfully');
+      }
     } catch (error) {
       console.error('Error deleting draft:', error);
       toast.error('Failed to delete draft');
+      
+      // Restore draft to the state if API call failed
+      const draft = drafts.find(d => d.id === draftId);
+      if (draft) {
+        setDrafts(prevDrafts => [...prevDrafts, draft]);
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -445,6 +488,10 @@ const PostLibraryPage: React.FC = () => {
     const draft = drafts.find(d => d.id === draftId);
     if (!draft) return;
     
+    // Immediately update UI - remove from drafts
+    const updatedDrafts = drafts.filter(d => d.id !== draftId);
+    setDrafts(updatedDrafts);
+    
     // Set up the form data in localStorage for the create post page
     Object.entries(draft).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
@@ -453,26 +500,36 @@ const PostLibraryPage: React.FC = () => {
     });
     
     try {
-      // Remove from drafts via backend API
-      await linkedInApi.deleteDraft(draftId);
+      // If it's a local draft, remove from localStorage
+      if (draftId.startsWith('draft_')) {
+        localStorage.removeItem(draftId);
+      } else {
+        // Remove from drafts via backend API
+        await linkedInApi.deleteDraft(draftId);
+      }
       
-      // Update local state after successful API call
-      const updatedDrafts = drafts.filter(d => d.id !== draftId);
-      setDrafts(updatedDrafts);
-    
       // Navigate to the create post page with schedule dialog open
       navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
     } catch (error) {
-      console.error('Error removing draft from backend:', error);
+      console.error('Error removing draft:', error);
       toast.error('Failed to process draft. Please try again later.');
+      
+      // Restore draft to state if there was an error
+      if (draft) {
+        setDrafts(prevDrafts => [...prevDrafts, draft]);
+      }
     }
   };
   
-  // Edit a scheduled post
-  const editScheduledPost = (postId: string) => {
+  // Edit a scheduled post - delete old scheduled post when navigating to edit
+  const editScheduledPost = async (postId: string) => {
     // Find the scheduled post
     const post = scheduled.find(p => p.id === postId);
     if (!post) return;
+    
+    // Immediately update UI - remove from scheduled
+    const updatedScheduled = scheduled.filter(p => p.id !== postId);
+    setScheduled(updatedScheduled);
     
     // Set up the form data in localStorage
     Object.entries(post).forEach(([key, value]) => {
@@ -493,8 +550,29 @@ const PostLibraryPage: React.FC = () => {
       localStorage.setItem('state:createPost.scheduledDate', JSON.stringify(scheduledDate.toISOString()));
     }
     
-    // Navigate to create post page with schedule dialog open
-    navigate('/dashboard/post', { state: { openScheduleDialog: true } });
+    try {
+      // If it's a local scheduled post, remove from localStorage 
+      if (postId.startsWith('scheduled_')) {
+        localStorage.removeItem(postId);
+      } else {
+        // Remove from backend API
+        await linkedInApi.deleteDBPost(postId);
+      }
+      
+      // Store the original scheduled post ID
+      localStorage.setItem('editingScheduledId', postId);
+      
+      // Navigate to create post page with schedule dialog open
+      navigate('/dashboard/post', { state: { openScheduleDialog: true } });
+    } catch (error) {
+      console.error('Error removing scheduled post:', error);
+      toast.error('Failed to edit scheduled post. Please try again later.');
+      
+      // Restore scheduled post to state if there was an error
+      if (post) {
+        setScheduled(prevScheduled => [...prevScheduled, post]);
+      }
+    }
   };
   
   // Delete a scheduled post
@@ -504,17 +582,29 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsDeleting(true);
       
-      // Delete from backend API
-      await linkedInApi.deleteDBPost(postId);
-      
-      // Update state
+      // Immediately update UI - remove from scheduled
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
       setScheduled(updatedScheduled);
       
-      toast.success('Scheduled post cancelled');
+      // Check if it's a local scheduled post
+      if (postId.startsWith('scheduled_')) {
+        // Remove from localStorage
+        localStorage.removeItem(postId);
+        toast.success('Scheduled post cancelled');
+      } else {
+        // Delete from backend API
+        await linkedInApi.deleteDBPost(postId);
+        toast.success('Scheduled post cancelled');
+      }
     } catch (error) {
       console.error('Error cancelling scheduled post:', error);
       toast.error('Failed to cancel scheduled post');
+      
+      // Restore scheduled post to state if API call failed
+      const post = scheduled.find(p => p.id === postId);
+      if (post) {
+        setScheduled(prevScheduled => [...prevScheduled, post]);
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -527,13 +617,41 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
-      // First, check if we need to migrate this post
-      const isLocalPost = draftId.startsWith('draft_');
+      // Find the draft
       const draft = drafts.find(d => d.id === draftId);
       
       if (!draft) {
         throw new Error('Draft not found');
       }
+      
+      // Immediately remove from drafts in UI
+      const updatedDrafts = drafts.filter(d => d.id !== draftId);
+      setDrafts(updatedDrafts);
+      
+      // Create a temporary published post to show immediately
+      const tempPublishedPost: PublishedPost = {
+        id: `temp_${draftId}`,
+        title: draft.title || 'Publishing...',
+        content: draft.content,
+        excerpt: draft.content?.substring(0, 100) + '...',
+        publishedDate: new Date().toLocaleDateString(),
+        isCarousel: draft.slides && draft.slides.length > 0,
+        slideCount: draft.slides?.length || 0,
+        status: 'published',
+        postImage: draft.postImage,
+        hashtags: draft.hashtags,
+        isPollActive: draft.isPollActive,
+        pollOptions: draft.pollOptions
+      };
+      
+      // Add the temp published post to the state
+      setPublished(prevPublished => [tempPublishedPost, ...prevPublished]);
+      
+      // Switch to published tab immediately
+      setActiveTab('published');
+      
+      // First, check if we need to migrate this post
+      const isLocalPost = draftId.startsWith('draft_');
       
       // First migrate local posts to the database before publishing
       if (isLocalPost) {
@@ -559,11 +677,10 @@ const PostLibraryPage: React.FC = () => {
               // Remove from localStorage
               localStorage.removeItem(draftId);
               
-              // Remove from drafts in local state
-              const updatedDrafts = drafts.filter(d => d.id !== draftId);
-              setDrafts(updatedDrafts);
+              // Remove the temporary post
+              const updatedPublished = published.filter(p => p.id !== `temp_${draftId}`);
               
-              // Create a published post object for the UI
+              // Create a real published post object for the UI
               const publishedPost: PublishedPost = {
                 id: publishResponse.data._id,
                 title: draft.title || 'Published Post',
@@ -579,10 +696,9 @@ const PostLibraryPage: React.FC = () => {
                 pollOptions: draft.pollOptions
               };
               
-              // Add the new published post to the state
-              setPublished(prevPublished => [publishedPost, ...prevPublished]);
+              // Update the published posts state
+              setPublished([publishedPost, ...updatedPublished]);
               toast.success('Post published to LinkedIn successfully');
-              setActiveTab('published');
               
               // Reload user content to ensure all data is updated
               await loadUserContent();
@@ -595,45 +711,60 @@ const PostLibraryPage: React.FC = () => {
         } catch (migrationError) {
           console.error('Error publishing draft after migration:', migrationError);
           toast.error('Failed to publish post: ' + (migrationError.message || 'Unknown error'));
+          
+          // Restore the draft to the state
+          setDrafts(prevDrafts => [draft, ...prevDrafts]);
+          
+          // Remove the temporary published post
+          setPublished(prevPublished => prevPublished.filter(p => p.id !== `temp_${draftId}`));
         }
       } else {
         // For database-backed posts, publish directly
-        const response = await linkedInApi.publishDBPost(draftId);
-        
-        console.log('Published post response:', response);
-        
-        if (response.success && response.data) {
-          // Remove from drafts in local state
-          const updatedDrafts = drafts.filter(d => d.id !== draftId);
-          setDrafts(updatedDrafts);
+        try {
+          const response = await linkedInApi.publishDBPost(draftId);
           
-          // Create a published post object for the UI based on the API response
-          const publishedPost: PublishedPost = {
-            id: response.data._id || draftId,
-            title: response.data.title || draft.title || 'Published Post',
-            content: response.data.content || draft.content,
-            excerpt: (response.data.content || draft.content)?.substring(0, 100) + '...',
-            publishedDate: response.data.publishedTime 
-              ? new Date(response.data.publishedTime).toLocaleDateString() 
-              : new Date().toLocaleDateString(),
-            isCarousel: draft.slides && draft.slides.length > 0,
-            slideCount: draft.slides?.length || 0,
-            status: 'published',
-            postImage: response.data.postImage || draft.postImage,
-            hashtags: response.data.hashtags || draft.hashtags,
-            isPollActive: response.data.isPollActive || draft.isPollActive,
-            pollOptions: response.data.pollOptions || draft.pollOptions
-          };
+          console.log('Published post response:', response);
           
-          // Add the new published post to the state
-          setPublished(prevPublished => [publishedPost, ...prevPublished]);
-          toast.success('Post published to LinkedIn successfully');
-          setActiveTab('published');
+          if (response.success && response.data) {
+            // Remove the temporary post
+            const updatedPublished = published.filter(p => p.id !== `temp_${draftId}`);
+            
+            // Create a published post object for the UI based on the API response
+            const publishedPost: PublishedPost = {
+              id: response.data._id || draftId,
+              title: response.data.title || draft.title || 'Published Post',
+              content: response.data.content || draft.content,
+              excerpt: (response.data.content || draft.content)?.substring(0, 100) + '...',
+              publishedDate: response.data.publishedTime 
+                ? new Date(response.data.publishedTime).toLocaleDateString() 
+                : new Date().toLocaleDateString(),
+              isCarousel: draft.slides && draft.slides.length > 0,
+              slideCount: draft.slides?.length || 0,
+              status: 'published',
+              postImage: response.data.postImage || draft.postImage,
+              hashtags: response.data.hashtags || draft.hashtags,
+              isPollActive: response.data.isPollActive || draft.isPollActive,
+              pollOptions: response.data.pollOptions || draft.pollOptions
+            };
+            
+            // Update the published posts state
+            setPublished([publishedPost, ...updatedPublished]);
+            toast.success('Post published to LinkedIn successfully');
+            
+            // Reload user content to make sure all data is up to date
+            await loadUserContent();
+          } else {
+            throw new Error('Invalid response from server when publishing post');
+          }
+        } catch (error) {
+          console.error('Error publishing draft:', error);
+          toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
           
-          // Reload user content to make sure all data is up to date
-          await loadUserContent();
-        } else {
-          throw new Error('Invalid response from server when publishing post');
+          // Restore the draft to the state
+          setDrafts(prevDrafts => [draft, ...prevDrafts]);
+          
+          // Remove the temporary published post
+          setPublished(prevPublished => prevPublished.filter(p => p.id !== `temp_${draftId}`));
         }
       }
     } catch (error) {
@@ -651,13 +782,41 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
-      // First, check if we need to migrate this post
-      const isLocalPost = postId.startsWith('scheduled_');
+      // Find the scheduled post
       const scheduledPost = scheduled.find(p => p.id === postId);
       
       if (!scheduledPost) {
         throw new Error('Scheduled post not found');
       }
+      
+      // Immediately remove from scheduled in UI
+      const updatedScheduled = scheduled.filter(p => p.id !== postId);
+      setScheduled(updatedScheduled);
+      
+      // Create a temporary published post to show immediately
+      const tempPublishedPost: PublishedPost = {
+        id: `temp_${postId}`,
+        title: scheduledPost.title || 'Publishing...',
+        content: scheduledPost.content,
+        excerpt: scheduledPost.content?.substring(0, 100) + '...',
+        publishedDate: new Date().toLocaleDateString(),
+        isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
+        slideCount: scheduledPost.slides?.length || 0,
+        status: 'published',
+        postImage: scheduledPost.postImage,
+        hashtags: scheduledPost.hashtags,
+        isPollActive: scheduledPost.isPollActive,
+        pollOptions: scheduledPost.pollOptions
+      };
+      
+      // Add the temp published post to the state
+      setPublished(prevPublished => [tempPublishedPost, ...prevPublished]);
+      
+      // Switch to published tab immediately
+      setActiveTab('published');
+      
+      // First, check if we need to migrate this post
+      const isLocalPost = postId.startsWith('scheduled_');
       
       // First migrate local posts to the database before publishing
       if (isLocalPost) {
@@ -683,11 +842,10 @@ const PostLibraryPage: React.FC = () => {
               // Remove from localStorage
               localStorage.removeItem(postId);
               
-              // Remove from scheduled in local state
-              const updatedScheduled = scheduled.filter(p => p.id !== postId);
-              setScheduled(updatedScheduled);
+              // Remove the temporary post
+              const updatedPublished = published.filter(p => p.id !== `temp_${postId}`);
               
-              // Create a published post object for the UI
+              // Create a real published post object for the UI
               const publishedPost: PublishedPost = {
                 id: publishResponse.data._id,
                 title: scheduledPost.title || 'Published Post',
@@ -703,10 +861,9 @@ const PostLibraryPage: React.FC = () => {
                 pollOptions: scheduledPost.pollOptions
               };
               
-              // Add the new published post to the state
-              setPublished(prevPublished => [publishedPost, ...prevPublished]);
+              // Update the published posts state
+              setPublished([publishedPost, ...updatedPublished]);
               toast.success('Post published to LinkedIn successfully');
-              setActiveTab('published');
               
               // Reload user content to ensure all data is updated
               await loadUserContent();
@@ -719,45 +876,60 @@ const PostLibraryPage: React.FC = () => {
         } catch (migrationError) {
           console.error('Error publishing scheduled post after migration:', migrationError);
           toast.error('Failed to publish post: ' + (migrationError.message || 'Unknown error'));
+          
+          // Restore the scheduled post to the state
+          setScheduled(prevScheduled => [scheduledPost, ...prevScheduled]);
+          
+          // Remove the temporary published post
+          setPublished(prevPublished => prevPublished.filter(p => p.id !== `temp_${postId}`));
         }
       } else {
         // For database-backed posts, publish directly
-        const response = await linkedInApi.publishDBPost(postId);
-        
-        console.log('Published scheduled post response:', response);
-        
-        if (response.success && response.data) {
-          // Remove from scheduled in local state
-          const updatedScheduled = scheduled.filter(p => p.id !== postId);
-          setScheduled(updatedScheduled);
+        try {
+          const response = await linkedInApi.publishDBPost(postId);
           
-          // Create a published post object for the UI based on the API response
-          const publishedPost: PublishedPost = {
-            id: response.data._id || postId,
-            title: response.data.title || scheduledPost.title || 'Published Post',
-            content: response.data.content || scheduledPost.content,
-            excerpt: (response.data.content || scheduledPost.content)?.substring(0, 100) + '...',
-            publishedDate: response.data.publishedTime 
-              ? new Date(response.data.publishedTime).toLocaleDateString() 
-              : new Date().toLocaleDateString(),
-            isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
-            slideCount: scheduledPost.slides?.length || 0,
-            status: 'published',
-            postImage: response.data.postImage || scheduledPost.postImage,
-            hashtags: response.data.hashtags || scheduledPost.hashtags,
-            isPollActive: response.data.isPollActive || scheduledPost.isPollActive,
-            pollOptions: response.data.pollOptions || scheduledPost.pollOptions
-          };
+          console.log('Published scheduled post response:', response);
           
-          // Add the new published post to the state
-          setPublished(prevPublished => [publishedPost, ...prevPublished]);
-          toast.success('Scheduled post published to LinkedIn successfully');
-          setActiveTab('published');
+          if (response.success && response.data) {
+            // Remove the temporary post
+            const updatedPublished = published.filter(p => p.id !== `temp_${postId}`);
+            
+            // Create a published post object for the UI based on the API response
+            const publishedPost: PublishedPost = {
+              id: response.data._id || postId,
+              title: response.data.title || scheduledPost.title || 'Published Post',
+              content: response.data.content || scheduledPost.content,
+              excerpt: (response.data.content || scheduledPost.content)?.substring(0, 100) + '...',
+              publishedDate: response.data.publishedTime 
+                ? new Date(response.data.publishedTime).toLocaleDateString() 
+                : new Date().toLocaleDateString(),
+              isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
+              slideCount: scheduledPost.slides?.length || 0,
+              status: 'published',
+              postImage: response.data.postImage || scheduledPost.postImage,
+              hashtags: response.data.hashtags || scheduledPost.hashtags,
+              isPollActive: response.data.isPollActive || scheduledPost.isPollActive,
+              pollOptions: response.data.pollOptions || scheduledPost.pollOptions
+            };
+            
+            // Update the published posts state
+            setPublished([publishedPost, ...updatedPublished]);
+            toast.success('Scheduled post published to LinkedIn successfully');
+            
+            // Reload user content to make sure all data is up to date
+            await loadUserContent();
+          } else {
+            throw new Error('Invalid response from server when publishing post');
+          }
+        } catch (error) {
+          console.error('Error publishing scheduled post:', error);
+          toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
           
-          // Reload user content to make sure all data is up to date
-          await loadUserContent();
-        } else {
-          throw new Error('Invalid response from server when publishing post');
+          // Restore the scheduled post to the state
+          setScheduled(prevScheduled => [scheduledPost, ...prevScheduled]);
+          
+          // Remove the temporary published post
+          setPublished(prevPublished => prevPublished.filter(p => p.id !== `temp_${postId}`));
         }
       }
     } catch (error) {
@@ -770,6 +942,18 @@ const PostLibraryPage: React.FC = () => {
   
   // Render a unified post card for all types
   const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
+    // Determine the actual media type
+    let actualMediaType = 'none';
+    if (isCarouselPost(post)) {
+      actualMediaType = 'carousel';
+    } else if (post.postImage && post.postImage.secure_url) {
+      actualMediaType = 'image';
+    } else if (post.mediaType) {
+      actualMediaType = post.mediaType;
+    }
+    
+    console.log(`Rendering ${type} post ${post.id} with media type: ${actualMediaType}`);
+    
     return (
       <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col border dark:border-gray-700">
         {/* User Info Header */}
@@ -839,7 +1023,7 @@ const PostLibraryPage: React.FC = () => {
           </div>
           
           {/* Single Post Image (if available and not a carousel) */}
-          {post.postImage && !post.isCarousel && (
+          {post.postImage && actualMediaType === 'image' && (
             <div className="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
               <img 
                 src={post.postImage.secure_url} 
@@ -850,7 +1034,7 @@ const PostLibraryPage: React.FC = () => {
           )}
           
           {/* Carousel Images (if available) */}
-          {post.isCarousel && post.slides && post.slides.length > 0 && (
+          {actualMediaType === 'carousel' && post.slides && post.slides.length > 0 && (
             <CarouselCard slides={post.slides} />
           )}
           

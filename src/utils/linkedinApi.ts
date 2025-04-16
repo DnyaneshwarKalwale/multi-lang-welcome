@@ -940,12 +940,25 @@ class LinkedInApi {
   // Delete a post
   async deleteDBPost(postId: string): Promise<any> {
     try {
+      // Check if it's a local storage post by the ID prefix
+      if (postId.startsWith('draft_') || postId.startsWith('scheduled_')) {
+        console.log('Deleting local post from localStorage:', postId);
+        // Remove from localStorage
+        localStorage.removeItem(postId);
+        return {
+          success: true,
+          message: 'Post deleted from localStorage'
+        };
+      }
+      
+      // Otherwise delete from the database
       const token = tokenManager.getToken();
       
       if (!token) {
         throw new Error("Authentication token not available. Please login again.");
       }
       
+      console.log('Deleting post from API:', postId);
       const response = await axios.delete(`${this.POSTS_API_URL}/${postId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
