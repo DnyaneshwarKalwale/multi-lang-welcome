@@ -210,7 +210,7 @@ const PostLibraryPage: React.FC = () => {
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
-    localStorage.setItem('redirectAfterAuth', '/dashboard/library');
+    localStorage.setItem('redirectAfterAuth', '/dashboard/posts');
     
     // Redirect to LinkedIn OAuth endpoint
     window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
@@ -984,14 +984,14 @@ const PostLibraryPage: React.FC = () => {
     return (
       <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col border dark:border-gray-700">
         {/* User Info Header */}
-        <div className="flex items-center p-4 border-b dark:border-gray-700">
-          <Avatar className="h-10 w-10 mr-3">
+        <div className="flex items-center p-3 sm:p-4 border-b dark:border-gray-700">
+          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 mr-2 sm:mr-3">
             <AvatarImage src={user?.profilePicture || '/placeholder-avatar.png'} alt={`${user?.firstName} ${user?.lastName}` || 'User'} />
             <AvatarFallback>{user?.firstName?.[0] || 'U'}</AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <h3 className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : 'User'}</h3>
-            <p className="text-xs text-muted-foreground">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium truncate">{user ? `${user.firstName} ${user.lastName}` : 'User'}</h3>
+            <p className="text-xs text-muted-foreground truncate">
               {type === 'published' ? 'Posted' : type === 'scheduled' ? 'Scheduled' : 'Draft'} · {
                 type === 'scheduled' && (post as ScheduledPost).scheduledTime ? 
                   new Date((post as ScheduledPost).scheduledTime).toLocaleString() : 
@@ -1001,7 +1001,7 @@ const PostLibraryPage: React.FC = () => {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 ml-1">
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
@@ -1043,7 +1043,7 @@ const PostLibraryPage: React.FC = () => {
           </DropdownMenu>
         </div>
         
-        <CardContent className="p-4 flex-grow overflow-auto space-y-4">
+        <CardContent className="p-3 sm:p-4 flex-grow overflow-auto space-y-4">
           {/* Post Content */}
           <div className="text-sm whitespace-pre-wrap">
             {post.content || post.excerpt || "No content"}
@@ -1055,7 +1055,7 @@ const PostLibraryPage: React.FC = () => {
               <img 
                 src={post.postImage.secure_url} 
                 alt="Post image"
-                className="w-full object-contain max-h-[280px]"
+                className="w-full object-contain max-h-[200px] sm:max-h-[280px]"
               />
             </div>
           )}
@@ -1112,53 +1112,53 @@ const PostLibraryPage: React.FC = () => {
             </div>
           ) : (
             // For drafts and scheduled posts, show action buttons
-            <div className="flex gap-1 p-2 w-full">
+            <div className="w-full">
               {type === 'draft' && (
-                <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 p-2">
                   <Button 
                     variant="outline" 
                     onClick={() => editDraft(post.id)} 
-                    className="flex-1 h-9 text-xs"
+                    className="h-9 text-xs"
                   >
                     <PencilLine size={12} className="mr-1" /> Edit
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => scheduleDraft(post.id)} 
-                    className="flex-1 h-9 text-xs"
+                    className="h-9 text-xs"
                   >
                     <Calendar size={12} className="mr-1" /> Schedule
                   </Button>
                   <Button 
                     variant="default" 
                     onClick={() => publishDraft(post.id)} 
-                    className="flex-1 h-9 text-xs"
+                    className="h-9 text-xs"
                     disabled={isPublishing}
                   >
                     {isPublishing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Send size={12} className="mr-1" />}
                     Publish
                   </Button>
-                </>
+                </div>
               )}
               {type === 'scheduled' && (
-                <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 p-2">
                   <Button 
                     variant="outline" 
                     onClick={() => editScheduledPost(post.id)} 
-                    className="flex-1 h-9 text-xs"
+                    className="h-9 text-xs"
                   >
                     <PencilLine size={12} className="mr-1" /> Edit
                   </Button>
                   <Button 
                     variant="default" 
                     onClick={() => publishScheduledPost(post.id)} 
-                    className="flex-1 h-9 text-xs"
+                    className="h-9 text-xs"
                     disabled={isPublishing}
                   >
                     {isPublishing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Send size={12} className="mr-1" />}
                     Publish Now
                   </Button>
-                </>
+                </div>
               )}
             </div>
           )}
@@ -1185,9 +1185,9 @@ const PostLibraryPage: React.FC = () => {
   }, [locationState]);
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-neutral-black">Post Library</h1>
+    <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-black">Post Library</h1>
         
         <div className="flex gap-2">
           {(drafts.some(d => d.id.startsWith('draft_')) || 
@@ -1196,23 +1196,24 @@ const PostLibraryPage: React.FC = () => {
               variant="outline"
               onClick={migrateLocalPosts}
               disabled={isMigrating}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 text-xs sm:text-sm"
             >
               {isMigrating ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
                 <File className="h-4 w-4" />
               )}
-              Migrate Local Posts
+              <span className="hidden sm:inline">Migrate Local Posts</span>
+              <span className="inline sm:hidden">Migrate</span>
             </Button>
           )}
-          
-          <Button 
-            onClick={() => navigate('/dashboard/post')}
-            className="bg-primary text-white"
-          >
-            Create New Post
-          </Button>
+        
+        <Button 
+          onClick={() => navigate('/dashboard/post')}
+          className="bg-primary text-white text-xs sm:text-sm"
+        >
+          Create New Post
+        </Button>
         </div>
       </div>
       
@@ -1275,7 +1276,7 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               </Card>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
               {drafts.map((draft) => (
                 <div key={draft.id} className="h-full">
                   {renderPostCard(draft, 'draft')}
@@ -1298,7 +1299,7 @@ const PostLibraryPage: React.FC = () => {
                 </div>
               </Card>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
               {scheduled.map((post) => (
                 <div key={post.id} className="h-full">
                   {renderPostCard(post, 'scheduled')}
@@ -1321,7 +1322,7 @@ const PostLibraryPage: React.FC = () => {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
               {published.map((post) => (
                 <div key={post.id} className="h-full">
                   {renderPostCard(post, 'published')}

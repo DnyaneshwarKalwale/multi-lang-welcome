@@ -1171,7 +1171,7 @@ const CreatePostPage: React.FC = () => {
         });
         
         // Navigate to the post library scheduled tab
-        navigate('/dashboard/library', { state: { scheduled: true, activeTab: 'scheduled' } });
+        navigate('/dashboard/posts', { state: { scheduled: true, activeTab: 'scheduled' } });
       } else {
         toast.error('Failed to schedule post. Please try again.');
       }
