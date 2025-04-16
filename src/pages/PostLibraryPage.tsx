@@ -495,10 +495,22 @@ const PostLibraryPage: React.FC = () => {
     const updatedDrafts = drafts.filter(d => d.id !== draftId);
     setDrafts(updatedDrafts);
     
+    // Clean up any existing localStorage values to prevent issues
+    localStorage.removeItem('state:createPost.postImage');
+    localStorage.removeItem('state:createPost.slides');
+    localStorage.removeItem('state:createPost.scheduledDate');
+    localStorage.removeItem('state:createPost.scheduleTime');
+    
     // Set up the form data in localStorage for the create post page
     Object.entries(draft).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
-        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        // Make sure we don't store null/undefined values
+        if (value !== null && value !== undefined) {
+          localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        } else {
+          // Remove the key if it exists to avoid parsing errors
+          localStorage.removeItem(`state:createPost.${key}`);
+        }
       }
     });
     
@@ -534,10 +546,22 @@ const PostLibraryPage: React.FC = () => {
     const updatedScheduled = scheduled.filter(p => p.id !== postId);
     setScheduled(updatedScheduled);
     
+    // Clean up any existing localStorage values to prevent issues
+    localStorage.removeItem('state:createPost.postImage');
+    localStorage.removeItem('state:createPost.slides');
+    localStorage.removeItem('state:createPost.scheduledDate');
+    localStorage.removeItem('state:createPost.scheduleTime');
+    
     // Set up the form data in localStorage
     Object.entries(post).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status' && key !== 'scheduledTime') {
-        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        // Make sure we don't store null/undefined values
+        if (value !== null && value !== undefined) {
+          localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        } else {
+          // Remove the key if it exists to avoid parsing errors
+          localStorage.removeItem(`state:createPost.${key}`);
+        }
       }
     });
     

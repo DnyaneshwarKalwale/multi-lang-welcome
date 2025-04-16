@@ -83,7 +83,16 @@ export function StateProvider({ children }: { children: ReactNode }) {
     try {
       const rawValue = localStorage.getItem(`state:${key}`);
       if (rawValue) {
-        const { value, expiry } = JSON.parse(rawValue);
+        const parsed = JSON.parse(rawValue);
+        
+        // Check if parsed value is null or doesn't have the expected structure
+        if (!parsed || typeof parsed !== 'object') {
+          console.warn(`Invalid state format for ${key}, removing item`);
+          localStorage.removeItem(`state:${key}`);
+          return defaultValue;
+        }
+        
+        const { value, expiry } = parsed;
         
         // Check if expired
         if (expiry && new Date().getTime() > expiry) {
@@ -97,6 +106,8 @@ export function StateProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       console.error(`Error reading state for ${key}:`, e);
+      // If there was an error, clean up the problematic value
+      localStorage.removeItem(`state:${key}`);
     }
     
     return defaultValue;

@@ -488,23 +488,22 @@ const CreatePostPage: React.FC = () => {
       
       // Open schedule dialog if requested - but only once
       if (locationState.openScheduleDialog) {
-        // Use a ref to track if we've already opened the dialog to prevent reopening
-        const hasOpenedDialogRef = React.useRef(false);
-        
-        if (!hasOpenedDialogRef.current) {
-          // Mark that we've opened the dialog
-          hasOpenedDialogRef.current = true;
+        // Create a delay to ensure all state is properly initialized first
+        console.log('Opening schedule dialog from location state');
+        setTimeout(() => {
+          // Check for any required state before opening
+          if (postImage === null) {
+            // Clear any existing postImage data in localStorage to prevent errors
+            localStorage.removeItem('state:createPost.postImage');
+          }
           
-          // Use a slightly longer delay to ensure the component is fully rendered
-          console.log('Opening schedule dialog from location state');
-          setTimeout(() => {
-            setShowScheduleDialog(true);
-            console.log('Schedule dialog opened');
-          }, 100);
-        }
+          // Now it's safe to open the dialog
+          setShowScheduleDialog(true);
+          console.log('Schedule dialog opened');
+        }, 500); // Increased timeout to ensure state is fully loaded
       }
     }
-  }, [locationState, setContent, setHashtags, setAiGeneratedImage, setActiveTab]);
+  }, [locationState, setContent, setHashtags, setAiGeneratedImage, setActiveTab, postImage]);
   
   // Helper function to show save indicator
   const showSaveIndicator = () => {
