@@ -605,12 +605,24 @@ const CreatePostPage: React.FC = () => {
         slideCount: slides.length
       };
       
-      // Save to backend only - no localStorage fallback
+      // Save to backend
+      try {
         const savedDraft = await linkedInApi.saveDraft(draft);
-      
         // Update the local ID with the one from the backend
         draft.id = savedDraft.id || draft.id;
         toast.success('Draft saved to backend');
+      } catch (apiError) {
+        console.error('Error saving draft to backend:', apiError);
+        // Fallback to localStorage if API fails
+        console.log('Backend save failed, using localStorage');
+        
+        // Get existing drafts from localStorage
+        const existingDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
+        
+        // Add new draft to beginning of array
+        localStorage.setItem('post_drafts', JSON.stringify([draft, ...existingDrafts]));
+        toast.error('Failed to save to database, draft saved locally');
+      }
       
       // Clear form data from localStorage
       Object.keys(localStorage).forEach(key => {
@@ -621,9 +633,6 @@ const CreatePostPage: React.FC = () => {
       
       // Navigate back to library
       navigate('/dashboard/posts', { state: { activeTab: 'drafts', newDraft: true, draftId: draft.id } });
-    } catch (error) {
-      console.error('Error saving draft to backend:', error);
-      toast.error('Failed to save draft to backend. Please ensure you are connected to the internet and try again.');
     } finally {
       setIsSavingDraft(false);
     }
@@ -679,12 +688,23 @@ const CreatePostPage: React.FC = () => {
         slideCount: slides.length
       };
       
-      // Save to backend only - no localStorage fallback
+      // Try to save to backend
+      try {
         const savedPost = await linkedInApi.saveScheduledPost(scheduledPost);
-      
         // Update the local ID with the one from the backend
         scheduledPost.id = savedPost.id || scheduledPost.id;
         toast.success(`Post scheduled for ${scheduledDateTime.toLocaleString()}`);
+      } catch (apiError) {
+        console.error('Backend scheduling failed, using localStorage:', apiError);
+        
+        // Fallback to localStorage if API fails
+        // Get existing scheduled posts from localStorage
+        const existingScheduled = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
+        
+        // Add new scheduled post to beginning of array
+        localStorage.setItem('scheduled_posts', JSON.stringify([scheduledPost, ...existingScheduled]));
+        toast.error('Failed to save to database, scheduled post saved locally');
+      }
       
       // Clear form data from localStorage
       Object.keys(localStorage).forEach(key => {
@@ -695,9 +715,6 @@ const CreatePostPage: React.FC = () => {
       
       // Navigate back to library
       navigate('/dashboard/posts', { state: { activeTab: 'scheduled', scheduled: true, scheduledTime: scheduledDateTime.toISOString(), scheduledPostId: scheduledPost.id } });
-    } catch (error) {
-      console.error('Error scheduling post:', error);
-      toast.error('Failed to schedule post to backend. Please ensure you are connected to the internet and try again.');
     } finally {
       setIsPublishing(false);
       setShowScheduleDialog(false);

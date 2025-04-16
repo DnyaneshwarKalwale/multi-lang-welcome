@@ -1,38 +1,19 @@
 import axios from 'axios';
 import { tokenManager } from '@/services/api';
-import { toast } from 'sonner';
 
 // Import the API_URL from the services/api.ts file or define it here
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
 
-// Import a flag to enable development mode
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true' || false;
-
 // Helper function to get the best available LinkedIn token
 const getLinkedInToken = (accessToken?: string): string => {
-  console.log('Getting LinkedIn token with provided token:', !!accessToken);
-  
   // First try the provided access token (highest priority)
-  if (accessToken) {
-    console.log('Using provided access token');
-    return accessToken;
-  }
+  if (accessToken) return accessToken;
   
   // Then try LinkedIn-specific token from tokenManager
   const linkedinToken = tokenManager.getToken('linkedin');
-  console.log('LinkedIn token from tokenManager:', !!linkedinToken);
-  
-  // If tokenManager fails, try direct localStorage access as fallback
-  if (!linkedinToken) {
-    const directToken = localStorage.getItem('linkedin-login-token');
-    console.log('Direct LinkedIn token from localStorage:', !!directToken);
-    if (directToken) return directToken;
-  } else {
-    return linkedinToken;
-  }
+  if (linkedinToken) return linkedinToken;
   
   // No token available
-  console.warn('No LinkedIn token available');
   return '';
 };
 
@@ -121,77 +102,9 @@ export interface ScheduledPostData {
   userId?: string;
 }
 
-// Add helper to redirect to LinkedIn reconnection
-const redirectToLinkedInAuth = () => {
-  // Get the backend URL from environment variable or fallback to Render deployed URL
-  const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-  const baseUrl = baseApiUrl.replace('/api', '');
-  
-  // Store current URL in localStorage to redirect back after LinkedIn connection
-  localStorage.setItem('redirectAfterAuth', window.location.pathname);
-  
-  // Prevent redirect loops by checking if we've recently redirected
-  const lastRedirectTime = localStorage.getItem('lastLinkedInRedirect');
-  const now = Date.now();
-  
-  if (lastRedirectTime && (now - parseInt(lastRedirectTime)) < 60000) {
-    // If we redirected less than 1 minute ago, don't redirect again
-    toast.error('LinkedIn reconnection failed. Please try again later or contact support.');
-    console.error('LinkedIn auth redirect loop detected. Aborting redirect.');
-    return false;
-  }
-  
-  // Store the redirect time
-  localStorage.setItem('lastLinkedInRedirect', now.toString());
-  
-  // Redirect to LinkedIn OAuth endpoint
-  window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
-  return true;
-};
-
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
-  private devModeEnabled = DEV_MODE;
-
-  // Toggle development mode
-  setDevMode(enabled: boolean): void {
-    this.devModeEnabled = enabled;
-    console.log(`LinkedIn API dev mode ${enabled ? 'enabled' : 'disabled'}`);
-  }
-
-  // Expose getLinkedInToken as a public method
-  getToken(accessToken?: string): string {
-    return getLinkedInToken(accessToken);
-  }
-
-  // Debug method to check token status
-  async debugTokenStatus(): Promise<{
-    hasToken: boolean,
-    tokenValue: string,
-    authMethod: string | null,
-    localStorage: Record<string, string | null>
-  }> {
-    // Get the token using our helper
-    const token = getLinkedInToken();
-    
-    // Get auth method
-    const authMethod = localStorage.getItem('auth-method');
-    
-    // Check all relevant localStorage values
-    const relevantStorage = {
-      'auth-method': localStorage.getItem('auth-method'),
-      'linkedin-login-token': localStorage.getItem('linkedin-login-token')?.substring(0, 20) + '...' || null,
-      'google-login-token': localStorage.getItem('google-login-token')?.substring(0, 20) + '...' || null,
-    };
-    
-    return {
-      hasToken: !!token,
-      tokenValue: token ? token.substring(0, 20) + '...' : '',
-      authMethod,
-      localStorage: relevantStorage
-    };
-  }
 
   // Add a test connectivity method
   async testConnection(): Promise<{ success: boolean; message: string; details?: any; errorType?: string }> {
@@ -305,33 +218,8 @@ class LinkedInApi {
         'Authorization': `Bearer ${token}`
       };
       
-      // Try to get the ID from the profile endpoint
-      try {
-        const response = await axios.get(`${this.API_URL}/profile`, { headers });
-        return response.data.id;
-      } catch (profileError) {
-        console.error('Error fetching LinkedIn profile:', profileError);
-        
-        // If the /profile endpoint fails, try the /basic-profile endpoint
-        try {
-          const basicResponse = await axios.get(`${this.API_URL}/basic-profile`, { headers });
-          if (basicResponse.data && basicResponse.data.data && basicResponse.data.data.id) {
-            return basicResponse.data.data.id;
-          }
-        } catch (basicProfileError) {
-          console.error('Error fetching LinkedIn basic profile:', basicProfileError);
-        }
-        
-        // Check for token expiration in the profile error
-        if (profileError?.response?.status === 500 && 
-            profileError?.response?.data?.details?.includes('LinkedIn access token has expired')) {
-          this.handleApiError(profileError, 'fetching LinkedIn profile');
-        }
-        
-        // If all API calls fail, use a default mock ID for development
-        console.warn('Using mock LinkedIn ID for development purposes');
-        return 'mock-linkedin-id-12345';
-      }
+      const response = await axios.get(`${this.API_URL}/profile`, { headers });
+      return response.data.id;
     } catch (error) {
       console.error('Error getting LinkedIn user ID:', error);
       throw error;
@@ -345,12 +233,6 @@ class LinkedInApi {
     accessToken?: string
   ): Promise<LinkedInPostResponse> {
     try {
-      // In development mode, return mock data if enabled
-      if (this.devModeEnabled) {
-        console.log('[DEV MODE] Simulating LinkedIn post creation');
-        return this.mockPostResponse(text);
-      }
-      
       const token = getLinkedInToken(accessToken);
 
       // Create a post with just text content
@@ -369,50 +251,10 @@ class LinkedInApi {
       });
       
       return response.data;
-    } catch (error: any) {
-      // Check for LinkedIn token expiration
-      if (error?.response?.status === 500 && 
-          error?.response?.data?.details?.includes('LinkedIn access token has expired')) {
-        
-        // In dev mode, return mock data instead of redirecting
-        if (this.devModeEnabled) {
-          toast.warning('LinkedIn token expired (DEV MODE - using mock data)');
-          return this.mockPostResponse(text);
-        }
-        
-        toast.error('LinkedIn connection expired. Please reconnect your account.');
-        console.error('LinkedIn token expired:', error?.response?.data?.details);
-        
-        // Give user time to see toast before redirect
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Try to redirect, and if it fails (redirect loop protection), use mock data
-        if (!redirectToLinkedInAuth()) {
-          toast.warning('Using fallback mode for LinkedIn posts');
-          return this.mockPostResponse(text);
-        }
-      }
-      
-      // For other errors, just throw
+    } catch (error) {
       console.error('Error creating LinkedIn post:', error);
       throw error;
     }
-  }
-  
-  // Helper to create mock response data for development
-  private mockPostResponse(text: string): LinkedInPostResponse {
-    const now = Date.now();
-    return {
-      id: `mock-post-${now}`,
-      activity: `urn:li:activity:${now}`,
-      owner: 'urn:li:person:mock-linkedin-id-12345',
-      created: {
-        time: now
-      },
-      lastModified: {
-        time: now
-      }
-    };
   }
 
   // Initialize image upload to LinkedIn
@@ -740,82 +582,6 @@ class LinkedInApi {
       console.error('Error publishing post:', error);
       throw error;
     }
-  }
-
-  // Universal method to publish various post types to LinkedIn
-  async publishPostToLinkedIn(post: any): Promise<any> {
-    try {
-      const token = getLinkedInToken();
-      
-      // Determine post type and content
-      const postData: {
-        postContent: string;
-        visibility: string;
-        accessToken: string;
-        imagePath?: string;
-        imageTitle?: string;
-        imageDescription?: string;
-        pollOptions?: string[];
-        pollDuration?: number;
-      } = {
-        postContent: post.content || '',
-        visibility: post.visibility || 'PUBLIC',
-        accessToken: token
-      };
-      
-      // Add image if available
-      if (post.postImage) {
-        postData.imagePath = post.postImage.secure_url;
-        postData.imageTitle = post.title || 'Shared image';
-        postData.imageDescription = "Shared via Scripe";
-      }
-      
-      // Add poll options if it's a poll
-      if (post.isPollActive && post.pollOptions && post.pollOptions.length > 0) {
-        postData.pollOptions = post.pollOptions;
-        postData.pollDuration = post.pollDuration * 86400 || 604800; // Default to 7 days in seconds
-      }
-      
-      // Use the appropriate endpoint for the post type
-      const response = await axios.post(`${this.API_URL}/post`, postData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error publishing to LinkedIn:', error);
-      throw error;
-    }
-  }
-
-  // Public method to reconnect LinkedIn
-  reconnectLinkedIn(): boolean {
-    return redirectToLinkedInAuth();
-  }
-
-  // Add a method to handle expired token errors
-  private handleApiError(error: any, actionLabel: string = 'performing action'): never {
-    console.error(`Error ${actionLabel}:`, error);
-    
-    // Check if it's a token expiration error
-    if (error?.response?.status === 500 && 
-        error?.response?.data?.details?.includes('LinkedIn access token has expired')) {
-      
-      console.log('LinkedIn token expired, prompting for reconnection');
-      
-      // Show toast message using imported toast from sonner
-      toast.error('Your LinkedIn connection has expired. Redirecting to reconnect...');
-      
-      // Redirect after a small delay to allow the user to see the message
-      setTimeout(() => {
-        redirectToLinkedInAuth();
-      }, 2000);
-    }
-    
-    throw error;
   }
 }
 

@@ -54,7 +54,7 @@ export const tokenManager = {
 api.interceptors.request.use(
   (config) => {
     // Determine which token to use based on the API endpoint
-    let token: string | null;
+    let token;
     
     // First try to match token by endpoint
     if (config.url?.includes('/linkedin')) {
