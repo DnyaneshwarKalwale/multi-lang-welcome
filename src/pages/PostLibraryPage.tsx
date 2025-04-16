@@ -522,88 +522,79 @@ const PostLibraryPage: React.FC = () => {
   
   // Publish a draft directly
   const publishDraft = async (draftId: string) => {
-    // Find the draft
-    const draft = drafts.find(d => d.id === draftId);
-    if (!draft) return;
-    
-    if (!window.confirm('Are you sure you want to publish this draft to LinkedIn?')) return;
+    if (!window.confirm('Are you sure you want to publish this draft to LinkedIn now?')) return;
     
     try {
       setIsPublishing(true);
       
-      // Check for LinkedIn authentication directly from localStorage
-      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      // First, check if we need to migrate this post
+      const isLocalPost = draftId.startsWith('draft_');
+      const draft = drafts.find(d => d.id === draftId);
       
-      if (!linkedInToken) {
-        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
-        setIsPublishing(false);
-        setLinkedInAuthError(true);
-        return;
+      if (!draft) {
+        throw new Error('Draft not found');
       }
       
-      // For localStorage-based drafts, first migrate to database
-      if (draftId.startsWith('draft_')) {
-        toast.info('Migrating draft to database before publishing...');
+      // First migrate local posts to the database before publishing
+      if (isLocalPost) {
         try {
-          // Create a database post first
-          const postData = {
-            title: draft.title || 'Draft Post',
-            content: draft.content,
-            hashtags: draft.hashtags,
-            mediaType: draft.postImage ? 'image' : draft.slides && draft.slides.length > 0 ? 'carousel' : 'none',
-            postImage: draft.postImage,
-            slides: draft.slides,
-            isPollActive: draft.isPollActive,
-            pollOptions: draft.pollOptions,
-            status: 'draft',
-            visibility: draft.visibility || 'PUBLIC'
-          };
+          console.log('Migrating local draft before publishing');
+          // Use the single post migration function
+          const migrationResult = await linkedInApi.migrateSinglePostToDatabase(draft);
           
-          const createResponse = await linkedInApi.createDBPost(postData);
-          
-          if (createResponse && createResponse.data) {
-            // Use the new database ID
-            const dbDraftId = createResponse.data._id;
+          if (migrationResult.success && migrationResult.migratedPost) {
+            // Get the database ID of the migrated post
+            const dbPostId = migrationResult.migratedPost.dbId;
             
-            // Publish using the backend API
-            const publishResponse = await linkedInApi.publishDBPost(dbDraftId);
+            if (!dbPostId) {
+              throw new Error('Failed to get database ID for migrated post');
+            }
             
-            // Remove original localStorage draft
-            localStorage.removeItem(draftId);
+            console.log('Local post migrated successfully, publishing with DB ID:', dbPostId);
             
-            // Update state
-            const updatedDrafts = drafts.filter(d => d.id !== draftId);
-            setDrafts(updatedDrafts);
+            // Now publish the migrated post
+            const publishResponse = await linkedInApi.publishDBPost(dbPostId);
             
-            // Create a published post object for the UI
-            const publishedPost: PublishedPost = {
-              id: publishResponse?.data?._id || `published_${Date.now()}`,
-              title: draft.title || 'Published Post',
-              content: draft.content,
-              excerpt: draft.content?.substring(0, 100) + '...',
-              publishedDate: new Date().toLocaleDateString(),
-              isCarousel: draft.slides && draft.slides.length > 0,
-              slideCount: draft.slides?.length || 0,
-              status: 'published',
-              postImage: draft.postImage,
-              hashtags: draft.hashtags,
-              isPollActive: draft.isPollActive,
-              pollOptions: draft.pollOptions
-            };
-            
-            // Add the new published post to the state
-            setPublished(prevPublished => [publishedPost, ...prevPublished]);
-            toast.success('Post published to LinkedIn successfully');
-            setActiveTab('published');
-            
-            // Reload user content to make sure all data is up to date
-            await loadUserContent();
+            if (publishResponse.success) {
+              // Remove from localStorage
+              localStorage.removeItem(draftId);
+              
+              // Remove from drafts in local state
+              const updatedDrafts = drafts.filter(d => d.id !== draftId);
+              setDrafts(updatedDrafts);
+              
+              // Create a published post object for the UI
+              const publishedPost: PublishedPost = {
+                id: publishResponse.data._id,
+                title: draft.title || 'Published Post',
+                content: draft.content,
+                excerpt: draft.content?.substring(0, 100) + '...',
+                publishedDate: new Date().toLocaleDateString(),
+                isCarousel: draft.slides && draft.slides.length > 0,
+                slideCount: draft.slides?.length || 0,
+                status: 'published',
+                postImage: draft.postImage,
+                hashtags: draft.hashtags,
+                isPollActive: draft.isPollActive,
+                pollOptions: draft.pollOptions
+              };
+              
+              // Add the new published post to the state
+              setPublished(prevPublished => [publishedPost, ...prevPublished]);
+              toast.success('Post published to LinkedIn successfully');
+              setActiveTab('published');
+              
+              // Reload user content to ensure all data is updated
+              await loadUserContent();
+            } else {
+              throw new Error('Failed to publish post after migration');
+            }
           } else {
-            throw new Error('Failed to create database post before publishing');
+            throw new Error('Failed to migrate post');
           }
         } catch (migrationError) {
-          console.error('Error migrating draft before publishing:', migrationError);
-          throw migrationError;
+          console.error('Error publishing draft after migration:', migrationError);
+          toast.error('Failed to publish post: ' + (migrationError.message || 'Unknown error'));
         }
       } else {
         // For database-backed posts, publish directly
@@ -611,159 +602,123 @@ const PostLibraryPage: React.FC = () => {
         
         console.log('Published post response:', response);
         
-        // Remove from drafts in local state
-        const updatedDrafts = drafts.filter(d => d.id !== draftId);
-        setDrafts(updatedDrafts);
-        
-        // Create a published post object for the UI based on the API response
-        const publishedPost: PublishedPost = {
-          id: response?.data?._id || draftId,
-          title: draft.title || 'Published Post',
-          content: draft.content,
-          excerpt: draft.content?.substring(0, 100) + '...',
-          publishedDate: new Date().toLocaleDateString(),
-          isCarousel: draft.slides && draft.slides.length > 0,
-          slideCount: draft.slides?.length || 0,
-          status: 'published',
-          postImage: draft.postImage,
-          hashtags: draft.hashtags,
-          isPollActive: draft.isPollActive,
-          pollOptions: draft.pollOptions
-        };
-        
-        // Add the new published post to the state
-        setPublished(prevPublished => [publishedPost, ...prevPublished]);
-        toast.success('Post published to LinkedIn successfully');
-        setActiveTab('published');
-        
-        // Reload user content to make sure all data is up to date
-        await loadUserContent();
+        if (response.success && response.data) {
+          // Remove from drafts in local state
+          const updatedDrafts = drafts.filter(d => d.id !== draftId);
+          setDrafts(updatedDrafts);
+          
+          // Create a published post object for the UI based on the API response
+          const publishedPost: PublishedPost = {
+            id: response.data._id || draftId,
+            title: response.data.title || draft.title || 'Published Post',
+            content: response.data.content || draft.content,
+            excerpt: (response.data.content || draft.content)?.substring(0, 100) + '...',
+            publishedDate: response.data.publishedTime 
+              ? new Date(response.data.publishedTime).toLocaleDateString() 
+              : new Date().toLocaleDateString(),
+            isCarousel: draft.slides && draft.slides.length > 0,
+            slideCount: draft.slides?.length || 0,
+            status: 'published',
+            postImage: response.data.postImage || draft.postImage,
+            hashtags: response.data.hashtags || draft.hashtags,
+            isPollActive: response.data.isPollActive || draft.isPollActive,
+            pollOptions: response.data.pollOptions || draft.pollOptions
+          };
+          
+          // Add the new published post to the state
+          setPublished(prevPublished => [publishedPost, ...prevPublished]);
+          toast.success('Post published to LinkedIn successfully');
+          setActiveTab('published');
+          
+          // Reload user content to make sure all data is up to date
+          await loadUserContent();
+        } else {
+          throw new Error('Invalid response from server when publishing post');
+        }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error publishing draft:', error);
-      
-      // Check for token expiration message from our API handler
-      if (error.message && error.message.includes('authentication expired')) {
-        setLinkedInAuthError(true);
-        toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
-        
-        // Show reconnect dialog
-        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
-          handleConnectLinkedIn();
-        }
-        return;
-      }
-      
-      // Check if it's a LinkedIn auth error
-      if (error?.response?.status === 401 || 
-          (error?.response?.status === 500 && 
-           error?.response?.data?.details?.includes('token has expired'))) {
-        setLinkedInAuthError(true);
-        toast.error('LinkedIn authentication failed. Please reconnect your account.');
-        
-        // Show reconnect dialog
-        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
-          handleConnectLinkedIn();
-        }
-      } else {
-        toast.error('Failed to publish draft: ' + (error.message || 'Unknown error'));
-      }
+      toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
     } finally {
       setIsPublishing(false);
     }
   };
   
-  // Similar update for publishScheduledPost function
+  // Publish a scheduled post immediately
   const publishScheduledPost = async (postId: string) => {
-    // Find the scheduled post
-    const post = scheduled.find(p => p.id === postId);
-    if (!post) return;
-    
-    if (!window.confirm('Are you sure you want to publish this post to LinkedIn now?')) return;
+    if (!window.confirm('Are you sure you want to publish this scheduled post to LinkedIn now?')) return;
     
     try {
       setIsPublishing(true);
       
-      // Check for LinkedIn authentication directly from localStorage
-      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      // First, check if we need to migrate this post
+      const isLocalPost = postId.startsWith('scheduled_');
+      const scheduledPost = scheduled.find(p => p.id === postId);
       
-      if (!linkedInToken) {
-        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
-        setIsPublishing(false);
-        setLinkedInAuthError(true);
-        return;
+      if (!scheduledPost) {
+        throw new Error('Scheduled post not found');
       }
       
-      // For localStorage-based scheduled posts, first migrate to database
-      if (postId.startsWith('scheduled_')) {
-        toast.info('Migrating scheduled post to database before publishing...');
+      // First migrate local posts to the database before publishing
+      if (isLocalPost) {
         try {
-          // Create a database post first
-          const postData = {
-            title: post.title || 'Scheduled Post',
-            content: post.content,
-            hashtags: post.hashtags,
-            mediaType: post.postImage ? 'image' : post.slides && post.slides.length > 0 ? 'carousel' : 'none',
-            postImage: post.postImage,
-            slides: post.slides,
-            isPollActive: post.isPollActive,
-            pollOptions: post.pollOptions,
-            status: 'scheduled',
-            visibility: post.visibility || 'PUBLIC',
-            scheduledTime: post.scheduledTime
-          };
+          console.log('Migrating local scheduled post before publishing');
+          // Use the single post migration function
+          const migrationResult = await linkedInApi.migrateSinglePostToDatabase(scheduledPost);
           
-          console.log('Creating DB post with data:', postData);
-          
-          const createResponse = await linkedInApi.createDBPost(postData);
-          
-          if (createResponse && createResponse.data) {
-            // Use the new database ID
-            const dbPostId = createResponse.data._id;
+          if (migrationResult.success && migrationResult.migratedPost) {
+            // Get the database ID of the migrated post
+            const dbPostId = migrationResult.migratedPost.dbId;
             
-            console.log('Publishing DB post with ID:', dbPostId);
+            if (!dbPostId) {
+              throw new Error('Failed to get database ID for migrated post');
+            }
             
-            // Publish using the backend API
+            console.log('Local post migrated successfully, publishing with DB ID:', dbPostId);
+            
+            // Now publish the migrated post
             const publishResponse = await linkedInApi.publishDBPost(dbPostId);
             
-            console.log('Publish response:', publishResponse);
-            
-            // Remove original localStorage scheduled post
-            localStorage.removeItem(postId);
-            
-            // Update state
-            const updatedScheduled = scheduled.filter(p => p.id !== postId);
-            setScheduled(updatedScheduled);
-            
-            // Create a published post object for the UI
-            const publishedPost: PublishedPost = {
-              id: publishResponse?.data?._id || `published_${Date.now()}`,
-              title: post.title || 'Published Post',
-              content: post.content,
-              excerpt: post.content?.substring(0, 100) + '...',
-              publishedDate: new Date().toLocaleDateString(),
-              isCarousel: post.slides && post.slides.length > 0,
-              slideCount: post.slides?.length || 0,
-              status: 'published',
-              postImage: post.postImage,
-              hashtags: post.hashtags,
-              isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions
-            };
-            
-            // Add the new published post to the state
-            setPublished(prevPublished => [publishedPost, ...prevPublished]);
-            toast.success('Post published to LinkedIn successfully');
-            setActiveTab('published');
-            
-            // Reload user content to make sure all data is up to date
-            await loadUserContent();
+            if (publishResponse.success) {
+              // Remove from localStorage
+              localStorage.removeItem(postId);
+              
+              // Remove from scheduled in local state
+              const updatedScheduled = scheduled.filter(p => p.id !== postId);
+              setScheduled(updatedScheduled);
+              
+              // Create a published post object for the UI
+              const publishedPost: PublishedPost = {
+                id: publishResponse.data._id,
+                title: scheduledPost.title || 'Published Post',
+                content: scheduledPost.content,
+                excerpt: scheduledPost.content?.substring(0, 100) + '...',
+                publishedDate: new Date().toLocaleDateString(),
+                isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
+                slideCount: scheduledPost.slides?.length || 0,
+                status: 'published',
+                postImage: scheduledPost.postImage,
+                hashtags: scheduledPost.hashtags,
+                isPollActive: scheduledPost.isPollActive,
+                pollOptions: scheduledPost.pollOptions
+              };
+              
+              // Add the new published post to the state
+              setPublished(prevPublished => [publishedPost, ...prevPublished]);
+              toast.success('Post published to LinkedIn successfully');
+              setActiveTab('published');
+              
+              // Reload user content to ensure all data is updated
+              await loadUserContent();
+            } else {
+              throw new Error('Failed to publish post after migration');
+            }
           } else {
-            throw new Error('Failed to create database post before publishing');
+            throw new Error('Failed to migrate post');
           }
         } catch (migrationError) {
-          console.error('Error migrating scheduled post before publishing:', migrationError);
-          throw migrationError;
+          console.error('Error publishing scheduled post after migration:', migrationError);
+          toast.error('Failed to publish post: ' + (migrationError.message || 'Unknown error'));
         }
       } else {
         // For database-backed posts, publish directly
@@ -771,63 +726,43 @@ const PostLibraryPage: React.FC = () => {
         
         console.log('Published scheduled post response:', response);
         
-        // Remove from scheduled in local state
-        const updatedScheduled = scheduled.filter(p => p.id !== postId);
-        setScheduled(updatedScheduled);
-        
-        // Create a published post object for the UI based on the API response
-        const publishedPost: PublishedPost = {
-          id: response?.data?._id || postId,
-          title: post.title || 'Published Post',
-          content: post.content,
-          excerpt: post.content?.substring(0, 100) + '...',
-          publishedDate: new Date().toLocaleDateString(),
-          isCarousel: post.slides && post.slides.length > 0,
-          slideCount: post.slides?.length || 0,
-          status: 'published',
-          postImage: post.postImage,
-          hashtags: post.hashtags,
-          isPollActive: post.isPollActive,
-          pollOptions: post.pollOptions
-        };
-        
-        // Add the new published post to the state
-        setPublished(prevPublished => [publishedPost, ...prevPublished]);
-        toast.success('Post published to LinkedIn successfully');
-        setActiveTab('published');
-        
-        // Reload user content to make sure all data is up to date
-        await loadUserContent();
+        if (response.success && response.data) {
+          // Remove from scheduled in local state
+          const updatedScheduled = scheduled.filter(p => p.id !== postId);
+          setScheduled(updatedScheduled);
+          
+          // Create a published post object for the UI based on the API response
+          const publishedPost: PublishedPost = {
+            id: response.data._id || postId,
+            title: response.data.title || scheduledPost.title || 'Published Post',
+            content: response.data.content || scheduledPost.content,
+            excerpt: (response.data.content || scheduledPost.content)?.substring(0, 100) + '...',
+            publishedDate: response.data.publishedTime 
+              ? new Date(response.data.publishedTime).toLocaleDateString() 
+              : new Date().toLocaleDateString(),
+            isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
+            slideCount: scheduledPost.slides?.length || 0,
+            status: 'published',
+            postImage: response.data.postImage || scheduledPost.postImage,
+            hashtags: response.data.hashtags || scheduledPost.hashtags,
+            isPollActive: response.data.isPollActive || scheduledPost.isPollActive,
+            pollOptions: response.data.pollOptions || scheduledPost.pollOptions
+          };
+          
+          // Add the new published post to the state
+          setPublished(prevPublished => [publishedPost, ...prevPublished]);
+          toast.success('Scheduled post published to LinkedIn successfully');
+          setActiveTab('published');
+          
+          // Reload user content to make sure all data is up to date
+          await loadUserContent();
+        } else {
+          throw new Error('Invalid response from server when publishing post');
+        }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error publishing scheduled post:', error);
-      
-      // Check for token expiration message from our API handler
-      if (error.message && error.message.includes('authentication expired')) {
-        setLinkedInAuthError(true);
-        toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
-        
-        // Show reconnect dialog
-        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
-          handleConnectLinkedIn();
-        }
-        return;
-      }
-      
-      // Check if it's a LinkedIn auth error
-      if (error?.response?.status === 401 || 
-          (error?.response?.status === 500 && 
-           error?.response?.data?.details?.includes('token has expired'))) {
-        setLinkedInAuthError(true);
-        toast.error('LinkedIn authentication failed. Please reconnect your account.');
-        
-        // Show reconnect dialog
-        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
-          handleConnectLinkedIn();
-        }
-      } else {
-        toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
-      }
+      toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
     } finally {
       setIsPublishing(false);
     }

@@ -968,6 +968,16 @@ class LinkedInApi {
         throw new Error("Authentication token not available. Please login again.");
       }
       
+      console.log('Publishing post with ID:', postId);
+      
+      // First get the current post data
+      const post = await this.getPostById(postId);
+      
+      if (!post || !post.data) {
+        throw new Error("Post not found or could not be retrieved");
+      }
+      
+      // Publish to LinkedIn
       const response = await axios.post(`${this.POSTS_API_URL}/${postId}/publish`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -975,9 +985,40 @@ class LinkedInApi {
         }
       });
       
-      return response.data;
+      console.log('Publish response from backend:', response.data);
+      
+      // Explicitly reload the post to ensure we have the latest data
+      const updatedPost = await this.getPostById(postId);
+      
+      return {
+        success: true,
+        data: updatedPost.data,
+        message: 'Post published successfully'
+      };
     } catch (error) {
       console.error('Error publishing post:', error);
+      throw error;
+    }
+  }
+  
+  // Get a post by ID
+  async getPostById(postId: string): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.get(`${this.POSTS_API_URL}/${postId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching post:', error);
       throw error;
     }
   }
@@ -1007,8 +1048,8 @@ class LinkedInApi {
     }
   }
 
-  // Migrate posts from localStorage to the database
-  async migrateLocalPostsToDatabase(): Promise<any> {
+  // Migrate a single post from localStorage to database
+  async migrateSinglePostToDatabase(post: any): Promise<any> {
     try {
       const token = tokenManager.getToken();
       
@@ -1016,54 +1057,107 @@ class LinkedInApi {
         throw new Error("Authentication token not available. Please login again.");
       }
       
-      // Collect all drafts and scheduled posts from localStorage
-      const postsToMigrate: any[] = [];
-      
-      // Scan localStorage for drafts and scheduled posts
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        
-        // Check for draft posts
-        if (key?.startsWith('draft_')) {
-          try {
-            const draftData = JSON.parse(localStorage.getItem(key) || '{}');
-            if (draftData.id) {
-              postsToMigrate.push({
-                ...draftData,
-                status: 'draft'
-              });
-            }
-          } catch (error) {
-            console.error('Error parsing draft for migration:', error);
+      // Call the migration API endpoint with a single post
+      const response = await axios.post(`${this.POSTS_API_URL}/migrate-from-local`, 
+        { posts: [post] },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        } 
-        // Check for scheduled posts
-        else if (key?.startsWith('scheduled_')) {
+        }
+      );
+      
+      // If migration was successful, remove from localStorage
+      if (response.data.success && response.data.results && response.data.results.length > 0) {
+        const result = response.data.results[0];
+        if (result.success) {
           try {
-            const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
-            if (scheduledData.id) {
-              postsToMigrate.push({
-                ...scheduledData,
-                status: 'scheduled'
-              });
-            }
+            localStorage.removeItem(post.id);
           } catch (error) {
-            console.error('Error parsing scheduled post for migration:', error);
+            console.error(`Error removing migrated post ${post.id} from localStorage:`, error);
+          }
+        }
+        
+        return {
+          success: true,
+          migratedPost: result,
+          message: 'Post migrated successfully'
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'Failed to migrate post',
+        details: response.data
+      };
+    } catch (error) {
+      console.error('Error migrating post to database:', error);
+      throw error;
+    }
+  }
+
+  // Migrate posts from localStorage to the database
+  async migrateLocalPostsToDatabase(postsToMigrate?: any[]): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      // If posts are provided, use them, otherwise collect from localStorage
+      const posts = postsToMigrate || [];
+      
+      // If no posts were provided, scan localStorage for posts to migrate
+      if (!postsToMigrate || postsToMigrate.length === 0) {
+        // Scan localStorage for drafts and scheduled posts
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          
+          // Check for draft posts
+          if (key?.startsWith('draft_')) {
+            try {
+              const draftData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (draftData.id) {
+                posts.push({
+                  ...draftData,
+                  status: 'draft'
+                });
+              }
+            } catch (error) {
+              console.error('Error parsing draft for migration:', error);
+            }
+          } 
+          // Check for scheduled posts
+          else if (key?.startsWith('scheduled_')) {
+            try {
+              const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (scheduledData.id) {
+                posts.push({
+                  ...scheduledData,
+                  status: 'scheduled'
+                });
+              }
+            } catch (error) {
+              console.error('Error parsing scheduled post for migration:', error);
+            }
           }
         }
       }
       
-      if (postsToMigrate.length === 0) {
+      if (posts.length === 0) {
         return {
           success: true, 
-          message: 'No local posts found to migrate',
-          migratedCount: 0
+          message: 'No posts found to migrate',
+          migratedCount: 0,
+          migratedPosts: []
         };
       }
       
       // Call the migration API endpoint
       const response = await axios.post(`${this.POSTS_API_URL}/migrate-from-local`, 
-        { posts: postsToMigrate },
+        { posts },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -1088,7 +1182,8 @@ class LinkedInApi {
       
       return {
         ...response.data,
-        migratedCount: response.data.results?.filter((r: any) => r.success).length || 0
+        migratedCount: response.data.results?.filter((r: any) => r.success).length || 0,
+        migratedPosts: response.data.results?.filter((r: any) => r.success) || []
       };
     } catch (error) {
       console.error('Error migrating posts to database:', error);

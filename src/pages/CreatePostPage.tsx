@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -100,7 +100,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import axios from 'axios';
 
@@ -169,6 +168,8 @@ interface LocationState {
   hashtags?: string[];
   image?: string;
   openScheduleDialog?: boolean;
+  scheduledDate?: string;
+  scheduleTime?: string;
 }
 
 // Inline carousel preview component
@@ -469,11 +470,38 @@ const CreatePostPage: React.FC = () => {
         setActiveTab('carousel'); // Switch to carousel tab if image is provided
       }
       
-      // Open schedule dialog if requested
+      // Check for scheduledDate and scheduleTime in location state
+      if (locationState.scheduledDate) {
+        try {
+          const date = new Date(locationState.scheduledDate);
+          setScheduledDate(date);
+          console.log('Set scheduled date from location state:', date);
+        } catch (err) {
+          console.error('Error parsing scheduled date from location state:', err);
+        }
+      }
+      
+      if (locationState.scheduleTime) {
+        setScheduleTime(locationState.scheduleTime);
+        console.log('Set schedule time from location state:', locationState.scheduleTime);
+      }
+      
+      // Open schedule dialog if requested - but only once
       if (locationState.openScheduleDialog) {
-        setTimeout(() => {
-          setShowScheduleDialog(true);
-        }, 500);
+        // Use a ref to track if we've already opened the dialog to prevent reopening
+        const hasOpenedDialogRef = React.useRef(false);
+        
+        if (!hasOpenedDialogRef.current) {
+          // Mark that we've opened the dialog
+          hasOpenedDialogRef.current = true;
+          
+          // Use a slightly longer delay to ensure the component is fully rendered
+          console.log('Opening schedule dialog from location state');
+          setTimeout(() => {
+            setShowScheduleDialog(true);
+            console.log('Schedule dialog opened');
+          }, 100);
+        }
       }
     }
   }, [locationState, setContent, setHashtags, setAiGeneratedImage, setActiveTab]);
@@ -1201,6 +1229,12 @@ const CreatePostPage: React.FC = () => {
     }
   };
   
+  // Add a handler to close the dialog reliably
+  const handleDialogClose = useCallback(() => {
+    console.log('Explicitly closing dialog');
+    setShowScheduleDialog(false);
+  }, []);
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -1258,104 +1292,123 @@ const CreatePostPage: React.FC = () => {
             )}
           </Button>
           
-          <Dialog open={showScheduleDialog} onOpenChange={(open) => {
-            // Only update if we're closing the dialog manually
-            if (!open) {
-              setShowScheduleDialog(false);
-            }
-          }}>
-            <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1">
-            <Clock size={16} />
-            Schedule
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200" 
+            onClick={() => {
+              // Only open the dialog if it's currently closed
+              if (!showScheduleDialog) {
+                console.log('Opening schedule dialog from button click');
+                setShowScheduleDialog(true);
+              }
+            }}
+          >
+            <Clock size={16} className="mr-1" />
+            Schedule Post
           </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Schedule LinkedIn Post</DialogTitle>
-                <DialogDescription>
-                  Choose when you want this post to be published to LinkedIn
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+          
+          {/* Schedule Dialog */}
+          {showScheduleDialog && (
+            <Dialog 
+              open={true} 
+              onOpenChange={(open) => {
+                if (!open) handleDialogClose();
+              }}
+            >
+              <DialogContent className="sm:max-w-md" onPointerDownOutside={handleDialogClose}>
+                <DialogHeader>
+                  <DialogTitle>Schedule LinkedIn Post</DialogTitle>
+                  <DialogDescription>
+                    Choose when you want this post to be published to LinkedIn
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Date</label>
+                      <Input
+                        type="date"
+                        value={scheduledDate.toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          const newDate = new Date(e.target.value);
+                          // Preserve the time
+                          const currentHours = scheduledDate.getHours();
+                          const currentMinutes = scheduledDate.getMinutes();
+                          newDate.setHours(currentHours, currentMinutes, 0, 0);
+                          setScheduledDate(newDate);
+                          console.log('Date changed to:', newDate);
+                        }}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Time</label>
+                      <Input
+                        type="time"
+                        value={scheduleTime}
+                        onChange={(e) => {
+                          setScheduleTime(e.target.value);
+                          // Update the scheduledDate with this time
+                          const [hours, minutes] = e.target.value.split(':').map(Number);
+                          const newDate = new Date(scheduledDate);
+                          newDate.setHours(hours, minutes, 0, 0);
+                          setScheduledDate(newDate);
+                          console.log('Time changed to:', e.target.value, 'Updated date:', newDate);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Date</label>
-                    <Input
-                      type="date"
-                      value={scheduledDate.toISOString().split('T')[0]}
-                      onChange={(e) => {
-                        const newDate = new Date(e.target.value);
-                        // Preserve the time
-                        const currentHours = scheduledDate.getHours();
-                        const currentMinutes = scheduledDate.getMinutes();
-                        newDate.setHours(currentHours, currentMinutes, 0, 0);
-                        setScheduledDate(newDate);
-                        console.log('Date changed to:', newDate);
-                      }}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
+                    <label className="text-sm font-medium mb-1 block">Visibility</label>
+                    <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
+                        <SelectItem value="CONNECTIONS">Connections only</SelectItem>
+                        <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">Time</label>
-                    <Input
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(e) => {
-                        setScheduleTime(e.target.value);
-                        // Update the scheduledDate with this time
-                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                        const newDate = new Date(scheduledDate);
-                        newDate.setHours(hours, minutes, 0, 0);
-                        setScheduledDate(newDate);
-                        console.log('Time changed to:', e.target.value, 'Updated date:', newDate);
-                      }}
-                    />
+                  
+                  <div className="mt-2">
+                    <h4 className="text-sm font-medium mb-1">Post Summary</h4>
+                    <div className="border rounded p-3 bg-gray-50 dark:bg-gray-900 text-sm">
+                      <p className="line-clamp-3">{content || "No content yet"}</p>
+                      {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
+                      {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
+                      <p className="text-blue-600 mt-1">Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}</p>
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Visibility</label>
-                  <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select visibility" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
-                      <SelectItem value="CONNECTIONS">Connections only</SelectItem>
-                      <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="mt-2">
-                  <h4 className="text-sm font-medium mb-1">Post Summary</h4>
-                  <div className="border rounded p-3 bg-gray-50 dark:bg-gray-900 text-sm">
-                    <p className="line-clamp-3">{content || "No content yet"}</p>
-                    {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
-                    {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
-                    <p className="text-blue-600 mt-1">Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}</p>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-                <Button onClick={schedulePost} disabled={isPublishing}>
-                  {isPublishing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Scheduling...
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Schedule Post
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={handleDialogClose}>Cancel</Button>
+                  <Button 
+                    onClick={() => {
+                      schedulePost();
+                      handleDialogClose();
+                    }} 
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Scheduling...
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Schedule Post
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
