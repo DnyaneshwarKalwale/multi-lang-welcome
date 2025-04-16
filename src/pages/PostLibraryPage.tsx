@@ -90,11 +90,11 @@ const CarouselCard: React.FC<{
   const [currentSlide, setCurrentSlide] = useState(0);
   
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
   
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
   // If no slides or empty array, render nothing or a placeholder
@@ -351,7 +351,7 @@ const PostLibraryPage: React.FC = () => {
               if (draftData.id) {
                 // Check if this draft is already in our state (avoid duplicates)
                 if (!draftPosts.some(d => d.id === draftData.id)) {
-                  localDrafts.push(draftData);
+                localDrafts.push(draftData);
                 }
               }
             } catch (e) {
@@ -465,7 +465,7 @@ const PostLibraryPage: React.FC = () => {
       if (draftId.startsWith('draft_')) {
         // Remove from localStorage
         localStorage.removeItem(draftId);
-        toast.success('Draft deleted successfully');
+      toast.success('Draft deleted successfully');
       } else {
         // Delete from backend API
         await linkedInApi.deleteDBPost(draftId);
@@ -506,7 +506,7 @@ const PostLibraryPage: React.FC = () => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
         // Make sure we don't store null/undefined values
         if (value !== null && value !== undefined) {
-          localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
         } else {
           // Remove the key if it exists to avoid parsing errors
           localStorage.removeItem(`state:createPost.${key}`);
@@ -519,10 +519,10 @@ const PostLibraryPage: React.FC = () => {
       if (draftId.startsWith('draft_')) {
         localStorage.removeItem(draftId);
       } else {
-        // Remove from drafts via backend API
-        await linkedInApi.deleteDraft(draftId);
+      // Remove from drafts via backend API
+      await linkedInApi.deleteDraft(draftId);
       }
-      
+    
       // Navigate to the create post page with schedule dialog open
       navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
     } catch (error) {
@@ -557,7 +557,7 @@ const PostLibraryPage: React.FC = () => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status' && key !== 'scheduledTime') {
         // Make sure we don't store null/undefined values
         if (value !== null && value !== undefined) {
-          localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
         } else {
           // Remove the key if it exists to avoid parsing errors
           localStorage.removeItem(`state:createPost.${key}`);
@@ -590,7 +590,7 @@ const PostLibraryPage: React.FC = () => {
       localStorage.setItem('editingScheduledId', postId);
       
       // Navigate to create post page with schedule dialog open
-      navigate('/dashboard/post', { state: { openScheduleDialog: true } });
+    navigate('/dashboard/post', { state: { openScheduleDialog: true } });
     } catch (error) {
       console.error('Error removing scheduled post:', error);
       toast.error('Failed to edit scheduled post. Please try again later.');
@@ -617,7 +617,7 @@ const PostLibraryPage: React.FC = () => {
       if (postId.startsWith('scheduled_')) {
         // Remove from localStorage
         localStorage.removeItem(postId);
-        toast.success('Scheduled post cancelled');
+      toast.success('Scheduled post cancelled');
       } else {
         // Delete from backend API
         await linkedInApi.deleteDBPost(postId);
@@ -644,8 +644,8 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
-      // Find the draft
-      const draft = drafts.find(d => d.id === draftId);
+    // Find the draft
+    const draft = drafts.find(d => d.id === draftId);
       
       if (!draft) {
         throw new Error('Draft not found');
@@ -708,24 +708,24 @@ const PostLibraryPage: React.FC = () => {
               const updatedPublished = published.filter(p => p.id !== `temp_${draftId}`);
               
               // Create a real published post object for the UI
-              const publishedPost: PublishedPost = {
+      const publishedPost: PublishedPost = {
                 id: publishResponse.data._id,
-                title: draft.title || 'Published Post',
+        title: draft.title || 'Published Post',
                 content: draft.content,
-                excerpt: draft.content?.substring(0, 100) + '...',
-                publishedDate: new Date().toLocaleDateString(),
-                isCarousel: draft.slides && draft.slides.length > 0,
-                slideCount: draft.slides?.length || 0,
-                status: 'published',
-                postImage: draft.postImage,
-                hashtags: draft.hashtags,
-                isPollActive: draft.isPollActive,
-                pollOptions: draft.pollOptions
-              };
-              
+        excerpt: draft.content?.substring(0, 100) + '...',
+        publishedDate: new Date().toLocaleDateString(),
+        isCarousel: draft.slides && draft.slides.length > 0,
+        slideCount: draft.slides?.length || 0,
+        status: 'published',
+        postImage: draft.postImage,
+        hashtags: draft.hashtags,
+        isPollActive: draft.isPollActive,
+        pollOptions: draft.pollOptions
+      };
+      
               // Update the published posts state
               setPublished([publishedPost, ...updatedPublished]);
-              toast.success('Post published to LinkedIn successfully');
+      toast.success('Post published to LinkedIn successfully');
               
               // Reload user content to ensure all data is updated
               await loadUserContent();
@@ -950,7 +950,7 @@ const PostLibraryPage: React.FC = () => {
           }
         } catch (error) {
           console.error('Error publishing scheduled post:', error);
-          toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
           
           // Restore the scheduled post to the state
           setScheduled(prevScheduled => [scheduledPost, ...prevScheduled]);

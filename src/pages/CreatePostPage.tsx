@@ -447,35 +447,48 @@ const CreatePostPage: React.FC = () => {
   // Scheduling states
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [scheduledDate, setScheduledDate] = useState(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    return tomorrow;
+    // Use current date as default
+    const now = new Date();
+    return now;
   });
-  const [scheduleTime, setScheduleTime] = useState('09:00');
+  const [scheduleTime, setScheduleTime] = useState(() => {
+    // Set current time as default
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  });
   
-  // Initialize with data from location state (if available)
+  // Create a ref to track if we've already shown the dialog for this location state
+  const dialogShownRef = React.useRef(false);
+  
+  // Effect for processing location state
   useEffect(() => {
-    if (locationState) {
+    if (locationState && !dialogShownRef.current) {
+      // Mark that we've processed this location state
+      dialogShownRef.current = true;
+      
       if (locationState.content) {
         setContent(locationState.content);
       }
       
-      if (locationState.hashtags && locationState.hashtags.length > 0) {
+      if (locationState.hashtags) {
         setHashtags(locationState.hashtags);
       }
       
       if (locationState.image) {
         setAiGeneratedImage(locationState.image);
-        setActiveTab('carousel'); // Switch to carousel tab if image is provided
+        setActiveTab('text');
       }
       
-      // Check for scheduledDate and scheduleTime in location state
       if (locationState.scheduledDate) {
         try {
-          const date = new Date(locationState.scheduledDate);
-          setScheduledDate(date);
-          console.log('Set scheduled date from location state:', date);
+          // Convert string date to Date object
+          const parsedDate = new Date(locationState.scheduledDate);
+          if (!isNaN(parsedDate.getTime())) {
+            setScheduledDate(parsedDate);
+            console.log('Set scheduled date from location state:', parsedDate);
+          }
         } catch (err) {
           console.error('Error parsing scheduled date from location state:', err);
         }
@@ -1065,7 +1078,7 @@ const CreatePostPage: React.FC = () => {
         toast.error('Please select both date and time for scheduling');
         return;
       }
-      
+
       // Validate content based on active tab
       if (activeTab === 'text' && !content.trim()) {
         toast.error('Please add some content to your post');
@@ -1170,7 +1183,7 @@ const CreatePostPage: React.FC = () => {
           }
         });
         
-        // Navigate to the post library scheduled tab
+        // Navigate to the post library scheduled tab - use /posts not /library
         navigate('/dashboard/posts', { state: { scheduled: true, activeTab: 'scheduled' } });
       } else {
         toast.error('Failed to schedule post. Please try again.');
@@ -1387,98 +1400,131 @@ const CreatePostPage: React.FC = () => {
                 if (!open) handleDialogClose();
               }}
             >
-              <DialogContent className="sm:max-w-md" onPointerDownOutside={handleDialogClose}>
-                <DialogHeader>
-                  <DialogTitle>Schedule LinkedIn Post</DialogTitle>
-                  <DialogDescription>
-                    Choose when you want this post to be published to LinkedIn
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Date</label>
-                      <Input
-                        type="date"
-                        value={scheduledDate.toISOString().split('T')[0]}
-                        onChange={(e) => {
+              <DialogContent className="sm:max-w-md overflow-hidden" onPointerDownOutside={handleDialogClose}>
+              <DialogHeader>
+                <DialogTitle>Schedule LinkedIn Post</DialogTitle>
+                <DialogDescription>
+                  Choose when you want this post to be published to LinkedIn
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Date</label>
+                    <Input
+                      type="date"
+                      value={scheduledDate.toISOString().split('T')[0]}
+                      onChange={(e) => {
+                        if (e.target.value) {
                           const newDate = new Date(e.target.value);
                           // Preserve the time
                           const currentHours = scheduledDate.getHours();
                           const currentMinutes = scheduledDate.getMinutes();
                           newDate.setHours(currentHours, currentMinutes, 0, 0);
-                          setScheduledDate(newDate);
-                          console.log('Date changed to:', newDate);
-                        }}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Time</label>
-                      <Input
-                        type="time"
-                        value={scheduleTime}
-                        onChange={(e) => {
-                          setScheduleTime(e.target.value);
-                          // Update the scheduledDate with this time
-                          const [hours, minutes] = e.target.value.split(':').map(Number);
-                          const newDate = new Date(scheduledDate);
-                          newDate.setHours(hours, minutes, 0, 0);
-                          setScheduledDate(newDate);
-                          console.log('Time changed to:', e.target.value, 'Updated date:', newDate);
-                        }}
-                      />
-                    </div>
+                          
+                          // Only set if it's a valid date and not in the past
+                          if (!isNaN(newDate.getTime())) {
+                            const now = new Date();
+                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            const selectedDay = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+                            
+                            if (selectedDay >= today) {
+                              setScheduledDate(newDate);
+                              console.log('Date changed to:', newDate);
+                            } else {
+                              toast.error('Please select today or a future date');
+                            }
+                          }
+                        }
+                      }}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
                   </div>
-                  
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Visibility</label>
-                    <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select visibility" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
-                        <SelectItem value="CONNECTIONS">Connections only</SelectItem>
-                        <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="mt-2">
-                    <h4 className="text-sm font-medium mb-1">Post Summary</h4>
-                    <div className="border rounded p-3 bg-gray-50 dark:bg-gray-900 text-sm">
-                      <p className="line-clamp-3">{content || "No content yet"}</p>
-                      {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
-                      {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
-                      <p className="text-blue-600 mt-1">Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}</p>
-                    </div>
+                    <label className="text-sm font-medium mb-1 block">Time</label>
+                    <Input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(e) => {
+                        setScheduleTime(e.target.value);
+                        // Update the scheduledDate with this time
+                        const [hours, minutes] = e.target.value.split(':').map(Number);
+                        const newDate = new Date(scheduledDate);
+                        newDate.setHours(hours, minutes, 0, 0);
+                        
+                        // Validate that the date+time combination is not in the past
+                        const now = new Date();
+                        if (newDate <= now) {
+                          // If selected time is in the past but the date is today,
+                          // we can suggest a time in the future
+                          if (newDate.getDate() === now.getDate() && 
+                              newDate.getMonth() === now.getMonth() && 
+                              newDate.getFullYear() === now.getFullYear()) {
+                            // Set time to be now + 15 minutes
+                            const suggestedDate = new Date();
+                            suggestedDate.setMinutes(suggestedDate.getMinutes() + 15);
+                            const suggestedHours = String(suggestedDate.getHours()).padStart(2, '0');
+                            const suggestedMinutes = String(suggestedDate.getMinutes()).padStart(2, '0');
+                            const suggestedTime = `${suggestedHours}:${suggestedMinutes}`;
+                            
+                            toast.error(`Time must be in the future. Setting to ${suggestedTime}`);
+                            setScheduleTime(suggestedTime);
+                            newDate.setHours(suggestedDate.getHours(), suggestedDate.getMinutes(), 0, 0);
+                          }
+                        }
+                        
+                        setScheduledDate(newDate);
+                        console.log('Time changed to:', e.target.value, 'Updated date:', newDate);
+                      }}
+                    />
                   </div>
                 </div>
-                <DialogFooter>
+                
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Visibility</label>
+                  <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select visibility" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
+                      <SelectItem value="CONNECTIONS">Connections only</SelectItem>
+                      <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="mt-2">
+                  <h4 className="text-sm font-medium mb-1">Post Summary</h4>
+                  <div className="border rounded p-3 bg-white text-sm">
+                    <p className="line-clamp-3">{content || "No content yet"}</p>
+                    {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
+                    {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
+                    <p className="text-blue-600 mt-1">Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}</p>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
                   <Button variant="outline" onClick={handleDialogClose}>Cancel</Button>
                   <Button 
-                    onClick={() => {
-                      schedulePost();
-                      handleDialogClose();
-                    }} 
+                    onClick={schedulePost} 
                     disabled={isPublishing}
                   >
-                    {isPublishing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Scheduling...
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Schedule Post
-                      </>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  {isPublishing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Schedule Post
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           )}
           
           <DropdownMenu>
@@ -1957,11 +2003,11 @@ const CreatePostPage: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <FileText size={48} className="mx-auto mb-4 text-neutral-medium" />
-                        <h3 className="text-lg font-medium mb-2">Upload Document</h3>
-                        <p className="text-sm text-neutral-medium mb-4">
-                          Drag and drop a file here, or click to browse
-                        </p>
+                    <FileText size={48} className="mx-auto mb-4 text-neutral-medium" />
+                    <h3 className="text-lg font-medium mb-2">Upload Document</h3>
+                    <p className="text-sm text-neutral-medium mb-4">
+                      Drag and drop a file here, or click to browse
+                    </p>
                         <Button onClick={() => {
                           const fileInput = document.getElementById('document-file-input');
                           if (fileInput) fileInput.click();
@@ -2135,8 +2181,8 @@ const CreatePostPage: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <FileText size={40} className="mx-auto mb-2 text-neutral-medium" />
-                          <p className="text-sm text-neutral-medium">Document Preview</p>
+                    <FileText size={40} className="mx-auto mb-2 text-neutral-medium" />
+                    <p className="text-sm text-neutral-medium">Document Preview</p>
                         </>
                       )}
                     </div>
