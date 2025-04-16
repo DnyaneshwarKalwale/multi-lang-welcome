@@ -119,7 +119,7 @@ export interface ScheduledPostData {
 }
 
 // Main API wrapper for LinkedIn API
-class LinkedInApi {
+export class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
 
   // Simplified test connectivity method that avoids unnecessary API calls
@@ -545,16 +545,6 @@ class LinkedInApi {
     }
   }
 
-  // Delete a post
-  async deletePost(postId: string): Promise<void> {
-    try {
-      await axios.delete(`${this.API_URL}/posts/${postId}`);
-    } catch (error) {
-      console.error('Error deleting LinkedIn post:', error);
-      throw error;
-    }
-  }
-
   // Get user's posts
   async getUserPosts(limit: number = 10): Promise<any> {
     try {
@@ -647,7 +637,9 @@ class LinkedInApi {
   // Update a draft or scheduled post
   async updatePost(postId: string, updates: Partial<ScheduledPostData>): Promise<any> {
     try {
-      const response = await axios.put(`${this.API_URL}/posts/${postId}`, updates);
+      const response = await axios.put(`${this.API_URL}/posts/${postId}`, updates, {
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating post:', error);
@@ -655,10 +647,43 @@ class LinkedInApi {
     }
   }
 
+  // Change post status (draft -> scheduled, draft -> published, etc.)
+  async changePostStatus(postId: string, newStatus: 'draft' | 'scheduled' | 'published', scheduledTime?: string): Promise<any> {
+    try {
+      const data: any = { status: newStatus };
+      if (scheduledTime && newStatus === 'scheduled') {
+        data.scheduledTime = scheduledTime;
+      }
+      
+      const response = await axios.put(`${this.API_URL}/posts/${postId}/status`, data, {
+        withCredentials: true
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error changing post status to ${newStatus}:`, error);
+      throw error;
+    }
+  }
+  
+  // Delete a post
+  async deletePost(postId: string): Promise<any> {
+    try {
+      const response = await axios.delete(`${this.API_URL}/posts/${postId}`, {
+        withCredentials: true
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      throw error;
+    }
+  }
+
   // Publish a draft or scheduled post immediately
   async publishNow(postId: string): Promise<any> {
     try {
-      const response = await axios.post(`${this.API_URL}/posts/${postId}/publish`);
+      const response = await axios.post(`${this.API_URL}/posts/${postId}/publish`, {}, {
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       console.error('Error publishing post:', error);

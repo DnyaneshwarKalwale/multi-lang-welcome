@@ -260,7 +260,45 @@ const PostLibraryPage: React.FC = () => {
         }
       }
       
-      // You could add code here to fetch published posts if needed
+      // Get published posts from API
+      try {
+        const publishedData = await linkedInApi.getUserPosts(20); // Fetch up to 20 published posts
+        if (publishedData && Array.isArray(publishedData)) {
+          const formattedPublished: PublishedPost[] = publishedData.map((item: any) => {
+            const post = item.postData || item;
+            return {
+              id: item._id || item.id || `published_${Date.now()}`,
+              title: post.title || 'Published Post',
+              content: post.content || '',
+              publishedAt: item.publishedAt || item.createdAt || new Date().toISOString(),
+              createdAt: item.createdAt || new Date().toISOString(),
+              updatedAt: item.updatedAt || new Date().toISOString(),
+              slides: post.slides,
+              postData: post,
+              postImage: post.postImage,
+              hashtags: post.hashtags,
+              isPollActive: post.isPollActive,
+              pollOptions: post.pollOptions,
+              isCarousel: post.slides && post.slides.length > 0,
+              slideCount: post.slides?.length || 0,
+              status: 'published',
+              linkedInPostUrl: item.linkedInPostUrl || post.linkedInPostUrl
+            };
+          });
+          setPublished(formattedPublished);
+        }
+      } catch (error) {
+        console.error('Error loading published posts from API:', error);
+        if ((error as any)?.response?.status === 401) {
+          // LinkedIn auth error already handled in drafts/scheduled section
+          if (!linkedInAuthError) {
+            setLinkedInAuthError(true);
+            toast.error('LinkedIn authentication required to load your published content');
+          }
+        } else {
+          toast.error('Failed to load published posts');
+        }
+      }
       
     } catch (error) {
       console.error('Error in loadUserContent:', error);
@@ -295,7 +333,7 @@ const PostLibraryPage: React.FC = () => {
       setIsDeleting(true);
       
       // Delete from backend API
-      await linkedInApi.deleteDraft(draftId);
+      await linkedInApi.deletePost(draftId);
       
       // Update state
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
@@ -324,15 +362,22 @@ const PostLibraryPage: React.FC = () => {
     });
     
     try {
-      // Remove from drafts via backend API
-      await linkedInApi.deleteDraft(draftId);
+      // Remove from drafts via API - instead of deleting, we'll update the post on scheduling
+      // We'll do this via the scheduling dialog in CreatePostPage
       
       // Update local state after successful API call
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
       setDrafts(updatedDrafts);
     
       // Navigate to the create post page with schedule dialog open
-      navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
+      navigate('/dashboard/post', { 
+        state: { 
+          openScheduleDialog: true, 
+          fromDraft: true, 
+          draftId: draftId,
+          fromLibrary: true
+        } 
+      });
     } catch (error) {
       console.error('Error removing draft from backend:', error);
       toast.error('Failed to process draft. Please try again later.');
@@ -347,13 +392,25 @@ const PostLibraryPage: React.FC = () => {
     
     // Set up the form data in localStorage
     Object.entries(post).forEach(([key, value]) => {
-      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status' && key !== 'scheduledTime') {
+      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
         localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
       }
     });
     
+    // Store the scheduled time
+    if (post.scheduledTime) {
+      localStorage.setItem('state:createPost.scheduledTime', JSON.stringify(post.scheduledTime));
+    }
+    
     // Navigate to the create post page with schedule dialog open
-    navigate('/dashboard/post', { state: { openScheduleDialog: true } });
+    navigate('/dashboard/post', { 
+      state: { 
+        openScheduleDialog: true,
+        fromScheduled: true,
+        scheduledPostId: postId,
+        fromLibrary: true
+      }
+    });
   };
   
   // Delete a scheduled post
@@ -364,7 +421,7 @@ const PostLibraryPage: React.FC = () => {
       setIsDeleting(true);
       
       // Delete from backend API
-      await linkedInApi.deleteScheduledPost(postId);
+      await linkedInApi.deletePost(postId);
       
       // Update state
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
@@ -400,53 +457,22 @@ const PostLibraryPage: React.FC = () => {
         return;
       }
       
-      // Prepare content with hashtags
-      let postContent = draft.content || '';
-      if (draft.hashtags && draft.hashtags.length > 0) {
-        postContent += '\n\n' + draft.hashtags.map(tag => `#${tag}`).join(' ');
+      // Publish directly via API
+      const response = await linkedInApi.publishNow(draftId);
+      
+      if (response.success) {
+        // Update local state after successful API call
+        const updatedDrafts = drafts.filter(d => d.id !== draftId);
+        setDrafts(updatedDrafts);
+        
+        // Load published posts to refresh the list
+        await loadUserContent();
+        
+        toast.success('Post published to LinkedIn successfully');
+        setActiveTab('published');
+      } else {
+        throw new Error(response.error || 'Failed to publish post');
       }
-      
-      // Publish to LinkedIn
-      const response = await linkedInApi.createTextPost(postContent, draft.visibility || 'PUBLIC');
-      
-      // Remove from drafts via backend API
-      await linkedInApi.deleteDraft(draftId);
-      
-      // Update local state after successful API call
-      const updatedDrafts = drafts.filter(d => d.id !== draftId);
-      setDrafts(updatedDrafts);
-      
-      // Add to published posts via backend API
-      const publishedPost: PublishedPost = {
-        id: response?.id || `published_${Date.now()}`,
-        title: draft.title || 'Published Post',
-        excerpt: draft.content?.substring(0, 100) + '...',
-        publishedDate: new Date().toLocaleDateString(),
-        stats: {
-          impressions: 0,
-          likes: 0,
-          comments: 0,
-          shares: 0
-        },
-        isCarousel: draft.slides && draft.slides.length > 0,
-        slideCount: draft.slides?.length || 0,
-        status: 'published',
-        postImage: draft.postImage,
-        hashtags: draft.hashtags,
-        isPollActive: draft.isPollActive,
-        pollOptions: draft.pollOptions
-      };
-      
-      try {
-        await linkedInApi.savePublishedPost(publishedPost);
-      } catch (saveError) {
-        console.error('Error saving published post to backend:', saveError);
-        toast.error('Post published, but failed to save to database');
-      }
-      
-      setPublished([publishedPost, ...published]);
-      toast.success('Post published to LinkedIn successfully');
-      setActiveTab('published');
       
     } catch (error: any) {
       console.error('Error publishing draft:', error);
@@ -503,53 +529,22 @@ const PostLibraryPage: React.FC = () => {
         return;
       }
       
-      // Prepare content with hashtags
-      let postContent = post.content || '';
-      if (post.hashtags && post.hashtags.length > 0) {
-        postContent += '\n\n' + post.hashtags.map(tag => `#${tag}`).join(' ');
+      // Publish directly via API
+      const response = await linkedInApi.publishNow(postId);
+      
+      if (response.success) {
+        // Update local state after successful API call
+        const updatedScheduled = scheduled.filter(p => p.id !== postId);
+        setScheduled(updatedScheduled);
+        
+        // Load published posts to refresh the list
+        await loadUserContent();
+        
+        toast.success('Post published to LinkedIn successfully');
+        setActiveTab('published');
+      } else {
+        throw new Error(response.error || 'Failed to publish post');
       }
-      
-      // Publish to LinkedIn
-      const response = await linkedInApi.createTextPost(postContent, post.visibility || 'PUBLIC');
-      
-      // Remove from scheduled via backend API
-      await linkedInApi.deleteScheduledPost(postId);
-      
-      // Update local state after successful API call
-      const updatedScheduled = scheduled.filter(p => p.id !== postId);
-      setScheduled(updatedScheduled);
-      
-      // Add to published via backend API
-      const publishedPost: PublishedPost = {
-        id: response?.id || `published_${Date.now()}`,
-        title: post.title || 'Published Post',
-        excerpt: post.content?.substring(0, 100) + '...',
-        publishedDate: new Date().toLocaleDateString(),
-        stats: {
-          impressions: 0,
-          likes: 0,
-          comments: 0,
-          shares: 0
-        },
-        isCarousel: post.slides && post.slides.length > 0,
-        slideCount: post.slides?.length || 0,
-        status: 'published',
-        postImage: post.postImage,
-        hashtags: post.hashtags,
-        isPollActive: post.isPollActive,
-        pollOptions: post.pollOptions
-      };
-      
-      try {
-        await linkedInApi.savePublishedPost(publishedPost);
-      } catch (saveError) {
-        console.error('Error saving published post to backend:', saveError);
-        toast.error('Post published, but failed to save to database');
-      }
-      
-      setPublished([publishedPost, ...published]);
-      toast.success('Post published to LinkedIn successfully');
-      setActiveTab('published');
       
     } catch (error: any) {
       console.error('Error publishing scheduled post:', error);
