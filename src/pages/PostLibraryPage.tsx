@@ -180,6 +180,31 @@ const PostLibraryPage: React.FC = () => {
   const [linkedInAuthError, setLinkedInAuthError] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   
+  // Effect to switch to the correct tab when navigating from another page
+  useEffect(() => {
+    if (locationState) {
+      // When redirected from create post page
+      if (locationState.activeTab) {
+        setActiveTab(locationState.activeTab);
+      } else if (locationState.newPost) {
+        // When a new post was created, switch to published tab
+        setActiveTab('published');
+      } else if (locationState.scheduled) {
+        // When a post was scheduled
+        setActiveTab('scheduled');
+      } else if (locationState.newDraft) {
+        // When a new draft was created
+        setActiveTab('drafts');
+      }
+    }
+  }, [locationState]);
+  
+  // Effect to load data when component mounts or when activeTab changes due to navigation
+  useEffect(() => {
+    loadUserContent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
   // Function to migrate posts from localStorage to database
   const migrateLocalPosts = async () => {
     try {
@@ -329,12 +354,27 @@ const PostLibraryPage: React.FC = () => {
         console.log('Processed published posts:', publishedPosts);
 
         // Update state with API data
-        if (draftPosts.length > 0) setDrafts(draftPosts);
-        if (scheduledPosts.length > 0) setScheduled(scheduledPosts);
-        if (publishedPosts.length > 0) {
-          console.log('Setting published posts:', publishedPosts);
-          setPublished(publishedPosts);
-        }
+        setDrafts(draftPosts);
+        setScheduled(scheduledPosts);
+        setPublished(publishedPosts);
+        
+        // Create a map of existing draft IDs for efficient lookup
+        const existingDraftIds = new Set(draftPosts.map(draft => draft.id));
+        // Also track content hashes to identify duplicates with different IDs
+        const contentHashes = new Map<string, boolean>();
+        draftPosts.forEach(draft => {
+          // Create a simple hash of content to identify similar drafts
+          const contentHash = draft.content ? `${draft.content.substring(0, 50)}` : '';
+          if (contentHash) contentHashes.set(contentHash, true);
+        });
+        
+        // Create a map of existing scheduled post IDs
+        const existingScheduledIds = new Set(scheduledPosts.map(post => post.id));
+        const scheduledContentHashes = new Map<string, boolean>();
+        scheduledPosts.forEach(post => {
+          const contentHash = post.content ? `${post.content.substring(0, 50)}` : '';
+          if (contentHash) scheduledContentHashes.set(contentHash, true);
+        });
         
         // Always check localStorage for any local drafts or scheduled posts
         console.log("Checking localStorage for any additional posts...");
@@ -349,9 +389,23 @@ const PostLibraryPage: React.FC = () => {
             try {
               const draftData = JSON.parse(localStorage.getItem(key) || '{}');
               if (draftData.id) {
-                // Check if this draft is already in our state (avoid duplicates)
-                if (!draftPosts.some(d => d.id === draftData.id)) {
-                localDrafts.push(draftData);
+                // Check if this draft is already in our API data (avoid duplicates)
+                if (!existingDraftIds.has(draftData.id)) {
+                  // Also check for content duplicates
+                  const contentHash = draftData.content ? `${draftData.content.substring(0, 50)}` : '';
+                  if (!contentHash || !contentHashes.has(contentHash)) {
+                    localDrafts.push(draftData);
+                    // Add this content hash to our tracking map
+                    if (contentHash) contentHashes.set(contentHash, true);
+                  } else {
+                    console.log('Skipping duplicate draft based on content:', draftData.id);
+                    // Clean up duplicate from localStorage
+                    localStorage.removeItem(key);
+                  }
+                } else {
+                  console.log('Skipping duplicate draft with ID:', draftData.id);
+                  // Clean up duplicate from localStorage
+                  localStorage.removeItem(key);
                 }
               }
             } catch (e) {
@@ -361,9 +415,23 @@ const PostLibraryPage: React.FC = () => {
             try {
               const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
               if (scheduledData.id) {
-                // Check if this scheduled post is already in our state
-                if (!scheduledPosts.some(s => s.id === scheduledData.id)) {
-                  localScheduledPosts.push(scheduledData);
+                // Check if this scheduled post is already in our API data
+                if (!existingScheduledIds.has(scheduledData.id)) {
+                  // Also check for content duplicates
+                  const contentHash = scheduledData.content ? `${scheduledData.content.substring(0, 50)}` : '';
+                  if (!contentHash || !scheduledContentHashes.has(contentHash)) {
+                    localScheduledPosts.push(scheduledData);
+                    // Add this content hash to our tracking map
+                    if (contentHash) scheduledContentHashes.set(contentHash, true);
+                  } else {
+                    console.log('Skipping duplicate scheduled post based on content:', scheduledData.id);
+                    // Clean up duplicate from localStorage
+                    localStorage.removeItem(key);
+                  }
+                } else {
+                  console.log('Skipping duplicate scheduled post with ID:', scheduledData.id);
+                  // Clean up duplicate from localStorage
+                  localStorage.removeItem(key);
                 }
               }
             } catch (e) {
@@ -402,13 +470,26 @@ const PostLibraryPage: React.FC = () => {
     const localDrafts: DraftPost[] = [];
     const localScheduledPosts: ScheduledPost[] = [];
     
+    // Create maps to track content hashes for deduplication
+    const contentHashesMap = new Map<string, boolean>();
+    const scheduledContentHashesMap = new Map<string, boolean>();
+    
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key?.startsWith('draft_')) {
         try {
           const draftData = JSON.parse(localStorage.getItem(key) || '{}');
           if (draftData.id) {
-            localDrafts.push(draftData);
+            // Create a simple content hash for deduplication
+            const contentHash = draftData.content ? `${draftData.content.substring(0, 50)}` : '';
+            if (!contentHash || !contentHashesMap.has(contentHash)) {
+              localDrafts.push(draftData);
+              if (contentHash) contentHashesMap.set(contentHash, true);
+            } else {
+              console.log('Skipping duplicate draft in localStorage:', draftData.id);
+              // Clean up duplicate
+              localStorage.removeItem(key);
+            }
           }
         } catch (e) {
           console.error('Error parsing draft:', e);
@@ -417,7 +498,16 @@ const PostLibraryPage: React.FC = () => {
         try {
           const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
           if (scheduledData.id) {
-            localScheduledPosts.push(scheduledData);
+            // Create a simple content hash for deduplication
+            const contentHash = scheduledData.content ? `${scheduledData.content.substring(0, 50)}` : '';
+            if (!contentHash || !scheduledContentHashesMap.has(contentHash)) {
+              localScheduledPosts.push(scheduledData);
+              if (contentHash) scheduledContentHashesMap.set(contentHash, true);
+            } else {
+              console.log('Skipping duplicate scheduled post in localStorage:', scheduledData.id);
+              // Clean up duplicate
+              localStorage.removeItem(key);
+            }
           }
         } catch (e) {
           console.error('Error parsing scheduled post:', e);
@@ -1166,23 +1256,6 @@ const PostLibraryPage: React.FC = () => {
       </Card>
     );
   };
-  
-  // Initialize data on component mount
-  useEffect(() => {
-    loadUserContent();
-    
-    // Handle location state for newly created draft/scheduled post
-    if (locationState?.newDraft) {
-      setActiveTab('drafts');
-      toast.success('Draft saved successfully');
-    } else if (locationState?.scheduled) {
-      setActiveTab('scheduled');
-      toast.success('Post scheduled successfully');
-    } else if (locationState?.newPost) {
-      setActiveTab('published');
-      toast.success('Post published successfully');
-    }
-  }, [locationState]);
   
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8">

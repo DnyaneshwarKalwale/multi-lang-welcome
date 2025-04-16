@@ -924,6 +924,33 @@ const CreatePostPage: React.FC = () => {
         toast.success('Post published to LinkedIn successfully!');
       }
       
+      // First, save the post to the database to ensure it appears in the published section
+      if (response) {
+        try {
+          // Create a published post in the database
+          const dbPostData = {
+            title: 'Published Post',
+            content: content,
+            hashtags: hashtags,
+            mediaType: postImage ? 'image' : slides.length > 0 ? 'carousel' : 'none',
+            postImage: postImage,
+            slides: slides,
+            isPollActive: isPollActive,
+            pollOptions: pollOptions.filter(Boolean),
+            status: 'published',
+            visibility: visibility,
+            publishedTime: new Date().toISOString()
+          };
+          
+          // Save to the database
+          const dbResponse = await linkedInApi.createDBPost(dbPostData);
+          console.log('Published post saved to database:', dbResponse);
+        } catch (dbError) {
+          console.error('Error saving published post to database:', dbError);
+          // Continue anyway, as the post was published to LinkedIn
+        }
+      }
+      
       // Clear the form after successful publishing
       setTimeout(() => {
         // Clear all createPost related state
@@ -938,7 +965,8 @@ const CreatePostPage: React.FC = () => {
           state: { 
             newPost: true,
             postId: response?.id,
-            platform: 'linkedin'
+            platform: 'linkedin',
+            activeTab: 'published' // Explicitly set to published tab
           }
         });
       }, 1500);
@@ -1076,8 +1104,8 @@ const CreatePostPage: React.FC = () => {
       // Validate required fields
       if (!scheduledDate || !scheduleTime) {
         toast.error('Please select both date and time for scheduling');
-        return;
-      }
+      return;
+    }
 
       // Validate content based on active tab
       if (activeTab === 'text' && !content.trim()) {
@@ -1416,7 +1444,7 @@ const CreatePostPage: React.FC = () => {
                       value={scheduledDate.toISOString().split('T')[0]}
                       onChange={(e) => {
                         if (e.target.value) {
-                          const newDate = new Date(e.target.value);
+                        const newDate = new Date(e.target.value);
                           // Preserve the time
                           const currentHours = scheduledDate.getHours();
                           const currentMinutes = scheduledDate.getMinutes();
@@ -1429,7 +1457,7 @@ const CreatePostPage: React.FC = () => {
                             const selectedDay = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
                             
                             if (selectedDay >= today) {
-                              setScheduledDate(newDate);
+                        setScheduledDate(newDate);
                               console.log('Date changed to:', newDate);
                             } else {
                               toast.error('Please select today or a future date');
