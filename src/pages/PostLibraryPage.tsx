@@ -1495,14 +1495,14 @@ const PostLibraryPage: React.FC = () => {
             if (!open) setShowScheduleDialog(false);
           }}
         >
-          <DialogContent className="sm:max-w-md overflow-hidden">
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Schedule LinkedIn Post</DialogTitle>
               <DialogDescription>
                 Choose when you want this post to be published to LinkedIn
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-2">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Date</label>
@@ -1532,6 +1532,7 @@ const PostLibraryPage: React.FC = () => {
                       }
                     }}
                     min={new Date().toISOString().split('T')[0]}
+                    className="w-full"
                   />
                 </div>
                 <div>
@@ -1569,6 +1570,7 @@ const PostLibraryPage: React.FC = () => {
                       
                       setScheduledDate(newDate);
                     }}
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -1589,25 +1591,38 @@ const PostLibraryPage: React.FC = () => {
               
               <div className="mt-2">
                 <h4 className="text-sm font-medium mb-1">Post Summary</h4>
-                <div className="border rounded p-3 bg-white text-sm">
-                  <p className="line-clamp-3">{selectedDraftForScheduling.content || "No content yet"}</p>
+                <div className="border rounded p-3 bg-white text-sm overflow-hidden">
+                  <div className="max-h-24 overflow-y-auto mb-2">
+                    <p className="text-sm whitespace-pre-wrap break-words line-clamp-3">
+                      {selectedDraftForScheduling.content || "No content yet"}
+                    </p>
+                  </div>
+                  
                   {selectedDraftForScheduling.postImage && (
-                    <p className="text-green-600 mt-1">
-                      Image: {selectedDraftForScheduling.postImage.secure_url.split('/').pop()}
-                    </p>
+                    <div className="flex items-center text-green-600 mt-1 text-xs">
+                      <span className="font-medium mr-1">Image:</span>
+                      <span className="truncate max-w-[200px] inline-block overflow-hidden">
+                        {selectedDraftForScheduling.postImage.secure_url.split('/').pop()}
+                      </span>
+                    </div>
                   )}
+                  
                   {selectedDraftForScheduling.isPollActive && selectedDraftForScheduling.pollOptions && (
-                    <p className="text-blue-600 mt-1">
-                      Poll with {selectedDraftForScheduling.pollOptions.filter(o => o?.trim()).length} options
+                    <p className="text-blue-600 mt-1 text-xs">
+                      <span className="font-medium">Poll:</span> {selectedDraftForScheduling.pollOptions.filter(o => o?.trim()).length} options
                     </p>
                   )}
-                  <p className="text-blue-600 mt-1">
-                    Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}
-                  </p>
+                  
+                  <div className="text-blue-600 mt-1 text-xs font-medium flex items-center">
+                    <Calendar className="h-3 w-3 mr-1 inline" />
+                    <span className="truncate">
+                      Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-2 pt-2 border-t">
               <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
               <Button 
                 onClick={schedulePostDirectly} 
