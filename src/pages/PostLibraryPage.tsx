@@ -1117,7 +1117,7 @@ const PostLibraryPage: React.FC = () => {
       localStorage.setItem('linkedinPostFormData', JSON.stringify(formData));
       
       // Navigate to the post creation page with editing state
-      navigate('/create-post', { 
+      navigate('/dashboard/post', { 
         state: { 
           fromEdit: true, 
           postId: post.id, 
