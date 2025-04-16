@@ -1149,7 +1149,7 @@ const PostLibraryPage: React.FC = () => {
       setPublished(prev => prev.filter(p => p.id !== post.id));
       
       // Delete from LinkedIn and local library
-      await linkedInApi.deleteDBPost(post.id, post.platformPostId);
+      await linkedInApi.deleteDBPost(post.id);
       
       toast.success('Post deleted successfully from LinkedIn and local library');
     } catch (error) {
