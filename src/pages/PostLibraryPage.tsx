@@ -90,16 +90,19 @@ const CarouselCard: React.FC<{
   const [currentSlide, setCurrentSlide] = useState(0);
   
   const nextSlide = () => {
-    if (slides.length > 0) {
-      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
   
   const prevSlide = () => {
-    if (slides.length > 0) {
-      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-    }
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
+
+  // If no slides or empty array, render nothing or a placeholder
+  if (!slides || slides.length === 0) {
+    return <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white min-h-[280px] flex items-center justify-center">
+      <p className="text-gray-400">No slides available</p>
+    </div>;
+  }
 
   return (
     <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
@@ -1035,7 +1038,7 @@ const PostLibraryPage: React.FC = () => {
           
           {/* Carousel Images (if available) */}
           {actualMediaType === 'carousel' && post.slides && post.slides.length > 0 && (
-            <CarouselCard slides={post.slides} />
+            <CarouselCard slides={post.slides || []} />
           )}
           
           {/* Hashtags (if available) */}
