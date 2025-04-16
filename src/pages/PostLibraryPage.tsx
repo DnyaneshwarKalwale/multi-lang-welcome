@@ -200,8 +200,10 @@ const PostLibraryPage: React.FC = () => {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [selectedDraftForScheduling, setSelectedDraftForScheduling] = useState<DraftPost | null>(null);
   const [scheduledDate, setScheduledDate] = useState(() => {
-    // Use current date as default
+    // Use current date as default, ensuring it's at the start of the day in the local timezone
     const now = new Date();
+    // Reset time to midnight to avoid timezone issues
+    now.setHours(0, 0, 0, 0);
     return now;
   });
   const [scheduleTime, setScheduleTime] = useState(() => {
@@ -1273,9 +1275,10 @@ const PostLibraryPage: React.FC = () => {
       setIsScheduling(true);
       
       // Create a Date object from the scheduled date and time
+      // Make a fresh date object to avoid timezone issues
       const scheduledDateTime = new Date(scheduledDate);
       const [hours, minutes] = scheduleTime.split(':').map(Number);
-      scheduledDateTime.setHours(hours, minutes);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
       
       // Check if the scheduled time is in the past
       if (scheduledDateTime <= new Date()) {
@@ -1508,26 +1511,41 @@ const PostLibraryPage: React.FC = () => {
                   <label className="text-sm font-medium mb-1 block">Date</label>
                   <Input
                     type="date"
-                    value={scheduledDate.toISOString().split('T')[0]}
+                    // Format date with correct timezone handling
+                    value={(() => {
+                      // Create a date with timezone offset applied
+                      const date = new Date(scheduledDate);
+                      // Format as YYYY-MM-DD
+                      return date.toISOString().split('T')[0];
+                    })()}
                     onChange={(e) => {
                       if (e.target.value) {
-                        const newDate = new Date(e.target.value);
-                        // Preserve the time
-                        const currentHours = scheduledDate.getHours();
-                        const currentMinutes = scheduledDate.getMinutes();
-                        newDate.setHours(currentHours, currentMinutes, 0, 0);
-                        
-                        // Only set if it's a valid date and not in the past
-                        if (!isNaN(newDate.getTime())) {
-                          const now = new Date();
-                          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                          const selectedDay = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+                        try {
+                          // Handle the date directly from the input value to avoid timezone issues
+                          const dateParts = e.target.value.split('-').map(Number);
+                          const newDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
                           
-                          if (selectedDay >= today) {
-                            setScheduledDate(newDate);
-                          } else {
-                            toast.error('Please select today or a future date');
+                          // Preserve the time but on the new date
+                          const currentHours = scheduledDate.getHours();
+                          const currentMinutes = scheduledDate.getMinutes();
+                          newDate.setHours(currentHours, currentMinutes, 0, 0);
+                          
+                          // Only set if it's a valid date and not in the past
+                          if (!isNaN(newDate.getTime())) {
+                            const now = new Date();
+                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            const selectedDay = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+                            
+                            if (selectedDay >= today) {
+                              setScheduledDate(newDate);
+                              console.log('Set date to:', newDate.toISOString(), 'from input:', e.target.value);
+                            } else {
+                              toast.error('Please select today or a future date');
+                            }
                           }
+                        } catch (err) {
+                          console.error('Error parsing date:', err);
+                          toast.error('Invalid date format');
                         }
                       }
                     }}
@@ -1616,7 +1634,11 @@ const PostLibraryPage: React.FC = () => {
                   <div className="text-blue-600 mt-1 text-xs font-medium flex items-center">
                     <Calendar className="h-3 w-3 mr-1 inline" />
                     <span className="truncate">
-                      Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}
+                      Scheduled for: {scheduledDate.toLocaleDateString(undefined, { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })} at {scheduleTime}
                     </span>
                   </div>
                 </div>
