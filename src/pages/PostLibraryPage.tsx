@@ -28,7 +28,9 @@ import {
   MessageSquare,
   BarChart2,
   AlertCircle,
-  Linkedin
+  Linkedin,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -53,7 +55,7 @@ interface BasePost {
   excerpt?: string;
   createdAt?: string;
   updatedAt?: string;
-  slides?: {id: string, content: string}[];
+  slides?: {id: string, content: string, imageUrl?: string, cloudinaryImage?: any}[];
   postImage?: CloudinaryImage;
   isPollActive?: boolean;
   pollOptions?: string[];
@@ -193,7 +195,9 @@ const PostLibraryPage: React.FC = () => {
               postImage: post.postImage,
               hashtags: post.hashtags,
               isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions
+              pollOptions: post.pollOptions,
+              isCarousel: post.slides && post.slides.length > 0,
+              slideCount: post.slides?.length || 0
             };
           }));
           
@@ -209,7 +213,9 @@ const PostLibraryPage: React.FC = () => {
               postImage: post.postImage,
               hashtags: post.hashtags,
               isPollActive: post.isPollActive,
-              pollOptions: post.pollOptions
+              pollOptions: post.pollOptions,
+              isCarousel: post.slides && post.slides.length > 0,
+              slideCount: post.slides?.length || 0
             };
           }));
           
@@ -224,10 +230,26 @@ const PostLibraryPage: React.FC = () => {
           
           // Fallback to localStorage if API fails
           const savedDrafts = JSON.parse(localStorage.getItem('post_drafts') || '[]');
-          setDrafts(savedDrafts);
+          
+          // Ensure carousel properties are set correctly for localStorage drafts
+          const processedDrafts = savedDrafts.map((draft: any) => ({
+            ...draft,
+            isCarousel: draft.slides && draft.slides.length > 0 || draft.isCarousel,
+            slideCount: draft.slides?.length || draft.slideCount || 0
+          }));
+          
+          setDrafts(processedDrafts);
           
           const savedScheduled = JSON.parse(localStorage.getItem('scheduled_posts') || '[]');
-          setScheduled(savedScheduled.length > 0 ? savedScheduled : scheduled);
+          
+          // Ensure carousel properties are set correctly for localStorage scheduled posts
+          const processedScheduled = savedScheduled.map((post: any) => ({
+            ...post,
+            isCarousel: post.slides && post.slides.length > 0 || post.isCarousel,
+            slideCount: post.slides?.length || post.slideCount || 0
+          }));
+          
+          setScheduled(processedScheduled.length > 0 ? processedScheduled : scheduled);
         }
       } catch (error) {
         console.error('Error loading user content:', error);
@@ -529,6 +551,22 @@ const PostLibraryPage: React.FC = () => {
   
   // Render a unified post card for all types
   const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
+    // Add state for carousel navigation
+    const [currentSlide, setCurrentSlide] = useState(0);
+    
+    // Helper function to navigate through carousel slides
+    const nextSlide = () => {
+      if (post.slides && post.slides.length > 0) {
+        setCurrentSlide((prev) => (prev === post.slides!.length - 1 ? 0 : prev + 1));
+      }
+    };
+    
+    const prevSlide = () => {
+      if (post.slides && post.slides.length > 0) {
+        setCurrentSlide((prev) => (prev === 0 ? post.slides!.length - 1 : prev - 1));
+      }
+    };
+    
     return (
       <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col border dark:border-gray-700">
         {/* User Info Header */}
@@ -600,14 +638,73 @@ const PostLibraryPage: React.FC = () => {
             {post.content || post.excerpt || "No content"}
           </div>
           
-          {/* Post Image (if available) */}
-          {post.postImage && (
+          {/* Single Post Image (if available and not a carousel) */}
+          {post.postImage && !post.isCarousel && (
             <div className="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
               <img 
                 src={post.postImage.secure_url} 
                 alt="Post image"
                 className="w-full object-contain max-h-[280px]"
               />
+            </div>
+          )}
+          
+          {/* Carousel Images (if available) */}
+          {post.isCarousel && post.slides && post.slides.length > 0 && (
+            <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
+              <div className="relative min-h-[280px] w-full">
+                {post.slides.map((slide, index) => (
+                  <div 
+                    key={slide.id}
+                    className={`absolute top-0 left-0 w-full transition-opacity duration-300 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                  >
+                    {/* Slide Image */}
+                    {slide.cloudinaryImage && (
+                      <img 
+                        src={slide.cloudinaryImage.secure_url} 
+                        alt={`Slide ${index + 1}`}
+                        className="w-full object-contain max-h-[240px]"
+                      />
+                    )}
+                    
+                    {/* Slide Content */}
+                    <div className="p-3 bg-white text-sm">
+                      {slide.content}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Carousel Navigation Buttons */}
+                {post.slides.length > 1 && (
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white/70 flex items-center justify-center"
+                      aria-label="Previous slide"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white/70 flex items-center justify-center"
+                      aria-label="Next slide"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </>
+                )}
+              </div>
+              
+              {/* Carousel indicator */}
+              <div className="flex gap-1 justify-center my-2">
+                {post.slides.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`h-1.5 rounded-full ${i === currentSlide ? 'w-4 bg-blue-500' : 'w-1.5 bg-gray-300'}`}
+                    onClick={() => setCurrentSlide(i)}
+                  ></div>
+                ))}
+              </div>
             </div>
           )}
           
@@ -642,15 +739,6 @@ const PostLibraryPage: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
-          )}
-          
-          {/* Carousel indicator (if applicable) */}
-          {post.isCarousel && (
-            <div className="flex gap-1 justify-center my-2">
-              {Array.from({length: post.slideCount || 0}, (_, i) => (
-                <div key={i} className={`h-1.5 rounded-full ${i === 0 ? 'w-4 bg-blue-500' : 'w-1.5 bg-gray-300'}`}></div>
-              ))}
             </div>
           )}
         </CardContent>

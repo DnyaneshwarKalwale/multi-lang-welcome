@@ -367,7 +367,7 @@ const MyCarouselsPage: React.FC = () => {
                   >
                     <Eye size={14} />
                   </button>
-                </div>
+                      </div>
               </div>
               
               <CardContent className="py-4 flex-grow">

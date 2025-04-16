@@ -579,7 +579,7 @@ const CreatePostPage: React.FC = () => {
     setIsSavingDraft(true);
     
     try {
-      // Create a draft post object
+      // Create a draft post object with proper slides including cloudinaryImage data
       const draft = {
         id: `draft_${Date.now()}`,
         title: content.split('\n')[0].substring(0, 50) || 'Untitled Draft',
@@ -593,7 +593,16 @@ const CreatePostPage: React.FC = () => {
         pollOptions: pollOptions,
         pollDuration: pollDuration,
         status: 'draft' as 'draft',
-        provider: 'linkedin'
+        provider: 'linkedin',
+        // Ensure the full slide data is included with cloudinaryImage property
+        slides: slides.map(slide => ({
+          id: slide.id,
+          content: slide.content,
+          imageUrl: slide.imageUrl,
+          cloudinaryImage: slide.cloudinaryImage
+        })),
+        isCarousel: activeTab === 'carousel',
+        slideCount: slides.length
       };
       
       // Save to backend
@@ -653,7 +662,7 @@ const CreatePostPage: React.FC = () => {
         return;
       }
       
-      // Create a scheduled post object
+      // Create a scheduled post object with complete slides data including images
       const scheduledPost = {
         id: `scheduled_${Date.now()}`,
         title: content.split('\n')[0].substring(0, 50) || 'Scheduled Post',
@@ -667,7 +676,16 @@ const CreatePostPage: React.FC = () => {
         pollOptions: pollOptions,
         pollDuration: pollDuration,
         status: 'scheduled' as 'scheduled',
-        provider: 'linkedin'
+        provider: 'linkedin',
+        // Ensure the full slide data is included with cloudinaryImage property
+        slides: slides.map(slide => ({
+          id: slide.id,
+          content: slide.content,
+          imageUrl: slide.imageUrl,
+          cloudinaryImage: slide.cloudinaryImage
+        })),
+        isCarousel: activeTab === 'carousel',
+        slideCount: slides.length
       };
       
       // Try to save to backend
