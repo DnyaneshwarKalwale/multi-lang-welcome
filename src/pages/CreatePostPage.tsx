@@ -703,17 +703,22 @@ const CreatePostPage: React.FC = () => {
             // Transform slides to the format expected by createCarouselPost
             const transformedSlides = slides.map(slide => ({
               content: slide.content,
-              imageUrl: slide.cloudinaryImage?.secure_url
+              imageUrl: slide.cloudinaryImage?.secure_url,
+              cloudinaryImage: slide.cloudinaryImage
             }));
             
             // Check if the method exists before calling it
             if (typeof linkedInApi.createCarouselPost === 'function') {
               // Use the new createCarouselPost method
+              toast.info('Creating carousel posts. This will create multiple posts for each slide...');
+              
               response = await linkedInApi.createCarouselPost(
                 content,
                 transformedSlides,
                 visibility
               );
+              
+              toast.success(`Carousel published! ${transformedSlides.length} slides have been posted to LinkedIn as separate posts.`);
             } else {
               // Fallback to using the first image if the method doesn't exist
               const firstImage = slides[0].cloudinaryImage;
@@ -735,10 +740,11 @@ const CreatePostPage: React.FC = () => {
                 'Carousel slide 1',
                 visibility
               );
+              
+              toast.success('Carousel content published as a single post with the first image.');
             }
             
             console.log('LinkedIn carousel post response:', response);
-            toast.success('Carousel published to LinkedIn successfully!');
           }
         } catch (carouselError: any) {
           console.error('Error publishing LinkedIn carousel post:', carouselError);

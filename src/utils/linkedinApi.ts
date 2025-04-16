@@ -539,9 +539,11 @@ class LinkedInApi {
   }
 
   // Create a carousel post (multiple images with text)
+  // Note: LinkedIn API doesn't directly support carousel posts through most integrations.
+  // This method creates a series of separate posts, one for each slide.
   async createCarouselPost(
     text: string,
-    slides: Array<{content: string, imageUrl?: string}>,
+    slides: Array<{content: string, imageUrl?: string, cloudinaryImage?: {secure_url: string, original_filename?: string}}>,
     visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC',
     accessToken?: string
   ): Promise<LinkedInPostResponse> {
@@ -553,42 +555,88 @@ class LinkedInApi {
       }
 
       // Filter slides to only include those with images
-      const slidesWithImages = slides.filter(slide => slide.imageUrl);
+      const slidesWithImages = slides.filter(slide => slide.imageUrl || slide.cloudinaryImage?.secure_url);
       
       if (slidesWithImages.length === 0) {
         throw new Error("No slides with images found. Carousel posts require at least one image.");
       }
       
-      // Use the first slide with image as the main image
+      // First create main post with the first slide
       const firstSlide = slidesWithImages[0];
+      const imageUrl = firstSlide.cloudinaryImage?.secure_url || firstSlide.imageUrl;
       
-      // Add all slide content to the post text
-      const slideContents = slides.map((slide, index) => 
-        `Slide ${index + 1}: ${slide.content}`
-      ).join('\n\n');
+      if (!imageUrl) {
+        throw new Error("First slide has no valid image URL");
+      }
       
-      // Combine original text with slide contents
-      const fullContent = `${text}\n\n${slideContents}`;
-      
-      // Use the existing image post endpoint with the first image
-      const imagePostData = {
-        postContent: fullContent,
-        imagePath: firstSlide.imageUrl,
-        imageTitle: `Slide 1: ${firstSlide.content.substring(0, 30)}...`,
-        imageDescription: "Carousel slide",
-        isCloudinaryImage: true, // Assuming the image URL is from Cloudinary
+      // Create a main post with the carousel introduction
+      const mainPostData = {
+        postContent: `${text}\n\n${firstSlide.content} (Slide 1/${slidesWithImages.length})`,
+        imagePath: imageUrl,
+        imageTitle: firstSlide.cloudinaryImage?.original_filename || 'Slide 1',
+        imageDescription: "Carousel slide 1",
+        isCloudinaryImage: true,
         visibility: visibility
       };
 
-      // Send post request to the existing post endpoint
-      const response = await axios.post(`${this.API_URL}/post`, imagePostData, {
+      // Send main post request
+      const mainResponse = await axios.post(`${this.API_URL}/post`, mainPostData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      return response.data;
+      // For remaining slides, create comment-style posts in the thread
+      // However, LinkedIn's API doesn't easily support creating a thread through third parties
+      // So we'll create separate posts for each slide
+      
+      // We'll add a small delay between posts to avoid rate limiting
+      const createFollowUpPost = async (slide: any, index: number) => {
+        const slideImageUrl = slide.cloudinaryImage?.secure_url || slide.imageUrl;
+        
+        if (!slideImageUrl) {
+          console.warn(`Slide ${index + 1} has no valid image URL, skipping`);
+          return null;
+        }
+        
+        const slidePostData = {
+          postContent: `${slide.content} (Slide ${index + 1}/${slidesWithImages.length} - Part of carousel)`,
+          imagePath: slideImageUrl,
+          imageTitle: slide.cloudinaryImage?.original_filename || `Slide ${index + 1}`,
+          imageDescription: `Carousel slide ${index + 1}`,
+          isCloudinaryImage: true,
+          visibility: visibility
+        };
+        
+        try {
+          const slideResponse = await axios.post(`${this.API_URL}/post`, slidePostData, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log(`Posted slide ${index + 1} successfully`);
+          return slideResponse.data;
+        } catch (slideError) {
+          console.error(`Error posting slide ${index + 1}:`, slideError);
+          return null;
+        }
+      };
+      
+      // Post remaining slides (starting from index 1)
+      if (slidesWithImages.length > 1) {
+        console.log(`Posting ${slidesWithImages.length - 1} additional slides...`);
+        
+        // Create the remaining slide posts with a delay between each
+        for (let i = 1; i < slidesWithImages.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay between posts
+          await createFollowUpPost(slidesWithImages[i], i);
+        }
+      }
+      
+      return mainResponse.data;
     } catch (error: any) {
       console.error('Error creating LinkedIn carousel post:', error);
       
