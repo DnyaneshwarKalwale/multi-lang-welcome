@@ -710,7 +710,7 @@ const CreatePostPage: React.FC = () => {
             // Check if the method exists before calling it
             if (typeof linkedInApi.createCarouselPost === 'function') {
               // Use the new createCarouselPost method
-              toast.info('Creating carousel posts. This will create multiple posts for each slide...');
+              toast.info('Creating LinkedIn post with carousel content...');
               
               response = await linkedInApi.createCarouselPost(
                 content,
@@ -718,7 +718,8 @@ const CreatePostPage: React.FC = () => {
                 visibility
               );
               
-              toast.success(`Carousel published! ${transformedSlides.length} slides have been posted to LinkedIn as separate posts.`);
+              toast.success('Carousel content published to LinkedIn! Due to LinkedIn API limitations, the post includes the first image with all slide text.');
+              toast.info('To create true carousel posts with multiple images, you need to post directly through the LinkedIn app.');
             } else {
               // Fallback to using the first image if the method doesn't exist
               const firstImage = slides[0].cloudinaryImage;
@@ -742,6 +743,7 @@ const CreatePostPage: React.FC = () => {
               );
               
               toast.success('Carousel content published as a single post with the first image.');
+              toast.info('LinkedIn API limitations prevent creating true carousel posts with multiple images.');
             }
             
             console.log('LinkedIn carousel post response:', response);

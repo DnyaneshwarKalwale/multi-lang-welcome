@@ -121,6 +121,7 @@ export interface ScheduledPostData {
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
+  private POSTS_API_URL = `${API_URL}/posts`; // Add new posts API URL
 
   // Simplified test connectivity method that avoids unnecessary API calls
   async testConnection(): Promise<{ success: boolean; message: string; details?: any; errorType?: string }> {
@@ -539,8 +540,8 @@ class LinkedInApi {
   }
 
   // Create a carousel post (multiple images with text)
-  // Note: LinkedIn API doesn't directly support carousel posts through most integrations.
-  // This method creates a series of separate posts, one for each slide.
+  // Note: LinkedIn API limitations prevent creating true carousel posts with multiple images in one post.
+  // LinkedIn only allows this natively when posting directly through their app.
   async createCarouselPost(
     text: string,
     slides: Array<{content: string, imageUrl?: string, cloudinaryImage?: {secure_url: string, original_filename?: string}}>,
@@ -561,7 +562,7 @@ class LinkedInApi {
         throw new Error("No slides with images found. Carousel posts require at least one image.");
       }
       
-      // First create main post with the first slide
+      // Use the first slide as the main image
       const firstSlide = slidesWithImages[0];
       const imageUrl = firstSlide.cloudinaryImage?.secure_url || firstSlide.imageUrl;
       
@@ -569,74 +570,33 @@ class LinkedInApi {
         throw new Error("First slide has no valid image URL");
       }
       
-      // Create a main post with the carousel introduction
-      const mainPostData = {
-        postContent: `${text}\n\n${firstSlide.content} (Slide 1/${slidesWithImages.length})`,
+      // Add all slide content to the post text
+      const slideContents = slides.map((slide, index) => 
+        `Slide ${index + 1}: ${slide.content}`
+      ).join('\n\n');
+      
+      // Combine original text with slide contents
+      const fullContent = `${text}\n\n${slideContents}\n\n(Note: This post contains multiple slides that would normally display as a carousel when posted directly via LinkedIn)`;
+      
+      // Create a single post with the first image and all slide content
+      const imagePostData = {
+        postContent: fullContent,
         imagePath: imageUrl,
-        imageTitle: firstSlide.cloudinaryImage?.original_filename || 'Slide 1',
-        imageDescription: "Carousel slide 1",
+        imageTitle: firstSlide.cloudinaryImage?.original_filename || 'Carousel Image',
+        imageDescription: "Carousel post with multiple slides",
         isCloudinaryImage: true,
         visibility: visibility
       };
 
-      // Send main post request
-      const mainResponse = await axios.post(`${this.API_URL}/post`, mainPostData, {
+      // Send post request to the existing post endpoint
+      const response = await axios.post(`${this.API_URL}/post`, imagePostData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      // For remaining slides, create comment-style posts in the thread
-      // However, LinkedIn's API doesn't easily support creating a thread through third parties
-      // So we'll create separate posts for each slide
-      
-      // We'll add a small delay between posts to avoid rate limiting
-      const createFollowUpPost = async (slide: any, index: number) => {
-        const slideImageUrl = slide.cloudinaryImage?.secure_url || slide.imageUrl;
-        
-        if (!slideImageUrl) {
-          console.warn(`Slide ${index + 1} has no valid image URL, skipping`);
-          return null;
-        }
-        
-        const slidePostData = {
-          postContent: `${slide.content} (Slide ${index + 1}/${slidesWithImages.length} - Part of carousel)`,
-          imagePath: slideImageUrl,
-          imageTitle: slide.cloudinaryImage?.original_filename || `Slide ${index + 1}`,
-          imageDescription: `Carousel slide ${index + 1}`,
-          isCloudinaryImage: true,
-          visibility: visibility
-        };
-        
-        try {
-          const slideResponse = await axios.post(`${this.API_URL}/post`, slidePostData, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          console.log(`Posted slide ${index + 1} successfully`);
-          return slideResponse.data;
-        } catch (slideError) {
-          console.error(`Error posting slide ${index + 1}:`, slideError);
-          return null;
-        }
-      };
-      
-      // Post remaining slides (starting from index 1)
-      if (slidesWithImages.length > 1) {
-        console.log(`Posting ${slidesWithImages.length - 1} additional slides...`);
-        
-        // Create the remaining slide posts with a delay between each
-        for (let i = 1; i < slidesWithImages.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay between posts
-          await createFollowUpPost(slidesWithImages[i], i);
-        }
-      }
-      
-      return mainResponse.data;
+      return response.data;
     } catch (error: any) {
       console.error('Error creating LinkedIn carousel post:', error);
       
@@ -851,6 +811,174 @@ class LinkedInApi {
       return response.data;
     } catch (error) {
       console.error('Error publishing post:', error);
+      throw error;
+    }
+  }
+
+  // Post management methods for database-backed posts
+  
+  // Get all posts with optional status filter
+  async getDBPosts(status?: string, page: number = 1, limit: number = 20): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const params: any = { page, limit };
+      if (status) {
+        params.status = status;
+      }
+      
+      const response = await axios.get(this.POSTS_API_URL, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      throw error;
+    }
+  }
+  
+  // Get a specific post by ID
+  async getDBPostById(postId: string): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.get(`${this.POSTS_API_URL}/${postId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching post:', error);
+      throw error;
+    }
+  }
+  
+  // Create a new post (draft)
+  async createDBPost(postData: any): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.post(this.POSTS_API_URL, postData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error creating post:', error);
+      throw error;
+    }
+  }
+  
+  // Update an existing post
+  async updateDBPost(postId: string, postData: any): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.put(`${this.POSTS_API_URL}/${postId}`, postData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error updating post:', error);
+      throw error;
+    }
+  }
+  
+  // Delete a post
+  async deleteDBPost(postId: string): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.delete(`${this.POSTS_API_URL}/${postId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      throw error;
+    }
+  }
+  
+  // Publish a draft or scheduled post immediately
+  async publishDBPost(postId: string): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.post(`${this.POSTS_API_URL}/${postId}/publish`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error publishing post:', error);
+      throw error;
+    }
+  }
+  
+  // Schedule a post for later publishing
+  async scheduleDBPost(postId: string, scheduledTime: string): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      const response = await axios.post(`${this.POSTS_API_URL}/${postId}/schedule`, {
+        scheduledTime
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error scheduling post:', error);
       throw error;
     }
   }
