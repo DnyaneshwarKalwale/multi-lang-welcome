@@ -6,14 +6,29 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender
 
 // Helper function to get the best available LinkedIn token
 const getLinkedInToken = (accessToken?: string): string => {
+  console.log('Getting LinkedIn token with provided token:', !!accessToken);
+  
   // First try the provided access token (highest priority)
-  if (accessToken) return accessToken;
+  if (accessToken) {
+    console.log('Using provided access token');
+    return accessToken;
+  }
   
   // Then try LinkedIn-specific token from tokenManager
   const linkedinToken = tokenManager.getToken('linkedin');
-  if (linkedinToken) return linkedinToken;
+  console.log('LinkedIn token from tokenManager:', !!linkedinToken);
+  
+  // If tokenManager fails, try direct localStorage access as fallback
+  if (!linkedinToken) {
+    const directToken = localStorage.getItem('linkedin-login-token');
+    console.log('Direct LinkedIn token from localStorage:', !!directToken);
+    if (directToken) return directToken;
+  } else {
+    return linkedinToken;
+  }
   
   // No token available
+  console.warn('No LinkedIn token available');
   return '';
 };
 
@@ -105,6 +120,39 @@ export interface ScheduledPostData {
 // Main API wrapper for LinkedIn API
 class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
+
+  // Expose getLinkedInToken as a public method
+  getToken(accessToken?: string): string {
+    return getLinkedInToken(accessToken);
+  }
+
+  // Debug method to check token status
+  async debugTokenStatus(): Promise<{
+    hasToken: boolean,
+    tokenValue: string,
+    authMethod: string | null,
+    localStorage: Record<string, string | null>
+  }> {
+    // Get the token using our helper
+    const token = getLinkedInToken();
+    
+    // Get auth method
+    const authMethod = localStorage.getItem('auth-method');
+    
+    // Check all relevant localStorage values
+    const relevantStorage = {
+      'auth-method': localStorage.getItem('auth-method'),
+      'linkedin-login-token': localStorage.getItem('linkedin-login-token')?.substring(0, 20) + '...' || null,
+      'google-login-token': localStorage.getItem('google-login-token')?.substring(0, 20) + '...' || null,
+    };
+    
+    return {
+      hasToken: !!token,
+      tokenValue: token ? token.substring(0, 20) + '...' : '',
+      authMethod,
+      localStorage: relevantStorage
+    };
+  }
 
   // Add a test connectivity method
   async testConnection(): Promise<{ success: boolean; message: string; details?: any; errorType?: string }> {
