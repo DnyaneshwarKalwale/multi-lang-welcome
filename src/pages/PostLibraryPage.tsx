@@ -498,7 +498,7 @@ const PostLibraryPage: React.FC = () => {
             const dbDraftId = createResponse.data._id;
             
             // Publish using the backend API
-            await linkedInApi.publishDBPost(dbDraftId);
+            const publishResponse = await linkedInApi.publishDBPost(dbDraftId);
             
             // Remove original localStorage draft
             localStorage.removeItem(draftId);
@@ -509,7 +509,7 @@ const PostLibraryPage: React.FC = () => {
             
             // Create a published post object for the UI
             const publishedPost: PublishedPost = {
-              id: `published_${Date.now()}`,
+              id: publishResponse?.data?._id || `published_${Date.now()}`,
               title: draft.title || 'Published Post',
               content: draft.content,
               excerpt: draft.content?.substring(0, 100) + '...',
@@ -526,6 +526,9 @@ const PostLibraryPage: React.FC = () => {
             setPublished([publishedPost, ...published]);
             toast.success('Post published to LinkedIn successfully');
             setActiveTab('published');
+            
+            // Reload user content to make sure all data is up to date
+            await loadUserContent();
           } else {
             throw new Error('Failed to create database post before publishing');
           }
@@ -560,6 +563,9 @@ const PostLibraryPage: React.FC = () => {
         setPublished([publishedPost, ...published]);
         toast.success('Post published to LinkedIn successfully');
         setActiveTab('published');
+        
+        // Reload user content to make sure all data is up to date
+        await loadUserContent();
       }
     } catch (error: any) {
       console.error('Error publishing draft:', error);
@@ -642,7 +648,7 @@ const PostLibraryPage: React.FC = () => {
             const dbPostId = createResponse.data._id;
             
             // Publish using the backend API
-            await linkedInApi.publishDBPost(dbPostId);
+            const publishResponse = await linkedInApi.publishDBPost(dbPostId);
             
             // Remove original localStorage scheduled post
             localStorage.removeItem(postId);
@@ -653,7 +659,7 @@ const PostLibraryPage: React.FC = () => {
             
             // Create a published post object for the UI
             const publishedPost: PublishedPost = {
-              id: `published_${Date.now()}`,
+              id: publishResponse?.data?._id || `published_${Date.now()}`,
               title: post.title || 'Published Post',
               content: post.content,
               excerpt: post.content?.substring(0, 100) + '...',
@@ -670,6 +676,9 @@ const PostLibraryPage: React.FC = () => {
             setPublished([publishedPost, ...published]);
             toast.success('Post published to LinkedIn successfully');
             setActiveTab('published');
+            
+            // Reload user content to make sure all data is up to date
+            await loadUserContent();
           } else {
             throw new Error('Failed to create database post before publishing');
           }
@@ -704,6 +713,9 @@ const PostLibraryPage: React.FC = () => {
         setPublished([publishedPost, ...published]);
         toast.success('Post published to LinkedIn successfully');
         setActiveTab('published');
+        
+        // Reload user content to make sure all data is up to date
+        await loadUserContent();
       }
     } catch (error: any) {
       console.error('Error publishing scheduled post:', error);
