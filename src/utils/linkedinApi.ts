@@ -496,18 +496,22 @@ class LinkedInApi {
         throw new Error("LinkedIn token not available. Please login again.");
       }
 
-      // Create FormData to send the document
-      const formData = new FormData();
-      formData.append('document', documentFile);
-      formData.append('text', text);
-      formData.append('title', documentTitle || documentFile.name);
-      formData.append('visibility', visibility);
+      // Since we can't directly upload document files to LinkedIn through our backend,
+      // we'll create a text post that mentions the document name
+      const documentInfo = `Document: ${documentFile.name} (${(documentFile.size / 1024 / 1024).toFixed(2)} MB)`;
+      const fullContent = `${text}\n\n${documentInfo}`;
+      
+      // Use the existing text post endpoint
+      const textPostData = {
+        postContent: fullContent,
+        visibility: visibility
+      };
 
-      // Send document post request to our backend which will handle the LinkedIn API
-      const response = await axios.post(`${this.API_URL}/document-post`, formData, {
+      // Send post request to our backend using the text post endpoint
+      const response = await axios.post(`${this.API_URL}/post`, textPostData, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
       
@@ -555,15 +559,29 @@ class LinkedInApi {
         throw new Error("No slides with images found. Carousel posts require at least one image.");
       }
       
-      // Create carousel post request data
-      const carouselData = {
-        text: text,
-        slides: slidesWithImages,
+      // Use the first slide with image as the main image
+      const firstSlide = slidesWithImages[0];
+      
+      // Add all slide content to the post text
+      const slideContents = slides.map((slide, index) => 
+        `Slide ${index + 1}: ${slide.content}`
+      ).join('\n\n');
+      
+      // Combine original text with slide contents
+      const fullContent = `${text}\n\n${slideContents}`;
+      
+      // Use the existing image post endpoint with the first image
+      const imagePostData = {
+        postContent: fullContent,
+        imagePath: firstSlide.imageUrl,
+        imageTitle: `Slide 1: ${firstSlide.content.substring(0, 30)}...`,
+        imageDescription: "Carousel slide",
+        isCloudinaryImage: true, // Assuming the image URL is from Cloudinary
         visibility: visibility
       };
 
-      // Send carousel post request to our backend which will handle the LinkedIn API
-      const response = await axios.post(`${this.API_URL}/carousel-post`, carouselData, {
+      // Send post request to the existing post endpoint
+      const response = await axios.post(`${this.API_URL}/post`, imagePostData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
