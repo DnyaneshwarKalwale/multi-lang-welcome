@@ -46,6 +46,22 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { tokenManager } from '@/services/api';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define interfaces for post types
 interface BasePost {
@@ -179,6 +195,25 @@ const PostLibraryPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [linkedInAuthError, setLinkedInAuthError] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  
+  // State for scheduling dialog
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [selectedDraftForScheduling, setSelectedDraftForScheduling] = useState<DraftPost | null>(null);
+  const [scheduledDate, setScheduledDate] = useState(() => {
+    // Use current date as default
+    const now = new Date();
+    return now;
+  });
+  const [scheduleTime, setScheduleTime] = useState(() => {
+    // Set current time as default, plus 15 minutes
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 15);
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  });
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN'>('PUBLIC');
+  const [isScheduling, setIsScheduling] = useState(false);
   
   // Effect to switch to the correct tab when navigating from another page
   useEffect(() => {
@@ -581,49 +616,8 @@ const PostLibraryPage: React.FC = () => {
     const draft = drafts.find(d => d.id === draftId);
     if (!draft) return;
     
-    // Immediately update UI - remove from drafts
-    const updatedDrafts = drafts.filter(d => d.id !== draftId);
-    setDrafts(updatedDrafts);
-    
-    // Clean up any existing localStorage values to prevent issues
-    localStorage.removeItem('state:createPost.postImage');
-    localStorage.removeItem('state:createPost.slides');
-    localStorage.removeItem('state:createPost.scheduledDate');
-    localStorage.removeItem('state:createPost.scheduleTime');
-    
-    // Set up the form data in localStorage for the create post page
-    Object.entries(draft).forEach(([key, value]) => {
-      if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
-        // Make sure we don't store null/undefined values
-        if (value !== null && value !== undefined) {
-        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
-        } else {
-          // Remove the key if it exists to avoid parsing errors
-          localStorage.removeItem(`state:createPost.${key}`);
-        }
-      }
-    });
-    
-    try {
-      // If it's a local draft, remove from localStorage
-      if (draftId.startsWith('draft_')) {
-        localStorage.removeItem(draftId);
-      } else {
-      // Remove from drafts via backend API
-      await linkedInApi.deleteDraft(draftId);
-      }
-    
-      // Navigate to the create post page with schedule dialog open
-      navigate('/dashboard/post', { state: { openScheduleDialog: true, fromDraft: true, draftId } });
-    } catch (error) {
-      console.error('Error removing draft:', error);
-      toast.error('Failed to process draft. Please try again later.');
-      
-      // Restore draft to state if there was an error
-      if (draft) {
-        setDrafts(prevDrafts => [...prevDrafts, draft]);
-      }
-    }
+    // Open the scheduling dialog with this draft
+    openScheduleDialog(draft);
   };
   
   // Edit a scheduled post - delete old scheduled post when navigating to edit
@@ -1257,6 +1251,93 @@ const PostLibraryPage: React.FC = () => {
     );
   };
   
+  // Function to open the schedule dialog
+  const openScheduleDialog = (draft: DraftPost) => {
+    setSelectedDraftForScheduling(draft);
+    setShowScheduleDialog(true);
+    
+    // Set visibility from draft if available
+    if (draft.visibility) {
+      setVisibility(draft.visibility as 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN');
+    }
+  };
+  
+  // Function to schedule a post directly from the library
+  const schedulePostDirectly = async () => {
+    if (!selectedDraftForScheduling) {
+      toast.error('No draft selected for scheduling');
+      return;
+    }
+    
+    try {
+      setIsScheduling(true);
+      
+      // Create a Date object from the scheduled date and time
+      const scheduledDateTime = new Date(scheduledDate);
+      const [hours, minutes] = scheduleTime.split(':').map(Number);
+      scheduledDateTime.setHours(hours, minutes);
+      
+      // Check if the scheduled time is in the past
+      if (scheduledDateTime <= new Date()) {
+        toast.error('Please select a future date and time');
+        return;
+      }
+      
+      // Prepare post data for scheduling
+      const postData = {
+        title: selectedDraftForScheduling.title || 'Scheduled Post',
+        content: selectedDraftForScheduling.content || '',
+        hashtags: selectedDraftForScheduling.hashtags || [],
+        visibility: visibility,
+        platform: 'linkedin',
+        status: 'scheduled',
+        scheduledTime: scheduledDateTime.toISOString(),
+        mediaType: selectedDraftForScheduling.postImage ? 'image' : 
+                  (selectedDraftForScheduling.slides && selectedDraftForScheduling.slides.length > 0) ? 'carousel' : 'none',
+        postImage: selectedDraftForScheduling.postImage,
+        slides: selectedDraftForScheduling.slides || [],
+        isPollActive: selectedDraftForScheduling.isPollActive || false,
+        pollOptions: selectedDraftForScheduling.pollOptions || []
+      };
+      
+      // First, remove the draft
+      if (selectedDraftForScheduling.id.startsWith('draft_')) {
+        // If it's a local draft, remove from localStorage
+        localStorage.removeItem(selectedDraftForScheduling.id);
+      } else {
+        // If it's a database draft, delete it from the database
+        await linkedInApi.deleteDBPost(selectedDraftForScheduling.id);
+      }
+      
+      // Create scheduled post in database
+      const response = await linkedInApi.createDBPost({
+        ...postData,
+        status: 'scheduled'
+      });
+      
+      if (response && response.success) {
+        // Remove from drafts in state
+        setDrafts(prevDrafts => prevDrafts.filter(d => d.id !== selectedDraftForScheduling.id));
+        
+        toast.success('Post scheduled successfully!');
+        setShowScheduleDialog(false);
+        
+        // Reload user content to show the scheduled post
+        await loadUserContent();
+        
+        // Switch to scheduled tab
+        setActiveTab('scheduled');
+      } else {
+        throw new Error('Failed to schedule post');
+      }
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      toast.error('Failed to schedule post: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+  
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -1405,6 +1486,149 @@ const PostLibraryPage: React.FC = () => {
           )}
         </TabsContent>
       </Tabs>
+      
+      {/* Scheduling Dialog */}
+      {showScheduleDialog && selectedDraftForScheduling && (
+        <Dialog 
+          open={showScheduleDialog} 
+          onOpenChange={(open) => {
+            if (!open) setShowScheduleDialog(false);
+          }}
+        >
+          <DialogContent className="sm:max-w-md overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>Schedule LinkedIn Post</DialogTitle>
+              <DialogDescription>
+                Choose when you want this post to be published to LinkedIn
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Date</label>
+                  <Input
+                    type="date"
+                    value={scheduledDate.toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const newDate = new Date(e.target.value);
+                        // Preserve the time
+                        const currentHours = scheduledDate.getHours();
+                        const currentMinutes = scheduledDate.getMinutes();
+                        newDate.setHours(currentHours, currentMinutes, 0, 0);
+                        
+                        // Only set if it's a valid date and not in the past
+                        if (!isNaN(newDate.getTime())) {
+                          const now = new Date();
+                          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                          const selectedDay = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+                          
+                          if (selectedDay >= today) {
+                            setScheduledDate(newDate);
+                          } else {
+                            toast.error('Please select today or a future date');
+                          }
+                        }
+                      }
+                    }}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Time</label>
+                  <Input
+                    type="time"
+                    value={scheduleTime}
+                    onChange={(e) => {
+                      setScheduleTime(e.target.value);
+                      // Update the scheduledDate with this time
+                      const [hours, minutes] = e.target.value.split(':').map(Number);
+                      const newDate = new Date(scheduledDate);
+                      newDate.setHours(hours, minutes, 0, 0);
+                      
+                      // Validate that the date+time combination is not in the past
+                      const now = new Date();
+                      if (newDate <= now) {
+                        // If selected time is in the past but the date is today,
+                        // we can suggest a time in the future
+                        if (newDate.getDate() === now.getDate() && 
+                            newDate.getMonth() === now.getMonth() && 
+                            newDate.getFullYear() === now.getFullYear()) {
+                          // Set time to be now + 15 minutes
+                          const suggestedDate = new Date();
+                          suggestedDate.setMinutes(suggestedDate.getMinutes() + 15);
+                          const suggestedHours = String(suggestedDate.getHours()).padStart(2, '0');
+                          const suggestedMinutes = String(suggestedDate.getMinutes()).padStart(2, '0');
+                          const suggestedTime = `${suggestedHours}:${suggestedMinutes}`;
+                          
+                          toast.error(`Time must be in the future. Setting to ${suggestedTime}`);
+                          setScheduleTime(suggestedTime);
+                          newDate.setHours(suggestedDate.getHours(), suggestedDate.getMinutes(), 0, 0);
+                        }
+                      }
+                      
+                      setScheduledDate(newDate);
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-1 block">Visibility</label>
+                <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
+                    <SelectItem value="CONNECTIONS">Connections only</SelectItem>
+                    <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="mt-2">
+                <h4 className="text-sm font-medium mb-1">Post Summary</h4>
+                <div className="border rounded p-3 bg-white text-sm">
+                  <p className="line-clamp-3">{selectedDraftForScheduling.content || "No content yet"}</p>
+                  {selectedDraftForScheduling.postImage && (
+                    <p className="text-green-600 mt-1">
+                      Image: {selectedDraftForScheduling.postImage.secure_url.split('/').pop()}
+                    </p>
+                  )}
+                  {selectedDraftForScheduling.isPollActive && selectedDraftForScheduling.pollOptions && (
+                    <p className="text-blue-600 mt-1">
+                      Poll with {selectedDraftForScheduling.pollOptions.filter(o => o?.trim()).length} options
+                    </p>
+                  )}
+                  <p className="text-blue-600 mt-1">
+                    Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
+              <Button 
+                onClick={schedulePostDirectly} 
+                disabled={isScheduling}
+              >
+                {isScheduling ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule Post
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
