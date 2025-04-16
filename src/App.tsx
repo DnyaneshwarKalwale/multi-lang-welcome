@@ -196,11 +196,18 @@ const AppRoutes = () => {
       }
     }, [loading]);
     
+    // Show loading spinner while authenticating
     if (loading && showLoader) {
       return <LoadingSpinner />;
     }
     
-    if (!isAuthenticated) {
+    // Check for token directly, as an additional safeguard
+    const authMethod = localStorage.getItem('auth-method');
+    const hasToken = authMethod && localStorage.getItem(`${authMethod}-login-token`);
+    
+    // If not authenticated and not loading AND no token, redirect to homepage
+    if (!isAuthenticated && !loading && !hasToken) {
+      console.log('ProtectedDashboardRoute - User not authenticated, redirecting to homepage');
       return <Navigate to="/" replace />;
     }
     
@@ -211,7 +218,7 @@ const AppRoutes = () => {
       // If we have a user object and it says onboarding is completed, update localStorage
       if (user && user.onboardingCompleted) {
         localStorage.setItem('onboardingCompleted', 'true');
-        return <DashboardPage />;
+        return <Navigate to="/dashboard/home" replace />;
       }
       
       // Otherwise redirect to onboarding
@@ -219,6 +226,7 @@ const AppRoutes = () => {
       return <Navigate to={`/onboarding/${savedStep}`} replace />;
     }
     
+    // User is authenticated and has completed onboarding, show dashboard
     return <Navigate to="/dashboard/home" replace />;
   }
 

@@ -11,6 +11,7 @@ export default function OAuthCallbackPage() {
   const location = useLocation();
   const { fetchUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     // Use an async function to handle the authentication process
@@ -29,13 +30,17 @@ export default function OAuthCallbackPage() {
       
       if (errorParam) {
         console.error('OAuth error from server:', errorParam);
-        navigate('/');
+        setError(`Authentication failed: ${errorParam}`);
+        // Wait a moment before redirecting on error
+        setTimeout(() => navigate('/', { replace: true }), 2000);
         return;
       }
       
       if (!token) {
         console.error('No authentication token received');
-        navigate('/');
+        setError('No authentication token received');
+        // Wait a moment before redirecting on error
+        setTimeout(() => navigate('/', { replace: true }), 2000);
         return;
       }
       
@@ -64,45 +69,24 @@ export default function OAuthCallbackPage() {
       
       console.log('OAuth callback - Determined authMethod:', authMethod);
       
-      // Don't set the token yet, wait until we get user data to confirm the auth method
-      
       try {
-        // Update user state in AuthContext
+        // First store the token - important to do this before fetchUser
+        console.log('OAuth callback - Storing token with authMethod:', authMethod);
+        tokenManager.storeToken(token, authMethod as 'linkedin' | 'google');
+        
+        // Now fetch user data to ensure we have a user object loaded
+        console.log('OAuth callback - Fetching user data');
         const userData = await fetchUser();
         
-        // Determine the correct auth method based on user data
-        let finalAuthMethod = authMethod;
-        
-        // Update authMethod based on user data if available
-        if (userData) {
-          console.log('OAuth callback - User data received:', {
-            id: userData.id,
-            authMethod: userData.authMethod,
-            hasLinkedinId: !!userData.linkedinId,
-            hasGoogleId: !!userData.googleId
-          });
-          
-          if (userData.authMethod) {
-            console.log(`OAuth callback - Using authMethod from user data: ${userData.authMethod}`);
-            finalAuthMethod = userData.authMethod;
-          } else if (userData.linkedinId) {
-            console.log('OAuth callback - Found linkedinId in user data, updating authMethod to linkedin');
-            finalAuthMethod = 'linkedin';
-          } else if (userData.googleId) {
-            console.log('OAuth callback - Found googleId in user data, updating authMethod to google');
-            finalAuthMethod = 'google';
-          }
+        if (!userData) {
+          console.error('OAuth callback - User data could not be loaded');
+          setError('Could not load user data, please try again');
+          // Wait a moment before redirecting on error
+          setTimeout(() => navigate('/', { replace: true }), 2000);
+          return;
         }
         
-        // Now set the token with the correct auth method
-        console.log(`OAuth callback - Setting token with finalAuthMethod: ${finalAuthMethod}`);
-        
-        // Ensure finalAuthMethod is only 'linkedin' or 'google'
-        if (finalAuthMethod !== 'linkedin' && finalAuthMethod !== 'google') {
-          finalAuthMethod = 'linkedin'; // Default to LinkedIn if not a valid type
-        }
-        
-        tokenManager.storeToken(token, finalAuthMethod as 'linkedin' | 'google');
+        console.log('OAuth callback - User data loaded successfully', { id: userData.id });
         
         // Check for pending invitation token
         const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
@@ -112,10 +96,12 @@ export default function OAuthCallbackPage() {
         
         // Determine where to redirect the user
         if (pendingInvitationToken) {
+          console.log('OAuth callback - Redirecting to handle pending invitation');
           navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
           localStorage.removeItem('pendingInvitationToken');
         } else if (redirectAfterAuth) {
           // Navigate to the stored redirect path and remove it from localStorage
+          console.log('OAuth callback - Redirecting to previously stored path:', redirectAfterAuth);
           navigate(redirectAfterAuth, { replace: true });
           localStorage.removeItem('redirectAfterAuth');
         } else {
@@ -126,7 +112,7 @@ export default function OAuthCallbackPage() {
           console.log('OAuthCallback - onboardingCompleted from localStorage:', onboardingCompleted);
           
           // If onboarding is true in query params OR onboardingCompleted is not 'true', go to onboarding
-          if (onboarding === true || onboardingCompleted !== 'true') {
+          if (onboarding || onboardingCompleted !== 'true') {
             console.log('OAuthCallback - Redirecting to onboarding');
             navigate('/onboarding/welcome', { replace: true });
           } else {
@@ -135,26 +121,12 @@ export default function OAuthCallbackPage() {
           }
         }
       } catch (error) {
-        console.error('Error verifying user data:', error);
-        // Continue with navigation anyway since we have a token
-        
-        // Check for pending invitation
-        const pendingInvitationToken = localStorage.getItem('pendingInvitationToken');
-        
-        // Check for redirect after auth
-        const redirectAfterAuth = localStorage.getItem('redirectAfterAuth');
-        
-        if (pendingInvitationToken) {
-          navigate(`/invitations?token=${pendingInvitationToken}`, { replace: true });
-          localStorage.removeItem('pendingInvitationToken');
-        } else if (redirectAfterAuth) {
-          navigate(redirectAfterAuth, { replace: true });
-          localStorage.removeItem('redirectAfterAuth');
-        } else if (onboarding) {
-          navigate('/onboarding/welcome', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        console.error('Error processing authentication:', error);
+        setError('Error processing authentication. Please try again.');
+        // Wait a moment before redirecting on error
+        setTimeout(() => navigate('/', { replace: true }), 2000);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -162,18 +134,29 @@ export default function OAuthCallbackPage() {
     processAuth();
   }, [location, navigate, fetchUser]);
 
-  // Return a minimal loading indicator that matches the design system
+  // Return loading indicator or error message
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
       <div className="flex flex-col items-center gap-4">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="relative w-20 h-20"
-        >
-          <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-primary/30 animate-spin"></div>
-          <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" style={{animationDuration: '1.5s'}}></div>
-        </motion.div>
+        {error ? (
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Authentication Error</h2>
+            <p className="text-gray-500">{error}</p>
+            <p className="text-sm mt-4">Redirecting you back...</p>
+          </div>
+        ) : (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative w-20 h-20"
+            >
+              <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-primary/30 animate-spin"></div>
+              <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" style={{animationDuration: '1.5s'}}></div>
+            </motion.div>
+            <p className="text-gray-500 mt-4">Completing authentication...</p>
+          </>
+        )}
       </div>
     </div>
   );

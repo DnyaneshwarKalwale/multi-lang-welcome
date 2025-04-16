@@ -351,13 +351,31 @@ class LinkedInApi {
         imageTitle
       });
 
+      // Make sure we have a valid Cloudinary URL
+      if (!imageUrl || !imageUrl.includes('cloudinary.com')) {
+        throw new Error('Invalid Cloudinary image URL');
+      }
+
+      // Get a direct image URL with no transformations if needed
+      let directImageUrl = imageUrl;
+      if (imageUrl.includes('/upload/')) {
+        // Extract the base URL and file path to create a direct URL
+        const parts = imageUrl.split('/upload/');
+        if (parts.length === 2) {
+          // Remove any transformations in the URL
+          directImageUrl = `${parts[0]}/upload/${parts[1].split('/').pop()}`;
+        }
+      }
+
+      console.log('Using direct image URL:', directImageUrl);
+
       // Since backend expects local files but we have a Cloudinary URL,
       // we'll use a text post fallback if the image post fails
       try {
         // Try directly with Cloudinary URL first
         const imagePostData = {
           postContent: text,
-          imagePath: imageUrl,
+          imagePath: directImageUrl,
           imageTitle: imageTitle || fileName,
           imageDescription: "Shared via Scripe",
           isCloudinaryImage: true, // Flag to tell backend this is a Cloudinary URL
@@ -379,7 +397,7 @@ class LinkedInApi {
         // Fall back to text-only post if image fails
         console.log('Falling back to text-only post');
         const textPostData = {
-          postContent: `${text}\n\n${imageTitle}: ${imageUrl}`,
+          postContent: `${text}\n\n${imageTitle}: ${directImageUrl}`,
           visibility: visibility
         };
 

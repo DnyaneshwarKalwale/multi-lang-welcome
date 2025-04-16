@@ -55,22 +55,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (!token) {
       setLoading(false);
-      return;
+      return null;
     }
     
     try {
+      console.log('AuthContext - fetchUser - Fetching user data with token');
       const { user } = await authApi.getCurrentUser();
-      setUser(user);
       
+      // Always update user state when we get user data
       if (user) {
+        console.log('AuthContext - fetchUser - User data received', { id: user.id, email: user.email });
+        setUser(user);
         // Make sure localStorage accurately reflects the user's onboarding status from server
         localStorage.setItem('onboardingCompleted', user.onboardingCompleted.toString());
         console.log(`Setting onboardingCompleted to ${user.onboardingCompleted}`);
+      } else {
+        console.log('AuthContext - fetchUser - No user data returned from API');
       }
       
       return user;
     } catch (error) {
       console.error("Failed to get user data:", error);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -88,14 +94,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       try {
         const { user } = await authApi.getCurrentUser();
-        setUser(user);
-        localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+        if (user) {
+          setUser(user);
+          localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
+          console.log('AuthContext - checkAuthStatus - User loaded on init', { id: user.id, email: user.email });
+        } else {
+          // If API returns success but no user, clear token
+          console.warn('AuthContext - checkAuthStatus - API returned no user data');
+          tokenManager.clearAllTokens();
+          setUser(null);
+          setToken(null);
+        }
       } catch (error) {
         console.error("Failed to get user data:", error);
         // Clear auth method token on failure
         if (authMethod) {
-          localStorage.removeItem(`${authMethod}-login-token`);
-          localStorage.removeItem('auth-method');
+          console.warn('AuthContext - checkAuthStatus - Clearing tokens due to API error');
+          tokenManager.clearAllTokens();
+          setUser(null);
+          setToken(null);
         }
       } finally {
         setLoading(false);
@@ -177,17 +194,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenManager.storeToken(response.token, 'linkedin');
         
         setToken(response.token);
-        setUser(response.user);
         
+        // Always set user when we get it in the response
         if (response.user) {
+          setUser(response.user);
           localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted ? 'true' : 'false');
+          console.log('AuthContext - linkedinAuth - User set from response', { id: response.user.id });
+        } else {
+          // If no user in response, fetch it
+          console.log('AuthContext - linkedinAuth - No user in response, fetching');
+          await fetchUser();
         }
+        
+        return response.user;
       } else {
         setError('Failed to authenticate with LinkedIn');
+        return null;
       }
     } catch (error) {
       console.error('LinkedIn Auth Error:', error);
       setError('Failed to authenticate with LinkedIn');
+      return null;
     } finally {
       setLoading(false);
     }
@@ -205,17 +232,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenManager.storeToken(response.token, 'google');
         
         setToken(response.token);
-        setUser(response.user);
         
+        // Always set user when we get it in the response
         if (response.user) {
+          setUser(response.user);
           localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted ? 'true' : 'false');
+          console.log('AuthContext - googleAuth - User set from response', { id: response.user.id });
+        } else {
+          // If no user in response, fetch it
+          console.log('AuthContext - googleAuth - No user in response, fetching');
+          await fetchUser();
         }
+        
+        return response.user;
       } else {
         setError('Failed to authenticate with Google');
+        return null;
       }
     } catch (error) {
       console.error('Google Auth Error:', error);
       setError('Failed to authenticate with Google');
+      return null;
     } finally {
       setLoading(false);
     }

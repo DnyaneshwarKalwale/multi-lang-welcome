@@ -4,11 +4,15 @@ import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 
 const InvitationCheckRoute = () => {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const [hasInvitations, setHasInvitations] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false); // Start with false to avoid blocking navigation
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Check for token directly, as an additional safeguard
+    const authMethod = localStorage.getItem('auth-method');
+    const hasToken = authMethod && localStorage.getItem(`${authMethod}-login-token`);
+    
     // Skip invitation check if user has previously skipped invitations
     const skippedInvitations = localStorage.getItem('skippedInvitations');
     if (skippedInvitations === 'true') {
@@ -17,7 +21,7 @@ const InvitationCheckRoute = () => {
     }
 
     // Don't check if user isn't authenticated
-    if (!isAuthenticated || authLoading) {
+    if (!isAuthenticated || authLoading || !hasToken) {
       return;
     }
 
@@ -75,19 +79,25 @@ const InvitationCheckRoute = () => {
 
     // Run invitation check without blocking
     checkInvitations();
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, user]);
 
   // Only show loading indicator if authentication is still loading
   if (authLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="ml-3 text-gray-600">Checking authentication...</p>
       </div>
     );
   }
 
-  // If not authenticated, redirect to the homepage
-  if (!isAuthenticated && !authLoading) {
+  // Check for token directly, as an additional safeguard
+  const authMethod = localStorage.getItem('auth-method');
+  const hasToken = authMethod && localStorage.getItem(`${authMethod}-login-token`);
+
+  // If not authenticated or no token, redirect to the homepage
+  if ((!isAuthenticated && !authLoading) || !hasToken) {
+    console.log('InvitationCheckRoute - User not authenticated, redirecting to homepage');
     return <Navigate to="/" replace />;
   }
 
@@ -96,8 +106,7 @@ const InvitationCheckRoute = () => {
     return <Navigate to="/pending-invitations" replace />;
   }
 
-  // Otherwise, render the protected child route immediately
-  // while potentially checking for invitations in the background
+  // Otherwise, render the protected child route
   return <Outlet />;
 };
 

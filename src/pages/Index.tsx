@@ -10,14 +10,44 @@ import { Link } from "react-router-dom";
 import IndexHero from "@/components/IndexHero";
 import { motion } from "framer-motion";
 import { BrandOutHorizontalLogo } from "@/components/BrandOutIcon";
+import { useAuth } from "@/contexts/AuthContext";
+import { tokenManager } from "@/services/api";
 
 const Index = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { isAuthenticated, user, loading } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Check authentication status and redirect if needed
+  useEffect(() => {
+    // Skip redirect if auth is still loading
+    if (loading) return;
+    
+    // Check for token directly as an additional safeguard
+    const authMethod = localStorage.getItem('auth-method');
+    const hasToken = authMethod && localStorage.getItem(`${authMethod}-login-token`);
+    
+    // If authenticated with a token, redirect to appropriate page
+    if ((isAuthenticated || hasToken) && !loading) {
+      console.log('Index - User is authenticated, redirecting to appropriate page');
+      
+      // Check if onboarding is completed
+      const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+      
+      if (onboardingCompleted) {
+        // Redirect to dashboard if onboarding is completed
+        navigate('/dashboard', { replace: true });
+      } else {
+        // Redirect to onboarding if not completed
+        const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
+        navigate(`/onboarding/${savedStep}`, { replace: true });
+      }
+    }
+  }, [isAuthenticated, loading, navigate, user]);
   
   // Handle scroll events to change navbar appearance
   useEffect(() => {
@@ -38,6 +68,15 @@ const Index = () => {
     setIsRegisterOpen(false);
     navigate("/onboarding/welcome");
   };
+  
+  // If auth is loading, show minimal loading screen
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   // Testimonial data
   const testimonials = [
@@ -484,16 +523,16 @@ const Index = () => {
       </footer>
       
       {/* Registration & Login Sheets */}
-      <RegistrationSheet 
-        open={isRegisterOpen} 
-        onOpenChange={setIsRegisterOpen}
-        onSuccess={handleRegisterSuccess}
+      <LoginSheet 
+        open={isLoginOpen}
+        onOpenChange={setIsLoginOpen}
+        onSuccess={handleLoginSuccess}
       />
       
-      <LoginSheet 
-        open={isLoginOpen} 
-        onOpenChange={setIsLoginOpen} 
-        onSuccess={handleLoginSuccess}
+      <RegistrationSheet
+        open={isRegisterOpen}
+        onOpenChange={setIsRegisterOpen}
+        onSuccess={handleRegisterSuccess}
       />
     </div>
   );
