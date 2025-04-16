@@ -1028,6 +1028,8 @@ const CreatePostPage: React.FC = () => {
     const [hours, minutes] = scheduleTime.split(':').map(Number);
     selectedDate.setHours(hours, minutes, 0, 0);
 
+    console.log('Scheduling post for:', selectedDate, 'Time:', scheduleTime);
+
     if (!selectedDate) {
       toast.error('Please select a date to schedule your post');
       return;
@@ -1057,13 +1059,15 @@ const CreatePostPage: React.FC = () => {
         scheduledDate: selectedDate.toLocaleDateString()
       };
       
+      console.log('Scheduling post with data:', scheduledData);
+      
       // Save directly to localStorage with the key matching the pattern expected by PostLibraryPage
       localStorage.setItem(scheduledId, JSON.stringify(scheduledData));
       
       // Also try to save to backend if possible
       try {
         // Save to backend API - this will only work if the API is connected
-        await linkedInApi.createDBPost({
+        const dbPostData = {
           title: 'Scheduled Post',
           content: content,
           hashtags: hashtags,
@@ -1075,11 +1079,19 @@ const CreatePostPage: React.FC = () => {
           status: 'scheduled',
           visibility: visibility,
           scheduledTime: selectedDate.toISOString()
-        });
+        };
+        
+        console.log('Creating DB scheduled post with data:', dbPostData);
+        
+        const response = await linkedInApi.createDBPost(dbPostData);
+        console.log('DB post creation response:', response);
       } catch (apiError) {
         // Silently ignore backend API errors since we've already saved to localStorage
         console.log('Note: Scheduled post saved to localStorage only, API save failed:', apiError);
       }
+      
+      // Close the schedule dialog explicitly
+      setShowScheduleDialog(false);
       
       // Success message
       toast.success('Post scheduled', {
@@ -1246,7 +1258,12 @@ const CreatePostPage: React.FC = () => {
             )}
           </Button>
           
-          <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+          <Dialog open={showScheduleDialog} onOpenChange={(open) => {
+            // Only update if we're closing the dialog manually
+            if (!open) {
+              setShowScheduleDialog(false);
+            }
+          }}>
             <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1">
             <Clock size={16} />
@@ -1269,7 +1286,12 @@ const CreatePostPage: React.FC = () => {
                       value={scheduledDate.toISOString().split('T')[0]}
                       onChange={(e) => {
                         const newDate = new Date(e.target.value);
+                        // Preserve the time
+                        const currentHours = scheduledDate.getHours();
+                        const currentMinutes = scheduledDate.getMinutes();
+                        newDate.setHours(currentHours, currentMinutes, 0, 0);
                         setScheduledDate(newDate);
+                        console.log('Date changed to:', newDate);
                       }}
                       min={new Date().toISOString().split('T')[0]}
                     />
@@ -1279,7 +1301,15 @@ const CreatePostPage: React.FC = () => {
                     <Input
                       type="time"
                       value={scheduleTime}
-                      onChange={(e) => setScheduleTime(e.target.value)}
+                      onChange={(e) => {
+                        setScheduleTime(e.target.value);
+                        // Update the scheduledDate with this time
+                        const [hours, minutes] = e.target.value.split(':').map(Number);
+                        const newDate = new Date(scheduledDate);
+                        newDate.setHours(hours, minutes, 0, 0);
+                        setScheduledDate(newDate);
+                        console.log('Time changed to:', e.target.value, 'Updated date:', newDate);
+                      }}
                     />
                   </div>
                 </div>
@@ -1304,6 +1334,7 @@ const CreatePostPage: React.FC = () => {
                     <p className="line-clamp-3">{content || "No content yet"}</p>
                     {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
                     {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
+                    <p className="text-blue-600 mt-1">Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}</p>
                   </div>
                 </div>
               </div>

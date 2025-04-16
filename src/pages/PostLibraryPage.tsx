@@ -232,6 +232,8 @@ const PostLibraryPage: React.FC = () => {
         const scheduledData = await linkedInApi.getDBPosts('scheduled');
         const publishedData = await linkedInApi.getDBPosts('published');
 
+        console.log('Published data from API:', publishedData);
+
         // Convert backend data to the format expected by the UI
         const draftPosts: DraftPost[] = draftData?.data?.map((post: any) => ({
           id: post._id,
@@ -270,6 +272,7 @@ const PostLibraryPage: React.FC = () => {
           scheduledDate: new Date(post.scheduledTime).toLocaleDateString()
         })) || [];
 
+        // Ensure all properties from the API response are correctly mapped
         const publishedPosts: PublishedPost[] = publishedData?.data?.map((post: any) => ({
           id: post._id,
           title: post.title || 'Published Post',
@@ -277,7 +280,9 @@ const PostLibraryPage: React.FC = () => {
           excerpt: post.content?.substring(0, 100) + '...',
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
-          publishedDate: new Date(post.publishedTime || post.updatedAt).toLocaleDateString(),
+          publishedDate: post.publishedTime 
+            ? new Date(post.publishedTime).toLocaleDateString() 
+            : new Date(post.updatedAt).toLocaleDateString(),
           slides: post.slides || [],
           postImage: post.postImage,
           isPollActive: post.isPollActive,
@@ -290,57 +295,108 @@ const PostLibraryPage: React.FC = () => {
           slideCount: post.slides?.length || 0
         })) || [];
 
+        console.log('Processed published posts:', publishedPosts);
+
         // Update state with API data
-        setDrafts(draftPosts);
-        setScheduled(scheduledPosts);
-        setPublished(publishedPosts);
+        if (draftPosts.length > 0) setDrafts(draftPosts);
+        if (scheduledPosts.length > 0) setScheduled(scheduledPosts);
+        if (publishedPosts.length > 0) {
+          console.log('Setting published posts:', publishedPosts);
+          setPublished(publishedPosts);
+        }
         
-        // If no data from API, fallback to localStorage as a backup
-        if (draftPosts.length === 0 && scheduledPosts.length === 0 && publishedPosts.length === 0) {
-          console.log("No posts found in backend, checking localStorage...");
-          
-          // Scan localStorage for saved drafts and scheduled posts
-          const localDrafts: DraftPost[] = [];
-          const localScheduledPosts: ScheduledPost[] = [];
-          
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith('draft_')) {
-              try {
-                const draftData = JSON.parse(localStorage.getItem(key) || '{}');
-                if (draftData.id) {
+        // Always check localStorage for any local drafts or scheduled posts
+        console.log("Checking localStorage for any additional posts...");
+        
+        // Scan localStorage for saved drafts and scheduled posts
+        const localDrafts: DraftPost[] = [];
+        const localScheduledPosts: ScheduledPost[] = [];
+        
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('draft_')) {
+            try {
+              const draftData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (draftData.id) {
+                // Check if this draft is already in our state (avoid duplicates)
+                if (!draftPosts.some(d => d.id === draftData.id)) {
                   localDrafts.push(draftData);
                 }
-              } catch (e) {
-                console.error('Error parsing draft:', e);
               }
-            } else if (key?.startsWith('scheduled_')) {
-              try {
-                const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
-                if (scheduledData.id) {
+            } catch (e) {
+              console.error('Error parsing draft:', e);
+            }
+          } else if (key?.startsWith('scheduled_')) {
+            try {
+              const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
+              if (scheduledData.id) {
+                // Check if this scheduled post is already in our state
+                if (!scheduledPosts.some(s => s.id === scheduledData.id)) {
                   localScheduledPosts.push(scheduledData);
                 }
-              } catch (e) {
-                console.error('Error parsing scheduled post:', e);
               }
+            } catch (e) {
+              console.error('Error parsing scheduled post:', e);
             }
           }
-          
-          // Only use localStorage data if there's no API data
-          if (localDrafts.length > 0) setDrafts(localDrafts);
-          if (localScheduledPosts.length > 0) setScheduled(localScheduledPosts);
         }
+        
+        // Merge local data with API data
+        if (localDrafts.length > 0) setDrafts(prev => [...prev, ...localDrafts]);
+        if (localScheduledPosts.length > 0) setScheduled(prev => [...prev, ...localScheduledPosts]);
         
       } catch (apiError: any) {
         console.error('Error loading content:', apiError);
         toast.error('Failed to load your content');
+        
+        // Fallback to localStorage if API fails
+        fallbackToLocalStorage();
       }
     } catch (error) {
       console.error('Error in loadUserContent:', error);
       toast.error('Failed to load content');
+      
+      // Also fallback to localStorage in case of general error
+      fallbackToLocalStorage();
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Function to fallback to localStorage if API fails
+  const fallbackToLocalStorage = () => {
+    console.log("Falling back to localStorage for posts...");
+    
+    // Scan localStorage for saved drafts, scheduled posts, and published posts
+    const localDrafts: DraftPost[] = [];
+    const localScheduledPosts: ScheduledPost[] = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('draft_')) {
+        try {
+          const draftData = JSON.parse(localStorage.getItem(key) || '{}');
+          if (draftData.id) {
+            localDrafts.push(draftData);
+          }
+        } catch (e) {
+          console.error('Error parsing draft:', e);
+        }
+      } else if (key?.startsWith('scheduled_')) {
+        try {
+          const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
+          if (scheduledData.id) {
+            localScheduledPosts.push(scheduledData);
+          }
+        } catch (e) {
+          console.error('Error parsing scheduled post:', e);
+        }
+      }
+    }
+    
+    // Update state with localStorage data
+    if (localDrafts.length > 0) setDrafts(localDrafts);
+    if (localScheduledPosts.length > 0) setScheduled(localScheduledPosts);
   };
   
   // Edit a draft
@@ -425,7 +481,19 @@ const PostLibraryPage: React.FC = () => {
       }
     });
     
-    // Navigate to the create post page with schedule dialog open
+    // For the scheduledTime, we need to handle it specially
+    if (post.scheduledTime) {
+      const scheduledDate = new Date(post.scheduledTime);
+      // Format hours and minutes as HH:MM
+      const hours = scheduledDate.getHours().toString().padStart(2, '0');
+      const minutes = scheduledDate.getMinutes().toString().padStart(2, '0');
+      localStorage.setItem('state:createPost.scheduleTime', JSON.stringify(`${hours}:${minutes}`));
+      
+      // Also store the actual date
+      localStorage.setItem('state:createPost.scheduledDate', JSON.stringify(scheduledDate.toISOString()));
+    }
+    
+    // Navigate to create post page with schedule dialog open
     navigate('/dashboard/post', { state: { openScheduleDialog: true } });
   };
   
@@ -523,7 +591,8 @@ const PostLibraryPage: React.FC = () => {
               pollOptions: draft.pollOptions
             };
             
-            setPublished([publishedPost, ...published]);
+            // Add the new published post to the state
+            setPublished(prevPublished => [publishedPost, ...prevPublished]);
             toast.success('Post published to LinkedIn successfully');
             setActiveTab('published');
             
@@ -539,6 +608,8 @@ const PostLibraryPage: React.FC = () => {
       } else {
         // For database-backed posts, publish directly
         const response = await linkedInApi.publishDBPost(draftId);
+        
+        console.log('Published post response:', response);
         
         // Remove from drafts in local state
         const updatedDrafts = drafts.filter(d => d.id !== draftId);
@@ -560,7 +631,8 @@ const PostLibraryPage: React.FC = () => {
           pollOptions: draft.pollOptions
         };
         
-        setPublished([publishedPost, ...published]);
+        // Add the new published post to the state
+        setPublished(prevPublished => [publishedPost, ...prevPublished]);
         toast.success('Post published to LinkedIn successfully');
         setActiveTab('published');
         
@@ -641,14 +713,20 @@ const PostLibraryPage: React.FC = () => {
             scheduledTime: post.scheduledTime
           };
           
+          console.log('Creating DB post with data:', postData);
+          
           const createResponse = await linkedInApi.createDBPost(postData);
           
           if (createResponse && createResponse.data) {
             // Use the new database ID
             const dbPostId = createResponse.data._id;
             
+            console.log('Publishing DB post with ID:', dbPostId);
+            
             // Publish using the backend API
             const publishResponse = await linkedInApi.publishDBPost(dbPostId);
+            
+            console.log('Publish response:', publishResponse);
             
             // Remove original localStorage scheduled post
             localStorage.removeItem(postId);
@@ -673,7 +751,8 @@ const PostLibraryPage: React.FC = () => {
               pollOptions: post.pollOptions
             };
             
-            setPublished([publishedPost, ...published]);
+            // Add the new published post to the state
+            setPublished(prevPublished => [publishedPost, ...prevPublished]);
             toast.success('Post published to LinkedIn successfully');
             setActiveTab('published');
             
@@ -689,6 +768,8 @@ const PostLibraryPage: React.FC = () => {
       } else {
         // For database-backed posts, publish directly
         const response = await linkedInApi.publishDBPost(postId);
+        
+        console.log('Published scheduled post response:', response);
         
         // Remove from scheduled in local state
         const updatedScheduled = scheduled.filter(p => p.id !== postId);
@@ -710,7 +791,8 @@ const PostLibraryPage: React.FC = () => {
           pollOptions: post.pollOptions
         };
         
-        setPublished([publishedPost, ...published]);
+        // Add the new published post to the state
+        setPublished(prevPublished => [publishedPost, ...prevPublished]);
         toast.success('Post published to LinkedIn successfully');
         setActiveTab('published');
         
