@@ -441,26 +441,10 @@ const CreatePostPage: React.FC = () => {
       }
       
       // Check for LinkedIn authentication
-      const token = tokenManager.getToken('linkedin');
+      const token = localStorage.getItem('linkedin-login-token');
       
       if (!token) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
-        setIsPublishing(false);
-        return;
-      }
-      
-      // First validate the LinkedIn connection
-      try {
-        const connectionTest = await linkedInApi.testConnection();
-        if (!connectionTest.success) {
-          toast.error(`LinkedIn connection error: ${connectionTest.message}`);
-          console.error('Connection details:', connectionTest.details);
-          setIsPublishing(false);
-          return;
-        }
-      } catch (connectionError) {
-        console.error('Connection test failed:', connectionError);
-        toast.error('LinkedIn connection check failed. Please try the test button first.');
         setIsPublishing(false);
         return;
       }
@@ -638,27 +622,34 @@ const CreatePostPage: React.FC = () => {
     }
   };
   
-  // Function to schedule a post for later
+  // Function to schedule post for later
   const schedulePost = async () => {
-    if (!content.trim()) {
-      toast.error("Can't schedule an empty post");
-      setShowScheduleDialog(false);
-      return;
-    }
-    
-    setIsPublishing(true);
-    
     try {
-      // Prepare scheduled date
-      const [hours, minutes] = scheduleTime.split(':').map(Number);
-      const scheduledDateTime = new Date(scheduledDate);
-      scheduledDateTime.setHours(hours, minutes, 0, 0);
+      if (!content.trim()) {
+        toast.error('Please add some content to your post');
+        return;
+      }
+
+      setIsPublishing(true);
       
-      // Validate scheduled time is in future
-      if (scheduledDateTime <= new Date()) {
-        toast.error('Please select a future date and time');
+      // Check for LinkedIn authentication directly from localStorage
+      const token = localStorage.getItem('linkedin-login-token');
+      
+      if (!token) {
+        toast.error(`LinkedIn authentication required. Please login with LinkedIn first.`);
         setIsPublishing(false);
-        setShowScheduleDialog(false);
+        return;
+      }
+      
+      // Combine date and time
+      const scheduledDateTime = new Date(scheduledDate);
+      const [hours, minutes] = scheduleTime.split(':');
+      scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Check if the scheduled time is in the past
+      if (scheduledDateTime <= new Date()) {
+        toast.error("Scheduled time must be in the future");
+        setIsPublishing(false);
         return;
       }
       
@@ -727,42 +718,47 @@ const CreatePostPage: React.FC = () => {
       setIsPublishing(true);
       console.log('Testing LinkedIn connection');
       
-      // Check for LinkedIn authentication using tokenManager
-      const token = tokenManager.getToken('linkedin');
+      // Check for LinkedIn authentication directly from localStorage
+      const token = localStorage.getItem('linkedin-login-token');
       
       if (!token) {
-        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
+        toast.error(`LinkedIn authentication required. Please login with LinkedIn first.`);
         console.error('LinkedIn token not found');
         setIsPublishing(false);
         return;
       }
       
-      // First run the comprehensive connection test
-      const connectionTest = await linkedInApi.testConnection();
-      console.log('Connection test results:', connectionTest);
+      toast.info('LinkedIn token found. Attempting to post...');
       
-      if (!connectionTest.success) {
-        toast.error(`Connection test failed: ${connectionTest.message}`);
-        console.error('Connection test details:', connectionTest.details);
-        setIsPublishing(false);
-        return;
-      }
-      
-      toast.success('Connection test successful! Now trying a test post...');
-      
-      // If connection test passes, try a test post
-      const testPostContent = 'This is a test post from our application. ' + new Date().toISOString();
+      // Directly try a test post without running the connection test first
+      const testPostContent = 'This is a test post from Scripe. ' + new Date().toISOString();
       const response = await linkedInApi.createTextPost(testPostContent, 'PUBLIC');
       
       console.log('Test post successful:', response);
-      toast.success('LinkedIn test post successful!');
+      toast.success('LinkedIn test post successful! Your account is connected properly.');
       
     } catch (error) {
       console.error('LinkedIn test post failed:', error);
       if (error.response) {
         console.error('API response:', error.response.data);
+        
+        // Check for common error types 
+        if (error.response.status === 401) {
+          toast.error('Authentication failed. Your LinkedIn token may have expired. Please login again.');
+        } else if (error.response.status === 403) {
+          toast.error('Permission denied. You may not have proper LinkedIn permissions.');
+        } else if (error.response.status === 404) {
+          toast.error('API endpoint not found. The backend service might be unavailable.');
+        } else if (error.response.status >= 500) {
+          toast.error('LinkedIn server error. Please try again later.');
+        } else {
+          toast.error(`LinkedIn error: ${error.response.data?.message || 'Unknown error'}`);
+        }
+      } else if (error.request) {
+        toast.error('No response from server. Check your internet connection.');
+      } else {
+        toast.error('LinkedIn test failed: ' + (error.message || 'Unknown error'));
       }
-      toast.error('LinkedIn test failed: ' + (error.message || 'Unknown error'));
     } finally {
       setIsPublishing(false);
     }

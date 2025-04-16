@@ -19,11 +19,7 @@ const api = axios.create({
 export const tokenManager = {
   // Store token by auth method
   storeToken: (token: string, authMethod: 'linkedin' | 'google'): void => {
-    // Clear any existing tokens for other auth methods first
-    if (authMethod !== 'linkedin') localStorage.removeItem('linkedin-login-token');
-    if (authMethod !== 'google') localStorage.removeItem('google-login-token');
-    
-    // Store in method-specific storage only
+    // Store the token with the correct key
     localStorage.setItem(`${authMethod}-login-token`, token);
     
     // Record the auth method
@@ -56,20 +52,18 @@ api.interceptors.request.use(
     // Determine which token to use based on the API endpoint
     let token;
     
-    // First try to match token by endpoint
+    // Match token by endpoint
     if (config.url?.includes('/linkedin')) {
-      // Always use LinkedIn token for LinkedIn endpoints regardless of auth method
-      token = tokenManager.getToken('linkedin');
+      // Always use LinkedIn token for LinkedIn endpoints
+      token = localStorage.getItem('linkedin-login-token');
     } else if (config.url?.includes('/google')) {
-      token = tokenManager.getToken('google');
-    } else if (config.url?.includes('/teams') || config.url?.includes('/team')) {
-      // Explicitly handle team endpoints to ensure token is included
-      const authMethod = localStorage.getItem('auth-method');
-      token = tokenManager.getToken(authMethod || undefined);
-      console.log('Using token for team endpoint:', !!token);
+      token = localStorage.getItem('google-login-token');
     } else {
       // Use token based on current auth method
-      token = tokenManager.getToken();
+      const authMethod = localStorage.getItem('auth-method');
+      if (authMethod) {
+        token = localStorage.getItem(`${authMethod}-login-token`);
+      }
     }
     
     if (token) {

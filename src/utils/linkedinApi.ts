@@ -9,8 +9,8 @@ const getLinkedInToken = (accessToken?: string): string => {
   // First try the provided access token (highest priority)
   if (accessToken) return accessToken;
   
-  // Then try LinkedIn-specific token from tokenManager
-  const linkedinToken = tokenManager.getToken('linkedin');
+  // Directly get LinkedIn token from localStorage with the correct key
+  const linkedinToken = localStorage.getItem('linkedin-login-token');
   if (linkedinToken) return linkedinToken;
   
   // No token available
@@ -106,7 +106,7 @@ export interface ScheduledPostData {
 class LinkedInApi {
   private API_URL = `${API_URL}/linkedin`; // Use the full backend URL
 
-  // Add a test connectivity method
+  // Simplified test connectivity method that avoids unnecessary API calls
   async testConnection(): Promise<{ success: boolean; message: string; details?: any; errorType?: string }> {
     try {
       // Get the best available LinkedIn token
@@ -119,90 +119,28 @@ class LinkedInApi {
           errorType: 'auth_missing',
           details: {
             authMethod: localStorage.getItem('auth-method') || 'none',
-            hasLinkedInToken: !!tokenManager.getToken('linkedin')
+            hasLinkedInToken: !!localStorage.getItem('linkedin-login-token')
           }
         };
       }
       
-      // Skip health check since it may not exist on this backend
-      // Instead, directly test the LinkedIn profile endpoint
-      try {
-        const linkedinProfile = await this.getUserLinkedInId();
-        return {
-          success: true,
-          message: 'LinkedIn connectivity working correctly',
-          details: {
-            linkedinId: linkedinProfile,
-            authMethod: localStorage.getItem('auth-method') || 'unknown'
-          }
-        };
-      } catch (linkedinError: any) {
-        // Determine specific error type for LinkedIn errors
-        let errorType = 'linkedin_api_error';
-        let detailedMessage = 'LinkedIn API connection failed';
-        
-        if (linkedinError.response) {
-          const status = linkedinError.response.status;
-          
-          if (status === 401) {
-            errorType = 'linkedin_unauthorized';
-            detailedMessage = 'LinkedIn authentication failed. Your token may have expired.';
-          } else if (status === 403) {
-            errorType = 'linkedin_forbidden';
-            detailedMessage = 'LinkedIn access denied. You may need additional permissions.';
-          } else if (status === 404) {
-            errorType = 'linkedin_not_found';
-            detailedMessage = 'LinkedIn resource not found.';
-          } else if (status >= 500) {
-            errorType = 'linkedin_server_error';
-            detailedMessage = 'LinkedIn servers are experiencing issues.';
-          }
-        } else if (linkedinError.message && linkedinError.message.includes('Network Error')) {
-          errorType = 'network_error';
-          detailedMessage = 'Network connection error. Please check your internet connection.';
+      // Return authentication is present - we'll verify connection when actually needed
+      return {
+        success: true,
+        message: 'LinkedIn token available',
+        details: {
+          authMethod: localStorage.getItem('auth-method') || 'unknown',
+          hasToken: true
         }
-        
-        // Test if at least the base API is reachable
-        try {
-          // Try a simple request to the backend base URL
-          await axios.get(`${API_URL}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          // Base API is reachable but LinkedIn endpoints failed
-          return {
-            success: false,
-            message: detailedMessage,
-            errorType: errorType,
-            details: {
-              error: linkedinError.message,
-              status: linkedinError.response?.status,
-              authMethod: localStorage.getItem('auth-method') || 'unknown'
-            }
-          };
-        } catch (baseApiError: any) {
-          // Even the base API can't be reached
-          return {
-            success: false,
-            message: 'Backend server connection failed',
-            errorType: 'backend_unreachable',
-            details: {
-              error: baseApiError.message,
-              apiUrl: API_URL,
-              authMethod: localStorage.getItem('auth-method') || 'unknown'
-            }
-          };
-        }
-      }
+      };
     } catch (error: any) {
       // General error
       return {
         success: false,
-        message: 'Backend server connection failed',
+        message: 'Error checking LinkedIn connectivity',
         errorType: 'general_error',
         details: {
           error: error.message,
-          apiUrl: API_URL,
           authMethod: localStorage.getItem('auth-method') || 'unknown'
         }
       };
@@ -213,6 +151,10 @@ class LinkedInApi {
   async getUserLinkedInId(accessToken?: string): Promise<string> {
     try {
       const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
       
       const headers = {
         'Authorization': `Bearer ${token}`
@@ -234,12 +176,15 @@ class LinkedInApi {
   ): Promise<LinkedInPostResponse> {
     try {
       const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
 
       // Create a post with just text content
       const postData = {
         postContent: text,
-        visibility: visibility,
-        accessToken: accessToken // Pass the token directly
+        visibility: visibility
       };
 
       // Send post request to our backend which will handle the LinkedIn API
@@ -351,6 +296,10 @@ class LinkedInApi {
   ): Promise<LinkedInPostResponse> {
     try {
       const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
 
       // Create a post with the Cloudinary image URL
       const postData = {
@@ -358,8 +307,7 @@ class LinkedInApi {
         imagePath: imageUrl,
         imageTitle: imageTitle || fileName,
         imageDescription: "Shared via Scripe",
-        visibility: visibility,
-        accessToken: accessToken // Pass the token directly
+        visibility: visibility
       };
 
       // Send post request to our backend which will handle the LinkedIn API complexity
@@ -388,6 +336,10 @@ class LinkedInApi {
   ): Promise<LinkedInPostResponse> {
     try {
       const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
 
       // Send article post data to our backend
       const postData = {
@@ -395,8 +347,7 @@ class LinkedInApi {
         articleUrl: articleUrl,
         articleTitle: articleTitle || 'Shared Article',
         articleDescription: articleDescription || 'Shared via Scripe',
-        visibility: visibility,
-        accessToken: accessToken // Pass the token directly
+        visibility: visibility
       };
 
       // Use our backend endpoint for LinkedIn posting
@@ -439,13 +390,16 @@ class LinkedInApi {
   ): Promise<any> {
     try {
       const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
 
       // Create poll data
       const postData = {
         postContent: text,
         pollOptions: pollOptions,
-        pollDuration: durationDays * 86400, // Convert days to seconds
-        accessToken: accessToken // Pass the token directly
+        pollDuration: durationDays * 86400 // Convert days to seconds
       };
 
       // Send poll post to our backend

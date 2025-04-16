@@ -491,8 +491,8 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
-      // Check for LinkedIn authentication
-      const linkedInToken = tokenManager.getToken('linkedin');
+      // Check for LinkedIn authentication directly from localStorage
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
       
       if (!linkedInToken) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
@@ -575,8 +575,8 @@ const PostLibraryPage: React.FC = () => {
     try {
       setIsPublishing(true);
       
-      // Check for LinkedIn authentication
-      const linkedInToken = tokenManager.getToken('linkedin');
+      // Check for LinkedIn authentication directly from localStorage
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
       
       if (!linkedInToken) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
