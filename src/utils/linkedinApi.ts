@@ -481,6 +481,118 @@ class LinkedInApi {
     }
   }
 
+  // Create a post with a document (PDF, PPT, etc.)
+  async createDocumentPost(
+    text: string,
+    documentFile: File,
+    documentTitle: string = 'Document',
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC',
+    accessToken?: string
+  ): Promise<LinkedInPostResponse> {
+    try {
+      const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
+
+      // Create FormData to send the document
+      const formData = new FormData();
+      formData.append('document', documentFile);
+      formData.append('text', text);
+      formData.append('title', documentTitle || documentFile.name);
+      formData.append('visibility', visibility);
+
+      // Send document post request to our backend which will handle the LinkedIn API
+      const response = await axios.post(`${this.API_URL}/document-post`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating LinkedIn document post:', error);
+      
+      // Check for token expiration in the response
+      if (error.response && error.response.data) {
+        console.error('LinkedIn API error response:', error.response.data);
+        
+        // Handle token expiration
+        if (error.response.status === 401 || 
+            (error.response.status === 500 && 
+             error.response.data.details && 
+             error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired. Redirecting to reauthorization.');
+          refreshLinkedInToken();
+          throw new Error("LinkedIn authentication expired. Please login again.");
+        }
+      }
+      
+      throw error;
+    }
+  }
+
+  // Create a carousel post (multiple images with text)
+  async createCarouselPost(
+    text: string,
+    slides: Array<{content: string, imageUrl?: string}>,
+    visibility: 'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN' = 'PUBLIC',
+    accessToken?: string
+  ): Promise<LinkedInPostResponse> {
+    try {
+      const token = getLinkedInToken(accessToken);
+      
+      if (!token) {
+        throw new Error("LinkedIn token not available. Please login again.");
+      }
+
+      // Filter slides to only include those with images
+      const slidesWithImages = slides.filter(slide => slide.imageUrl);
+      
+      if (slidesWithImages.length === 0) {
+        throw new Error("No slides with images found. Carousel posts require at least one image.");
+      }
+      
+      // Create carousel post request data
+      const carouselData = {
+        text: text,
+        slides: slidesWithImages,
+        visibility: visibility
+      };
+
+      // Send carousel post request to our backend which will handle the LinkedIn API
+      const response = await axios.post(`${this.API_URL}/carousel-post`, carouselData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating LinkedIn carousel post:', error);
+      
+      // Check for token expiration in the response
+      if (error.response && error.response.data) {
+        console.error('LinkedIn API error response:', error.response.data);
+        
+        // Handle token expiration
+        if (error.response.status === 401 || 
+            (error.response.status === 500 && 
+             error.response.data.details && 
+             error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired. Redirecting to reauthorization.');
+          refreshLinkedInToken();
+          throw new Error("LinkedIn authentication expired. Please login again.");
+        }
+      }
+      
+      throw error;
+    }
+  }
+
   // Schedule a post for later
   async schedulePost(postData: LinkedInPostRequest, scheduledTime: Date): Promise<any> {
     try {

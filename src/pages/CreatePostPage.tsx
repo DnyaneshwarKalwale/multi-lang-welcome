@@ -78,7 +78,9 @@ import {
   UserRound,
   LayoutGrid,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Pause,
+  Play
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -169,6 +171,204 @@ interface LocationState {
   openScheduleDialog?: boolean;
 }
 
+// Inline carousel preview component
+const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, imageUrl?: string, cloudinaryImage?: ExtendedCloudinaryImage}[], variant: SliderVariant }> = ({ slides, variant }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoplay, setIsAutoplay] = useState(variant === 'autoplay');
+  
+  useEffect(() => {
+    let timer: number | null = null;
+    if (isAutoplay) {
+      timer = window.setInterval(() => {
+        nextSlide();
+      }, 3000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isAutoplay, currentSlide]);
+  
+  const nextSlide = () => {
+    setCurrentSlide(prev => prev === slides.length - 1 ? 0 : prev + 1);
+  };
+  
+  const prevSlide = () => {
+    setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1);
+  };
+  
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+  
+  const getContainerClass = () => {
+    let baseClass = "relative rounded-lg overflow-hidden";
+    switch (variant) {
+      case 'grid': return `${baseClass} grid grid-cols-2 gap-1`;
+      case 'coverflow': return `${baseClass} perspective-1000`;
+      case 'fade': return `${baseClass} fade-transition`;
+      case 'vertical': return `${baseClass} flex flex-col gap-1`;
+      default: return baseClass;
+    }
+  };
+  
+  const getSlideVariants = () => {
+    switch (variant) {
+      case 'fade':
+        return {
+          hidden: { opacity: 0 },
+          visible: { opacity: 1 },
+          exit: { opacity: 0 }
+        };
+      case 'coverflow':
+        return {
+          hidden: { rotateY: 45, scale: 0.8, opacity: 0.5, z: -200 },
+          visible: { rotateY: 0, scale: 1, opacity: 1, z: 0 },
+          exit: { rotateY: -45, scale: 0.8, opacity: 0.5, z: -200 }
+        };
+      case 'vertical':
+        return {
+          hidden: { y: 50, opacity: 0 },
+          visible: { y: 0, opacity: 1 },
+          exit: { y: -50, opacity: 0 }
+        };
+      default:
+        return {
+          hidden: { x: 300, opacity: 0 },
+          visible: { x: 0, opacity: 1 },
+          exit: { x: -300, opacity: 0 }
+        };
+    }
+  };
+  
+  const getTransitionSettings = () => {
+    if (variant === 'coverflow') {
+      return { type: "spring", stiffness: 300, damping: 30 };
+    }
+    return { duration: 0.5, ease: "easeInOut" };
+  };
+  
+  return (
+    <div className="carousel-container mb-3">
+      <div className={getContainerClass()}>
+        {variant !== 'grid' && (
+          <>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={getSlideVariants()}
+                transition={getTransitionSettings()}
+                className="bg-white rounded-lg shadow-sm overflow-hidden"
+              >
+                {slides[currentSlide]?.cloudinaryImage?.secure_url ? (
+                  <div className="relative">
+                    <img 
+                      src={slides[currentSlide].cloudinaryImage?.secure_url} 
+                      alt={`Slide ${currentSlide + 1}`}
+                      className="w-full aspect-[4/3] object-cover"
+                    />
+                    <div className="bg-gradient-to-t from-black/70 via-black/50 to-transparent absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <p className="text-sm font-medium">{slides[currentSlide].content}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 aspect-[4/3] flex items-center justify-center p-6">
+                    <p className="text-sm text-center text-gray-800">{slides[currentSlide].content}</p>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+            
+            {/* Navigation controls */}
+            <div className="absolute top-1/2 left-2 transform -translate-y-1/2 z-10">
+              <button 
+                className="w-6 h-6 bg-white/80 rounded-full flex items-center justify-center shadow-sm"
+                onClick={prevSlide}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="absolute top-1/2 right-2 transform -translate-y-1/2 z-10">
+              <button 
+                className="w-6 h-6 bg-white/80 rounded-full flex items-center justify-center shadow-sm"
+                onClick={nextSlide}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Pagination dots */}
+            {variant === 'pagination' && (
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1 z-10">
+                {slides.map((_, index) => (
+                  <button 
+                    key={index}
+                    className={`w-1.5 h-1.5 rounded-full ${index === currentSlide ? 'bg-primary' : 'bg-gray-300'}`}
+                    onClick={() => goToSlide(index)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+        
+        {variant === 'grid' && (
+          <div className="grid grid-cols-2 gap-1">
+            {slides.map((slide, index) => (
+              <div 
+                key={index}
+                className="bg-white rounded-lg shadow-sm overflow-hidden"
+              >
+                {slide.cloudinaryImage?.secure_url ? (
+                  <div className="relative">
+                    <img 
+                      src={slide.cloudinaryImage.secure_url} 
+                      alt={`Slide ${index + 1}`}
+                      className="w-full aspect-square object-cover"
+                    />
+                    <div className="bg-gradient-to-t from-black/70 via-black/50 to-transparent absolute bottom-0 left-0 right-0 p-2 text-white">
+                      <p className="text-xs font-medium">{slide.content}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 aspect-square flex items-center justify-center p-3">
+                    <p className="text-xs text-center text-gray-800">{slide.content}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Slide counter */}
+      {variant !== 'grid' && (
+        <div className="text-xs text-gray-500 mt-1 flex justify-between items-center">
+          <span>{currentSlide + 1} / {slides.length}</span>
+          {variant === 'autoplay' && (
+            <button 
+              className="text-xs flex items-center gap-1"
+              onClick={() => setIsAutoplay(!isAutoplay)}
+            >
+              {isAutoplay ? (
+                <>
+                  <Pause className="w-3 h-3" /> Pause
+                </>
+              ) : (
+                <>
+                  <Play className="w-3 h-3" /> Play
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CreatePostPage: React.FC = () => {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
@@ -233,6 +433,10 @@ const CreatePostPage: React.FC = () => {
   const [articleUrl, setArticleUrl] = usePersistentState('createPost.articleUrl', '');
   const [articleTitle, setArticleTitle] = usePersistentState('createPost.articleTitle', '');
   const [articleDescription, setArticleDescription] = usePersistentState('createPost.articleDescription', '');
+  
+  // Document states
+  const [documentFile, setDocumentFile] = usePersistentState<File | null>('createPost.documentFile', null);
+  const [documentDescription, setDocumentDescription] = usePersistentState('createPost.documentDescription', '');
   
   // LinkedIn posting states
   const [isPublishing, setIsPublishing] = useState(false);
@@ -475,6 +679,124 @@ const CreatePostPage: React.FC = () => {
         const filteredOptions = pollOptions.filter(opt => opt.trim());
         response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
         toast.success('Poll published to LinkedIn successfully!');
+      } else if (activeTab === 'carousel' && slides.length > 0) {
+        // Handle carousel post - with slides from state
+        console.log('Publishing LinkedIn carousel post with slides:', slides);
+        
+        try {
+          toast.info('Preparing carousel for LinkedIn...');
+          
+          // Check if all slides have images
+          const allSlidesHaveImages = slides.every(slide => slide.cloudinaryImage?.secure_url);
+          
+          if (!allSlidesHaveImages) {
+            // Process as document if not all slides have images
+            toast.warning('Some slides are missing images. Publishing as a document instead.');
+            
+            // Create a combined document from slides
+            const slideContent = slides.map(slide => slide.content).join('\n\n');
+            const fullContent = `${content}\n\n${slideContent}`;
+            
+            response = await linkedInApi.createTextPost(fullContent, visibility);
+            toast.success('Carousel content published as text successfully!');
+          } else {
+            // Transform slides to the format expected by createCarouselPost
+            const transformedSlides = slides.map(slide => ({
+              content: slide.content,
+              imageUrl: slide.cloudinaryImage?.secure_url
+            }));
+            
+            // Check if the method exists before calling it
+            if (typeof linkedInApi.createCarouselPost === 'function') {
+              // Use the new createCarouselPost method
+              response = await linkedInApi.createCarouselPost(
+                content,
+                transformedSlides,
+                visibility
+              );
+            } else {
+              // Fallback to using the first image if the method doesn't exist
+              const firstImage = slides[0].cloudinaryImage;
+              
+              if (!firstImage?.secure_url) {
+                toast.error('First slide image URL is missing');
+                setIsPublishing(false);
+                return;
+              }
+              
+              // Add slide descriptions to content
+              const slideDescriptions = slides.map(slide => slide.content).join('\n\n');
+              const fullContent = `${content}\n\n${slideDescriptions}`;
+              
+              response = await linkedInApi.createCloudinaryImagePost(
+                fullContent,
+                firstImage.secure_url,
+                firstImage.original_filename || 'carousel-image',
+                'Carousel slide 1',
+                visibility
+              );
+            }
+            
+            console.log('LinkedIn carousel post response:', response);
+            toast.success('Carousel published to LinkedIn successfully!');
+          }
+        } catch (carouselError: any) {
+          console.error('Error publishing LinkedIn carousel post:', carouselError);
+          
+          // Fallback to text post with carousel content
+          try {
+            const slideContent = slides.map(slide => slide.content).join('\n\n');
+            const fullContent = `${content}\n\n${slideContent}`;
+            
+            response = await linkedInApi.createTextPost(fullContent, visibility);
+            toast.success('Carousel content published as text successfully!');
+          } catch (textError) {
+            console.error('Even text fallback failed:', textError);
+            throw textError; // Re-throw to be caught by outer catch
+          }
+        }
+      } else if (activeTab === 'document' && documentFile) {
+        // Handle document post
+        console.log('Publishing LinkedIn post with document:', documentFile);
+        
+        try {
+          toast.info('Uploading document to LinkedIn...');
+          
+          // If we have a document description, add it to the content
+          let fullContent = content;
+          if (documentDescription) {
+            fullContent = `${content}\n\n${documentDescription}`;
+          }
+          
+          // Use the createDocumentPost method if it exists
+          if (typeof linkedInApi.createDocumentPost === 'function') {
+            response = await linkedInApi.createDocumentPost(
+              fullContent,
+              documentFile,
+              documentFile.name || 'document',
+              visibility
+            );
+          } else {
+            // Fallback to text post with document information
+            fullContent = `${fullContent}\n\nDocument: ${documentFile.name}`;
+            response = await linkedInApi.createTextPost(fullContent, visibility);
+          }
+          
+          console.log('LinkedIn document post response:', response);
+          toast.success('Document post published to LinkedIn successfully!');
+        } catch (documentError: any) {
+          console.error('Error publishing LinkedIn document post:', documentError);
+          
+          // Fallback to text post with document information
+          try {
+            const postWithDocument = `${content}\n\nDocument: ${documentFile.name}`;
+            response = await linkedInApi.createTextPost(postWithDocument, visibility);
+            toast.success('Document information published as text successfully!');
+          } catch (textError) {
+            console.error('Even text fallback failed:', textError);
+            throw textError; // Re-throw to be caught by outer catch
+          }
+        }
       } else if (postImage) {
         // Handle image post using Cloudinary image
         console.log('Publishing LinkedIn post with image:', postImage);
@@ -1360,13 +1682,81 @@ const CreatePostPage: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="border-2 border-dashed rounded-lg p-10 text-center bg-neutral-lightest">
-                    <FileText size={48} className="mx-auto mb-4 text-neutral-medium" />
-                    <h3 className="text-lg font-medium mb-2">Upload Document</h3>
-                    <p className="text-sm text-neutral-medium mb-4">
-                      Drag and drop a file here, or click to browse
-                    </p>
-                    <Button>Select File</Button>
+                  <div 
+                    className={`border-2 border-dashed rounded-lg p-10 text-center bg-neutral-lightest relative transition-all ${documentFile ? 'border-primary bg-primary/5' : 'border-neutral-light hover:border-primary/50'}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        const file = e.dataTransfer.files[0];
+                        setDocumentFile(file);
+                        showSaveIndicator();
+                      }
+                    }}
+                  >
+                    {documentFile ? (
+                      <>
+                        <FileText size={48} className="mx-auto mb-4 text-primary" />
+                        <h3 className="text-lg font-medium mb-2 break-all">{documentFile.name}</h3>
+                        <p className="text-sm text-neutral-medium mb-4">
+                          {(documentFile.size / 1024 / 1024).toFixed(2)} MB · {documentFile.type}
+                        </p>
+                        <div className="flex justify-center gap-3">
+                          <Button variant="outline" onClick={() => setDocumentFile(null)}>
+                            Remove
+                          </Button>
+                          <Button onClick={() => {
+                            const fileInput = document.getElementById('document-file-input');
+                            if (fileInput) fileInput.click();
+                          }}>
+                            Replace
+                          </Button>
+                        </div>
+                        <input 
+                          type="file" 
+                          id="document-file-input"
+                          className="hidden"
+                          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              setDocumentFile(e.target.files[0]);
+                              showSaveIndicator();
+                            }
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={48} className="mx-auto mb-4 text-neutral-medium" />
+                        <h3 className="text-lg font-medium mb-2">Upload Document</h3>
+                        <p className="text-sm text-neutral-medium mb-4">
+                          Drag and drop a file here, or click to browse
+                        </p>
+                        <Button onClick={() => {
+                          const fileInput = document.getElementById('document-file-input');
+                          if (fileInput) fileInput.click();
+                        }}>
+                          Select File
+                        </Button>
+                        <input 
+                          type="file" 
+                          id="document-file-input"
+                          className="hidden"
+                          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              setDocumentFile(e.target.files[0]);
+                              showSaveIndicator();
+                            }
+                          }}
+                        />
+                      </>
+                    )}
                   </div>
                   
                   <div className="mt-6">
@@ -1374,6 +1764,11 @@ const CreatePostPage: React.FC = () => {
                     <Textarea
                       placeholder="Add a description for your document..."
                       className="mt-2 min-h-[120px]"
+                      value={documentDescription}
+                      onChange={(e) => {
+                        setDocumentDescription(e.target.value);
+                        showSaveIndicator();
+                      }}
                     />
                   </div>
                 </CardContent>
@@ -1492,9 +1887,40 @@ const CreatePostPage: React.FC = () => {
                 )}
                 
                 {activeTab === 'document' && (
-                  <div className="bg-neutral-lightest border rounded-lg p-6 mb-4 text-center">
-                    <FileText size={40} className="mx-auto mb-2 text-neutral-medium" />
-                    <p className="text-sm text-neutral-medium">Document Preview</p>
+                  <div className="mb-4">
+                    {content && (
+                      <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200">
+                        {content}
+                      </p>
+                    )}
+                    
+                    <div className="bg-neutral-lightest border rounded-lg p-6 mb-3 text-center">
+                      {documentFile ? (
+                        <>
+                          <FileText size={40} className="mx-auto mb-2 text-primary" />
+                          <p className="text-sm font-medium text-black mb-1">{documentFile.name}</p>
+                          <p className="text-xs text-neutral-medium">
+                            {(documentFile.size / 1024 / 1024).toFixed(2)} MB · {documentFile.type}
+                          </p>
+                          {documentDescription && (
+                            <p className="text-sm text-neutral-dark mt-3 text-left bg-white rounded p-2 border">
+                              {documentDescription}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <FileText size={40} className="mx-auto mb-2 text-neutral-medium" />
+                          <p className="text-sm text-neutral-medium">Document Preview</p>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {hashtags.map(tag => (
+                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer">#{tag}</span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 
@@ -1710,191 +2136,6 @@ const CreatePostPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
-const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, imageUrl?: string, cloudinaryImage?: ExtendedCloudinaryImage}[], variant: SliderVariant }> = ({ slides, variant }) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoplay, setIsAutoplay] = useState(variant === 'autoplay');
-  
-  // Handle autoplay behavior
-  useEffect(() => {
-    setIsAutoplay(variant === 'autoplay');
-    
-    let autoplayInterval: number | null = null;
-    if (isAutoplay && slides.length > 1) {
-      autoplayInterval = window.setInterval(() => {
-        setCurrentSlide((prevIndex) => (prevIndex + 1) % slides.length);
-      }, 3000);
-    }
-    
-    return () => {
-      if (autoplayInterval) {
-        window.clearInterval(autoplayInterval);
-      }
-    };
-  }, [variant, isAutoplay, slides.length]);
-  
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-  
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-  
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
-  
-  // Get container class based on variant
-  const getContainerClass = () => {
-    let baseClass = "relative overflow-hidden rounded-lg border shadow-sm";
-    
-    if (variant === 'coverflow') {
-      baseClass += " perspective-1000";
-    }
-    
-    return baseClass;
-  };
-  
-  // Slide transition variants based on selected variant
-  const getSlideVariants = () => {
-    switch (variant) {
-      case 'fade':
-        return {
-          enter: { opacity: 0 },
-          center: { opacity: 1 },
-          exit: { opacity: 0 }
-        };
-      case 'coverflow':
-        return {
-          enter: { opacity: 0, scale: 0.85, rotateY: -25, z: -200 },
-          center: { opacity: 1, scale: 1, rotateY: 0, z: 0 },
-          exit: { opacity: 0, scale: 0.85, rotateY: 25, z: -200 }
-        };
-      case 'vertical':
-        return {
-          enter: { opacity: 0, y: 60, scale: 0.95 },
-          center: { opacity: 1, y: 0, scale: 1 },
-          exit: { opacity: 0, y: -60, scale: 0.95 }
-        };
-      default:
-        return {
-          enter: { opacity: 0, x: 75, scale: 0.95 },
-          center: { opacity: 1, x: 0, scale: 1 },
-          exit: { opacity: 0, x: -75, scale: 0.95 }
-        };
-    }
-  };
-  
-  // Get transition settings based on variant
-  const getTransitionSettings = () => {
-    switch(variant) {
-      case 'fade':
-        return { duration: 0.7, ease: "easeInOut" };
-      case 'coverflow':
-        return { duration: 0.7, ease: [0.4, 0.0, 0.2, 1] };
-      default:
-        return { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] };
-    }
-  };
-  
-  if (slides.length === 0) {
-    return <div className="text-center p-8 text-gray-400">No slides to display</div>;
-  }
-  
-  return (
-    <div className="relative linkedin-post-preview">
-      <div 
-        className={`${getContainerClass()} aspect-video bg-white flex items-center justify-center`}
-      >
-        {/* Single slide display */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            className="absolute inset-0 flex items-center justify-center"
-            initial="enter"
-            animate="center"
-            exit="exit"
-            variants={getSlideVariants()}
-            transition={getTransitionSettings()}
-          >
-            <div className="bg-white w-full h-full flex flex-col justify-between relative overflow-hidden">
-              {/* Image display - takes up most of the slide */}
-              {slides[currentSlide].cloudinaryImage ? (
-                <div className="w-full flex-grow overflow-hidden bg-white">
-                  <img 
-                    src={slides[currentSlide].cloudinaryImage.secure_url} 
-                    alt={`Slide ${currentSlide + 1}`}
-                    className="w-full h-full object-contain" 
-                    style={{maxHeight: '350px'}}
-                  />
-                </div>
-              ) : slides[currentSlide].imageUrl ? (
-                <div className="w-full flex-grow overflow-hidden bg-white">
-                  <img 
-                    src={slides[currentSlide].imageUrl} 
-                    alt={`Slide ${currentSlide + 1}`}
-                    className="w-full h-full object-contain" 
-                    style={{maxHeight: '350px'}}
-                  />
-                </div>
-              ) : (
-                <div className="w-full flex-grow bg-white flex items-center justify-center p-4">
-                  <p className="text-center text-gray-400">
-                    {slides[currentSlide].content || "Add content to this slide"}
-                  </p>
-                </div>
-              )}
-              
-              {/* Text content at the bottom */}
-              <div className="p-3 bg-white border-t">
-                {/* Content displayed in LinkedIn style */}
-                <div className="text-sm font-medium text-black">
-                  {slides[currentSlide].content}
-                </div>
-                
-                {/* Slide indicators */}
-                <div className="flex mt-2 gap-1">
-                  {slides.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => goToSlide(idx)}
-                      className={`h-1.5 rounded-full ${idx === currentSlide ? 'bg-blue-600 w-6' : 'bg-gray-300 w-3'} transition-all`}
-                      aria-label={`Go to slide ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-        
-        {/* Navigation arrows */}
-        {slides.length > 1 && (
-          <>
-            <button 
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-8 w-8 shadow-md z-10 flex items-center justify-center"
-              onClick={prevSlide}
-            >
-              <ChevronLeft size={16} className="text-gray-700" />
-            </button>
-            <button 
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-8 w-8 shadow-md z-10 flex items-center justify-center"
-              onClick={nextSlide}
-            >
-              <ChevronRight size={16} className="text-gray-700" />
-            </button>
-          </>
-        )}
-        
-        {/* Current slide indicator */}
-        <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
-          {currentSlide + 1} / {slides.length}
-        </div>
-      </div>
     </div>
   );
 };
