@@ -88,6 +88,83 @@ interface PublishedPost extends BasePost {
   };
 }
 
+// Create a separate component for carousel slides
+const CarouselCard: React.FC<{ 
+  slides: {id: string, content: string, imageUrl?: string, cloudinaryImage?: any}[]
+}> = ({ slides }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const nextSlide = () => {
+    if (slides.length > 0) {
+      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    }
+  };
+  
+  const prevSlide = () => {
+    if (slides.length > 0) {
+      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    }
+  };
+
+  return (
+    <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
+      <div className="relative min-h-[280px] w-full">
+        {slides.map((slide, index) => (
+          <div 
+            key={slide.id}
+            className={`absolute top-0 left-0 w-full transition-opacity duration-300 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+          >
+            {/* Slide Image */}
+            {slide.cloudinaryImage && (
+              <img 
+                src={slide.cloudinaryImage.secure_url} 
+                alt={`Slide ${index + 1}`}
+                className="w-full object-contain max-h-[240px]"
+              />
+            )}
+            
+            {/* Slide Content */}
+            <div className="p-3 bg-white text-sm">
+              {slide.content}
+            </div>
+          </div>
+        ))}
+        
+        {/* Carousel Navigation Buttons */}
+        {slides.length > 1 && (
+          <>
+            <button 
+              onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white/70 flex items-center justify-center"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white/70 flex items-center justify-center"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </>
+        )}
+      </div>
+      
+      {/* Carousel indicator */}
+      <div className="flex gap-1 justify-center my-2">
+        {slides.map((_, i) => (
+          <div 
+            key={i} 
+            className={`h-1.5 rounded-full ${i === currentSlide ? 'w-4 bg-blue-500' : 'w-1.5 bg-gray-300'}`}
+            onClick={() => setCurrentSlide(i)}
+          ></div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const PostLibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -184,6 +261,18 @@ const PostLibraryPage: React.FC = () => {
           
           // Set state with API data
           setDrafts(apiDrafts.map((item: any) => {
+            // Check if item.postData exists to prevent errors
+            if (!item || !item.postData) {
+              console.warn('Missing item or postData in API response for draft:', item);
+              return {
+                id: item?._id || `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                title: 'Untitled Draft',
+                content: '',
+                updatedAt: new Date().toISOString(),
+                status: 'draft'
+              };
+            }
+            
             const post = item.postData;
             return {
               id: item._id,
@@ -202,6 +291,18 @@ const PostLibraryPage: React.FC = () => {
           }));
           
           setScheduled(apiScheduled.map((item: any) => {
+            // Check if item.postData exists to prevent errors
+            if (!item || !item.postData) {
+              console.warn('Missing item or postData in API response for scheduled post:', item);
+              return {
+                id: item?._id || `scheduled_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                title: 'Scheduled Post',
+                content: '',
+                scheduledTime: item?.scheduledTime || new Date().toISOString(),
+                status: 'scheduled'
+              };
+            }
+            
             const post = item.postData;
             return {
               id: item._id,
@@ -551,22 +652,6 @@ const PostLibraryPage: React.FC = () => {
   
   // Render a unified post card for all types
   const renderPostCard = (post: BasePost, type: 'draft' | 'scheduled' | 'published') => {
-    // Add state for carousel navigation
-    const [currentSlide, setCurrentSlide] = useState(0);
-    
-    // Helper function to navigate through carousel slides
-    const nextSlide = () => {
-      if (post.slides && post.slides.length > 0) {
-        setCurrentSlide((prev) => (prev === post.slides!.length - 1 ? 0 : prev + 1));
-      }
-    };
-    
-    const prevSlide = () => {
-      if (post.slides && post.slides.length > 0) {
-        setCurrentSlide((prev) => (prev === 0 ? post.slides!.length - 1 : prev - 1));
-      }
-    };
-    
     return (
       <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col border dark:border-gray-700">
         {/* User Info Header */}
@@ -651,61 +736,7 @@ const PostLibraryPage: React.FC = () => {
           
           {/* Carousel Images (if available) */}
           {post.isCarousel && post.slides && post.slides.length > 0 && (
-            <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
-              <div className="relative min-h-[280px] w-full">
-                {post.slides.map((slide, index) => (
-                  <div 
-                    key={slide.id}
-                    className={`absolute top-0 left-0 w-full transition-opacity duration-300 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                  >
-                    {/* Slide Image */}
-                    {slide.cloudinaryImage && (
-                      <img 
-                        src={slide.cloudinaryImage.secure_url} 
-                        alt={`Slide ${index + 1}`}
-                        className="w-full object-contain max-h-[240px]"
-                      />
-                    )}
-                    
-                    {/* Slide Content */}
-                    <div className="p-3 bg-white text-sm">
-                      {slide.content}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Carousel Navigation Buttons */}
-                {post.slides.length > 1 && (
-                  <>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white/70 flex items-center justify-center"
-                      aria-label="Previous slide"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white/70 flex items-center justify-center"
-                      aria-label="Next slide"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </>
-                )}
-              </div>
-              
-              {/* Carousel indicator */}
-              <div className="flex gap-1 justify-center my-2">
-                {post.slides.map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`h-1.5 rounded-full ${i === currentSlide ? 'w-4 bg-blue-500' : 'w-1.5 bg-gray-300'}`}
-                    onClick={() => setCurrentSlide(i)}
-                  ></div>
-                ))}
-              </div>
-            </div>
+            <CarouselCard slides={post.slides} />
           )}
           
           {/* Hashtags (if available) */}
