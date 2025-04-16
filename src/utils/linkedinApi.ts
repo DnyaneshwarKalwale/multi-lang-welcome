@@ -17,6 +17,22 @@ const getLinkedInToken = (accessToken?: string): string => {
   return '';
 };
 
+// Function to handle LinkedIn token refresh
+const refreshLinkedInToken = (): void => {
+  // Clear existing token
+  localStorage.removeItem('linkedin-login-token');
+  
+  // Get the backend URL from environment variable or fallback to Render deployed URL
+  const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+  const baseUrl = baseApiUrl.replace('/api', '');
+  
+  // Store current URL in localStorage to redirect back after LinkedIn reconnection
+  localStorage.setItem('redirectAfterAuth', window.location.pathname);
+  
+  // Redirect to LinkedIn OAuth endpoint
+  window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+};
+
 // Types for LinkedIn API requests
 export interface LinkedInPostRequest {
   author: string; // Format: urn:li:person:{memberId}
@@ -162,8 +178,19 @@ class LinkedInApi {
       
       const response = await axios.get(`${this.API_URL}/profile`, { headers });
       return response.data.id;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting LinkedIn user ID:', error);
+      
+      // Handle token expiration
+      if (error.response && error.response.data && 
+          (error.response.status === 401 || 
+           (error.response.status === 500 && 
+            error.response.data.details && 
+            error.response.data.details.includes('token has expired')))) {
+        console.error('LinkedIn token expired. Redirecting to reauthorization.');
+        refreshLinkedInToken();
+      }
+      
       throw error;
     }
   }
@@ -196,8 +223,24 @@ class LinkedInApi {
       });
       
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating LinkedIn post:', error);
+      
+      // Check for token expiration in the response
+      if (error.response && error.response.data) {
+        console.error('LinkedIn API error response:', error.response.data);
+        
+        // Handle token expiration
+        if (error.response.status === 401 || 
+            (error.response.status === 500 && 
+             error.response.data.details && 
+             error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired. Redirecting to reauthorization.');
+          refreshLinkedInToken();
+          throw new Error("LinkedIn authentication expired. Please login again.");
+        }
+      }
+      
       throw error;
     }
   }
@@ -301,26 +344,68 @@ class LinkedInApi {
         throw new Error("LinkedIn token not available. Please login again.");
       }
 
-      // Create a post with the Cloudinary image URL
-      const postData = {
-        postContent: text,
-        imagePath: imageUrl,
-        imageTitle: imageTitle || fileName,
-        imageDescription: "Shared via Scripe",
-        visibility: visibility
-      };
-
-      // Send post request to our backend which will handle the LinkedIn API complexity
-      const response = await axios.post(`${this.API_URL}/post`, postData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      console.log('Creating post with Cloudinary image:', {
+        text,
+        imageUrl,
+        fileName,
+        imageTitle
       });
-      
-      return response.data;
-    } catch (error) {
+
+      // Since backend expects local files but we have a Cloudinary URL,
+      // we'll use a text post fallback if the image post fails
+      try {
+        // Try directly with Cloudinary URL first
+        const imagePostData = {
+          postContent: text,
+          imagePath: imageUrl,
+          imageTitle: imageTitle || fileName,
+          imageDescription: "Shared via Scripe",
+          isCloudinaryImage: true, // Flag to tell backend this is a Cloudinary URL
+          visibility: visibility
+        };
+
+        // Send post request to our backend
+        const response = await axios.post(`${this.API_URL}/post`, imagePostData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        return response.data;
+      } catch (imageError) {
+        console.error('Error posting with Cloudinary image:', imageError);
+        
+        // Fall back to text-only post if image fails
+        console.log('Falling back to text-only post');
+        const textPostData = {
+          postContent: `${text}\n\n${imageTitle}: ${imageUrl}`,
+          visibility: visibility
+        };
+
+        const textResponse = await axios.post(`${this.API_URL}/post`, textPostData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        return textResponse.data;
+      }
+    } catch (error: any) {
       console.error('Error creating LinkedIn Cloudinary image post:', error);
+      
+      // Handle token expiration
+      if (error.response && error.response.data && 
+          (error.response.status === 401 || 
+           (error.response.status === 500 && 
+            error.response.data.details && 
+            error.response.data.details.includes('token has expired')))) {
+        console.error('LinkedIn token expired. Redirecting to reauthorization.');
+        refreshLinkedInToken();
+        throw new Error("LinkedIn authentication expired. Please login again.");
+      }
+      
       throw error;
     }
   }
@@ -336,6 +421,7 @@ class LinkedInApi {
   ): Promise<LinkedInPostResponse> {
     try {
       const token = getLinkedInToken(accessToken);
+      
       
       if (!token) {
         throw new Error("LinkedIn token not available. Please login again.");
@@ -359,8 +445,20 @@ class LinkedInApi {
       });
       
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing to LinkedIn:', error);
+      
+      // Handle token expiration
+      if (error.response && error.response.data && 
+          (error.response.status === 401 || 
+           (error.response.status === 500 && 
+            error.response.data.details && 
+            error.response.data.details.includes('token has expired')))) {
+        console.error('LinkedIn token expired. Redirecting to reauthorization.');
+        refreshLinkedInToken();
+        throw new Error("LinkedIn authentication expired. Please login again.");
+      }
+      
       throw error;
     }
   }
@@ -411,8 +509,20 @@ class LinkedInApi {
       });
       
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating LinkedIn poll:', error);
+      
+      // Handle token expiration
+      if (error.response && error.response.data && 
+          (error.response.status === 401 || 
+           (error.response.status === 500 && 
+            error.response.data.details && 
+            error.response.data.details.includes('token has expired')))) {
+        console.error('LinkedIn token expired. Redirecting to reauthorization.');
+        refreshLinkedInToken();
+        throw new Error("LinkedIn authentication expired. Please login again.");
+      }
+      
       throw error;
     }
   }

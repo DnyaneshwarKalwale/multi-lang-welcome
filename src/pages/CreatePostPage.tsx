@@ -428,6 +428,19 @@ const CreatePostPage: React.FC = () => {
     showSaveIndicator();
   };
   
+  // Function to handle LinkedIn reconnection
+  const handleReconnectLinkedIn = () => {
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
+    localStorage.setItem('redirectAfterAuth', '/dashboard/post');
+    
+    // Redirect to LinkedIn OAuth endpoint
+    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+  };
+  
   // Function to publish post directly to LinkedIn
   const publishToLinkedIn = async () => {
     try {
@@ -446,6 +459,11 @@ const CreatePostPage: React.FC = () => {
       if (!token) {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
         setIsPublishing(false);
+        
+        // Show a reconnect option
+        if (window.confirm('Would you like to connect your LinkedIn account now?')) {
+          handleReconnectLinkedIn();
+        }
         return;
       }
       
@@ -460,11 +478,16 @@ const CreatePostPage: React.FC = () => {
       } else if (postImage) {
         // Handle image post using Cloudinary image
         console.log('Publishing LinkedIn post with image:', postImage);
+        
+        // Make sure we have all required image data
+        if (!postImage.secure_url) {
+          toast.error('Image URL is missing');
+          setIsPublishing(false);
+          return;
+        }
+        
         try {
-          // Make sure we have all required image data
-          if (!postImage.secure_url) {
-            throw new Error('Image URL is missing');
-          }
+          toast.info('Uploading image to LinkedIn...');
           
           response = await linkedInApi.createCloudinaryImagePost(
             content, 
@@ -473,15 +496,43 @@ const CreatePostPage: React.FC = () => {
             postImage.original_filename || 'Shared image',
             visibility
           );
+          
           console.log('LinkedIn image post response:', response);
           toast.success('Image post published to LinkedIn successfully!');
-        } catch (imageError) {
+        } catch (imageError: any) {
           console.error('Error publishing LinkedIn image post:', imageError);
-          toast.error('Failed to publish image. Publishing as text post instead.');
-          // Fallback to text post
-          response = await linkedInApi.createTextPost(content, visibility);
-          console.log('LinkedIn text post fallback response:', response);
-          toast.success('Post published to LinkedIn as text instead.');
+          
+          // Check if it's a token expiration issue
+          if (imageError.message && imageError.message.includes('authentication expired')) {
+            toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+            
+            if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+              handleReconnectLinkedIn();
+            }
+            setIsPublishing(false);
+            return;
+          }
+          
+          // Check for other specific errors
+          if (imageError.response && imageError.response.status === 422) {
+            toast.error('LinkedIn was unable to process the image. Publishing as text post instead.');
+          } else {
+            toast.error('Failed to publish image. Publishing as text post instead.');
+          }
+          
+          // Fallback to text post with image URL
+          try {
+            const imageUrl = postImage.secure_url;
+            const imageTitle = postImage.original_filename || 'image';
+            const postWithImage = `${content}\n\n${imageTitle}: ${imageUrl}`;
+            
+            response = await linkedInApi.createTextPost(postWithImage, visibility);
+            console.log('LinkedIn text post fallback response:', response);
+            toast.success('Post published to LinkedIn as text with image link.');
+          } catch (textError) {
+            console.error('Even text fallback failed:', textError);
+            throw textError; // Re-throw to be caught by outer catch
+          }
         }
       } else if (hasArticle && articleUrl) {
         // Handle article post
@@ -522,8 +573,19 @@ const CreatePostPage: React.FC = () => {
         });
       }, 1500);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing to LinkedIn:', error);
+      
+      // Look for token expiration errors
+      if (error.message && error.message.includes('authentication expired')) {
+        toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+        
+        // Show a reconnect option
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleReconnectLinkedIn();
+        }
+        return;
+      }
       
       // Provide more specific error messages
       if (error.response) {
@@ -532,10 +594,16 @@ const CreatePostPage: React.FC = () => {
         // Parse common error types
         if (error.response.status === 401) {
           toast.error('Authentication failed. Your LinkedIn token may have expired.');
+          // Show a reconnect option
+          if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+            handleReconnectLinkedIn();
+          }
         } else if (error.response.status === 403) {
           toast.error('Permission denied. You may not have proper LinkedIn permissions.');
         } else if (error.response.status === 404) {
           toast.error('API endpoint not found. The backend service might be unavailable.');
+        } else if (error.response.status === 422) {
+          toast.error('LinkedIn could not process your request. Please check your content and try again.');
         } else if (error.response.status >= 500) {
           toast.error('LinkedIn server error. Please try again later.');
         } else {
@@ -725,6 +793,11 @@ const CreatePostPage: React.FC = () => {
         toast.error(`LinkedIn authentication required. Please login with LinkedIn first.`);
         console.error('LinkedIn token not found');
         setIsPublishing(false);
+        
+        // Show a reconnect option
+        if (window.confirm('Would you like to connect your LinkedIn account now?')) {
+          handleReconnectLinkedIn();
+        }
         return;
       }
       
@@ -737,20 +810,49 @@ const CreatePostPage: React.FC = () => {
       console.log('Test post successful:', response);
       toast.success('LinkedIn test post successful! Your account is connected properly.');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('LinkedIn test post failed:', error);
+      
+      // Check for specific token expiration error
+      if (error.message && error.message.includes('authentication expired')) {
+        toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+        
+        // Show a reconnect option
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleReconnectLinkedIn();
+        }
+        return;
+      }
+      
       if (error.response) {
         console.error('API response:', error.response.data);
         
         // Check for common error types 
         if (error.response.status === 401) {
           toast.error('Authentication failed. Your LinkedIn token may have expired. Please login again.');
+          
+          // Show a reconnect option
+          if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+            handleReconnectLinkedIn();
+          }
         } else if (error.response.status === 403) {
           toast.error('Permission denied. You may not have proper LinkedIn permissions.');
         } else if (error.response.status === 404) {
           toast.error('API endpoint not found. The backend service might be unavailable.');
         } else if (error.response.status >= 500) {
-          toast.error('LinkedIn server error. Please try again later.');
+          // Check for token expiration in 500 error
+          if (error.response.data && 
+              error.response.data.details && 
+              error.response.data.details.includes('token has expired')) {
+            toast.error('Your LinkedIn token has expired. Please reconnect your account.');
+            
+            // Show a reconnect option
+            if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+              handleReconnectLinkedIn();
+            }
+          } else {
+            toast.error('LinkedIn server error. Please try again later.');
+          }
         } else {
           toast.error(`LinkedIn error: ${error.response.data?.message || 'Unknown error'}`);
         }

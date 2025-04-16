@@ -552,12 +552,31 @@ const PostLibraryPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error publishing draft:', error);
       
+      // Check for token expiration message from our API handler
+      if (error.message && error.message.includes('authentication expired')) {
+        setLinkedInAuthError(true);
+        toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+        
+        // Show reconnect dialog
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleConnectLinkedIn();
+        }
+        return;
+      }
+      
       // Check if it's a LinkedIn auth error
-      if (error?.response?.status === 401) {
+      if (error?.response?.status === 401 || 
+          (error?.response?.status === 500 && 
+           error?.response?.data?.details?.includes('token has expired'))) {
         setLinkedInAuthError(true);
         toast.error('LinkedIn authentication failed. Please reconnect your account.');
+        
+        // Show reconnect dialog
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleConnectLinkedIn();
+        }
       } else {
-        toast.error('Failed to publish draft');
+        toast.error('Failed to publish draft: ' + (error.message || 'Unknown error'));
       }
     } finally {
       setIsPublishing(false);
@@ -633,9 +652,35 @@ const PostLibraryPage: React.FC = () => {
       toast.success('Post published to LinkedIn successfully');
       setActiveTab('published');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing scheduled post:', error);
-      toast.error('Failed to publish post');
+      
+      // Check for token expiration message from our API handler
+      if (error.message && error.message.includes('authentication expired')) {
+        setLinkedInAuthError(true);
+        toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+        
+        // Show reconnect dialog
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleConnectLinkedIn();
+        }
+        return;
+      }
+      
+      // Check if it's a LinkedIn auth error
+      if (error?.response?.status === 401 || 
+          (error?.response?.status === 500 && 
+           error?.response?.data?.details?.includes('token has expired'))) {
+        setLinkedInAuthError(true);
+        toast.error('LinkedIn authentication failed. Please reconnect your account.');
+        
+        // Show reconnect dialog
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleConnectLinkedIn();
+        }
+      } else {
+        toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
+      }
       
       // Fallback to localStorage if API fails
       try {
