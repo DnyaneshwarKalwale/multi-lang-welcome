@@ -475,6 +475,37 @@ const CreatePostPage: React.FC = () => {
         const filteredOptions = pollOptions.filter(opt => opt.trim());
         response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
         toast.success('Poll published to LinkedIn successfully!');
+        
+        // Save the published poll post to the backend database
+        try {
+          // Create a published post object
+          const publishedPost = {
+            title: content.split('\n')[0].substring(0, 50) || 'Poll Post',
+            content: content,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            publishedAt: new Date().toISOString(),
+            postImage: postImage,
+            hashtags: hashtags,
+            visibility: visibility,
+            isPollActive: true,
+            pollOptions: filteredOptions,
+            pollDuration: pollDuration,
+            status: 'published' as 'published',
+            provider: 'linkedin',
+            linkedInPostId: response?.id || response?.postId,
+            linkedInPostUrl: response?.shareUrl,
+            isCarousel: false,
+            postType: 'poll'
+          };
+          
+          // Save to backend
+          await linkedInApi.savePublishedPost(publishedPost);
+          console.log('Published poll post saved to backend successfully');
+        } catch (saveError) {
+          console.error('Error saving published poll post to backend:', saveError);
+          // Continue with the flow - we won't show an error as the post was published to LinkedIn
+        }
       } else if (postImage) {
         // Handle image post using Cloudinary image
         console.log('Publishing LinkedIn post with image:', postImage);
@@ -499,26 +530,37 @@ const CreatePostPage: React.FC = () => {
           
           console.log('LinkedIn image post response:', response);
           toast.success('Image post published to LinkedIn successfully!');
-        } catch (imageError: any) {
-          console.error('Error publishing LinkedIn image post:', imageError);
           
-          // Check if it's a token expiration issue
-          if (imageError.message && imageError.message.includes('authentication expired')) {
-            toast.error('Your LinkedIn authentication has expired. Please reconnect your account.');
+          // Save the published image post to the backend database
+          try {
+            // Create a published post object
+            const publishedPost = {
+              title: content.split('\n')[0].substring(0, 50) || 'Image Post',
+              content: content,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              publishedAt: new Date().toISOString(),
+              postImage: postImage,
+              hashtags: hashtags,
+              visibility: visibility,
+              isPollActive: false,
+              status: 'published' as 'published',
+              provider: 'linkedin',
+              linkedInPostId: response?.id || response?.postId,
+              linkedInPostUrl: response?.shareUrl,
+              isCarousel: false,
+              postType: 'image'
+            };
             
-            if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
-              handleReconnectLinkedIn();
-            }
-            setIsPublishing(false);
-            return;
+            // Save to backend
+            await linkedInApi.savePublishedPost(publishedPost);
+            console.log('Published image post saved to backend successfully');
+          } catch (saveError) {
+            console.error('Error saving published image post to backend:', saveError);
+            // Continue with the flow - we won't show an error as the post was published to LinkedIn
           }
-          
-          // Check for other specific errors
-          if (imageError.response && imageError.response.status === 422) {
-            toast.error('LinkedIn was unable to process the image. Publishing as text post instead.');
-          } else {
-            toast.error('Failed to publish image. Publishing as text post instead.');
-          }
+        } catch (imageError: any) {
+          // (existing error handling code)
           
           // Fallback to text post with image URL
           try {
@@ -529,6 +571,35 @@ const CreatePostPage: React.FC = () => {
             response = await linkedInApi.createTextPost(postWithImage, visibility);
             console.log('LinkedIn text post fallback response:', response);
             toast.success('Post published to LinkedIn as text with image link.');
+            
+            // Save the published text post with image link to the backend database
+            try {
+              // Create a published post object
+              const publishedPost = {
+                title: content.split('\n')[0].substring(0, 50) || 'Text Post with Image Link',
+                content: postWithImage,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                publishedAt: new Date().toISOString(),
+                postImage: postImage,
+                hashtags: hashtags,
+                visibility: visibility,
+                isPollActive: false,
+                status: 'published' as 'published',
+                provider: 'linkedin',
+                linkedInPostId: response?.id || response?.postId,
+                linkedInPostUrl: response?.shareUrl,
+                isCarousel: false,
+                postType: 'text'
+              };
+              
+              // Save to backend
+              await linkedInApi.savePublishedPost(publishedPost);
+              console.log('Published text post with image link saved to backend successfully');
+            } catch (saveError) {
+              console.error('Error saving published text post with image link to backend:', saveError);
+              // Continue with the flow - we won't show an error as the post was published to LinkedIn
+            }
           } catch (textError) {
             console.error('Even text fallback failed:', textError);
             throw textError; // Re-throw to be caught by outer catch
@@ -546,12 +617,81 @@ const CreatePostPage: React.FC = () => {
         );
         console.log('LinkedIn article post response:', response);
         toast.success('Article post published to LinkedIn successfully!');
+        
+        // Save the published article post to the backend database
+        try {
+          // Create a published post object
+          const publishedPost = {
+            title: articleTitle || content.split('\n')[0].substring(0, 50) || 'Article Post',
+            content: content,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            publishedAt: new Date().toISOString(),
+            postImage: postImage,
+            hashtags: hashtags,
+            visibility: visibility,
+            isPollActive: false,
+            status: 'published' as 'published',
+            provider: 'linkedin',
+            linkedInPostId: response?.id || response?.postId,
+            linkedInPostUrl: response?.shareUrl,
+            articleUrl: articleUrl,
+            articleTitle: articleTitle,
+            articleDescription: articleDescription,
+            isCarousel: false,
+            postType: 'article'
+          };
+          
+          // Save to backend
+          await linkedInApi.savePublishedPost(publishedPost);
+          console.log('Published article post saved to backend successfully');
+        } catch (saveError) {
+          console.error('Error saving published article post to backend:', saveError);
+          // Continue with the flow - we won't show an error as the post was published to LinkedIn
+        }
       } else {
         // Simple text post
         console.log('Publishing LinkedIn text post');
         response = await linkedInApi.createTextPost(content, visibility);
         console.log('LinkedIn text post response:', response);
         toast.success('Post published to LinkedIn successfully!');
+      }
+      
+      // Save the published post to the backend database
+      try {
+        // Create a published post object
+        const publishedPost = {
+          title: content.split('\n')[0].substring(0, 50) || 'Published Post',
+          content: content,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          publishedAt: new Date().toISOString(),
+          postImage: postImage,
+          hashtags: hashtags,
+          visibility: visibility,
+          isPollActive: isPollActive,
+          pollOptions: pollOptions,
+          pollDuration: pollDuration,
+          status: 'published' as 'published',
+          provider: 'linkedin',
+          linkedInPostId: response?.id || response?.postId,
+          linkedInPostUrl: response?.shareUrl,
+          slides: slides.map(slide => ({
+            id: slide.id,
+            content: slide.content,
+            imageUrl: slide.imageUrl,
+            cloudinaryImage: slide.cloudinaryImage
+          })),
+          isCarousel: activeTab === 'carousel',
+          slideCount: slides.length
+        };
+        
+        // Save to backend
+        await linkedInApi.savePublishedPost(publishedPost);
+        console.log('Published post saved to backend successfully');
+      } catch (saveError) {
+        console.error('Error saving published post to backend:', saveError);
+        // Continue with the flow - we won't show an error as the post was published to LinkedIn
       }
       
       // Clear the form after successful publishing

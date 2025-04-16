@@ -548,7 +548,17 @@ export class LinkedInApi {
   // Get user's posts
   async getUserPosts(limit: number = 10): Promise<any> {
     try {
-      const response = await axios.get(`${this.API_URL}/posts?limit=${limit}`);
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const response = await axios.get(`${this.API_URL}/posts?limit=${limit}`, {
+        withCredentials: true,
+        headers
+      });
       return response.data;
     } catch (error) {
       console.error('Error getting LinkedIn user posts:', error);
@@ -559,8 +569,16 @@ export class LinkedInApi {
   // Get drafts and scheduled posts
   async getDraftsAndScheduled(): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.get(`${this.API_URL}/posts/all`, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -572,8 +590,16 @@ export class LinkedInApi {
   // Delete a draft
   async deleteDraft(draftId: string): Promise<boolean> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       await axios.delete(`${this.API_URL}/posts/draft/${draftId}`, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return true;
     } catch (error) {
@@ -585,8 +611,16 @@ export class LinkedInApi {
   // Delete a scheduled post
   async deleteScheduledPost(postId: string): Promise<boolean> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       await axios.delete(`${this.API_URL}/posts/scheduled/${postId}`, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return true;
     } catch (error) {
@@ -598,8 +632,16 @@ export class LinkedInApi {
   // Save a published post
   async savePublishedPost(post: any): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.post(`${this.API_URL}/posts/published`, post, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -611,8 +653,16 @@ export class LinkedInApi {
   // Save a draft post
   async saveDraft(postData: ScheduledPostData): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.post(`${this.API_URL}/posts/draft`, postData, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -624,8 +674,16 @@ export class LinkedInApi {
   // Save a scheduled post
   async saveScheduledPost(postData: ScheduledPostData): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.post(`${this.API_URL}/posts/scheduled`, postData, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -637,8 +695,16 @@ export class LinkedInApi {
   // Update a draft or scheduled post
   async updatePost(postId: string, updates: Partial<ScheduledPostData>): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.put(`${this.API_URL}/posts/${postId}`, updates, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -655,8 +721,16 @@ export class LinkedInApi {
         data.scheduledTime = scheduledTime;
       }
       
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.put(`${this.API_URL}/posts/${postId}/status`, data, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -668,8 +742,16 @@ export class LinkedInApi {
   // Delete a post
   async deletePost(postId: string): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.delete(`${this.API_URL}/posts/${postId}`, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
@@ -681,8 +763,16 @@ export class LinkedInApi {
   // Publish a draft or scheduled post immediately
   async publishNow(postId: string): Promise<any> {
     try {
+      // Add auth token from localStorage if available
+      const headers: any = {};
+      const authToken = localStorage.getItem('auth-token');
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await axios.post(`${this.API_URL}/posts/${postId}/publish`, {}, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       });
       return response.data;
     } catch (error) {
