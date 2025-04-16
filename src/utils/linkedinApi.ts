@@ -982,6 +982,95 @@ class LinkedInApi {
       throw error;
     }
   }
+
+  // Migrate posts from localStorage to the database
+  async migrateLocalPostsToDatabase(): Promise<any> {
+    try {
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+      
+      // Collect all drafts and scheduled posts from localStorage
+      const postsToMigrate: any[] = [];
+      
+      // Scan localStorage for drafts and scheduled posts
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        
+        // Check for draft posts
+        if (key?.startsWith('draft_')) {
+          try {
+            const draftData = JSON.parse(localStorage.getItem(key) || '{}');
+            if (draftData.id) {
+              postsToMigrate.push({
+                ...draftData,
+                status: 'draft'
+              });
+            }
+          } catch (error) {
+            console.error('Error parsing draft for migration:', error);
+          }
+        } 
+        // Check for scheduled posts
+        else if (key?.startsWith('scheduled_')) {
+          try {
+            const scheduledData = JSON.parse(localStorage.getItem(key) || '{}');
+            if (scheduledData.id) {
+              postsToMigrate.push({
+                ...scheduledData,
+                status: 'scheduled'
+              });
+            }
+          } catch (error) {
+            console.error('Error parsing scheduled post for migration:', error);
+          }
+        }
+      }
+      
+      if (postsToMigrate.length === 0) {
+        return {
+          success: true, 
+          message: 'No local posts found to migrate',
+          migratedCount: 0
+        };
+      }
+      
+      // Call the migration API endpoint
+      const response = await axios.post(`${this.POSTS_API_URL}/migrate-from-local`, 
+        { posts: postsToMigrate },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Clean up successfully migrated posts from localStorage
+      if (response.data.success && response.data.results) {
+        const successfulMigrations = response.data.results.filter((result: any) => result.success);
+        
+        for (const migration of successfulMigrations) {
+          // Try to remove the original localStorage item
+          try {
+            localStorage.removeItem(migration.id);
+          } catch (error) {
+            console.error(`Error removing migrated post ${migration.id} from localStorage:`, error);
+          }
+        }
+      }
+      
+      return {
+        ...response.data,
+        migratedCount: response.data.results?.filter((r: any) => r.success).length || 0
+      };
+    } catch (error) {
+      console.error('Error migrating posts to database:', error);
+      throw error;
+    }
+  }
 }
 
 export const linkedInApi = new LinkedInApi(); 
