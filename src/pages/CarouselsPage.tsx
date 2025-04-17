@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, Download, Eye, Clock, Filter, PlusCircle,
   Check, AlertCircle, FileDown, Calendar, ChevronDown, 
-  Search, SlidersHorizontal
+  Search, SlidersHorizontal, Youtube
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,10 @@ interface CarouselRequest {
   deliveryDate?: Date;
   slideCount: number;
   downloadUrl?: string;
+  videoId?: string;
+  transcript?: string;
+  sourceUrl?: string;
+  source?: 'youtube' | 'manual';
 }
 
 const CarouselsPage: React.FC = () => {
@@ -51,8 +55,8 @@ const CarouselsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-  // Mock data for carousel requests
-  const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>([
+  // Initial mock data for carousel requests
+  const initialCarousels = [
     {
       id: 'cr-001',
       title: '5 Ways to Boost Team Productivity',
@@ -61,7 +65,8 @@ const CarouselsPage: React.FC = () => {
       requestDate: new Date('2023-10-15T10:30:00'),
       deliveryDate: new Date('2023-10-16T14:45:00'),
       slideCount: 8,
-      downloadUrl: '/files/productivity-carousel.pdf'
+      downloadUrl: '/files/productivity-carousel.pdf',
+      source: 'manual'
     },
     {
       id: 'cr-002',
@@ -71,23 +76,80 @@ const CarouselsPage: React.FC = () => {
       requestDate: new Date('2023-11-03T15:20:00'),
       deliveryDate: new Date('2023-11-04T11:10:00'),
       slideCount: 10,
-      downloadUrl: '/files/conversion-carousel.pdf'
+      downloadUrl: '/files/conversion-carousel.pdf',
+      source: 'manual'
     },
     {
       id: 'cr-003',
       title: 'The Future of Remote Work',
       status: 'in_progress',
       requestDate: new Date('2023-11-27T09:15:00'),
-      slideCount: 7
+      slideCount: 7,
+      source: 'manual'
     }
-  ]);
+  ] as CarouselRequest[];
+
+  const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>(initialCarousels);
+
+  // Load YouTube carousels from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedYoutubeItems = localStorage.getItem('youtubeCarouselItems');
+      
+      if (savedYoutubeItems) {
+        const parsedItems = JSON.parse(savedYoutubeItems) as unknown[];
+        
+        // Process the items to match our interface
+        const youtubeCarousels: CarouselRequest[] = parsedItems.map((item: any) => ({
+          id: item.id || `yt-${Date.now()}`,
+          title: item.title || 'Untitled YouTube Carousel',
+          status: 'delivered',
+          thumbnailUrl: item.thumbnailUrl || `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`,
+          requestDate: new Date(item.requestDate || Date.now()),
+          deliveryDate: new Date(item.deliveryDate || Date.now()),
+          slideCount: item.slideCount || 5,
+          videoId: item.videoId,
+          transcript: item.transcript,
+          sourceUrl: item.sourceUrl,
+          source: 'youtube' as const
+        }));
+        
+        // Combine with existing carousels
+        setCarouselRequests([...initialCarousels, ...youtubeCarousels]);
+      }
+    } catch (error) {
+      console.error('Error loading YouTube carousels:', error);
+    }
+  }, []);
 
   // Download handler
   const handleDownload = (carousel: CarouselRequest) => {
-    if (carousel.downloadUrl) {
-      // In a real app, trigger actual download
+    if (carousel.source === 'youtube') {
+      // For YouTube carousels, navigate to the original source
+      if (carousel.sourceUrl) {
+        window.open(carousel.sourceUrl, '_blank');
+        toast.success('Opening YouTube video');
+      }
+    } else if (carousel.downloadUrl) {
+      // For regular carousels with download URLs
       window.open(carousel.downloadUrl, '_blank');
       toast.success('Carousel download started');
+    }
+  };
+
+  // Preview handler for YouTube carousels
+  const handlePreview = (carousel: CarouselRequest) => {
+    if (carousel.source === 'youtube') {
+      // Show transcript in preview modal
+      if (carousel.transcript) {
+        // Here you would show a modal with the transcript
+        // For simplicity, we'll just copy it to clipboard
+        navigator.clipboard.writeText(carousel.transcript);
+        toast.success('Transcript copied to clipboard');
+      }
+    } else {
+      // Handle regular carousel preview
+      toast.info('Carousel preview not implemented');
     }
   };
 
@@ -222,6 +284,14 @@ const CarouselsPage: React.FC = () => {
                     src={carousel.thumbnailUrl} 
                     alt={carousel.title} 
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      if (carousel.videoId) {
+                        target.src = `https://i.ytimg.com/vi/${carousel.videoId}/hqdefault.jpg`;
+                      } else {
+                        target.src = 'https://placehold.co/600x400?text=No+Image';
+                      }
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -238,13 +308,22 @@ const CarouselsPage: React.FC = () => {
                 >
                   {carousel.status === 'delivered' ? 'Delivered' : 'In Progress'}
                 </Badge>
+                
+                {carousel.source === 'youtube' && (
+                  <Badge className="absolute top-3 left-3 bg-red-500 flex items-center gap-1">
+                    <Youtube className="h-3 w-3" />
+                    YouTube
+                  </Badge>
+                )}
               </div>
               
               <CardHeader className="pb-2">
                 <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
                 <CardDescription className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  Requested: {format(carousel.requestDate, 'MMM d, yyyy')}
+                  {carousel.requestDate instanceof Date 
+                    ? format(carousel.requestDate, 'MMM d, yyyy')
+                    : format(new Date(carousel.requestDate), 'MMM d, yyyy')}
                 </CardDescription>
               </CardHeader>
               
@@ -258,7 +337,9 @@ const CarouselsPage: React.FC = () => {
                   {carousel.deliveryDate && (
                     <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                       <Clock className="h-4 w-4" />
-                      <span>{format(carousel.deliveryDate, 'MMM d, yyyy')}</span>
+                      {carousel.deliveryDate instanceof Date 
+                        ? format(carousel.deliveryDate, 'MMM d, yyyy')
+                        : format(new Date(carousel.deliveryDate), 'MMM d, yyyy')}
                     </div>
                   )}
                 </div>
@@ -271,7 +352,7 @@ const CarouselsPage: React.FC = () => {
                       variant="outline" 
                       size="sm" 
                       className="gap-1"
-                      onClick={() => {/* Preview handler */}}
+                      onClick={() => handlePreview(carousel)}
                     >
                       <Eye className="h-4 w-4" />
                       Preview
@@ -283,7 +364,7 @@ const CarouselsPage: React.FC = () => {
                       onClick={() => handleDownload(carousel)}
                     >
                       <Download className="h-4 w-4" />
-                      Download
+                      {carousel.source === 'youtube' ? 'Open Video' : 'Download'}
                     </Button>
                   </div>
                 ) : (
@@ -307,13 +388,23 @@ const CarouselsPage: React.FC = () => {
               ? "No carousels match your current filters. Try adjusting your search criteria."
               : "You haven't requested any carousels yet. Create your first carousel request to get started."}
           </p>
-          <Button 
-            onClick={() => navigate('/dashboard/request-carousel')}
-            className="gap-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Request New Carousel
-          </Button>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/dashboard/request-carousel')}
+              className="gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Request New Carousel
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/dashboard/scraper')}
+              className="gap-2"
+            >
+              <Youtube className="h-4 w-4" />
+              YouTube Scraper
+            </Button>
+          </div>
         </div>
       )}
       
