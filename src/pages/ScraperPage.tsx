@@ -32,7 +32,7 @@ import {
 import { toast } from 'sonner';
 import axios from 'axios';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
-import { saveYouTubeVideo, YouTubeVideo } from '@/utils/youtubeStorage';
+import { saveYouTubeVideo, YouTubeVideo as StoredYouTubeVideo } from '@/utils/youtubeStorage';
 import { v4 as uuidv4 } from 'uuid';
 
 // Scraper result interface
@@ -100,6 +100,18 @@ interface YouTubeSearchResult {
   viewCount: number;
 }
 
+// Add the YouTubeVideo interface for channel videos
+interface ChannelVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  channelName: string;
+  channelId: string;
+  duration: number;
+  uploadDate: string;
+  url: string;
+}
+
 const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -121,6 +133,10 @@ const ScraperPage: React.FC = () => {
   const [youtubeSearchResults, setYoutubeSearchResults] = useState<YouTubeSearchResult[]>([]);
   const [youtubeSearchQuery, setYoutubeSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<ChannelVideo[]>([]);
+  const [channelInput, setChannelInput] = useState('');
+  const [isLoadingChannel, setIsLoadingChannel] = useState(false);
+  const [channelName, setChannelName] = useState('');
   
   // Example result data for demonstration
   const exampleResult: ScraperResult = {
@@ -313,7 +329,7 @@ const ScraperPage: React.FC = () => {
         });
         
         // Create and save the YouTube video data
-        const video: YouTubeVideo = {
+        const videoToSave: StoredYouTubeVideo = {
           id: uuidv4(),
           videoId: youtubeTranscript.videoId,
           title: videoDetailsResponse?.data?.data?.title || `YouTube Video ${youtubeTranscript.videoId}`,
@@ -327,7 +343,7 @@ const ScraperPage: React.FC = () => {
         };
         
         // Save to local storage
-        saveYouTubeVideo(video);
+        saveYouTubeVideo(videoToSave);
         
         toast.success('Transcript analyzed and LinkedIn content generated!');
       } else {
@@ -357,7 +373,7 @@ const ScraperPage: React.FC = () => {
       }).then(response => {
         if (response.data && response.data.success) {
           // Create YouTube video object
-          const video: YouTubeVideo = {
+          const videoToSave: StoredYouTubeVideo = {
             id: uuidv4(),
             videoId: youtubeTranscript.videoId,
             title: response.data.data.title,
@@ -371,12 +387,12 @@ const ScraperPage: React.FC = () => {
           };
           
           // Save to local storage
-          saveYouTubeVideo(video);
+          saveYouTubeVideo(videoToSave);
           
           toast.success('Saved to Inspiration Vault!');
         } else {
           // If video details can't be fetched, save with minimal info
-          const video: YouTubeVideo = {
+          const videoToSave: StoredYouTubeVideo = {
             id: uuidv4(),
             videoId: youtubeTranscript.videoId,
             title: `YouTube Video ${youtubeTranscript.videoId}`,
@@ -390,7 +406,7 @@ const ScraperPage: React.FC = () => {
           };
           
           // Save to local storage
-          saveYouTubeVideo(video);
+          saveYouTubeVideo(videoToSave);
           
           toast.success('Saved to Inspiration Vault!');
         }
@@ -564,6 +580,53 @@ const ScraperPage: React.FC = () => {
     setYoutubeSearchQuery(''); // Clear search query
   };
 
+  // Replace YouTube search handler with channel videos handler
+  const handleFetchChannelVideos = async () => {
+    if (!channelInput.trim()) {
+      toast.error('Please enter a channel name or URL');
+      return;
+    }
+    
+    setIsLoadingChannel(true);
+    setYoutubeVideos([]);
+    
+    try {
+      // Call backend API to fetch channel videos
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/channel-videos`;
+      const response = await axios.post(apiUrl, {
+        channelName: channelInput
+      });
+      
+      if (response.data && response.data.success) {
+        setYoutubeVideos(response.data.data);
+        
+        // Try to extract channel name
+        if (response.data.data.length > 0) {
+          setChannelName(response.data.data[0].channelName);
+        } else if (channelInput.includes('@')) {
+          setChannelName('@' + channelInput.split('@')[1].split('/')[0]);
+        } else {
+          setChannelName(channelInput);
+        }
+        
+        toast.success(`Found ${response.data.data.length} videos from the channel`);
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch channel videos');
+      }
+    } catch (error) {
+      console.error('Error fetching channel videos:', error);
+      toast.error('Failed to fetch channel videos. Please check the channel name or URL.');
+    } finally {
+      setIsLoadingChannel(false);
+    }
+  };
+
+  // Add handler to select a YouTube video from channel
+  const handleSelectVideo = (video: ChannelVideo) => {
+    setInputUrl(video.url);
+    // Don't clear the videos list so users can select other videos
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -648,78 +711,91 @@ const ScraperPage: React.FC = () => {
               </Button>
             </div>
             
-            {/* Add YouTube search UI */}
+            {/* Update YouTube section */}
             {activeTab === 'youtube' && (
               <div className="mt-4 border-t pt-4">
-                <p className="text-sm text-gray-500 mb-3">Or search for YouTube videos by name:</p>
+                <p className="text-sm text-gray-500 mb-3">Enter a YouTube channel name or URL to fetch videos:</p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1">
                     <Input
                       type="text"
-                      placeholder="Search for YouTube videos..."
-                      value={youtubeSearchQuery}
-                      onChange={(e) => setYoutubeSearchQuery(e.target.value)}
+                      placeholder="Channel name (e.g., @MrBeast) or URL"
+                      value={channelInput}
+                      onChange={(e) => setChannelInput(e.target.value)}
                       className="w-full"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          handleYoutubeSearch();
+                          handleFetchChannelVideos();
                         }
                       }}
                     />
                   </div>
                   <Button
-                    onClick={() => handleYoutubeSearch()}
-                    disabled={isSearching || !youtubeSearchQuery.trim()}
+                    onClick={handleFetchChannelVideos}
+                    disabled={isLoadingChannel || !channelInput.trim()}
                     className="min-w-[120px]"
                   >
-                    {isSearching ? (
+                    {isLoadingChannel ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Searching...
+                        Loading...
                       </>
                     ) : (
                       <>
                         <Search className="mr-2 h-4 w-4" />
-                        Search Videos
+                        Fetch Videos
                       </>
                     )}
                   </Button>
                 </div>
                 
-                {/* YouTube search results */}
-                {youtubeSearchResults.length > 0 && (
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-2">
-                    {youtubeSearchResults.map(video => (
-                      <Card 
-                        key={video.videoId} 
-                        className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => handleSelectYoutubeVideo(video)}
-                      >
-                        <div className="relative aspect-video bg-gray-100">
-                          <img 
-                            src={video.thumbnail} 
-                            alt={video.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
-                            }}
-                          />
-                          {video.duration && (
-                            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 rounded">
-                              {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                            </div>
-                          )}
-                        </div>
-                        <CardContent className="p-3">
-                          <h3 className="font-medium text-sm line-clamp-2 mb-1">{video.title}</h3>
-                          <p className="text-xs text-gray-500">{video.channelName}</p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                            <Eye className="h-3 w-3" />
-                            {video.viewCount.toLocaleString()} views
+                {/* Channel videos */}
+                {youtubeVideos.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-3">
+                      {channelName ? `Videos from ${channelName}` : 'Channel Videos'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto p-2">
+                      {youtubeVideos.map(video => (
+                        <Card 
+                          key={video.videoId} 
+                          className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
+                          onClick={() => handleSelectVideo(video)}
+                        >
+                          <div className="relative aspect-video bg-gray-100">
+                            <img 
+                              src={video.thumbnail} 
+                              alt={video.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
+                              }}
+                            />
+                            {video.duration && (
+                              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 rounded">
+                                {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                              </div>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          <CardContent className="p-3">
+                            <h3 className="font-medium text-sm line-clamp-2 mb-1">{video.title}</h3>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs text-gray-500">{video.channelName}</p>
+                              {video.uploadDate && (
+                                <p className="text-xs text-gray-500">
+                                  {video.uploadDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')}
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-gray-500">
+                        Select a video to get its transcript
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
