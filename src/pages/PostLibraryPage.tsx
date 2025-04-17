@@ -293,7 +293,11 @@ const PostLibraryPage: React.FC = () => {
     return post.slides !== undefined && 
            Array.isArray(post.slides) && 
            post.slides.length > 0 && 
-           post.slides.some(slide => slide.cloudinaryImage?.secure_url || slide.imageUrl);
+           // Make sure slides have actual content and/or images, not just empty objects
+           post.slides.some(slide => 
+             (slide.cloudinaryImage?.secure_url || slide.imageUrl) && 
+             (slide.content?.trim().length > 0)
+           );
   };
   
   // Load user content from API
@@ -761,8 +765,8 @@ const PostLibraryPage: React.FC = () => {
         content: draft.content,
         excerpt: draft.content?.substring(0, 100) + '...',
         publishedDate: new Date().toLocaleDateString(),
-        isCarousel: draft.slides && draft.slides.length > 0,
-        slideCount: draft.slides?.length || 0,
+        isCarousel: isCarouselPost(draft),
+        slideCount: isCarouselPost(draft) ? draft.slides?.length || 0 : 0,
         status: 'published',
         postImage: draft.postImage,
         hashtags: draft.hashtags,
@@ -814,8 +818,8 @@ const PostLibraryPage: React.FC = () => {
                 content: draft.content,
         excerpt: draft.content?.substring(0, 100) + '...',
         publishedDate: new Date().toLocaleDateString(),
-        isCarousel: draft.slides && draft.slides.length > 0,
-        slideCount: draft.slides?.length || 0,
+        isCarousel: isCarouselPost(draft),
+        slideCount: isCarouselPost(draft) ? draft.slides?.length || 0 : 0,
         status: 'published',
         postImage: draft.postImage,
         hashtags: draft.hashtags,
@@ -859,15 +863,15 @@ const PostLibraryPage: React.FC = () => {
             
             // Create a published post object for the UI based on the API response
             const publishedPost: PublishedPost = {
-              id: response.data._id || draftId,
+              id: response.data._id,
               title: response.data.title || draft.title || 'Published Post',
               content: response.data.content || draft.content,
               excerpt: (response.data.content || draft.content)?.substring(0, 100) + '...',
               publishedDate: response.data.publishedTime 
                 ? new Date(response.data.publishedTime).toLocaleDateString() 
                 : new Date().toLocaleDateString(),
-              isCarousel: draft.slides && draft.slides.length > 0,
-              slideCount: draft.slides?.length || 0,
+              isCarousel: isCarouselPost(draft),
+              slideCount: isCarouselPost(draft) ? draft.slides?.length || 0 : 0,
               status: 'published',
               postImage: response.data.postImage || draft.postImage,
               hashtags: response.data.hashtags || draft.hashtags,
@@ -934,8 +938,8 @@ const PostLibraryPage: React.FC = () => {
         content: scheduledPost.content,
         excerpt: scheduledPost.content?.substring(0, 100) + '...',
         publishedDate: new Date().toLocaleDateString(),
-        isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
-        slideCount: scheduledPost.slides?.length || 0,
+        isCarousel: isCarouselPost(scheduledPost),
+        slideCount: isCarouselPost(scheduledPost) ? scheduledPost.slides?.length || 0 : 0,
         status: 'published',
         postImage: scheduledPost.postImage,
         hashtags: scheduledPost.hashtags,
@@ -987,8 +991,8 @@ const PostLibraryPage: React.FC = () => {
                 content: scheduledPost.content,
                 excerpt: scheduledPost.content?.substring(0, 100) + '...',
         publishedDate: new Date().toLocaleDateString(),
-                isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
-                slideCount: scheduledPost.slides?.length || 0,
+                isCarousel: isCarouselPost(scheduledPost),
+                slideCount: isCarouselPost(scheduledPost) ? scheduledPost.slides?.length || 0 : 0,
         status: 'published',
                 postImage: scheduledPost.postImage,
                 hashtags: scheduledPost.hashtags,
@@ -1037,15 +1041,15 @@ const PostLibraryPage: React.FC = () => {
             
             // Create a published post object for the UI based on the API response
             const publishedPost: PublishedPost = {
-              id: response.data._id || postId,
+              id: response.data._id,
               title: response.data.title || scheduledPost.title || 'Published Post',
               content: response.data.content || scheduledPost.content,
               excerpt: (response.data.content || scheduledPost.content)?.substring(0, 100) + '...',
               publishedDate: response.data.publishedTime 
                 ? new Date(response.data.publishedTime).toLocaleDateString() 
                 : new Date().toLocaleDateString(),
-              isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
-              slideCount: scheduledPost.slides?.length || 0,
+              isCarousel: isCarouselPost(scheduledPost),
+              slideCount: isCarouselPost(scheduledPost) ? scheduledPost.slides?.length || 0 : 0,
               status: 'published',
               postImage: response.data.postImage || scheduledPost.postImage,
               hashtags: response.data.hashtags || scheduledPost.hashtags,
@@ -1369,7 +1373,7 @@ const PostLibraryPage: React.FC = () => {
         status: 'scheduled',
         scheduledTime: scheduledDateTime.toISOString(),
         mediaType: selectedDraftForScheduling.postImage ? 'image' : 
-                  (selectedDraftForScheduling.slides && selectedDraftForScheduling.slides.length > 0) ? 'carousel' : 'none',
+                  isCarouselPost(selectedDraftForScheduling) ? 'carousel' : 'none',
         postImage: selectedDraftForScheduling.postImage,
         slides: selectedDraftForScheduling.slides || [],
         isPollActive: selectedDraftForScheduling.isPollActive || false,

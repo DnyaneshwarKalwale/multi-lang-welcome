@@ -928,12 +928,19 @@ const CreatePostPage: React.FC = () => {
       // First, save the post to the database to ensure it appears in the published section
       if (response) {
         try {
+          // Helper function to check if it's a valid carousel post
+          const isValidCarousel = () => {
+            return activeTab === 'carousel' && 
+                   slides.length > 0 && 
+                   slides.some(slide => slide.content?.trim().length > 0 && slide.cloudinaryImage?.secure_url);
+          };
+          
           // Create a published post in the database
           const dbPostData = {
             title: 'Published Post',
             content: content,
             hashtags: hashtags,
-            mediaType: postImage ? 'image' : slides.length > 0 ? 'carousel' : 'none',
+            mediaType: postImage ? 'image' : isValidCarousel() ? 'carousel' : 'none',
             postImage: postImage,
             slides: slides,
             isPollActive: isPollActive,
@@ -1053,12 +1060,19 @@ const CreatePostPage: React.FC = () => {
       
       // Also try to save to backend if possible
       try {
+        // Helper function to check if it's a valid carousel post
+        const isValidCarousel = () => {
+          return activeTab === 'carousel' && 
+                 slides.length > 0 && 
+                 slides.some(slide => slide.content?.trim().length > 0 && slide.cloudinaryImage?.secure_url);
+        };
+        
         // Save to backend API - this will only work if the API is connected
         await linkedInApi.createDBPost({
           title: 'Draft Post',
           content: content,
           hashtags: hashtags,
-          mediaType: postImage ? 'image' : slides.length > 0 ? 'carousel' : 'none',
+          mediaType: postImage ? 'image' : isValidCarousel() ? 'carousel' : 'none',
           postImage: postImage,
           slides: slides,
           isPollActive: isPollActive,
