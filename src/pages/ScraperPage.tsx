@@ -267,11 +267,11 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
-      // Get the authentication token
-      const token = tokenManager.getToken();
+      // Get the authentication token (specifically LinkedIn token if available)
+      const token = tokenManager.getToken('linkedin') || tokenManager.getToken();
       
       if (!token) {
-        toast.error('You need to be logged in to fetch video transcript');
+        toast.error('You need to be logged in with LinkedIn to fetch video transcript');
         setIsLoading(false);
         return;
       }
@@ -336,11 +336,11 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
-      // Get the authentication token
-      const token = tokenManager.getToken();
+      // Get the authentication token (specifically LinkedIn token if available)
+      const token = tokenManager.getToken('linkedin') || tokenManager.getToken();
       
       if (!token) {
-        toast.error('You need to be logged in to analyze content');
+        toast.error('You need to be logged in with LinkedIn to analyze content');
         setIsAnalyzing(false);
         return;
       }
@@ -410,11 +410,11 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
-      // Get the authentication token
-      const token = tokenManager.getToken();
+      // Get the authentication token (specifically LinkedIn token if available)
+      const token = tokenManager.getToken('linkedin') || tokenManager.getToken();
       
       if (!token) {
-        toast.error('You need to be logged in to save video');
+        toast.error('You need to be logged in with LinkedIn to save video');
         return;
       }
       
@@ -561,11 +561,11 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
-      // Get the authentication token
-      const token = tokenManager.getToken();
+      // Get the authentication token (specifically LinkedIn token if available)
+      const token = tokenManager.getToken('linkedin') || tokenManager.getToken();
       
       if (!token) {
-        toast.error('You need to be logged in to generate images');
+        toast.error('You need to be logged in with LinkedIn to generate images');
         setIsGeneratingImage(false);
         return;
       }
@@ -631,11 +631,11 @@ const ScraperPage: React.FC = () => {
       
       console.log('Fetching videos from URL:', `${apiBaseUrl}/youtube/channel-videos`);
       
-      // Get the authentication token
-      const token = tokenManager.getToken();
+      // Get the authentication token (specifically LinkedIn token if available)
+      const token = tokenManager.getToken('linkedin') || tokenManager.getToken();
       
       if (!token) {
-        toast.error('You need to be logged in to fetch videos');
+        toast.error('You need to be logged in with LinkedIn to fetch videos');
         return;
       }
       
