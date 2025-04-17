@@ -129,7 +129,7 @@ const ScraperPage: React.FC = () => {
     setIsFetchingChannel(true);
     
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/channel`;
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/youtube/channel`;
       const response = await axios.post(apiUrl, {
         channelName: inputUrl
       });
