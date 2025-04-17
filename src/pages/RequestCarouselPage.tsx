@@ -77,7 +77,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "6EEW-9NDM5k",
     title: "The Ultimate Guide to LinkedIn Content Strategy",
     channelName: "LinkedIn Marketing Solutions",
-    thumbnailUrl: "https://img.youtube.com/vi/6EEW-9NDM5k/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/6EEW-9NDM5k/mqdefault.jpg",
     views: "1.2M",
     date: "2 weeks ago",
     duration: "12:45"
@@ -86,7 +86,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "mTz0GXj8NN0",
     title: "How to Grow Your Personal Brand on LinkedIn",
     channelName: "GaryVee",
-    thumbnailUrl: "https://img.youtube.com/vi/mTz0GXj8NN0/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/mTz0GXj8NN0/mqdefault.jpg",
     views: "856K",
     date: "1 month ago",
     duration: "18:23"
@@ -95,7 +95,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "dW7WjA-heYw",
     title: "LinkedIn Content That Gets 10x Engagement",
     channelName: "Social Media Examiner",
-    thumbnailUrl: "https://img.youtube.com/vi/dW7WjA-heYw/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/dW7WjA-heYw/mqdefault.jpg",
     views: "543K",
     date: "3 weeks ago",
     duration: "15:19"
@@ -104,7 +104,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "vN4jQKk-MZI",
     title: "B2B Marketing Strategies for LinkedIn",
     channelName: "B2B Marketing Insights",
-    thumbnailUrl: "https://img.youtube.com/vi/vN4jQKk-MZI/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/vN4jQKk-MZI/mqdefault.jpg",
     views: "328K",
     date: "2 months ago",
     duration: "22:37"
@@ -113,7 +113,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "pQFo8JWgHEU",
     title: "Creating Video Content for Professional Audiences",
     channelName: "Video Creators",
-    thumbnailUrl: "https://img.youtube.com/vi/pQFo8JWgHEU/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/pQFo8JWgHEU/mqdefault.jpg",
     views: "421K",
     date: "5 weeks ago",
     duration: "14:52"
@@ -122,7 +122,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "lD3FfI7zNc4",
     title: "LinkedIn Ads: Complete 2023 Tutorial",
     channelName: "Digital Marketing Pro",
-    thumbnailUrl: "https://img.youtube.com/vi/lD3FfI7zNc4/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/lD3FfI7zNc4/mqdefault.jpg",
     views: "612K",
     date: "3 months ago",
     duration: "26:14"
@@ -131,7 +131,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "X9YmkKbTgmk",
     title: "How to Write LinkedIn Posts That Convert",
     channelName: "Content Masters",
-    thumbnailUrl: "https://img.youtube.com/vi/X9YmkKbTgmk/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/X9YmkKbTgmk/mqdefault.jpg",
     views: "287K",
     date: "4 weeks ago",
     duration: "19:08"
@@ -140,7 +140,7 @@ const youtubeVideos: YouTubeVideo[] = [
     id: "aW7lJMroT2c",
     title: "LinkedIn Algorithm: What Works in 2023",
     channelName: "Social Media Today",
-    thumbnailUrl: "https://img.youtube.com/vi/aW7lJMroT2c/maxresdefault.jpg",
+    thumbnailUrl: "https://img.youtube.com/vi/aW7lJMroT2c/mqdefault.jpg",
     views: "732K",
     date: "1 week ago",
     duration: "16:47"
@@ -283,18 +283,33 @@ const RequestCarouselPage: React.FC = () => {
             const loadedVideos = JSON.parse(savedVideosString);
             
             // Convert to SavedCarouselVideo format
-            const carousels = loadedVideos.map((video: any) => ({
-              id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
-              title: video.title || 'YouTube Video',
-              status: 'ready',
-              thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
-              requestDate: new Date(video.requestDate) || new Date(),
-              deliveryDate: new Date(video.deliveryDate) || new Date(),
-              slideCount: video.slideCount || 5,
-              videoId: video.videoId,
-              videoUrl: video.videoUrl || `https://youtube.com/watch?v=${video.videoId}`,
-              source: 'youtube'
-            }));
+            const carousels = loadedVideos.map((video: any) => {
+              // Create a valid date object or fallback to current date
+              const safeDate = (dateStr: string | undefined) => {
+                if (!dateStr) return new Date();
+                try {
+                  const date = new Date(dateStr);
+                  // Check if date is valid
+                  return isNaN(date.getTime()) ? new Date() : date;
+                } catch (e) {
+                  return new Date();
+                }
+              };
+              
+              return {
+                id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
+                title: video.title || 'YouTube Video',
+                status: 'ready',
+                thumbnailUrl: video.thumbnailUrl || 
+                  (video.videoId ? `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg` : undefined),
+                requestDate: safeDate(video.requestDate),
+                deliveryDate: safeDate(video.deliveryDate),
+                slideCount: video.slideCount || 5,
+                videoId: video.videoId,
+                videoUrl: video.videoUrl || (video.videoId ? `https://youtube.com/watch?v=${video.videoId}` : undefined),
+                source: 'youtube'
+              };
+            });
             
             setSavedVideos(carousels);
           } catch (parseError) {
@@ -575,7 +590,13 @@ const RequestCarouselPage: React.FC = () => {
                     <CardHeader className="pb-2">
                       <CardTitle className="line-clamp-1">{video.title}</CardTitle>
                       <CardDescription className="flex items-center gap-1">
-                        Added: {format(new Date(video.requestDate), 'MMM d, yyyy')}
+                        Added: {(() => {
+                          try {
+                            return format(video.requestDate, 'MMM d, yyyy');
+                          } catch (e) {
+                            return 'Unknown date';
+                          }
+                        })()}
                       </CardDescription>
                     </CardHeader>
                     
@@ -588,7 +609,13 @@ const RequestCarouselPage: React.FC = () => {
                         
                         {video.deliveryDate && (
                           <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                            <span>{format(new Date(video.deliveryDate), 'MMM d, yyyy')}</span>
+                            <span>{(() => {
+                              try {
+                                return format(video.deliveryDate, 'MMM d, yyyy');
+                              } catch (e) {
+                                return 'Unknown date';
+                              }
+                            })()}</span>
                           </div>
                         )}
                       </div>

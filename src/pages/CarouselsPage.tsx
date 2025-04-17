@@ -74,17 +74,30 @@ const CarouselsPage: React.FC = () => {
           try {
             const savedVideos = JSON.parse(savedVideosString);
             
+            // Create a valid date object or fallback to current date
+            const safeDate = (dateStr: string | undefined) => {
+              if (!dateStr) return new Date();
+              try {
+                const date = new Date(dateStr);
+                // Check if date is valid
+                return isNaN(date.getTime()) ? new Date() : date;
+              } catch (e) {
+                return new Date();
+              }
+            };
+            
             // Convert to CarouselRequest format
             const carousels = savedVideos.map((video: any) => ({
               id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
               title: video.title || 'YouTube Video',
               status: 'ready',
-              thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
-              requestDate: new Date(video.requestDate) || new Date(),
-              deliveryDate: new Date(video.deliveryDate) || new Date(),
+              thumbnailUrl: video.thumbnailUrl || 
+                (video.videoId ? `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg` : undefined),
+              requestDate: safeDate(video.requestDate),
+              deliveryDate: safeDate(video.deliveryDate),
               slideCount: video.slideCount || 5,
               videoId: video.videoId,
-              videoUrl: video.videoUrl || `https://youtube.com/watch?v=${video.videoId}`,
+              videoUrl: video.videoUrl || (video.videoId ? `https://youtube.com/watch?v=${video.videoId}` : undefined),
               source: 'youtube'
             }));
             
@@ -312,7 +325,13 @@ const CarouselsPage: React.FC = () => {
                   <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
                   <CardDescription className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    Added: {format(new Date(carousel.requestDate), 'MMM d, yyyy')}
+                    Added: {(() => {
+                      try {
+                        return format(carousel.requestDate, 'MMM d, yyyy');
+                      } catch (e) {
+                        return 'Unknown date';
+                      }
+                    })()}
                   </CardDescription>
                 </CardHeader>
                 
@@ -326,7 +345,13 @@ const CarouselsPage: React.FC = () => {
                     {carousel.deliveryDate && (
                       <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                         <Clock className="h-4 w-4" />
-                        <span>{format(new Date(carousel.deliveryDate), 'MMM d, yyyy')}</span>
+                        <span>{(() => {
+                          try {
+                            return format(carousel.deliveryDate, 'MMM d, yyyy');
+                          } catch (e) {
+                            return 'Unknown date';
+                          }
+                        })()}</span>
                       </div>
                     )}
                   </div>
