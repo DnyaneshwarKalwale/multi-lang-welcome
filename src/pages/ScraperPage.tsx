@@ -328,7 +328,10 @@ const ScraperPage: React.FC = () => {
         selectedTweets.has(tweet.id)
       );
       
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/save`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/twitter/save`
+        : `${baseUrl}/api/twitter/save`;
       
       const response = await axios.post(apiUrl, {
         tweets: tweetsToSave,
@@ -365,7 +368,10 @@ const ScraperPage: React.FC = () => {
         selectedVideos.has(video.id)
       );
 
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/carousels/youtube`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/carousels/youtube`
+        : `${baseUrl}/api/carousels/youtube`;
       
       const response = await axios.post(apiUrl, {
         videos: videosToSave,
@@ -398,7 +404,11 @@ const ScraperPage: React.FC = () => {
     try {
       const prompt = youtubeTranscript?.transcript.substring(0, 200) || linkedinContent.substring(0, 200);
       
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cloudinary/generate`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/cloudinary/generate`
+        : `${baseUrl}/api/cloudinary/generate`;
+      
       const response = await axios.post(apiUrl, {
         prompt: `Create a professional, high-quality image based on this content: ${prompt}`,
         size: '1024x1024',
