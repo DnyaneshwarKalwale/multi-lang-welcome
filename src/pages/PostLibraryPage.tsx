@@ -981,15 +981,15 @@ const PostLibraryPage: React.FC = () => {
               const updatedPublished = published.filter(p => p.id !== `temp_${postId}`);
               
               // Create a real published post object for the UI
-              const publishedPost: PublishedPost = {
+      const publishedPost: PublishedPost = {
                 id: publishResponse.data._id,
                 title: scheduledPost.title || 'Published Post',
                 content: scheduledPost.content,
                 excerpt: scheduledPost.content?.substring(0, 100) + '...',
-                publishedDate: new Date().toLocaleDateString(),
+        publishedDate: new Date().toLocaleDateString(),
                 isCarousel: scheduledPost.slides && scheduledPost.slides.length > 0,
                 slideCount: scheduledPost.slides?.length || 0,
-                status: 'published',
+        status: 'published',
                 postImage: scheduledPost.postImage,
                 hashtags: scheduledPost.hashtags,
                 isPollActive: scheduledPost.isPollActive,
@@ -999,7 +999,7 @@ const PostLibraryPage: React.FC = () => {
               
               // Update the published posts state
               setPublished([publishedPost, ...updatedPublished]);
-              toast.success('Post published to LinkedIn successfully');
+      toast.success('Post published to LinkedIn successfully');
               
               // Reload user content to ensure all data is updated
               await loadUserContent();
@@ -1070,7 +1070,7 @@ const PostLibraryPage: React.FC = () => {
           }
         } catch (error) {
           console.error('Error publishing scheduled post:', error);
-          toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
+        toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
           
           // Restore the scheduled post to the state
           setScheduled(prevScheduled => [scheduledPost, ...prevScheduled]);
@@ -1087,60 +1087,6 @@ const PostLibraryPage: React.FC = () => {
     }
   };
   
-  const editPublishedPost = async (post: BasePost) => {
-    if (!post || !post.id) {
-      toast.error('Cannot edit post. Post data is missing.');
-      return;
-    }
-    
-    const confirmed = window.confirm('Are you sure you want to edit this published post? Changes will also be reflected on LinkedIn.');
-    if (!confirmed) return;
-    
-    try {
-      setIsLoading(true);
-      // Get the latest post data from LinkedIn to ensure we're working with the most up-to-date version
-      const response = await linkedInApi.getPostById(post.id);
-      if (!response || !response.data) {
-        toast.error('Failed to retrieve the latest post data');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Make sure we capture the platformPostId for LinkedIn
-      const postData = response.data;
-      
-      // Store the post data in localStorage for editing
-      const formData = {
-        ...postData,
-        id: post.id,
-        isEditing: true,
-        isPublishedEdit: true,
-        platformPostId: post.platformPostId || postData.platformPostId,
-        originalPost: post
-      };
-      
-      console.log('Editing published post with data:', formData);
-      
-      localStorage.setItem('linkedinPostFormData', JSON.stringify(formData));
-      
-      // Navigate to the post creation page with editing state
-      navigate('/dashboard/post', { 
-        state: { 
-          fromEdit: true, 
-          postId: post.id, 
-          platform: 'linkedin',
-          isPublished: true,
-          platformPostId: post.platformPostId || postData.platformPostId
-        } 
-      });
-    } catch (error) {
-      console.error('Error preparing post for edit:', error);
-      toast.error('Failed to prepare post for editing');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const deletePublishedPost = async (post: BasePost) => {
     if (!post || !post.id) {
       toast.error('Cannot delete post. Post data is missing.');
@@ -1211,12 +1157,6 @@ const PostLibraryPage: React.FC = () => {
             }
           },
           {
-            id: 'edit',
-            label: 'Edit Post',
-            icon: <Edit size={14} />,
-            onClick: () => editPublishedPost(post)
-          },
-          {
             id: 'delete',
             label: 'Delete Post',
             icon: <Trash size={14} />,
@@ -1257,7 +1197,7 @@ const PostLibraryPage: React.FC = () => {
                 <DropdownMenuItem key={item.id} className={item.className} onClick={item.onClick}>
                   {item.icon}
                   {item.label}
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1462,7 +1402,7 @@ const PostLibraryPage: React.FC = () => {
         await loadUserContent();
         
         // Switch to scheduled tab
-        setActiveTab('scheduled');
+      setActiveTab('scheduled');
         
         // Force reload after a short delay to ensure backend state is reflected
         setTimeout(() => {

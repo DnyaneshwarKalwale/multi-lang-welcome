@@ -923,34 +923,6 @@ class LinkedInApi {
         throw new Error("Authentication token not available. Please login again.");
       }
       
-      console.log('Updating post:', postId, 'with data:', postData);
-      
-      // Check if this is a LinkedIn post that needs to be updated on LinkedIn as well
-      if (postData.platformPostId) {
-        console.log('This is a LinkedIn post with platformPostId:', postData.platformPostId);
-        
-        try {
-          // Call the backend endpoint that handles LinkedIn post updates
-          await axios.put(`${this.API_URL}/update-post`, {
-            platformPostId: postData.platformPostId,
-            content: postData.content,
-            visibility: postData.visibility || 'PUBLIC'
-          }, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          console.log('Successfully sent LinkedIn post update request');
-        } catch (linkedinError) {
-          console.error('Failed to update post on LinkedIn:', linkedinError);
-          // We'll still update our database even if LinkedIn update fails
-          console.log('Continuing with database update despite LinkedIn API error');
-        }
-      }
-      
-      // Update in our database
       const response = await axios.put(`${this.POSTS_API_URL}/${postId}`, postData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -958,11 +930,7 @@ class LinkedInApi {
         }
       });
       
-      return {
-        success: true,
-        data: response.data,
-        message: 'Post updated successfully'
-      };
+      return response.data;
     } catch (error) {
       console.error('Error updating post:', error);
       throw error;

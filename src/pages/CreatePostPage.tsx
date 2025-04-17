@@ -170,10 +170,6 @@ interface LocationState {
   openScheduleDialog?: boolean;
   scheduledDate?: string;
   scheduleTime?: string;
-  fromEdit?: boolean;
-  isPublished?: boolean;
-  postId?: string;
-  platformPostId?: string;
 }
 
 // Inline carousel preview component
@@ -465,104 +461,6 @@ const CreatePostPage: React.FC = () => {
   
   // Create a ref to track if we've already shown the dialog for this location state
   const dialogShownRef = React.useRef(false);
-  const editDataLoadedRef = React.useRef(false);
-  
-  // Add state to track if we're editing a published post
-  const [isEditingPublished, setIsEditingPublished] = useState(false);
-  
-  // Effect to handle editing published posts
-  useEffect(() => {
-    if (locationState?.fromEdit && !editDataLoadedRef.current) {
-      console.log('Loading data for post edit:', locationState);
-      editDataLoadedRef.current = true;
-      
-      // Set editing state
-      setIsEditingPublished(locationState.isPublished === true);
-      
-      // Check for the post ID
-      const postId = locationState.postId;
-      if (!postId) {
-        toast.error('Post ID is missing. Cannot edit post.');
-        return;
-      }
-      
-      // Try to load the form data from localStorage
-      const formDataStr = localStorage.getItem('linkedinPostFormData');
-      if (formDataStr) {
-        try {
-          const formData = JSON.parse(formDataStr);
-          console.log('Loaded post data for editing:', formData);
-          
-          // Set values from loaded data
-          if (formData.content) setContent(formData.content);
-          if (formData.hashtags) setHashtags(formData.hashtags);
-          if (formData.postImage) setPostImage(formData.postImage);
-          if (formData.slides) setSlides(formData.slides);
-          if (formData.isPollActive !== undefined) setIsPollActive(formData.isPollActive);
-          if (formData.pollOptions) setPollOptions(formData.pollOptions);
-          if (formData.pollDuration) setPollDuration(formData.pollDuration);
-          if (formData.visibility) setVisibility(formData.visibility);
-          
-          // Set appropriate tab based on post type
-          if (formData.slides && formData.slides.length > 0) {
-            setActiveTab('carousel');
-          } else if (formData.postImage) {
-            setActiveTab('text'); // Text with image
-          } else if (formData.isPollActive) {
-            setActiveTab('text'); // Text with poll
-          } else {
-            setActiveTab('text');
-          }
-          
-          toast.info('Post loaded for editing');
-        } catch (error) {
-          console.error('Error parsing post data for edit:', error);
-          toast.error('Failed to load post data for editing');
-        }
-      } else {
-        // If we don't have local data, try to fetch from API
-        const fetchPost = async () => {
-          try {
-            const response = await linkedInApi.getPostById(postId);
-            if (response && response.data) {
-              const postData = response.data;
-              console.log('Fetched post data for editing:', postData);
-              
-              // Set values from fetched data
-              if (postData.content) setContent(postData.content);
-              if (postData.hashtags) setHashtags(postData.hashtags);
-              if (postData.postImage) setPostImage(postData.postImage);
-              if (postData.slides) setSlides(postData.slides);
-              if (postData.isPollActive !== undefined) setIsPollActive(postData.isPollActive);
-              if (postData.pollOptions) setPollOptions(postData.pollOptions);
-              if (postData.pollDuration) setPollDuration(postData.pollDuration);
-              if (postData.visibility) setVisibility(postData.visibility);
-              
-              // Set appropriate tab based on post type
-              if (postData.slides && postData.slides.length > 0) {
-                setActiveTab('carousel');
-              } else if (postData.postImage) {
-                setActiveTab('text'); // Text with image
-              } else if (postData.isPollActive) {
-                setActiveTab('text'); // Text with poll
-              } else {
-                setActiveTab('text');
-              }
-              
-              toast.info('Post loaded for editing');
-            } else {
-              throw new Error('Post data not found');
-            }
-          } catch (error) {
-            console.error('Failed to fetch post for editing:', error);
-            toast.error('Could not retrieve post data for editing');
-          }
-        };
-        
-        fetchPost();
-      }
-    }
-  }, [locationState, setContent, setHashtags, setPostImage, setSlides, setIsPollActive, setPollOptions, setPollDuration, setVisibility, setActiveTab]);
   
   // Effect for processing location state
   useEffect(() => {
@@ -814,82 +712,8 @@ const CreatePostPage: React.FC = () => {
         return;
       }
       
-      // Check if we're editing an existing post
-      const isEditingPublishedPost = locationState?.fromEdit && locationState?.isPublished;
-      const existingPostId = locationState?.postId;
-      const platformPostId = locationState?.platformPostId;
-      
-      console.log('Publishing with state:', { 
-        isEditingPublishedPost, 
-        existingPostId, 
-        platformPostId 
-      });
-      
       let response;
       
-      // If editing a published post, update instead of creating new
-      if (isEditingPublishedPost && existingPostId) {
-        console.log('Updating existing published post:', existingPostId);
-        toast.info('Updating your published post...');
-        
-        try {
-          // Prepare the updated post data
-          const updatedPostData = {
-            content: content,
-            hashtags: hashtags,
-            mediaType: postImage ? 'image' : 
-                      (slides && slides.length > 0) ? 'carousel' : 'none',
-            postImage: postImage,
-            slides: slides,
-            isPollActive: isPollActive,
-            pollOptions: pollOptions.filter(Boolean),
-            visibility: visibility,
-            platformPostId: platformPostId
-          };
-          
-          // Update the post in the database
-          response = await linkedInApi.updateDBPost(existingPostId, updatedPostData);
-          
-          console.log('Post update response:', response);
-          
-          if (response && response.success) {
-            toast.success('Post updated successfully!');
-            
-            // Clean up form data
-            localStorage.removeItem('linkedinPostFormData');
-            
-            // Clear any editing flags from localStorage
-            Object.keys(localStorage).forEach(key => {
-              if (key.startsWith('state:createPost.')) {
-                localStorage.removeItem(key);
-              }
-            });
-            
-            // Navigate back to the post library
-            setTimeout(() => {
-              navigate('/dashboard/posts', {
-                state: { 
-                  updated: true,
-                  postId: existingPostId,
-                  platform: 'linkedin',
-                  activeTab: 'published'
-                }
-              });
-            }, 1500);
-          } else {
-            throw new Error('Failed to update post. Please try again.');
-          }
-          
-          return; // Exit early, we're done with the update
-        } catch (updateError) {
-          console.error('Error updating published post:', updateError);
-          toast.error('Failed to update post: ' + (updateError.message || 'Unknown error'));
-          setIsPublishing(false);
-          return;
-        }
-      }
-      
-      // Regular publishing flow for new posts continues below
       // Handle different post types
       if (isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2) {
         // Publish as poll
@@ -1521,26 +1345,14 @@ const CreatePostPage: React.FC = () => {
         localStorage.removeItem('editingDraftId');
         localStorage.removeItem('editingScheduledId');
       }
-      
-      // Also clean up the post form data used for editing published posts
-      if (locationState?.fromEdit) {
-        localStorage.removeItem('linkedinPostFormData');
-      }
     };
-  }, [content, slides, locationState]);
+  }, [content, slides]);
   
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-neutral-black">
-            {isEditingPublished ? 'Edit LinkedIn Content' : 'Create LinkedIn Content'}
-          </h1>
-          {isEditingPublished && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-200">
-              Editing Published Post
-            </Badge>
-          )}
+        <h1 className="text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
           {saveStatus !== 'idle' && (
             <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
               saveStatus === 'saving' 
@@ -1621,22 +1433,22 @@ const CreatePostPage: React.FC = () => {
             }}
           >
             <DialogContent className="sm:max-w-md overflow-hidden" onPointerDownOutside={handleDialogClose}>
-            <DialogHeader>
-              <DialogTitle>Schedule LinkedIn Post</DialogTitle>
-              <DialogDescription>
-                Choose when you want this post to be published to LinkedIn
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Date</label>
-                  <Input
-                    type="date"
-                    value={scheduledDate.toISOString().split('T')[0]}
-                    onChange={(e) => {
+              <DialogHeader>
+                <DialogTitle>Schedule LinkedIn Post</DialogTitle>
+                <DialogDescription>
+                  Choose when you want this post to be published to LinkedIn
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Date</label>
+                    <Input
+                      type="date"
+                      value={scheduledDate.toISOString().split('T')[0]}
+                      onChange={(e) => {
                       if (e.target.value) {
-                      const newDate = new Date(e.target.value);
+                        const newDate = new Date(e.target.value);
                         // Preserve the time
                         const currentHours = scheduledDate.getHours();
                         const currentMinutes = scheduledDate.getMinutes();
@@ -1649,22 +1461,22 @@ const CreatePostPage: React.FC = () => {
                           const selectedDay = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
                           
                           if (selectedDay >= today) {
-                      setScheduledDate(newDate);
+                        setScheduledDate(newDate);
                             console.log('Date changed to:', newDate);
                           } else {
                             toast.error('Please select today or a future date');
                           }
                         }
                       }
-                    }}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Time</label>
-                  <Input
-                    type="time"
-                    value={scheduleTime}
+                      }}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Time</label>
+                    <Input
+                      type="time"
+                      value={scheduleTime}
                     onChange={(e) => {
                       setScheduleTime(e.target.value);
                       // Update the scheduledDate with this time
@@ -1696,54 +1508,54 @@ const CreatePostPage: React.FC = () => {
                       setScheduledDate(newDate);
                       console.log('Time changed to:', e.target.value, 'Updated date:', newDate);
                     }}
-                  />
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium mb-1 block">Visibility</label>
-                <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
-                    <SelectItem value="CONNECTIONS">Connections only</SelectItem>
-                    <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="mt-2">
-                <h4 className="text-sm font-medium mb-1">Post Summary</h4>
+                
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Visibility</label>
+                  <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select visibility" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
+                      <SelectItem value="CONNECTIONS">Connections only</SelectItem>
+                      <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="mt-2">
+                  <h4 className="text-sm font-medium mb-1">Post Summary</h4>
                 <div className="border rounded p-3 bg-white text-sm">
-                  <p className="line-clamp-3">{content || "No content yet"}</p>
-                  {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
-                  {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
+                    <p className="line-clamp-3">{content || "No content yet"}</p>
+                    {postImage && <p className="text-green-600 mt-1">Image: {postImage.secure_url.split('/').pop()}</p>}
+                    {isPollActive && <p className="text-blue-600 mt-1">Poll with {pollOptions.filter(o => o.trim()).length} options</p>}
                   <p className="text-blue-600 mt-1">Scheduled for: {scheduledDate.toLocaleDateString()} at {scheduleTime}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
+              <DialogFooter>
                 <Button variant="outline" onClick={handleDialogClose}>Cancel</Button>
                 <Button 
                   onClick={schedulePost} 
                   disabled={isPublishing}
                 >
-                {isPublishing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Scheduling...
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Schedule Post
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+                  {isPublishing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Schedule Post
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
           </Dialog>
           
           <DropdownMenu>
@@ -1752,12 +1564,12 @@ const CreatePostPage: React.FC = () => {
                 {isPublishing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isEditingPublished ? 'Updating...' : 'Publishing...'}
+                    Publishing...
                   </>
                 ) : (
                   <>
             <ArrowRightFromLine size={16} />
-            {isEditingPublished ? 'Update Post' : 'Publish Now'}
+            Publish Now
                   </>
                 )}
           </Button>
@@ -1769,7 +1581,7 @@ const CreatePostPage: React.FC = () => {
                 className="gap-2 cursor-pointer"
               >
                 <Linkedin size={16} className="text-blue-600" />
-                {isEditingPublished ? 'Update on LinkedIn' : 'Publish to LinkedIn'}
+                Publish to LinkedIn
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
