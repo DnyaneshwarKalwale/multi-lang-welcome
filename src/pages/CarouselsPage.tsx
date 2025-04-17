@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, Download, Eye, Clock, Filter, PlusCircle,
   Check, AlertCircle, FileDown, Calendar, ChevronDown, 
-  Search, SlidersHorizontal, Youtube, ChevronLeft, ChevronRight
+  Search, SlidersHorizontal, Youtube, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,72 +32,104 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import axios from 'axios';
+import api from '@/services/api';
 
 interface CarouselRequest {
   id: string;
   title: string;
-  status: 'in_progress' | 'delivered';
+  status: 'ready' | 'in_progress' | 'delivered';
   thumbnailUrl?: string;
   requestDate: Date;
   deliveryDate?: Date;
   slideCount: number;
   downloadUrl?: string;
   videoId?: string;
-  source?: 'youtube';
   videoUrl?: string;
-  view_count?: number;
-  duration?: string;
+  source?: 'youtube';
 }
-
-interface YouTubeVideo {
-  id: string;
-  title: string;
-  thumbnail: string;
-  url: string;
-  duration: string;
-  view_count: number;
-  upload_date: string;
-}
-
-const ITEMS_PER_PAGE = 4;
 
 const CarouselsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
   const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>([]);
 
   useEffect(() => {
-    // Load saved YouTube videos from localStorage
+    // Load saved videos from localStorage
     const loadSavedVideos = () => {
+      setIsLoading(true);
       try {
-        const savedVideosJson = localStorage.getItem('savedYoutubeVideos');
-        if (savedVideosJson) {
-          const savedVideos = JSON.parse(savedVideosJson) as YouTubeVideo[];
+        // Get videos from localStorage
+        const savedVideosString = localStorage.getItem('savedYoutubeVideos');
+        
+        if (savedVideosString) {
+          try {
+            const savedVideos = JSON.parse(savedVideosString);
+            
+            // Convert to CarouselRequest format
+            const carousels = savedVideos.map((video: any) => ({
+              id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
+              title: video.title || 'YouTube Video',
+              status: 'ready',
+              thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
+              requestDate: new Date(video.requestDate) || new Date(),
+              deliveryDate: new Date(video.deliveryDate) || new Date(),
+              slideCount: video.slideCount || 5,
+              videoId: video.videoId,
+              videoUrl: video.videoUrl || `https://youtube.com/watch?v=${video.videoId}`,
+              source: 'youtube'
+            }));
+            
+            setCarouselRequests(carousels);
+          } catch (parseError) {
+            console.error('Error parsing saved videos:', parseError);
+            setCarouselRequests([]);
+          }
+        } else {
+          // If no saved videos are found, use dummy data for demonstration
+          const dummyCarousels: CarouselRequest[] = [
+            {
+              id: '1',
+              title: 'Why LinkedIn is Important for Professionals',
+              status: 'ready',
+              thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+              requestDate: new Date(),
+              deliveryDate: new Date(),
+              slideCount: 5,
+              videoId: 'dQw4w9WgXcQ',
+              videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+              source: 'youtube'
+            },
+            {
+              id: '2',
+              title: 'Top 10 Resume Tips for 2023',
+              status: 'ready',
+              thumbnailUrl: 'https://i.ytimg.com/vi/UBJq-QHaHyY/hqdefault.jpg',
+              requestDate: new Date(),
+              deliveryDate: new Date(),
+              slideCount: 8,
+              videoId: 'UBJq-QHaHyY',
+              videoUrl: 'https://youtube.com/watch?v=UBJq-QHaHyY',
+              source: 'youtube'
+            }
+          ];
           
-          // Convert to carousel request format
-          const carousels = savedVideos.map(video => ({
-            id: video.id,
-            title: video.title,
-            status: 'delivered' as const,
-            thumbnailUrl: video.thumbnail,
-            requestDate: new Date(video.upload_date || Date.now()),
-            slideCount: 5,
-            videoId: video.id,
-            source: 'youtube' as const,
-            videoUrl: video.url,
-            view_count: video.view_count,
-            duration: video.duration
-          }));
-          
-          setCarouselRequests(carousels);
+          setCarouselRequests(dummyCarousels);
         }
       } catch (error) {
         console.error('Error loading saved videos:', error);
         toast.error('Failed to load your saved videos');
+        setCarouselRequests([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -112,8 +144,12 @@ const CarouselsPage: React.FC = () => {
   };
 
   const handleWatchVideo = (carousel: CarouselRequest) => {
-    if (carousel.videoId) {
+    if (carousel.videoUrl) {
+      window.open(carousel.videoUrl, '_blank');
+      toast.success('Opening YouTube video');
+    } else if (carousel.videoId) {
       window.open(`https://youtube.com/watch?v=${carousel.videoId}`, '_blank');
+      toast.success('Opening YouTube video');
     }
   };
 
@@ -122,21 +158,20 @@ const CarouselsPage: React.FC = () => {
     const matchesStatus = !statusFilter || carousel.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
+  
   // Calculate pagination
-  const totalPages = Math.ceil(filteredCarousels.length / ITEMS_PER_PAGE);
-  const paginatedCarousels = filteredCarousels.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const handleNextPage = () => {
+  const totalPages = Math.ceil(filteredCarousels.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCarousels = filteredCarousels.slice(startIndex, endIndex);
+  
+  const goToNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
-
-  const handlePrevPage = () => {
+  
+  const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
@@ -146,18 +181,18 @@ const CarouselsPage: React.FC = () => {
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-2">My YouTube Videos</h1>
+          <h1 className="text-2xl font-bold mb-2">My Carousel Requests</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            Manage your saved YouTube videos for LinkedIn carousels
+            Manage your requested LinkedIn carousel designs
           </p>
         </div>
         
         <Button 
-          onClick={() => navigate('/dashboard/scraper')}
+          onClick={() => navigate('/dashboard/request-carousel')}
           className="gap-2"
         >
           <PlusCircle className="h-4 w-4" />
-          Find More Videos
+          Request New Carousel
         </Button>
       </div>
       
@@ -166,12 +201,30 @@ const CarouselsPage: React.FC = () => {
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 
-            placeholder="Search videos..." 
+            placeholder="Search carousels..." 
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        
+        <Select 
+          value={statusFilter || 'all'} 
+          onValueChange={(value) => setStatusFilter(value === 'all' ? null : value)}
+        >
+          <SelectTrigger className="w-full sm:w-44">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <SelectValue placeholder="All statuses" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="ready">Ready</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
+          </SelectContent>
+        </Select>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -184,23 +237,22 @@ const CarouselsPage: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Newest first</DropdownMenuItem>
             <DropdownMenuItem>Oldest first</DropdownMenuItem>
-            <DropdownMenuItem>Views (High to Low)</DropdownMenuItem>
             <DropdownMenuItem>Alphabetical (A-Z)</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Videos</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Carousels</p>
                 <p className="text-2xl font-bold mt-1">{carouselRequests.length}</p>
               </div>
               <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
-                <Youtube className="h-5 w-5 text-primary" />
+                <LayoutGrid className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -210,13 +262,29 @@ const CarouselsPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Current Page</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Ready to Use</p>
                 <p className="text-2xl font-bold mt-1">
-                  {currentPage} of {totalPages || 1}
+                  {carouselRequests.filter(c => c.status === 'ready' || c.status === 'delivered').length}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <Check className="h-5 w-5 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
+                <p className="text-2xl font-bold mt-1">
+                  {carouselRequests.filter(c => c.status === 'in_progress').length}
                 </p>
               </div>
               <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                <LayoutGrid className="h-5 w-5 text-blue-500" />
+                <Clock className="h-5 w-5 text-blue-500" />
               </div>
             </div>
           </CardContent>
@@ -224,11 +292,18 @@ const CarouselsPage: React.FC = () => {
       </div>
       
       {/* Carousels list */}
-      {paginatedCarousels.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p>Loading your carousel videos...</p>
+          </div>
+        </div>
+      ) : currentCarousels.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {paginatedCarousels.map(carousel => (
-              <Card key={carousel.id} className="overflow-hidden flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {currentCarousels.map(carousel => (
+              <Card key={carousel.id} className="overflow-hidden">
                 <div className="h-48 bg-gray-100 dark:bg-gray-800 relative">
                   {carousel.thumbnailUrl ? (
                     <img 
@@ -238,44 +313,87 @@ const CarouselsPage: React.FC = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Youtube className="h-16 w-16 text-gray-300 dark:text-gray-600" />
+                      <LayoutGrid className="h-16 w-16 text-gray-300 dark:text-gray-600" />
                     </div>
                   )}
                   
-                  {carousel.duration && (
-                    <Badge className="absolute bottom-3 right-3 bg-black/70">
-                      {carousel.duration}
+                  <Badge 
+                    className={`absolute top-3 right-3 ${
+                      carousel.status === 'delivered' || carousel.status === 'ready'
+                        ? 'bg-green-500' 
+                        : 'bg-blue-500'
+                    }`}
+                  >
+                    {carousel.status === 'delivered' || carousel.status === 'ready' ? 'Ready' : 'In Progress'}
+                  </Badge>
+                  
+                  {carousel.source === 'youtube' && (
+                    <Badge className="absolute top-3 left-3 bg-red-500 flex items-center gap-1">
+                      <Youtube className="h-3 w-3" />
+                      YouTube
                     </Badge>
                   )}
                 </div>
                 
-                <CardHeader className="pb-2 flex-grow">
-                  <CardTitle className="line-clamp-2 text-base">{carousel.title}</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
                   <CardDescription className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {format(new Date(carousel.requestDate), 'MMM d, yyyy')}
+                    Added: {format(new Date(carousel.requestDate), 'MMM d, yyyy')}
                   </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="pb-4">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <Eye className="h-4 w-4" />
-                      <span>{carousel.view_count?.toLocaleString() || '0'} views</span>
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>{carousel.slideCount} slides</span>
                     </div>
+                    
+                    {carousel.deliveryDate && (
+                      <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                        <Clock className="h-4 w-4" />
+                        <span>{format(new Date(carousel.deliveryDate), 'MMM d, yyyy')}</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 
                 <CardFooter className="border-t border-gray-100 dark:border-gray-800 pt-4">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="w-full gap-1"
-                    onClick={() => handleWatchVideo(carousel)}
-                  >
-                    <Youtube className="h-4 w-4" />
-                    Watch Video
-                  </Button>
+                  <div className="flex justify-between w-full">
+                    {carousel.source === 'youtube' ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-1"
+                        onClick={() => handleWatchVideo(carousel)}
+                      >
+                        <Youtube className="h-4 w-4" />
+                        Watch Video
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Eye className="h-4 w-4" />
+                        Preview
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => navigate('/dashboard/create-post', { 
+                        state: { 
+                          title: carousel.title,
+                          activeTab: 'carousel',
+                          youtubeVideoId: carousel.videoId
+                        }
+                      })}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      Create Post
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
@@ -283,75 +401,74 @@ const CarouselsPage: React.FC = () => {
           
           {/* Pagination controls */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-6 mb-8">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              <div className="text-sm font-medium mx-4">
-                Page {currentPage} of {totalPages}
+            <div className="flex justify-center mt-8">
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToPreviousPage} 
+                  disabled={currentPage === 1}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                
+                <div className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToNextPage} 
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
               </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           )}
         </>
       ) : (
-        <Card className="p-8">
-          <div className="text-center">
-            <div className="inline-flex h-20 w-20 rounded-full items-center justify-center bg-gray-100 dark:bg-gray-800 mb-4">
-              <Youtube className="h-10 w-10 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">No videos found</h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
-              {searchQuery || statusFilter
-                ? "No videos match your current filters. Try adjusting your search criteria."
-                : "You haven't saved any YouTube videos yet. Use the scraper to find and save videos."}
-            </p>
-            <Button
-              onClick={() => navigate('/dashboard/scraper')}
-              className="gap-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Find Videos to Save
-            </Button>
+        <div className="text-center py-12">
+          <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+            <LayoutGrid className="h-8 w-8 text-gray-400" />
           </div>
-        </Card>
+          
+          <h3 className="text-lg font-medium mb-2">No carousels found</h3>
+          
+          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+            {searchQuery || statusFilter 
+              ? "No carousels match your current filters. Try adjusting your search criteria."
+              : "You haven't requested any carousels yet. Create your first carousel request to get started."}
+          </p>
+          
+          <Button
+            onClick={() => navigate('/dashboard/request-carousel')}
+            className="gap-2"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Request New Carousel
+          </Button>
+        </div>
       )}
       
-      {/* Help card */}
-      <Card className="mt-8">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="bg-primary-50 dark:bg-primary-900/20 p-2 rounded-full">
-              <AlertCircle className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">YouTube Video Library</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Save YouTube videos that you'd like to use for your LinkedIn content. Videos from channels will appear here for easy access.
-              </p>
-              <Button variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => navigate('/dashboard/scraper')}>
-                Go to YouTube Scraper
-              </Button>
-            </div>
+      <div className="mt-12 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-medium mb-1">Carousel Credits</h3>
+            <p>
+              You have 2 carousel requests remaining this month. Your credits will reset on {format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), 'MMMM d, yyyy')}.
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          
+          <Button variant="outline" size="sm" onClick={() => toast.info('This feature is coming soon!')}>
+            <PlusCircle className="h-3 w-3 mr-1" />
+            Get More Credits
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

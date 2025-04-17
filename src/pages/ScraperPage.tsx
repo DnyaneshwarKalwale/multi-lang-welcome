@@ -368,28 +368,41 @@ const ScraperPage: React.FC = () => {
         selectedVideos.has(video.id)
       );
 
-      // Save to localStorage instead of sending to backend
-      let existingVideos = [];
-      try {
-        const existingVideosJson = localStorage.getItem('savedYoutubeVideos');
-        if (existingVideosJson) {
-          existingVideos = JSON.parse(existingVideosJson);
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/carousels/youtube`
+        : `${baseUrl}/api/carousels/youtube`;
+      
+      const response = await axios.post(apiUrl, {
+        videos: videosToSave,
+        userId: user?.id
+      });
+      
+      if (response.data && response.data.success) {
+        const savedVideos = response.data.data;
+        
+        const existingSavedVideos = localStorage.getItem('savedYoutubeVideos');
+        let allSavedVideos = [];
+        
+        if (existingSavedVideos) {
+          try {
+            allSavedVideos = JSON.parse(existingSavedVideos);
+          } catch (err) {
+            console.error('Error parsing existing saved videos', err);
+            allSavedVideos = [];
+          }
         }
-      } catch (error) {
-        console.error('Error reading from localStorage:', error);
+        
+        allSavedVideos = [...allSavedVideos, ...savedVideos];
+        
+        localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
+        
+        toast.success(`Saved ${response.data.count} videos as carousels!`);
+        setSelectedVideos(new Set());
+        navigate('/dashboard/carousels');
+      } else {
+        throw new Error(response.data?.message || 'Failed to save videos');
       }
-      
-      // Combine existing videos with new ones, avoiding duplicates
-      const existingIds = new Set(existingVideos.map(video => video.id));
-      const newVideos = videosToSave.filter(video => !existingIds.has(video.id));
-      const combinedVideos = [...existingVideos, ...newVideos];
-      
-      // Save back to localStorage
-      localStorage.setItem('savedYoutubeVideos', JSON.stringify(combinedVideos));
-      
-      toast.success(`Saved ${newVideos.length} videos to your library!`);
-      setSelectedVideos(new Set());
-      navigate('/dashboard/carousels');
     } catch (error) {
       console.error('Error saving videos:', error);
       toast.error('Failed to save videos. Please try again.');
@@ -736,7 +749,7 @@ const ScraperPage: React.FC = () => {
                 ) : (
                   <>
                     <Save className="h-3 w-3" />
-                    Save to Library ({selectedVideos.size})
+                    Create Carousels ({selectedVideos.size})
                   </>
                 )}
               </Button>
