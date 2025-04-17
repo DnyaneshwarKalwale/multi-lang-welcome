@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -21,6 +21,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { format } from "date-fns";
 
 // Define the form schema for validation
 const formSchema = z.object({
@@ -52,6 +54,21 @@ interface YouTubeVideo {
   views: string;
   date: string;
   duration: string;
+}
+
+// Interface for saved carousel videos
+interface SavedCarouselVideo {
+  id: string;
+  title: string;
+  status: 'ready' | 'in_progress' | 'delivered';
+  thumbnailUrl?: string;
+  requestDate: Date;
+  deliveryDate?: Date;
+  slideCount: number;
+  downloadUrl?: string;
+  videoId?: string;
+  videoUrl?: string;
+  source?: 'youtube';
 }
 
 // Sample YouTube videos
@@ -245,6 +262,63 @@ const RequestCarouselPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const videosPerPage = 4;
+  
+  // Saved videos state
+  const [savedVideos, setSavedVideos] = useState<SavedCarouselVideo[]>([]);
+  const [isLoadingSavedVideos, setIsLoadingSavedVideos] = useState(false);
+  const [filterValue, setFilterValue] = useState("all");
+  const itemsPerPage = 4;
+  const [savedVideosPage, setSavedVideosPage] = useState(1);
+
+  // Load saved videos from localStorage
+  useEffect(() => {
+    const loadSavedVideos = () => {
+      setIsLoadingSavedVideos(true);
+      try {
+        // Get videos from localStorage
+        const savedVideosString = localStorage.getItem('savedYoutubeVideos');
+        
+        if (savedVideosString) {
+          try {
+            const loadedVideos = JSON.parse(savedVideosString);
+            
+            // Convert to SavedCarouselVideo format
+            const carousels = loadedVideos.map((video: any) => ({
+              id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
+              title: video.title || 'YouTube Video',
+              status: 'ready',
+              thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
+              requestDate: new Date(video.requestDate) || new Date(),
+              deliveryDate: new Date(video.deliveryDate) || new Date(),
+              slideCount: video.slideCount || 5,
+              videoId: video.videoId,
+              videoUrl: video.videoUrl || `https://youtube.com/watch?v=${video.videoId}`,
+              source: 'youtube'
+            }));
+            
+            setSavedVideos(carousels);
+          } catch (parseError) {
+            console.error('Error parsing saved videos:', parseError);
+            setSavedVideos([]);
+          }
+        } else {
+          setSavedVideos([]);
+        }
+      } catch (error) {
+        console.error('Error loading saved videos:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load your saved videos",
+          variant: "destructive"
+        });
+        setSavedVideos([]);
+      } finally {
+        setIsLoadingSavedVideos(false);
+      }
+    };
+    
+    loadSavedVideos();
+  }, [toast]);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -299,6 +373,23 @@ const RequestCarouselPage: React.FC = () => {
     });
   };
 
+  // Watch video handler
+  const handleWatchVideo = (video: SavedCarouselVideo) => {
+    if (video.videoUrl) {
+      window.open(video.videoUrl, '_blank');
+      toast({
+        title: "Opening video",
+        description: "Opening YouTube video in a new tab",
+      });
+    } else if (video.videoId) {
+      window.open(`https://youtube.com/watch?v=${video.videoId}`, '_blank');
+      toast({
+        title: "Opening video",
+        description: "Opening YouTube video in a new tab",
+      });
+    }
+  };
+
   // Filter videos based on search query
   const filteredVideos = searchQuery 
     ? youtubeVideos.filter(video => 
@@ -307,11 +398,22 @@ const RequestCarouselPage: React.FC = () => {
       )
     : youtubeVideos;
   
-  // Calculate pagination
+  // Calculate pagination for YouTube videos
   const indexOfLastVideo = currentPage * videosPerPage;
   const indexOfFirstVideo = indexOfLastVideo - videosPerPage;
   const currentVideos = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
   const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
+  
+  // Calculate pagination for saved videos
+  const filteredSavedVideos = savedVideos.filter(video => {
+    if (filterValue === "all") return true;
+    return video.status === filterValue;
+  });
+  
+  const totalSavedPages = Math.ceil(filteredSavedVideos.length / itemsPerPage);
+  const startIndex = (savedVideosPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentSavedVideos = filteredSavedVideos.slice(startIndex, endIndex);
   
   // Handle page change
   const goToPage = (pageNumber: number) => {
@@ -329,6 +431,19 @@ const RequestCarouselPage: React.FC = () => {
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Handle saved videos pagination
+  const goToNextSavedPage = () => {
+    if (savedVideosPage < totalSavedPages) {
+      setSavedVideosPage(savedVideosPage + 1);
+    }
+  };
+  
+  const goToPrevSavedPage = () => {
+    if (savedVideosPage > 1) {
+      setSavedVideosPage(savedVideosPage - 1);
     }
   };
 
@@ -393,6 +508,172 @@ const RequestCarouselPage: React.FC = () => {
           Provide content from a YouTube video and we'll create a professional carousel for you
         </p>
       </div>
+      
+      {/* Saved Videos Section */}
+      {savedVideos.length > 0 && (
+        <div className="mb-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h2 className="text-xl font-semibold">Your Saved Videos</h2>
+            
+            <div className="flex gap-3">
+              <select
+                className="px-3 py-2 rounded-md border border-gray-200 text-sm"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+              >
+                <option value="all">All statuses</option>
+                <option value="ready">Ready</option>
+                <option value="in_progress">In Progress</option>
+                <option value="delivered">Delivered</option>
+              </select>
+            </div>
+          </div>
+          
+          {isLoadingSavedVideos ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                <p>Loading your carousel videos...</p>
+              </div>
+            </div>
+          ) : currentSavedVideos.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {currentSavedVideos.map(video => (
+                  <Card key={video.id} className="overflow-hidden">
+                    <div className="h-48 bg-gray-100 dark:bg-gray-800 relative">
+                      {video.thumbnailUrl ? (
+                        <img 
+                          src={video.thumbnailUrl} 
+                          alt={video.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <LayoutGrid className="h-16 w-16 text-gray-300 dark:text-gray-600" />
+                        </div>
+                      )}
+                      
+                      <Badge 
+                        className={`absolute top-3 right-3 ${
+                          video.status === 'delivered' || video.status === 'ready'
+                            ? 'bg-green-500' 
+                            : 'bg-blue-500'
+                        }`}
+                      >
+                        {video.status === 'delivered' || video.status === 'ready' ? 'Ready' : 'In Progress'}
+                      </Badge>
+                      
+                      {video.source === 'youtube' && (
+                        <Badge className="absolute top-3 left-3 bg-red-500 flex items-center gap-1">
+                          <Youtube className="h-3 w-3" />
+                          YouTube
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <CardHeader className="pb-2">
+                      <CardTitle className="line-clamp-1">{video.title}</CardTitle>
+                      <CardDescription className="flex items-center gap-1">
+                        Added: {format(new Date(video.requestDate), 'MMM d, yyyy')}
+                      </CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent className="pb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                          <LayoutGrid className="h-4 w-4" />
+                          <span>{video.slideCount} slides</span>
+                        </div>
+                        
+                        {video.deliveryDate && (
+                          <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                            <span>{format(new Date(video.deliveryDate), 'MMM d, yyyy')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                    
+                    <CardFooter className="border-t border-gray-100 dark:border-gray-800 pt-4">
+                      <div className="flex justify-between w-full">
+                        {video.source === 'youtube' ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-1"
+                            onClick={() => handleWatchVideo(video)}
+                          >
+                            <Youtube className="h-4 w-4" />
+                            Watch Video
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <Info className="h-4 w-4" />
+                            Preview
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => navigate('/dashboard/create-post', { 
+                            state: { 
+                              title: video.title,
+                              activeTab: 'carousel',
+                              youtubeVideoId: video.videoId
+                            }
+                          })}
+                        >
+                          <LayoutGrid className="h-4 w-4" />
+                          Create Post
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+              
+              {/* Pagination controls for saved videos */}
+              {totalSavedPages > 1 && (
+                <div className="flex justify-center mt-4 mb-8">
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={goToPrevSavedPage} 
+                      disabled={savedVideosPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    
+                    <div className="text-sm">
+                      Page {savedVideosPage} of {totalSavedPages}
+                    </div>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={goToNextSavedPage} 
+                      disabled={savedVideosPage === totalSavedPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-gray-500 dark:text-gray-400">
+                No saved videos found. Browse the YouTube videos below to create carousels.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       
       <div className="grid lg:grid-cols-2 gap-8">
       <Form {...form}>

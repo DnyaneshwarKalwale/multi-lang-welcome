@@ -94,35 +94,8 @@ const CarouselsPage: React.FC = () => {
             setCarouselRequests([]);
           }
         } else {
-          // If no saved videos are found, use dummy data for demonstration
-          const dummyCarousels: CarouselRequest[] = [
-            {
-              id: '1',
-              title: 'Why LinkedIn is Important for Professionals',
-              status: 'ready',
-              thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
-              requestDate: new Date(),
-              deliveryDate: new Date(),
-              slideCount: 5,
-              videoId: 'dQw4w9WgXcQ',
-              videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-              source: 'youtube'
-            },
-            {
-              id: '2',
-              title: 'Top 10 Resume Tips for 2023',
-              status: 'ready',
-              thumbnailUrl: 'https://i.ytimg.com/vi/UBJq-QHaHyY/hqdefault.jpg',
-              requestDate: new Date(),
-              deliveryDate: new Date(),
-              slideCount: 8,
-              videoId: 'UBJq-QHaHyY',
-              videoUrl: 'https://youtube.com/watch?v=UBJq-QHaHyY',
-              source: 'youtube'
-            }
-          ];
-          
-          setCarouselRequests(dummyCarousels);
+          // No saved videos found, show empty state
+          setCarouselRequests([]);
         }
       } catch (error) {
         console.error('Error loading saved videos:', error);
@@ -441,7 +414,7 @@ const CarouselsPage: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
             {searchQuery || statusFilter 
               ? "No carousels match your current filters. Try adjusting your search criteria."
-              : "You haven't requested any carousels yet. Create your first carousel request to get started."}
+              : "You don't have any carousels yet. Please visit the Request Carousel page to browse and select videos for your carousels."}
           </p>
           
           <Button
