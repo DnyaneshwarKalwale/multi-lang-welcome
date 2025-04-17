@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, Download, Eye, Clock, Filter, PlusCircle,
   Check, AlertCircle, FileDown, Calendar, ChevronDown, 
-  Search, SlidersHorizontal, Loader
+  Search, SlidersHorizontal, YoutubeIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,117 +32,62 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import axios from 'axios';
-
-// Carousel interface
-interface Carousel {
-  _id: string;
-  videoId: string;
-  title: string;
-  status: 'in_progress' | 'delivered';
-  thumbnailUrl?: string;
-  requestDate: string;
-  deliveryDate?: string;
-  slideCount: number;
-  downloadUrl?: string;
-  transcript: string;
-  generatedContent?: string;
-  preferences: {
-    format: string;
-    tone: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { getSavedYouTubeVideos, YouTubeVideo, updateYouTubeVideoStatus } from '@/utils/youtubeStorage';
 
 const CarouselsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [carousels, setCarousels] = useState<Carousel[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Fetch carousels from the API
+  const [carouselRequests, setCarouselRequests] = useState<YouTubeVideo[]>([]);
+
+  // Fetch saved YouTube videos
   useEffect(() => {
-    const fetchCarousels = async () => {
-      try {
-        setIsLoading(true);
-        const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/carousels`;
-        
-        const response = await axios.get(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
-        if (response.data && response.data.success) {
-          setCarousels(response.data.data);
-        } else {
-          throw new Error(response.data?.message || 'Failed to fetch carousels');
-        }
-      } catch (error) {
-        console.error('Error fetching carousels:', error);
-        toast.error('Failed to load your carousels. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+    const fetchSavedVideos = () => {
+      const videos = getSavedYouTubeVideos();
+      setCarouselRequests(videos);
     };
-    
-    fetchCarousels();
+
+    fetchSavedVideos();
   }, []);
 
   // Download handler
-  const handleDownload = (carousel: Carousel) => {
-    if (carousel.downloadUrl) {
-      // In a real app, trigger actual download
-      window.open(carousel.downloadUrl, '_blank');
-      toast.success('Carousel download started');
-    } else {
-      toast.error('Download link not available yet');
-    }
-  };
-
-  // Preview handler
-  const handlePreview = (carousel: Carousel) => {
-    // Navigate to a preview page with the carousel data
-    navigate(`/dashboard/carousels/${carousel._id}`);
+  const handleDownload = (carousel: YouTubeVideo) => {
+    // Mark as delivered
+    updateYouTubeVideoStatus(carousel.videoId, 'delivered');
+    
+    // Refresh the list
+    setCarouselRequests(getSavedYouTubeVideos());
+    
+    toast.success('Carousel download started');
+    
+    // Open YouTube video in new tab
+    window.open(`https://www.youtube.com/watch?v=${carousel.videoId}`, '_blank');
   };
 
   // Filter carousels based on search query and status filter
-  const filteredCarousels = carousels.filter(carousel => {
+  const filteredCarousels = carouselRequests.filter(carousel => {
     const matchesSearch = carousel.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = !statusFilter || carousel.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="text-center">
-          <Loader className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-gray-500 dark:text-gray-400">Loading your carousels...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold mb-2">My Carousel Requests</h1>
+          <h1 className="text-2xl font-bold mb-2">My YouTube Carousels</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            Manage your requested LinkedIn carousel designs
+            Manage your saved YouTube videos for carousel designs
           </p>
         </div>
         
         <Button 
-          onClick={() => navigate('/dashboard/request-carousel')}
+          onClick={() => navigate('/dashboard/scraper')}
           className="gap-2"
         >
           <PlusCircle className="h-4 w-4" />
-          Request New Carousel
+          Add New Video
         </Button>
       </div>
       
@@ -151,7 +96,7 @@ const CarouselsPage: React.FC = () => {
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 
-            placeholder="Search carousels..." 
+            placeholder="Search videos..." 
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -197,11 +142,11 @@ const CarouselsPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Carousels</p>
-                <p className="text-2xl font-bold mt-1">{carousels.length}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Videos</p>
+                <p className="text-2xl font-bold mt-1">{carouselRequests.length}</p>
               </div>
               <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
-                <LayoutGrid className="h-5 w-5 text-primary" />
+                <YoutubeIcon className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -213,7 +158,7 @@ const CarouselsPage: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Delivered</p>
                 <p className="text-2xl font-bold mt-1">
-                  {carousels.filter(c => c.status === 'delivered').length}
+                  {carouselRequests.filter(c => c.status === 'delivered').length}
                 </p>
               </div>
               <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
@@ -229,7 +174,7 @@ const CarouselsPage: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
                 <p className="text-2xl font-bold mt-1">
-                  {carousels.filter(c => c.status === 'in_progress').length}
+                  {carouselRequests.filter(c => c.status === 'in_progress').length}
                 </p>
               </div>
               <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
@@ -244,24 +189,17 @@ const CarouselsPage: React.FC = () => {
       {filteredCarousels.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCarousels.map(carousel => (
-            <Card key={carousel._id} className="overflow-hidden">
+            <Card key={carousel.id} className="overflow-hidden">
               <div className="h-48 bg-gray-100 dark:bg-gray-800 relative">
-                {carousel.thumbnailUrl ? (
+                {carousel.thumbnail ? (
                   <img 
-                    src={carousel.thumbnailUrl} 
+                    src={carousel.thumbnail} 
                     alt={carousel.title} 
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="flex flex-col items-center">
-                      <LayoutGrid className="h-16 w-16 text-gray-300 dark:text-gray-600" />
-                      <div className="mt-2 px-2">
-                        <p className="text-xs text-center text-gray-500">
-                          YouTube: {carousel.videoId}
-                        </p>
-                      </div>
-                    </div>
+                    <YoutubeIcon className="h-16 w-16 text-gray-300 dark:text-gray-600" />
                   </div>
                 )}
                 
@@ -280,7 +218,7 @@ const CarouselsPage: React.FC = () => {
                 <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
                 <CardDescription className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  Requested: {format(new Date(carousel.createdAt), 'MMM d, yyyy')}
+                  Saved: {format(new Date(carousel.dateAdded), 'MMM d, yyyy')}
                 </CardDescription>
               </CardHeader>
               
@@ -288,15 +226,13 @@ const CarouselsPage: React.FC = () => {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                     <LayoutGrid className="h-4 w-4" />
-                    <span>{carousel.slideCount} slides</span>
+                    <span>{carousel.slideCount || 5} slides</span>
                   </div>
                   
-                  {carousel.deliveryDate && (
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <Clock className="h-4 w-4" />
-                      <span>{format(new Date(carousel.deliveryDate), 'MMM d, yyyy')}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                    <YoutubeIcon className="h-4 w-4" />
+                    <span>YouTube</span>
+                  </div>
                 </div>
               </CardContent>
               
@@ -307,10 +243,10 @@ const CarouselsPage: React.FC = () => {
                       variant="outline" 
                       size="sm" 
                       className="gap-1"
-                      onClick={() => handlePreview(carousel)}
+                      onClick={() => window.open(`https://www.youtube.com/watch?v=${carousel.videoId}`, '_blank')}
                     >
                       <Eye className="h-4 w-4" />
-                      Preview
+                      View
                     </Button>
                     
                     <Button 
@@ -325,7 +261,7 @@ const CarouselsPage: React.FC = () => {
                 ) : (
                   <div className="w-full text-center text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
                     <Clock className="h-4 w-4 text-blue-500" />
-                    Expected delivery by {format(new Date(new Date(carousel.createdAt).getTime() + 24 * 60 * 60 * 1000), 'MMM d, h:mm a')}
+                    Expected delivery by {format(new Date(new Date(carousel.dateAdded).getTime() + 24 * 60 * 60 * 1000), 'MMM d, h:mm a')}
                   </div>
                 )}
               </CardFooter>
@@ -337,18 +273,18 @@ const CarouselsPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
             <AlertCircle className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium mb-2">No carousels found</h3>
+          <h3 className="text-lg font-medium mb-2">No videos found</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
             {searchQuery || statusFilter 
-              ? "No carousels match your current filters. Try adjusting your search criteria."
-              : "You haven't requested any carousels yet. Create your first carousel request to get started."}
+              ? "No videos match your current filters. Try adjusting your search criteria."
+              : "You haven't saved any YouTube videos yet. Add your first video to get started."}
           </p>
           <Button 
             onClick={() => navigate('/dashboard/scraper')}
             className="gap-2"
           >
             <PlusCircle className="h-4 w-4" />
-            Create Carousel from YouTube
+            Add New Video
           </Button>
         </div>
       )}
@@ -359,12 +295,12 @@ const CarouselsPage: React.FC = () => {
           <FileDown className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h3 className="font-medium mb-1">Carousel Credits</h3>
+          <h3 className="font-medium mb-1">Video Credits</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-            You have unlimited carousel requests during the beta period. Enjoy creating content!
+            You have unlimited video saves with your current plan. Create LinkedIn carousels from any YouTube content.
           </p>
           <Button variant="link" className="h-auto p-0 text-primary" onClick={() => navigate('/dashboard/billing')}>
-            View Plan Details →
+            Upgrade Plan →
           </Button>
         </div>
       </div>
