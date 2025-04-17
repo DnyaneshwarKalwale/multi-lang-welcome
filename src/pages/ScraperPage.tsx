@@ -32,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import axios from 'axios';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
+import api from '@/services/api';
 
 interface ScraperResult {
   content: string;
@@ -129,8 +130,7 @@ const ScraperPage: React.FC = () => {
     setIsFetchingChannel(true);
     
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/youtube/channel`;
-      const response = await axios.post(apiUrl, {
+      const response = await api.post('/youtube/channel', {
         channelName: inputUrl
       });
       
@@ -210,8 +210,7 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
-    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/twitter/user/${username}`;
-    const response = await axios.get(apiUrl);
+    const response = await api.get(`/twitter/user/${username}`);
     
     if (response.data && response.data.success) {
       const tweets = response.data.data;
@@ -235,8 +234,7 @@ const ScraperPage: React.FC = () => {
         return;
       }
       
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/transcript`;
-      const response = await axios.get(apiUrl, {
+      const response = await api.get('/youtube/transcript', {
         params: { url: inputUrl }
       });
       
@@ -267,8 +265,7 @@ const ScraperPage: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/analyze`;
-      const response = await axios.post(apiUrl, {
+      const response = await api.post('/youtube/analyze', {
         transcript: youtubeTranscript.transcript,
         preferences: contentPreferences
       });
