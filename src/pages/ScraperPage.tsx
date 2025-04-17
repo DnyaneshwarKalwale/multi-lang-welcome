@@ -34,6 +34,8 @@ import axios from 'axios';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import { saveYouTubeVideo, YouTubeVideo as StoredYouTubeVideo } from '@/utils/youtubeStorage';
 import { v4 as uuidv4 } from 'uuid';
+// Import tokenManager for token handling
+import { tokenManager } from '@/services/api';
 
 // Scraper result interface
 interface ScraperResult {
@@ -130,9 +132,6 @@ const ScraperPage: React.FC = () => {
   const [linkedinContent, setLinkedinContent] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedContentImage, setGeneratedContentImage] = useState<string | null>(null);
-  const [youtubeSearchResults, setYoutubeSearchResults] = useState<YouTubeSearchResult[]>([]);
-  const [youtubeSearchQuery, setYoutubeSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<ChannelVideo[]>([]);
   const [channelInput, setChannelInput] = useState('');
   const [isLoadingChannel, setIsLoadingChannel] = useState(false);
@@ -268,22 +267,33 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
-      // Call backend API to get transcript
+      // Get the authentication token
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        toast.error('You need to be logged in to fetch video transcript');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Call backend API to get transcript with authentication
       const apiUrl = `${apiBaseUrl}/youtube/transcript`;
       
       console.log('Fetching transcript from:', apiUrl);
       
       const response = await axios.get(apiUrl, {
-        params: { url: videoUrl }
+        params: { url: videoUrl },
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data && response.data.success) {
         const transcriptData = response.data.data;
         
-        // Get video details
+        // Get video details with authentication
         const videoDetailsUrl = `${apiBaseUrl}/youtube/details`;
         const videoDetailsResponse = await axios.get(videoDetailsUrl, {
-          params: { videoId: transcriptData.videoId }
+          params: { videoId: transcriptData.videoId },
+          headers: { Authorization: `Bearer ${token}` }
         });
         
         let title = 'YouTube Video';
@@ -326,21 +336,35 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
-      // Call backend API to analyze transcript
+      // Get the authentication token
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        toast.error('You need to be logged in to analyze content');
+        setIsAnalyzing(false);
+        return;
+      }
+      
+      // Call backend API to analyze transcript with authentication
       const apiUrl = `${apiBaseUrl}/youtube/analyze`;
-      const response = await axios.post(apiUrl, {
-        transcript: youtubeTranscript.transcript,
-        preferences: contentPreferences
-      });
+      const response = await axios.post(
+        apiUrl, 
+        {
+          transcript: youtubeTranscript.transcript,
+          preferences: contentPreferences
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       
       if (response.data && response.data.success) {
         const content = response.data.data.content;
         setLinkedinContent(content);
         
-        // Get video details for saving
+        // Get video details for saving with authentication
         const videoDetailsUrl = `${apiBaseUrl}/youtube/details`;
         const videoDetailsResponse = await axios.get(videoDetailsUrl, {
-          params: { videoId: youtubeTranscript.videoId }
+          params: { videoId: youtubeTranscript.videoId },
+          headers: { Authorization: `Bearer ${token}` }
         });
         
         // Create and save the YouTube video data
@@ -386,10 +410,19 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
+      // Get the authentication token
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        toast.error('You need to be logged in to save video');
+        return;
+      }
+      
       // Get video details
       const videoDetailsUrl = `${apiBaseUrl}/youtube/details`;
       axios.get(videoDetailsUrl, {
-        params: { videoId: youtubeTranscript.videoId }
+        params: { videoId: youtubeTranscript.videoId },
+        headers: { Authorization: `Bearer ${token}` }
       }).then(response => {
         if (response.data && response.data.success) {
           // Create YouTube video object
@@ -528,12 +561,25 @@ const ScraperPage: React.FC = () => {
       // Make sure there's only one /api/ in the path
       const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
       
+      // Get the authentication token
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        toast.error('You need to be logged in to generate images');
+        setIsGeneratingImage(false);
+        return;
+      }
+      
       const apiUrl = `${apiBaseUrl}/cloudinary/generate`;
-      const response = await axios.post(apiUrl, {
-        prompt: `Create a professional, high-quality image based on this content: ${prompt}`,
-        size: '1024x1024',
-        style: 'vivid'
-      });
+      const response = await axios.post(
+        apiUrl, 
+        {
+          prompt: `Create a professional, high-quality image based on this content: ${prompt}`,
+          size: '1024x1024',
+          style: 'vivid'
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       
       if (response.data && response.data.success) {
         const imageData = response.data.data;
@@ -565,46 +611,6 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Modify the YouTube search handler to accept an optional channelName
-  const handleYoutubeSearch = async (channelNameParam?: string) => {
-    const searchQuery = channelNameParam || youtubeSearchQuery;
-    
-    if (!searchQuery.trim()) {
-      toast.error('Please enter a search query');
-      return;
-    }
-    
-    setIsSearching(true);
-    setYoutubeSearchResults([]);
-    
-    try {
-      // Call backend API to search for videos
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/search`;
-      const response = await axios.get(apiUrl, {
-        params: { query: searchQuery }
-      });
-      
-      if (response.data && response.data.success) {
-        setYoutubeSearchResults(response.data.data);
-        toast.success(`Found ${response.data.data.length} videos`);
-      } else {
-        throw new Error(response.data?.message || 'Failed to search videos');
-      }
-    } catch (error) {
-      console.error('Error searching YouTube videos:', error);
-      toast.error('Failed to search for videos. Please try again.');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Add handler to select a YouTube video from search results
-  const handleSelectYoutubeVideo = (video: YouTubeSearchResult) => {
-    setInputUrl(`https://www.youtube.com/watch?v=${video.videoId}`);
-    setYoutubeSearchResults([]); // Clear search results
-    setYoutubeSearchQuery(''); // Clear search query
-  };
-
   // Replace YouTube search handler with channel videos handler
   const handleFetchChannelVideos = async () => {
     if (!channelInput.trim()) {
@@ -625,10 +631,20 @@ const ScraperPage: React.FC = () => {
       
       console.log('Fetching videos from URL:', `${apiBaseUrl}/youtube/channel-videos`);
       
-      // Call backend API to fetch channel videos
-      const response = await axios.post(`${apiBaseUrl}/youtube/channel-videos`, {
-        channelName: channelInput
-      });
+      // Get the authentication token
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        toast.error('You need to be logged in to fetch videos');
+        return;
+      }
+      
+      // Call backend API to fetch channel videos with authentication
+      const response = await axios.post(
+        `${apiBaseUrl}/youtube/channel-videos`, 
+        { channelName: channelInput },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       
       if (response.data && response.data.success) {
         setYoutubeVideos(response.data.data);
@@ -648,7 +664,7 @@ const ScraperPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching channel videos:', error);
-      toast.error('Failed to fetch channel videos. Please check the channel name or URL.');
+      toast.error('Failed to fetch channel videos. Please check the channel name or URL and ensure you are logged in.');
     } finally {
       setIsLoadingChannel(false);
     }
@@ -687,7 +703,6 @@ const ScraperPage: React.FC = () => {
               setTwitterResult(null);
               setYoutubeTranscript(null);
               setLinkedinContent('');
-              setYoutubeSearchResults([]);
             }}
             className="w-full"
           >
@@ -745,15 +760,16 @@ const ScraperPage: React.FC = () => {
               </Button>
             </div>
             
-            {/* Update YouTube section */}
+            {/* Update YouTube section to match example code */}
             {activeTab === 'youtube' && (
               <div className="mt-4 border-t pt-4">
                 <p className="text-sm text-gray-500 mb-3">Enter a YouTube channel name or URL to fetch videos:</p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1">
                     <Input
+                      id="channel"
                       type="text"
-                      placeholder="Channel name (e.g., @MrBeast) or URL"
+                      placeholder="Enter channel name (e.g., @MrBeast) or URL"
                       value={channelInput}
                       onChange={(e) => setChannelInput(e.target.value)}
                       className="w-full"
@@ -776,58 +792,43 @@ const ScraperPage: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Search className="mr-2 h-4 w-4" />
                         Fetch Videos
                       </>
                     )}
                   </Button>
                 </div>
                 
-                {/* Channel videos */}
+                {/* Channel videos - simplified to match example code */}
                 {youtubeVideos.length > 0 && (
-                  <div className="mt-6">
+                  <div className="mt-6" id="video-list">
                     <h3 className="text-lg font-semibold mb-3">
-                      {channelName ? `Videos from ${channelName}` : 'Channel Videos'}
+                      Videos from {channelName || "channel"}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto p-2">
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto p-2">
                       {youtubeVideos.map(video => (
-                        <Card 
-                          key={video.videoId} 
-                          className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
-                          onClick={() => handleSelectVideo(video)}
-                        >
-                          <div className="relative aspect-video bg-gray-100">
-                            <img 
-                              src={video.thumbnail} 
-                              alt={video.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
-                              }}
-                            />
-                            {video.duration && (
-                              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 rounded">
-                                {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                              </div>
-                            )}
-                          </div>
-                          <CardContent className="p-3">
-                            <h3 className="font-medium text-sm line-clamp-2 mb-1">{video.title}</h3>
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs text-gray-500">{video.channelName}</p>
-                              {video.uploadDate && (
-                                <p className="text-xs text-gray-500">
-                                  {video.uploadDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')}
-                                </p>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <div key={video.videoId} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+                          <p className="font-medium mb-2">{video.title || video.videoId}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleYouTubeScrape(video.url)}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? "Loading..." : "Get Transcript"}
+                          </Button>
+                        </div>
                       ))}
                     </div>
-                    <div className="mt-4 text-center">
-                      <p className="text-sm text-gray-500">
-                        Click on a video to get its transcript
+                  </div>
+                )}
+                
+                {/* Show transcript area only when transcript is loaded */}
+                {youtubeTranscript && (
+                  <div className="mt-6" id="transcript">
+                    <h3 className="text-lg font-semibold mb-2">Transcript</h3>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md max-h-[400px] overflow-y-auto">
+                      <p className="whitespace-pre-line text-sm">
+                        {youtubeTranscript.transcript}
                       </p>
                     </div>
                   </div>
