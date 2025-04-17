@@ -49,11 +49,17 @@ const formSchema = z.object({
 interface YouTubeVideo {
   id: string;
   title: string;
-  channelName: string;
-  thumbnailUrl: string;
-  views: string;
-  date: string;
-  duration: string;
+  channelName?: string;
+  thumbnailUrl?: string;
+  views?: string;
+  date?: string;
+  duration?: string;
+  requestDate?: Date;
+  deliveryDate?: Date;
+  slideCount?: number;
+  videoUrl?: string;
+  source?: 'youtube';
+  status?: string;
 }
 
 // Interface for saved carousel videos
@@ -70,82 +76,6 @@ interface SavedCarouselVideo {
   videoUrl?: string;
   source?: 'youtube';
 }
-
-// Sample YouTube videos
-const youtubeVideos: YouTubeVideo[] = [
-  {
-    id: "6EEW-9NDM5k",
-    title: "The Ultimate Guide to LinkedIn Content Strategy",
-    channelName: "LinkedIn Marketing Solutions",
-    thumbnailUrl: "https://img.youtube.com/vi/6EEW-9NDM5k/mqdefault.jpg",
-    views: "1.2M",
-    date: "2 weeks ago",
-    duration: "12:45"
-  },
-  {
-    id: "mTz0GXj8NN0",
-    title: "How to Grow Your Personal Brand on LinkedIn",
-    channelName: "GaryVee",
-    thumbnailUrl: "https://img.youtube.com/vi/mTz0GXj8NN0/mqdefault.jpg",
-    views: "856K",
-    date: "1 month ago",
-    duration: "18:23"
-  },
-  {
-    id: "dW7WjA-heYw",
-    title: "LinkedIn Content That Gets 10x Engagement",
-    channelName: "Social Media Examiner",
-    thumbnailUrl: "https://img.youtube.com/vi/dW7WjA-heYw/mqdefault.jpg",
-    views: "543K",
-    date: "3 weeks ago",
-    duration: "15:19"
-  },
-  {
-    id: "vN4jQKk-MZI",
-    title: "B2B Marketing Strategies for LinkedIn",
-    channelName: "B2B Marketing Insights",
-    thumbnailUrl: "https://img.youtube.com/vi/vN4jQKk-MZI/mqdefault.jpg",
-    views: "328K",
-    date: "2 months ago",
-    duration: "22:37"
-  },
-  {
-    id: "pQFo8JWgHEU",
-    title: "Creating Video Content for Professional Audiences",
-    channelName: "Video Creators",
-    thumbnailUrl: "https://img.youtube.com/vi/pQFo8JWgHEU/mqdefault.jpg",
-    views: "421K",
-    date: "5 weeks ago",
-    duration: "14:52"
-  },
-  {
-    id: "lD3FfI7zNc4",
-    title: "LinkedIn Ads: Complete 2023 Tutorial",
-    channelName: "Digital Marketing Pro",
-    thumbnailUrl: "https://img.youtube.com/vi/lD3FfI7zNc4/mqdefault.jpg",
-    views: "612K",
-    date: "3 months ago",
-    duration: "26:14"
-  },
-  {
-    id: "X9YmkKbTgmk",
-    title: "How to Write LinkedIn Posts That Convert",
-    channelName: "Content Masters",
-    thumbnailUrl: "https://img.youtube.com/vi/X9YmkKbTgmk/mqdefault.jpg",
-    views: "287K",
-    date: "4 weeks ago",
-    duration: "19:08"
-  },
-  {
-    id: "aW7lJMroT2c",
-    title: "LinkedIn Algorithm: What Works in 2023",
-    channelName: "Social Media Today",
-    thumbnailUrl: "https://img.youtube.com/vi/aW7lJMroT2c/mqdefault.jpg",
-    views: "732K",
-    date: "1 week ago",
-    duration: "16:47"
-  }
-];
 
 // Function to generate dummy transcript based on video ID
 const generateDummyTranscript = (videoId: string): string[] => {
@@ -264,16 +194,42 @@ const RequestCarouselPage: React.FC = () => {
   const videosPerPage = 4;
   
   // Saved videos state
-  const [savedVideos, setSavedVideos] = useState<SavedCarouselVideo[]>([]);
-  const [isLoadingSavedVideos, setIsLoadingSavedVideos] = useState(false);
-  const [filterValue, setFilterValue] = useState("all");
-  const itemsPerPage = 4;
-  const [savedVideosPage, setSavedVideosPage] = useState(1);
+  const [savedVideos, setSavedVideos] = useState<YouTubeVideo[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+
+  // Safe date formatter function to use throughout the component
+  const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
+    try {
+      if (!date) return 'Unknown date';
+      
+      // If it's already a Date object
+      if (date instanceof Date) {
+        return isNaN(date.getTime()) ? 'Unknown date' : format(date, formatString);
+      }
+      
+      // Try parsing as string
+      if (typeof date === 'string') {
+        const parsedDate = new Date(date);
+        return isNaN(parsedDate.getTime()) ? 'Unknown date' : format(parsedDate, formatString);
+      }
+      
+      // If it's a number (timestamp)
+      if (typeof date === 'number' && !isNaN(date)) {
+        const parsedDate = new Date(date);
+        return isNaN(parsedDate.getTime()) ? 'Unknown date' : format(parsedDate, formatString);
+      }
+      
+      return 'Unknown date';
+    } catch (e) {
+      console.error("Error formatting date:", e);
+      return 'Unknown date';
+    }
+  };
 
   // Load saved videos from localStorage
   useEffect(() => {
     const loadSavedVideos = () => {
-      setIsLoadingSavedVideos(true);
+      setIsLoadingVideos(true);
       try {
         // Get videos from localStorage
         const savedVideosString = localStorage.getItem('savedYoutubeVideos');
@@ -282,36 +238,77 @@ const RequestCarouselPage: React.FC = () => {
           try {
             const loadedVideos = JSON.parse(savedVideosString);
             
-            // Convert to SavedCarouselVideo format
-            const carousels = loadedVideos.map((video: any) => {
-              // Create a valid date object or fallback to current date
-              const safeDate = (dateStr: string | undefined) => {
-                if (!dateStr) return new Date();
-                try {
-                  const date = new Date(dateStr);
-                  // Check if date is valid
-                  return isNaN(date.getTime()) ? new Date() : date;
-                } catch (e) {
-                  return new Date();
-                }
-              };
-              
-              return {
-                id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
-                title: video.title || 'YouTube Video',
-                status: 'ready',
-                thumbnailUrl: video.thumbnailUrl || 
-                  (video.videoId ? `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg` : undefined),
-                requestDate: safeDate(video.requestDate),
-                deliveryDate: safeDate(video.deliveryDate),
-                slideCount: video.slideCount || 5,
-                videoId: video.videoId,
-                videoUrl: video.videoUrl || (video.videoId ? `https://youtube.com/watch?v=${video.videoId}` : undefined),
-                source: 'youtube'
-              };
+            // Convert to YouTubeVideo format with extra safety
+            const videos = loadedVideos.map((video: any) => {
+              try {
+                // Create a valid date object or fallback to current date
+                const safeDate = (dateInput: any) => {
+                  if (!dateInput) return new Date();
+                  
+                  try {
+                    // If it's already a Date object
+                    if (dateInput instanceof Date) {
+                      return isNaN(dateInput.getTime()) ? new Date() : dateInput;
+                    }
+                    
+                    // Try parsing as string
+                    if (typeof dateInput === 'string') {
+                      const parsedDate = new Date(dateInput);
+                      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+                    }
+                    
+                    // If it's a number (timestamp)
+                    if (typeof dateInput === 'number' && !isNaN(dateInput)) {
+                      const parsedDate = new Date(dateInput);
+                      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+                    }
+                    
+                    return new Date();
+                  } catch (e) {
+                    console.error("Error parsing date:", e);
+                    return new Date();
+                  }
+                };
+                
+                // Get safe videoId
+                const videoId = video.videoId || video.id || '';
+                
+                return {
+                  id: videoId,
+                  title: video.title || 'YouTube Video',
+                  channelName: "Your Saved Video",
+                  status: video.status || 'ready',
+                  thumbnailUrl: video.thumbnailUrl || 
+                    (videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : undefined),
+                  requestDate: safeDate(video.requestDate),
+                  deliveryDate: safeDate(video.deliveryDate),
+                  slideCount: video.slideCount || 5,
+                  videoUrl: video.videoUrl || (videoId ? `https://youtube.com/watch?v=${videoId}` : undefined),
+                  views: "Saved",
+                  date: safeFormatDate(safeDate(video.requestDate), "MMM d, yyyy"),
+                  duration: "Saved",
+                  source: 'youtube'
+                };
+              } catch (itemError) {
+                console.error("Error processing video item:", itemError);
+                // Return a safe default item if individual parsing fails
+                return {
+                  id: Math.random().toString(36).substring(2, 9),
+                  title: 'YouTube Video',
+                  channelName: "Your Saved Video",
+                  status: 'ready',
+                  requestDate: new Date(),
+                  deliveryDate: new Date(),
+                  slideCount: 5,
+                  source: 'youtube',
+                  views: "Saved",
+                  date: "Unknown",
+                  duration: "Saved"
+                };
+              }
             });
             
-            setSavedVideos(carousels);
+            setSavedVideos(videos);
           } catch (parseError) {
             console.error('Error parsing saved videos:', parseError);
             setSavedVideos([]);
@@ -328,7 +325,7 @@ const RequestCarouselPage: React.FC = () => {
         });
         setSavedVideos([]);
       } finally {
-        setIsLoadingSavedVideos(false);
+        setIsLoadingVideos(false);
       }
     };
     
@@ -374,7 +371,13 @@ const RequestCarouselPage: React.FC = () => {
   // Handle video selection
   const handleVideoSelect = (video: YouTubeVideo) => {
     setSelectedVideo(video);
-    form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
+    
+    // Set video URL to form based on video ID or videoUrl property
+    if (video.videoUrl) {
+      form.setValue("youtubeUrl", video.videoUrl);
+    } else if (video.id) {
+      form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
+    }
     
     // Generate dummy transcript
     const transcript = generateDummyTranscript(video.id);
@@ -389,15 +392,15 @@ const RequestCarouselPage: React.FC = () => {
   };
 
   // Watch video handler
-  const handleWatchVideo = (video: SavedCarouselVideo) => {
+  const handleWatchVideo = (video: YouTubeVideo) => {
     if (video.videoUrl) {
       window.open(video.videoUrl, '_blank');
       toast({
         title: "Opening video",
         description: "Opening YouTube video in a new tab",
       });
-    } else if (video.videoId) {
-      window.open(`https://youtube.com/watch?v=${video.videoId}`, '_blank');
+    } else if (video.id) {
+      window.open(`https://youtube.com/watch?v=${video.id}`, '_blank');
       toast({
         title: "Opening video",
         description: "Opening YouTube video in a new tab",
@@ -407,28 +410,17 @@ const RequestCarouselPage: React.FC = () => {
 
   // Filter videos based on search query
   const filteredVideos = searchQuery 
-    ? youtubeVideos.filter(video => 
+    ? savedVideos.filter(video => 
         video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        video.channelName.toLowerCase().includes(searchQuery.toLowerCase())
+        (video.channelName && video.channelName.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-    : youtubeVideos;
+    : savedVideos;
   
   // Calculate pagination for YouTube videos
   const indexOfLastVideo = currentPage * videosPerPage;
   const indexOfFirstVideo = indexOfLastVideo - videosPerPage;
   const currentVideos = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
   const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
-  
-  // Calculate pagination for saved videos
-  const filteredSavedVideos = savedVideos.filter(video => {
-    if (filterValue === "all") return true;
-    return video.status === filterValue;
-  });
-  
-  const totalSavedPages = Math.ceil(filteredSavedVideos.length / itemsPerPage);
-  const startIndex = (savedVideosPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSavedVideos = filteredSavedVideos.slice(startIndex, endIndex);
   
   // Handle page change
   const goToPage = (pageNumber: number) => {
@@ -446,19 +438,6 @@ const RequestCarouselPage: React.FC = () => {
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-    }
-  };
-
-  // Handle saved videos pagination
-  const goToNextSavedPage = () => {
-    if (savedVideosPage < totalSavedPages) {
-      setSavedVideosPage(savedVideosPage + 1);
-    }
-  };
-  
-  const goToPrevSavedPage = () => {
-    if (savedVideosPage > 1) {
-      setSavedVideosPage(savedVideosPage - 1);
     }
   };
 
@@ -524,186 +503,8 @@ const RequestCarouselPage: React.FC = () => {
         </p>
       </div>
       
-      {/* Saved Videos Section */}
-      {savedVideos.length > 0 && (
-        <div className="mb-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-semibold">Your Saved Videos</h2>
-            
-            <div className="flex gap-3">
-              <select
-                className="px-3 py-2 rounded-md border border-gray-200 text-sm"
-                value={filterValue}
-                onChange={(e) => setFilterValue(e.target.value)}
-              >
-                <option value="all">All statuses</option>
-                <option value="ready">Ready</option>
-                <option value="in_progress">In Progress</option>
-                <option value="delivered">Delivered</option>
-              </select>
-            </div>
-          </div>
-          
-          {isLoadingSavedVideos ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="flex flex-col items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                <p>Loading your carousel videos...</p>
-              </div>
-            </div>
-          ) : currentSavedVideos.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {currentSavedVideos.map(video => (
-                  <Card key={video.id} className="overflow-hidden">
-                    <div className="h-48 bg-gray-100 dark:bg-gray-800 relative">
-                      {video.thumbnailUrl ? (
-                        <img 
-                          src={video.thumbnailUrl} 
-                          alt={video.title} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <LayoutGrid className="h-16 w-16 text-gray-300 dark:text-gray-600" />
-                        </div>
-                      )}
-                      
-                      <Badge 
-                        className={`absolute top-3 right-3 ${
-                          video.status === 'delivered' || video.status === 'ready'
-                            ? 'bg-green-500' 
-                            : 'bg-blue-500'
-                        }`}
-                      >
-                        {video.status === 'delivered' || video.status === 'ready' ? 'Ready' : 'In Progress'}
-                      </Badge>
-                      
-                      {video.source === 'youtube' && (
-                        <Badge className="absolute top-3 left-3 bg-red-500 flex items-center gap-1">
-                          <Youtube className="h-3 w-3" />
-                          YouTube
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <CardHeader className="pb-2">
-                      <CardTitle className="line-clamp-1">{video.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-1">
-                        Added: {(() => {
-                          try {
-                            return format(video.requestDate, 'MMM d, yyyy');
-                          } catch (e) {
-                            return 'Unknown date';
-                          }
-                        })()}
-                      </CardDescription>
-                    </CardHeader>
-                    
-                    <CardContent className="pb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                          <LayoutGrid className="h-4 w-4" />
-                          <span>{video.slideCount} slides</span>
-                        </div>
-                        
-                        {video.deliveryDate && (
-                          <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                            <span>{(() => {
-                              try {
-                                return format(video.deliveryDate, 'MMM d, yyyy');
-                              } catch (e) {
-                                return 'Unknown date';
-                              }
-                            })()}</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                    
-                    <CardFooter className="border-t border-gray-100 dark:border-gray-800 pt-4">
-                      <div className="flex justify-between w-full">
-                        {video.source === 'youtube' ? (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-1"
-                            onClick={() => handleWatchVideo(video)}
-                          >
-                            <Youtube className="h-4 w-4" />
-                            Watch Video
-                          </Button>
-                        ) : (
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Info className="h-4 w-4" />
-                            Preview
-                          </Button>
-                        )}
-                        
-                        <Button 
-                          variant="default" 
-                          size="sm"
-                          className="gap-1"
-                          onClick={() => navigate('/dashboard/create-post', { 
-                            state: { 
-                              title: video.title,
-                              activeTab: 'carousel',
-                              youtubeVideoId: video.videoId
-                            }
-                          })}
-                        >
-                          <LayoutGrid className="h-4 w-4" />
-                          Create Post
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-              
-              {/* Pagination controls for saved videos */}
-              {totalSavedPages > 1 && (
-                <div className="flex justify-center mt-4 mb-8">
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={goToPrevSavedPage} 
-                      disabled={savedVideosPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
-                    </Button>
-                    
-                    <div className="text-sm">
-                      Page {savedVideosPage} of {totalSavedPages}
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={goToNextSavedPage} 
-                      disabled={savedVideosPage === totalSavedPages}
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">
-                No saved videos found. Browse the YouTube videos below to create carousels.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-      
       <div className="grid lg:grid-cols-2 gap-8">
-      <Form {...form}>
+        <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
               <CardHeader>
@@ -743,29 +544,38 @@ const RequestCarouselPage: React.FC = () => {
                     
                     <TabsContent value="youtube" className="space-y-4">
                       <div>
-                <FormField
-                  control={form.control}
+                        <FormField
+                          control={form.control}
                           name="youtubeUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                              <FormLabel>Search YouTube Videos</FormLabel>
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Select a Saved Video</FormLabel>
                               <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                  placeholder="Search by title or channel"
+                                  placeholder="Search by title"
                                   className="pl-8"
                                   value={searchQuery}
                                   onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                               </div>
                               <FormDescription>
-                                Select a video to automatically extract content
+                                Select one of your saved videos to create a carousel
                               </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      {isLoadingVideos ? (
+                        <div className="flex justify-center items-center py-12">
+                          <div className="flex flex-col items-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                            <p>Loading your videos...</p>
+                          </div>
+                        </div>
+                      ) : currentVideos.length > 0 ? (
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           {currentVideos.map((video) => (
                             <div 
@@ -796,75 +606,75 @@ const RequestCarouselPage: React.FC = () => {
                                 <h4 className="font-medium text-sm line-clamp-2">{video.title}</h4>
                                 <p className="text-xs text-muted-foreground mt-1">{video.channelName}</p>
                                 <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                                  <span>{video.views} views</span>
-                                  <span>•</span>
                                   <span>{video.date}</span>
                                 </div>
                               </div>
                             </div>
                           ))}
                         </div>
-                        
-                        {/* Pagination Controls */}
-                        {filteredVideos.length > videosPerPage && (
-                          <Pagination className="mt-4">
-                            <PaginationContent>
-                              <PaginationItem>
-                                <PaginationPrevious 
-                                  onClick={prevPage} 
-                                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                                />
-                              </PaginationItem>
-                              
-                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <PaginationItem key={page}>
-                                  <PaginationLink 
-                                    isActive={page === currentPage}
-                                    onClick={() => goToPage(page)}
-                                  >
-                                    {page}
-                                  </PaginationLink>
-                                </PaginationItem>
-                              ))}
-                              
-                              <PaginationItem>
-                                <PaginationNext 
-                                  onClick={nextPage}
-                                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                                />
-                              </PaginationItem>
-                            </PaginationContent>
-                          </Pagination>
-                        )}
-                        
-                        {showTranscript && selectedVideo && (
-                          <div className="mt-4 border rounded-lg p-4">
-                            <h3 className="text-lg font-medium mb-3">Generated Transcript</h3>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              This transcript will be used to create your carousel slides:
-                            </p>
-                            <ScrollArea className="h-48 rounded-md border p-4">
-                              <ol className="list-decimal pl-5 space-y-2">
-                                {generatedTranscript.map((line, index) => (
-                                  <li key={index} className="text-sm">
-                                    {line}
-                                  </li>
-                                ))}
-                              </ol>
-                            </ScrollArea>
+                      ) : (
+                        <div className="flex justify-center items-center py-8 border border-dashed rounded-lg">
+                          <div className="text-center">
+                            <p className="mb-2 text-muted-foreground">No saved videos found</p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate("/dashboard/scraper")}
+                            >
+                              <Youtube className="h-4 w-4 mr-2" />
+                              Scrape new videos
+                            </Button>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       
-                      {form.watch("youtubeUrl") && (
-                        <div className="rounded-lg bg-blue-50 p-4 flex items-start gap-3 border border-blue-100">
-                          <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <h4 className="font-medium text-blue-700">Content scraping in progress</h4>
-                            <p className="text-sm text-blue-600 mt-1">
-                              We're analyzing your video to extract high-quality content for your carousel. This makes your request more accurate.
-                            </p>
-                          </div>
+                      {/* Pagination Controls */}
+                      {filteredVideos.length > videosPerPage && (
+                        <Pagination className="mt-4">
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={prevPage} 
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                              />
+                            </PaginationItem>
+                            
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink 
+                                  isActive={page === currentPage}
+                                  onClick={() => goToPage(page)}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+                            
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={nextPage}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      )}
+                      
+                      {showTranscript && selectedVideo && (
+                        <div className="mt-4 border rounded-lg p-4">
+                          <h3 className="text-lg font-medium mb-3">Generated Transcript</h3>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            This transcript will be used to create your carousel slides:
+                          </p>
+                          <ScrollArea className="h-48 rounded-md border p-4">
+                            <ol className="list-decimal pl-5 space-y-2">
+                              {generatedTranscript.map((line, index) => (
+                                <li key={index} className="text-sm">
+                                  {line}
+                                </li>
+                              ))}
+                            </ol>
+                          </ScrollArea>
                         </div>
                       )}
                     </TabsContent>
@@ -923,8 +733,8 @@ const RequestCarouselPage: React.FC = () => {
                     </TabsContent>
                   </Tabs>
                 </div>
-                </CardContent>
-              </Card>
+              </CardContent>
+            </Card>
             
             <div className="flex gap-3">
               <Button type="submit" disabled={isSubmitting} className="flex-1">
@@ -939,10 +749,10 @@ const RequestCarouselPage: React.FC = () => {
                 <LayoutGrid className="h-4 w-4" />
                 Browse Templates
               </Button>
-          </div>
-        </form>
-      </Form>
-              
+            </div>
+          </form>
+        </Form>
+        
         <Card>
           <CardHeader>
             <CardTitle>Preview & Information</CardTitle>
