@@ -226,14 +226,49 @@ const ScraperPage: React.FC = () => {
       setSelectedVideo(null);
       setYoutubeTranscript(null);
       
+      // Validate input before sending to server
+      if (!inputUrl.trim()) {
+        throw new Error('Please enter a valid YouTube channel name or URL');
+      }
+      
+      // Log for debugging
+      console.log(`Fetching channel with input: ${inputUrl}`);
+      
       // Call backend API to get channel videos
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/channel`;
+      console.log(`Making request to: ${apiUrl}`);
+      
       const response = await axios.post(apiUrl, { 
         channelName: inputUrl 
+      }).catch(error => {
+        console.error('API call error:', error.response?.data || error.message);
+        
+        // Throw specific error based on status code
+        if (error.response?.status === 404) {
+          throw new Error(`Channel not found: ${error.response?.data?.message || 'No videos found or channel does not exist'}`);
+        } else if (error.response?.status === 401 || error.response?.status === 403) {
+          throw new Error('Authentication error. Please log in again.');
+        } else if (error.response) {
+          throw new Error(`Server error: ${error.response?.data?.message || error.message}`);
+        } else if (error.request) {
+          throw new Error('No response from server. Please check your connection or if the server is running.');
+        } else {
+          throw error; // Rethrow original error
+        }
       });
+      
+      if (!response) {
+        throw new Error('Failed to get response from server');
+      }
+      
+      console.log('API response:', response.data);
       
       if (response.data && response.data.success) {
         const videos = response.data.data;
+        
+        if (!videos || !Array.isArray(videos) || videos.length === 0) {
+          throw new Error('No videos found for this channel');
+        }
         
         // Map API response to our interface
         const formattedVideos: YouTubeVideo[] = videos.map((video: any) => ({
@@ -255,9 +290,13 @@ const ScraperPage: React.FC = () => {
       } else {
         throw new Error(response.data?.message || 'Failed to fetch channel videos');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching YouTube channel:', error);
-      toast.error('Failed to fetch YouTube channel videos. Please check the URL or channel name.');
+      
+      // Show specific error message
+      const errorMessage = error?.message || 'Failed to fetch YouTube channel videos';
+      toast.error(errorMessage);
+      
       throw error;
     } finally {
       setIsScrapingChannel(false);
@@ -289,14 +328,44 @@ const ScraperPage: React.FC = () => {
       
       const url = videoUrl || inputUrl;
       
+      // Log for debugging
+      console.log(`Fetching transcript for: ${url}`);
+      
       // Call backend API to get transcript
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/transcript`;
+      console.log(`Making transcript request to: ${apiUrl}`);
+      
       const response = await axios.get(apiUrl, {
         params: { url }
+      }).catch(error => {
+        console.error('API call error (transcript):', error.response?.data || error.message);
+        
+        // Throw specific error based on status code
+        if (error.response?.status === 404) {
+          throw new Error(`No transcript found: ${error.response?.data?.message || 'Video may not have captions'}`);
+        } else if (error.response?.status === 401 || error.response?.status === 403) {
+          throw new Error('Authentication error. Please log in again.');
+        } else if (error.response) {
+          throw new Error(`Server error: ${error.response?.data?.message || error.message}`);
+        } else if (error.request) {
+          throw new Error('No response from server. Please check your connection or if the server is running.');
+        } else {
+          throw error; // Rethrow original error
+        }
       });
+      
+      if (!response) {
+        throw new Error('Failed to get response from server');
+      }
+      
+      console.log('Transcript response:', response.data);
       
       if (response.data && response.data.success) {
         const transcriptData = response.data.data;
+        
+        if (!transcriptData || !transcriptData.transcript) {
+          throw new Error('Empty transcript received from server');
+        }
         
         setYoutubeTranscript(transcriptData);
         setResult(null); // Clear any previous results
@@ -329,14 +398,19 @@ const ScraperPage: React.FC = () => {
             toast.success('Video saved to carousels!');
           } catch (saveError) {
             console.error('Error saving to carousels:', saveError);
+            toast.error('Failed to save video to carousels');
           }
         }
       } else {
         throw new Error(response.data?.message || 'Failed to fetch transcript');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching YouTube transcript:', error);
-      toast.error('Failed to fetch YouTube transcript. The video might not have captions or is unavailable.');
+      
+      // Show specific error message
+      const errorMessage = error?.message || 'Failed to fetch YouTube transcript';
+      toast.error(errorMessage);
+      
       throw error;
     }
   };
