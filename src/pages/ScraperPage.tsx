@@ -225,18 +225,20 @@ const ScraperPage: React.FC = () => {
   };
 
   // YouTube specific scraping logic
-  const handleYouTubeScrape = async () => {
+  const handleYouTubeScrape = async (urlParam?: string) => {
+    const videoUrl = urlParam || inputUrl;
+    
     try {
-      if (!inputUrl.includes('youtube.com') && !inputUrl.includes('youtu.be')) {
+      if (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
         toast.error('Please enter a valid YouTube URL');
         return;
       }
       
       // Check if it's a video URL or a channel URL
-      if (inputUrl.includes('@') && !inputUrl.includes('watch?v=')) {
+      if (videoUrl.includes('@') && !videoUrl.includes('watch?v=')) {
         // Extract channel name
-        const channelName = inputUrl.includes('@') ? 
-          inputUrl.split('@')[1].split('/')[0] : '';
+        const channelName = videoUrl.includes('@') ? 
+          videoUrl.split('@')[1].split('/')[0] : '';
         
         toast.error(
           <div>
@@ -245,8 +247,8 @@ const ScraperPage: React.FC = () => {
             <button 
               className="underline text-blue-500 hover:text-blue-700"
               onClick={() => {
-                setYoutubeSearchQuery(channelName);
-                handleYoutubeSearch(channelName);
+                setChannelInput(channelName);
+                handleFetchChannelVideos();
               }}
             >
               Click here to search for videos from @{channelName}
@@ -259,21 +261,27 @@ const ScraperPage: React.FC = () => {
         return;
       }
       
-      // Call backend API to get transcript
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/transcript`;
+      setIsLoading(true);
       
-      // Log the constructed URL for debugging
+      // Fix the API URL to remove duplicate /api/
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Make sure there's only one /api/ in the path
+      const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+      
+      // Call backend API to get transcript
+      const apiUrl = `${apiBaseUrl}/youtube/transcript`;
+      
       console.log('Fetching transcript from:', apiUrl);
       
       const response = await axios.get(apiUrl, {
-        params: { url: inputUrl }
+        params: { url: videoUrl }
       });
       
       if (response.data && response.data.success) {
         const transcriptData = response.data.data;
         
         // Get video details
-        const videoDetailsUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/details`;
+        const videoDetailsUrl = `${apiBaseUrl}/youtube/details`;
         const videoDetailsResponse = await axios.get(videoDetailsUrl, {
           params: { videoId: transcriptData.videoId }
         });
@@ -298,6 +306,8 @@ const ScraperPage: React.FC = () => {
       console.error('Error fetching YouTube transcript:', error);
       toast.error('Failed to fetch YouTube transcript. The video might not have captions or is unavailable.');
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -311,8 +321,13 @@ const ScraperPage: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
+      // Fix the API URL to remove duplicate /api/
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Make sure there's only one /api/ in the path
+      const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+      
       // Call backend API to analyze transcript
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/analyze`;
+      const apiUrl = `${apiBaseUrl}/youtube/analyze`;
       const response = await axios.post(apiUrl, {
         transcript: youtubeTranscript.transcript,
         preferences: contentPreferences
@@ -323,7 +338,7 @@ const ScraperPage: React.FC = () => {
         setLinkedinContent(content);
         
         // Get video details for saving
-        const videoDetailsUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/details`;
+        const videoDetailsUrl = `${apiBaseUrl}/youtube/details`;
         const videoDetailsResponse = await axios.get(videoDetailsUrl, {
           params: { videoId: youtubeTranscript.videoId }
         });
@@ -366,8 +381,13 @@ const ScraperPage: React.FC = () => {
   // Save to inspiration vault
   const handleSaveToInspiration = () => {
     if (youtubeTranscript) {
+      // Fix the API URL to remove duplicate /api/
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Make sure there's only one /api/ in the path
+      const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+      
       // Get video details
-      const videoDetailsUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/details`;
+      const videoDetailsUrl = `${apiBaseUrl}/youtube/details`;
       axios.get(videoDetailsUrl, {
         params: { videoId: youtubeTranscript.videoId }
       }).then(response => {
@@ -503,7 +523,12 @@ const ScraperPage: React.FC = () => {
     try {
       const prompt = youtubeTranscript?.transcript.substring(0, 200) || linkedinContent.substring(0, 200);
       
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cloudinary/generate`;
+      // Fix the API URL to remove duplicate /api/
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Make sure there's only one /api/ in the path
+      const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+      
+      const apiUrl = `${apiBaseUrl}/cloudinary/generate`;
       const response = await axios.post(apiUrl, {
         prompt: `Create a professional, high-quality image based on this content: ${prompt}`,
         size: '1024x1024',
@@ -589,11 +614,19 @@ const ScraperPage: React.FC = () => {
     
     setIsLoadingChannel(true);
     setYoutubeVideos([]);
+    setYoutubeTranscript(null); // Clear any previous transcript
+    setLinkedinContent(''); // Clear any previous content
     
     try {
+      // Fix the API URL to remove duplicate /api/
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Make sure there's only one /api/ in the path
+      const apiBaseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+      
+      console.log('Fetching videos from URL:', `${apiBaseUrl}/youtube/channel-videos`);
+      
       // Call backend API to fetch channel videos
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/youtube/channel-videos`;
-      const response = await axios.post(apiUrl, {
+      const response = await axios.post(`${apiBaseUrl}/youtube/channel-videos`, {
         channelName: channelInput
       });
       
@@ -621,10 +654,11 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Add handler to select a YouTube video from channel
+  // Modify the handleSelectVideo to match the example code pattern
   const handleSelectVideo = (video: ChannelVideo) => {
     setInputUrl(video.url);
-    // Don't clear the videos list so users can select other videos
+    // Get the transcript directly after selecting a video
+    handleYouTubeScrape(video.url);
   };
 
   return (
@@ -793,7 +827,7 @@ const ScraperPage: React.FC = () => {
                     </div>
                     <div className="mt-4 text-center">
                       <p className="text-sm text-gray-500">
-                        Select a video to get its transcript
+                        Click on a video to get its transcript
                       </p>
                     </div>
                   </div>
