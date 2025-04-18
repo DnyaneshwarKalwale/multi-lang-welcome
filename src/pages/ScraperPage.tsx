@@ -34,6 +34,7 @@ import axios from 'axios';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import api from '@/services/api';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from "@/hooks/use-toast";
 
 interface ScraperResult {
   content: string;
@@ -105,6 +106,7 @@ interface YouTubeChannelResult {
 const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('linkedin');
   const [inputUrl, setInputUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -125,10 +127,26 @@ const ScraperPage: React.FC = () => {
   const [isFetchingChannel, setIsFetchingChannel] = useState(false);
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>("");
+  const [loadingTranscriptIds, setLoadingTranscriptIds] = useState<Set<string>>(new Set());
+
+  // Helper functions for toast
+  const toastSuccess = (message: string) => {
+    toast({
+      description: message,
+      variant: "default",
+    });
+  };
+
+  const toastError = (message: string) => {
+    toast({
+      description: message,
+      variant: "destructive",
+    });
+  };
 
   const handleYouTubeChannelScrape = async () => {
     if (!inputUrl) {
-      toast.error('Please enter a YouTube channel URL or @handle');
+      toastError('Please enter a YouTube channel URL or @handle');
       return;
     }
 
@@ -144,13 +162,13 @@ const ScraperPage: React.FC = () => {
           videos: response.data.data,
           channelName: inputUrl.includes('@') ? inputUrl.split('@')[1] : inputUrl
         });
-        toast.success(`Found ${response.data.data.length} videos`);
+        toastSuccess(`Found ${response.data.data.length} videos`);
       } else {
         throw new Error(response.data?.message || 'Failed to fetch channel videos');
       }
     } catch (error) {
       console.error('Error fetching YouTube channel:', error);
-      toast.error('Failed to fetch channel videos. Please try again.');
+      toastError('Failed to fetch channel videos. Please try again.');
     } finally {
       setIsFetchingChannel(false);
     }
@@ -158,7 +176,7 @@ const ScraperPage: React.FC = () => {
 
   const handleScrape = async () => {
     if (!inputUrl) {
-      toast.error('Please enter a valid URL');
+      toastError('Please enter a valid URL');
       return;
     }
     
@@ -187,11 +205,11 @@ const ScraperPage: React.FC = () => {
           estimatedReadTime: 2,
           wordCount: 150
         });
-        toast.success('Content scraped successfully!');
+        toastSuccess('Content scraped successfully!');
       }
     } catch (error) {
       console.error(`Error scraping content from ${activeTab}:`, error);
-      toast.error(`Failed to scrape content from ${activeTab}. Please try again.`);
+      toastError(`Failed to scrape content from ${activeTab}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +229,7 @@ const ScraperPage: React.FC = () => {
     }
     
     if (!username) {
-      toast.error('Please enter a valid Twitter username');
+      toastError('Please enter a valid Twitter username');
       return;
     }
     
@@ -226,7 +244,7 @@ const ScraperPage: React.FC = () => {
         profileImageUrl: tweets[0]?.author?.profile_image_url
       });
       
-      toast.success(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+      toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
     } else {
       throw new Error(response.data?.message || 'Failed to fetch tweets');
     }
@@ -235,7 +253,7 @@ const ScraperPage: React.FC = () => {
   const handleYouTubeScrape = async () => {
     try {
       if (!inputUrl.includes('youtube.com') && !inputUrl.includes('youtu.be')) {
-        toast.error('Please enter a valid YouTube URL');
+        toastError('Please enter a valid YouTube URL');
         return;
       }
       
@@ -250,20 +268,20 @@ const ScraperPage: React.FC = () => {
         setResult(null);
         setTwitterResult(null);
         
-        toast.success('YouTube transcript fetched successfully!');
+        toastSuccess('YouTube transcript fetched successfully!');
       } else {
         throw new Error(response.data?.message || 'Failed to fetch transcript');
       }
     } catch (error) {
       console.error('Error fetching YouTube transcript:', error);
-      toast.error('Failed to fetch YouTube transcript. The video might not have captions or is unavailable.');
+      toastError('Failed to fetch YouTube transcript. The video might not have captions or is unavailable.');
       throw error;
     }
   };
 
   const handleAnalyzeTranscript = async () => {
     if (!youtubeTranscript || !youtubeTranscript.transcript) {
-      toast.error('No transcript available to analyze');
+      toastError('No transcript available to analyze');
       return;
     }
     
@@ -278,13 +296,13 @@ const ScraperPage: React.FC = () => {
       if (response.data && response.data.success) {
         const content = response.data.data.content;
         setLinkedinContent(content);
-        toast.success('Transcript analyzed and LinkedIn content generated!');
+        toastSuccess('Transcript analyzed and LinkedIn content generated!');
       } else {
         throw new Error(response.data?.message || 'Failed to analyze transcript');
       }
     } catch (error) {
       console.error('Error analyzing transcript:', error);
-      toast.error('Failed to generate LinkedIn content from transcript.');
+      toastError('Failed to generate LinkedIn content from transcript.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -292,11 +310,11 @@ const ScraperPage: React.FC = () => {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!');
+    toastSuccess('Copied to clipboard!');
   };
 
   const handleSaveToInspiration = () => {
-    toast.success('Saved to Inspiration Vault!');
+    toastSuccess('Saved to Inspiration Vault!');
   };
 
   const handleCreatePost = () => {
@@ -317,12 +335,12 @@ const ScraperPage: React.FC = () => {
 
   const handleSaveSelectedTweets = async () => {
     if (selectedTweets.size === 0) {
-      toast.error('Please select at least one tweet to save');
+      toastError('Please select at least one tweet to save');
       return;
     }
     
     if (!twitterResult || !twitterResult.tweets) {
-      toast.error('No tweets available to save');
+      toastError('No tweets available to save');
       return;
     }
     
@@ -347,14 +365,14 @@ const ScraperPage: React.FC = () => {
       });
       
       if (response.data && response.data.success) {
-        toast.success(`Saved ${response.data.count} tweets successfully!`);
+        toastSuccess(`Saved ${response.data.count} tweets successfully!`);
         setSelectedTweets(new Set());
       } else {
         throw new Error(response.data?.message || 'Failed to save tweets');
       }
     } catch (error) {
       console.error('Error saving tweets:', error);
-      toast.error('Failed to save tweets. Please try again.');
+      toastError('Failed to save tweets. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -362,7 +380,7 @@ const ScraperPage: React.FC = () => {
 
   const handleSaveSelectedVideos = async () => {
     if (selectedVideos.size === 0 || !youtubeChannelResult) {
-      toast.error('Please select at least one video');
+      toastError('Please select at least one video');
       return;
     }
 
@@ -402,7 +420,7 @@ const ScraperPage: React.FC = () => {
         
         localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
         
-        toast.success(`Saved ${response.data.count} videos as carousels!`);
+        toastSuccess(`Saved ${response.data.count} videos as carousels!`);
         setSelectedVideos(new Set());
         navigate('/dashboard/carousels');
       } else {
@@ -410,7 +428,7 @@ const ScraperPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error saving videos:', error);
-      toast.error('Failed to save videos. Please try again.');
+      toastError('Failed to save videos. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -418,7 +436,7 @@ const ScraperPage: React.FC = () => {
 
   const handleGenerateImageFromContent = async () => {
     if (!linkedinContent && !youtubeTranscript?.transcript) {
-      toast.error('No content available to generate an image');
+      toastError('No content available to generate an image');
       return;
     }
     
@@ -455,13 +473,13 @@ const ScraperPage: React.FC = () => {
           height: imageData.height
         });
         
-        toast.success('Image generated successfully!');
+        toastSuccess('Image generated successfully!');
       } else {
         throw new Error(response.data?.message || 'Failed to generate image');
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      toast.error('Failed to generate image. Please try again.');
+      toastError('Failed to generate image. Please try again.');
     } finally {
       setIsGeneratingImage(false);
     }
@@ -469,7 +487,12 @@ const ScraperPage: React.FC = () => {
 
   const handleGetTranscript = async (videoId: string) => {
     try {
-      setIsLoadingTranscript(true);
+      setLoadingTranscriptIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(videoId);
+        return newSet;
+      });
+      
       setCurrentVideoId(videoId);
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
@@ -481,7 +504,8 @@ const ScraperPage: React.FC = () => {
       });
       
       if (!response.ok) {
-        throw new Error("Failed to fetch transcript");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch transcript");
       }
       
       const data = await response.json();
@@ -496,15 +520,19 @@ const ScraperPage: React.FC = () => {
           isAutoGenerated: data.is_generated || false
         });
         
-        toast.success("Successfully retrieved the video transcript.");
+        toastSuccess("Successfully retrieved the video transcript.");
       } else {
         throw new Error(data.message || "Failed to fetch transcript");
       }
     } catch (error) {
       console.error("Error fetching transcript:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to fetch transcript");
+      toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
     } finally {
-      setIsLoadingTranscript(false);
+      setLoadingTranscriptIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(videoId);
+        return newSet;
+      });
     }
   };
 
@@ -522,7 +550,7 @@ const ScraperPage: React.FC = () => {
 
   const handleSaveSelectedVideosWithTranscript = async () => {
     if (!youtubeTranscript) {
-      toast.error("Please fetch a transcript before saving");
+      toastError("Please fetch a transcript before saving");
       return;
     }
     
@@ -530,7 +558,7 @@ const ScraperPage: React.FC = () => {
     const videoWithTranscript = youtubeChannelResult?.videos.find(v => v.id === youtubeTranscript.videoId);
     
     if (!videoWithTranscript) {
-      toast.error("Cannot find the video for this transcript");
+      toastError("Cannot find the video for this transcript");
       return;
     }
     
@@ -563,14 +591,14 @@ const ScraperPage: React.FC = () => {
       // Save back to localStorage
       localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
       
-      toast.success("Video with transcript saved successfully");
+      toastSuccess("Video with transcript saved successfully");
       
       // Clear the transcript state
       setYoutubeTranscript(null);
       setCurrentVideoId("");
     } catch (error) {
       console.error("Error saving video with transcript:", error);
-      toast.error("Failed to save the video with transcript");
+      toastError("Failed to save the video with transcript");
     }
   };
 
@@ -919,11 +947,11 @@ const ScraperPage: React.FC = () => {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className={`w-full ${currentVideoId === video.id && isLoadingTranscript ? "opacity-70" : ""}`}
+                    className={`w-full ${loadingTranscriptIds.has(video.id) ? "opacity-70" : ""}`}
                     onClick={() => handleGetTranscript(video.id)}
-                    disabled={isLoadingTranscript}
+                    disabled={loadingTranscriptIds.has(video.id)}
                   >
-                    {currentVideoId === video.id && isLoadingTranscript 
+                    {loadingTranscriptIds.has(video.id)
                       ? "Loading..." 
                       : youtubeTranscript && youtubeTranscript.videoId === video.id 
                         ? "Transcript Ready" 
