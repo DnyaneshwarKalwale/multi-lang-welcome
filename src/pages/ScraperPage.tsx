@@ -230,10 +230,10 @@ const ScraperPage: React.FC = () => {
 
   const handleYouTubeScrape = async () => {
     if (!inputUrl || (!inputUrl.includes('youtube.com') && !inputUrl.includes('youtu.be'))) {
-      toast.error('Please enter a valid YouTube URL');
-      return;
-    }
-
+        toast.error('Please enter a valid YouTube URL');
+        return;
+      }
+      
     setIsLoadingTranscript(true);
     setYoutubeTranscript(null);
     
@@ -477,10 +477,10 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  const saveTranscriptToBackend = async () => {
+  const saveTranscriptToBackend = async (redirectAfterSave: boolean = false) => {
     if (!youtubeTranscript) {
       toast.error('No transcript to save');
-      return;
+      return false;
     }
     
     try {
@@ -489,7 +489,7 @@ const ScraperPage: React.FC = () => {
       
       if (!token) {
         toast.info('Please log in to save transcripts');
-        return;
+        return false;
       }
       
       const response = await axios.post(
@@ -509,12 +509,31 @@ const ScraperPage: React.FC = () => {
       
       if (response.data.success) {
         toast.success('Transcript saved successfully');
+        
+        // If redirecting, navigate to request carousel
+        if (redirectAfterSave) {
+          navigate('/dashboard/request-carousel', { 
+            state: { 
+              fromScraper: true,
+              youtubeVideo: {
+                id: youtubeTranscript.videoId,
+                title: youtubeTranscript.videoId,
+                thumbnailUrl: `https://img.youtube.com/vi/${youtubeTranscript.videoId}/mqdefault.jpg`,
+                videoUrl: `https://youtube.com/watch?v=${youtubeTranscript.videoId}`,
+                transcript: youtubeTranscript.transcript
+              }
+            } 
+          });
+        }
+        
+        return true;
       } else {
         throw new Error(response.data.message || 'Failed to save transcript');
       }
     } catch (error) {
       console.error('Error saving transcript:', error);
       toast.error('Failed to save transcript');
+      return false;
     }
   };
 
@@ -883,7 +902,7 @@ const ScraperPage: React.FC = () => {
       {activeTab === 'youtube' && !youtubeChannelResult && (
         <div className="space-y-4">
           {youtubeTranscript ? (
-            <Card>
+          <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">YouTube Transcript</CardTitle>
                 <CardDescription>
@@ -915,7 +934,7 @@ const ScraperPage: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={saveTranscriptToBackend}
+                      onClick={() => saveTranscriptToBackend(true)}
                     >
                       <Save className="h-3.5 w-3.5" />
                       <span>Save</span>
@@ -938,12 +957,22 @@ const ScraperPage: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={() => navigate('/dashboard/request-carousel', { 
-                        state: { 
-                          videoId: youtubeTranscript.videoId,
-                          transcript: youtubeTranscript.transcript
-                        } 
-                      })}
+                      onClick={() => {
+                        saveTranscriptToBackend().then(() => {
+                          navigate('/dashboard/request-carousel', { 
+                            state: { 
+                              fromScraper: true,
+                              youtubeVideo: {
+                                id: youtubeTranscript.videoId,
+                                title: youtubeTranscript.videoId,
+                                thumbnailUrl: `https://img.youtube.com/vi/${youtubeTranscript.videoId}/mqdefault.jpg`,
+                                videoUrl: `https://youtube.com/watch?v=${youtubeTranscript.videoId}`,
+                                transcript: youtubeTranscript.transcript
+                              }
+                            } 
+                          });
+                        });
+                      }}
                     >
                       <PlusCircle className="h-3.5 w-3.5" />
                       <span>Create Carousel</span>

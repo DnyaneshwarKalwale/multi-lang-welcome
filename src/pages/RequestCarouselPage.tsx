@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -202,6 +202,12 @@ const RequestCarouselPage: React.FC = () => {
   const [savedTranscripts, setSavedTranscripts] = useState<any[]>([]);
   const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
 
+  // Add state for transcript content
+  const [transcriptContent, setTranscriptContent] = useState<string>("");
+
+  const location = useLocation();
+  const locationState = location.state as any;
+  
   // Safe date formatter function to use throughout the component
   const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
     try {
@@ -413,26 +419,91 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Handle video selection
-  const handleVideoSelect = (video: YouTubeVideo) => {
-    setSelectedVideo(video);
+  // Effect to handle location state from ScraperPage
+  useEffect(() => {
+    if (locationState?.fromScraper && locationState?.youtubeVideo) {
+      const video = locationState.youtubeVideo;
+      handleVideoSelect({
+        id: video.id,
+        title: video.title || 'YouTube Video',
+        channelName: "From Scraper",
+        thumbnailUrl: video.thumbnailUrl,
+        videoUrl: video.videoUrl,
+        status: 'ready',
+        source: 'youtube',
+        date: new Date().toLocaleDateString(),
+        duration: "Saved"
+      });
+      
+      if (video.transcript) {
+        setTranscriptContent(video.transcript);
+      }
+      
+      // Set form title
+      form.setValue("title", `Carousel: ${video.title || 'YouTube Video'}`);
+    }
+  }, [locationState, form]);
+
+  // Update handleVideoSelect to handle both regular videos and transcripts
+  const handleVideoSelect = (video: YouTubeVideo | any) => {
+    // Check if this is a transcript object (has platformPostId)
+    const isTranscript = 'platformPostId' in video;
+    
+    // Create a standardized video object
+    const videoObject: YouTubeVideo = isTranscript 
+      ? {
+          id: video.platformPostId || 'unknown',
+          title: video.title || 'YouTube Video',
+          channelName: "Saved Transcript",
+          thumbnailUrl: video.platformPostId ? 
+            `https://img.youtube.com/vi/${video.platformPostId}/mqdefault.jpg` : undefined,
+          videoUrl: video.platformPostId ? 
+            `https://youtube.com/watch?v=${video.platformPostId}` : undefined,
+          status: 'ready',
+          source: 'youtube',
+          date: new Date().toLocaleDateString(),
+          duration: "Saved"
+        }
+      : video;
+    
+    setSelectedVideo(videoObject);
     
     // Set video URL to form based on video ID or videoUrl property
-    if (video.videoUrl) {
-      form.setValue("youtubeUrl", video.videoUrl);
-    } else if (video.id) {
-      form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
+    if (videoObject.videoUrl) {
+      form.setValue("youtubeUrl", videoObject.videoUrl);
+    } else if (videoObject.id) {
+      form.setValue("youtubeUrl", `https://youtube.com/watch?v=${videoObject.id}`);
     }
     
-    // Generate dummy transcript
-    const transcript = generateDummyTranscript(video.id);
-    setGeneratedTranscript(transcript);
+    // If we have transcript content already in the video object
+    if (isTranscript && video.content) {
+      setTranscriptContent(video.content);
+      const slides = processTranscriptToSlides(video.content);
+      setGeneratedTranscript(slides);
+    } else {
+      // Look for a matching transcript from saved transcripts
+      const matchingTranscript = savedTranscripts.find(t => 
+        t.platformPostId === videoObject.id
+      );
+      
+      if (matchingTranscript) {
+        setTranscriptContent(matchingTranscript.content);
+        const slides = processTranscriptToSlides(matchingTranscript.content);
+        setGeneratedTranscript(slides);
+      } else {
+        // Generate dummy transcript if no real one found
+        const transcript = generateDummyTranscript(videoObject.id);
+        setGeneratedTranscript(transcript);
+        setTranscriptContent(""); // Clear transcript content
+      }
+    }
+    
     setShowTranscript(true);
     setCurrentSlide(0);
     
     toast({
-      title: "Video selected",
-      description: "Content from this video will be used for your carousel.",
+      title: isTranscript ? "Transcript selected" : "Video selected",
+      description: `Content from this ${isTranscript ? "transcript" : "video"} will be used for your carousel.`,
     });
   };
 
@@ -514,37 +585,6 @@ const RequestCarouselPage: React.FC = () => {
       .slice(0, 8);
     
     return sentences.length > 0 ? sentences : generateDummyTranscript('default');
-  };
-
-  // Add this function to handle selecting a transcript
-  const handleSelectTranscript = (transcript: any) => {
-    // Process the transcript to get key points for slides
-    const slides = processTranscriptToSlides(transcript.content);
-    
-    // Set the video as selected
-    setSelectedVideo({
-      id: transcript.platformPostId || 'unknown',
-      title: transcript.title || 'YouTube Video',
-      channelName: "Saved Transcript",
-      thumbnailUrl: transcript.platformPostId ? 
-        `https://img.youtube.com/vi/${transcript.platformPostId}/mqdefault.jpg` : undefined,
-      videoUrl: transcript.platformPostId ? 
-        `https://youtube.com/watch?v=${transcript.platformPostId}` : undefined,
-      status: 'ready',
-      source: 'youtube',
-      date: new Date().toLocaleDateString(),
-      duration: "Saved"
-    });
-    
-    // Set the processed transcript as slides
-    setGeneratedTranscript(slides);
-    setShowTranscript(true);
-    setCurrentSlide(0);
-    
-    toast({
-      title: "Transcript selected",
-      description: "Content from this transcript will be used for your carousel",
-    });
   };
 
   // Success view
@@ -766,7 +806,7 @@ const RequestCarouselPage: React.FC = () => {
                                 className={`border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors ${
                                   selectedVideo?.id === transcript.platformPostId ? "bg-blue-50 border-blue-500" : ""
                                 }`}
-                                onClick={() => handleSelectTranscript(transcript)}
+                                onClick={() => handleVideoSelect(transcript)}
                               >
                                 <div className="flex gap-3">
                                   {transcript.platformPostId && (
@@ -797,6 +837,25 @@ const RequestCarouselPage: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      
+                      {/* Add Transcript Section */}
+                      {transcriptContent && (
+                        <Card className="mt-6">
+                          <CardHeader>
+                            <CardTitle className="text-lg">Video Transcript</CardTitle>
+                            <CardDescription>
+                              This transcript will be used to generate your carousel slides
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="border rounded-md p-4 max-h-64 overflow-y-auto">
+                              <pre className="whitespace-pre-wrap font-sans text-sm">
+                                {transcriptContent}
+                              </pre>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
                       
                       {showTranscript && selectedVideo && (
                         <div className="mt-4 border rounded-lg p-4">
