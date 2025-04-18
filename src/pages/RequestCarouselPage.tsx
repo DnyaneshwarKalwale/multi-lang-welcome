@@ -38,6 +38,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { format } from "date-fns";
+import axios from "axios";
 
 // Define the form schema for validation
 const formSchema = z.object({
@@ -197,6 +198,10 @@ const RequestCarouselPage: React.FC = () => {
   const [savedVideos, setSavedVideos] = useState<YouTubeVideo[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
+  // Add this state variable to store transcripts from the backend
+  const [savedTranscripts, setSavedTranscripts] = useState<any[]>([]);
+  const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
+
   // Safe date formatter function to use throughout the component
   const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
     try {
@@ -332,6 +337,46 @@ const RequestCarouselPage: React.FC = () => {
     loadSavedVideos();
   }, [toast]);
 
+  // Add a useEffect to fetch saved transcripts when the component mounts
+  useEffect(() => {
+    const fetchSavedTranscripts = async () => {
+      const token = localStorage.getItem('linkedin-login-token');
+      
+      if (!token) {
+        return;
+      }
+      
+      setIsLoadingTranscripts(true);
+      
+      try {
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        const response = await axios.get(
+          `${baseApiUrl}/posts?platform=youtube`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        if (response.data.success) {
+          setSavedTranscripts(response.data.posts || []);
+        }
+      } catch (error) {
+        console.error('Error fetching saved transcripts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load transcripts",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingTranscripts(false);
+      }
+    };
+    
+    fetchSavedTranscripts();
+  }, []);
+
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -455,6 +500,51 @@ const RequestCarouselPage: React.FC = () => {
         description: "We'll notify you when your carousel is ready.",
       });
     }, 1500);
+  };
+
+  // Process transcript to generate slides
+  const processTranscriptToSlides = (transcript: string): string[] => {
+    // Simple implementation: split by sentences and take the first 8 sentences
+    // In a real implementation, you would use NLP to extract key points
+    const sentences = transcript
+      .replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
+      .split("|")
+      .map(sentence => sentence.trim())
+      .filter(sentence => sentence.length > 20 && sentence.length < 150)
+      .slice(0, 8);
+    
+    return sentences.length > 0 ? sentences : generateDummyTranscript('default');
+  };
+
+  // Add this function to handle selecting a transcript
+  const handleSelectTranscript = (transcript: any) => {
+    // Process the transcript to get key points for slides
+    const slides = processTranscriptToSlides(transcript.content);
+    
+    // Set the video as selected
+    setSelectedVideo({
+      id: transcript.platformPostId || 'unknown',
+      title: transcript.title || 'YouTube Video',
+      channelName: "Saved Transcript",
+      thumbnailUrl: transcript.platformPostId ? 
+        `https://img.youtube.com/vi/${transcript.platformPostId}/mqdefault.jpg` : undefined,
+      videoUrl: transcript.platformPostId ? 
+        `https://youtube.com/watch?v=${transcript.platformPostId}` : undefined,
+      status: 'ready',
+      source: 'youtube',
+      date: new Date().toLocaleDateString(),
+      duration: "Saved"
+    });
+    
+    // Set the processed transcript as slides
+    setGeneratedTranscript(slides);
+    setShowTranscript(true);
+    setCurrentSlide(0);
+    
+    toast({
+      title: "Transcript selected",
+      description: "Content from this transcript will be used for your carousel",
+    });
   };
 
   // Success view
@@ -659,6 +749,54 @@ const RequestCarouselPage: React.FC = () => {
                           </PaginationContent>
                         </Pagination>
                       )}
+                      
+                      {/* Saved Transcripts Section */}
+                      <div className="mt-6">
+                        <h3 className="text-md font-medium mb-2">Your Saved Transcripts</h3>
+                        
+                        {isLoadingTranscripts ? (
+                          <div className="flex justify-center items-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        ) : savedTranscripts.length > 0 ? (
+                          <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                            {savedTranscripts.map((transcript) => (
+                              <div 
+                                key={transcript._id}
+                                className={`border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors ${
+                                  selectedVideo?.id === transcript.platformPostId ? "bg-blue-50 border-blue-500" : ""
+                                }`}
+                                onClick={() => handleSelectTranscript(transcript)}
+                              >
+                                <div className="flex gap-3">
+                                  {transcript.platformPostId && (
+                                    <img 
+                                      src={`https://img.youtube.com/vi/${transcript.platformPostId}/mqdefault.jpg`}
+                                      alt={transcript.title || "YouTube Video"}
+                                      className="w-20 h-12 object-cover rounded"
+                                    />
+                                  )}
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-sm line-clamp-1">{transcript.title || "YouTube Video"}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                      {transcript.content && transcript.content.substring(0, 80)}...
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Saved {new Date(transcript.createdAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-3 border border-dashed rounded-lg">
+                            <p className="text-sm text-muted-foreground">
+                              No saved transcripts found. Go to Scraper page to extract transcripts from YouTube videos.
+                            </p>
+                          </div>
+                        )}
+                      </div>
                       
                       {showTranscript && selectedVideo && (
                         <div className="mt-4 border rounded-lg p-4">
