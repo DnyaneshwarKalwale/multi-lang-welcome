@@ -472,7 +472,7 @@ const ScraperPage: React.FC = () => {
       setIsLoadingTranscript(true);
       setCurrentVideoId(videoId);
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/youtube/transcript`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
