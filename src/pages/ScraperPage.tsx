@@ -240,30 +240,11 @@ const ScraperPage: React.FC = () => {
       setIsLoading(true);
       
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      // Fix the API URL construction to avoid duplicate 'api' in the path
-      let apiUrl = '';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/transcript`
+        : `${baseUrl}/api/transcript`;
       
-      // Check if the baseUrl already has '/api' at the end
-      if (baseUrl.endsWith('/api')) {
-        apiUrl = `${baseUrl}/transcript`;
-      } else {
-        // For URLs without '/api' at the end
-        apiUrl = `${baseUrl}/api/transcript`;
-      }
-      
-      console.log('Fetching transcript from URL:', apiUrl);
-      
-      // Try the main API directly with no fallbacks
-      const response = await axios.post(apiUrl, { videoId }, {
-        // Include headers to help with potential CORS issues
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      // Show all raw errors
-      console.log('API response:', response.data);
+      const response = await axios.post(apiUrl, { videoId });
       
       if (response.data && response.data.success) {
         setYoutubeTranscript({
@@ -276,23 +257,11 @@ const ScraperPage: React.FC = () => {
         toast.success('Transcript fetched successfully!');
         return response.data.transcript;
       } else {
-        throw new Error(response.data?.error || 'Failed to fetch transcript - no success flag in response');
+        throw new Error(response.data?.error || 'Failed to fetch transcript');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching transcript:', error);
-      
-      // More detailed error messages
-      if (error.response) {
-        console.error('Error response:', error.response.data);
-        toast.error(`Error ${error.response.status}: ${error.response.data?.error || error.message}`);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-        toast.error('No response received from server. Check your network connection.');
-      } else {
-        console.error('Error details:', error);
-        toast.error(`Error: ${error.message}`);
-      }
-      
+      toast.error('Failed to fetch transcript. The video might not have captions.');
       return null;
     } finally {
       setIsLoading(false);
