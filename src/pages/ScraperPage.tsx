@@ -240,12 +240,14 @@ const ScraperPage: React.FC = () => {
       setIsLoading(true);
       
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      // Ensure the API URL has the correct format
+      // Fix the API URL construction to avoid duplicate 'api' in the path
       let apiUrl = '';
-      if (baseUrl.includes('localhost')) {
-        apiUrl = `${baseUrl}/api/transcript`;
+      
+      // Check if the baseUrl already has '/api' at the end
+      if (baseUrl.endsWith('/api')) {
+        apiUrl = `${baseUrl}/transcript`;
       } else {
-        // For production environments like Render
+        // For URLs without '/api' at the end
         apiUrl = `${baseUrl}/api/transcript`;
       }
       
