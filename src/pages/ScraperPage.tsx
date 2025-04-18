@@ -537,19 +537,21 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Add a function to get transcript for a single video from the channel results
   const getTranscriptForVideo = async (video: YouTubeVideo) => {
+    if (isLoadingTranscript) return;
+    
     setIsLoadingTranscript(true);
     
     try {
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      // Clear any existing transcript
+      setYoutubeTranscript(null);
       
-      // Call our transcript API with the video URL
-      const response = await axios.post(`${baseApiUrl}/posts/get-transcript`, {
-        videoUrl: video.url
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const response = await axios.get(`${baseApiUrl}/youtube/transcript`, {
+        params: { url: video.url }
       });
       
-      if (response.data.success) {
+      if (response.data && response.data.transcript) {
         setYoutubeTranscript({
           videoId: video.id,
           transcript: response.data.transcript,
@@ -570,11 +572,11 @@ const ScraperPage: React.FC = () => {
           });
         }, 100);
       } else {
-        throw new Error(response.data.message || 'Failed to retrieve transcript');
+        throw new Error(response.data.error || 'Failed to retrieve transcript');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching YouTube transcript:', error);
-      toast.error('Failed to fetch transcript. Please try again.');
+      toast.error(error.response?.data?.error || 'Failed to fetch transcript. Please try again.');
     } finally {
       setIsLoadingTranscript(false);
     }
@@ -612,11 +614,12 @@ const ScraperPage: React.FC = () => {
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
           
           // Get transcript
-          const transcriptResponse = await axios.post(`${baseApiUrl}/posts/get-transcript`, {
-            videoUrl: video.url
+          const transcriptResponse = await axios.get(`${baseApiUrl}/youtube/transcript`, {
+            params: { url: video.url }
           });
           
-          if (!transcriptResponse.data.success) {
+          if (!transcriptResponse.data || !transcriptResponse.data.transcript) {
+            console.error('Failed to get transcript:', transcriptResponse.data.error);
             failCount++;
             continue;
           }
@@ -638,8 +641,9 @@ const ScraperPage: React.FC = () => {
           );
           
           successCount++;
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error processing transcript for video ${video.id}:`, error);
+          toast.error(`Failed to process transcript for "${video.title}": ${error.response?.data?.error || error.message}`);
           failCount++;
         }
       }
@@ -661,9 +665,9 @@ const ScraperPage: React.FC = () => {
         // Clear selection
         setSelectedVideos(new Set());
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing transcripts:', error);
-      toast.error('Failed to process transcripts. Please try again.');
+      toast.error(`Failed to process transcripts: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
