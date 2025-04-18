@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -38,7 +38,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { format } from "date-fns";
-import axios from "axios";
 
 // Define the form schema for validation
 const formSchema = z.object({
@@ -198,16 +197,6 @@ const RequestCarouselPage: React.FC = () => {
   const [savedVideos, setSavedVideos] = useState<YouTubeVideo[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
-  // Add this state variable to store transcripts from the backend
-  const [savedTranscripts, setSavedTranscripts] = useState<any[]>([]);
-  const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
-
-  // Add state for transcript content
-  const [transcriptContent, setTranscriptContent] = useState<string>("");
-
-  const location = useLocation();
-  const locationState = location.state as any;
-  
   // Safe date formatter function to use throughout the component
   const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
     try {
@@ -343,46 +332,6 @@ const RequestCarouselPage: React.FC = () => {
     loadSavedVideos();
   }, [toast]);
 
-  // Add a useEffect to fetch saved transcripts when the component mounts
-  useEffect(() => {
-    const fetchSavedTranscripts = async () => {
-      const token = localStorage.getItem('linkedin-login-token');
-      
-      if (!token) {
-        return;
-      }
-      
-      setIsLoadingTranscripts(true);
-      
-      try {
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const response = await axios.get(
-          `${baseApiUrl}/posts?platform=youtube`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-        
-        if (response.data.success) {
-          setSavedTranscripts(response.data.posts || []);
-        }
-      } catch (error) {
-        console.error('Error fetching saved transcripts:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load transcripts",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoadingTranscripts(false);
-      }
-    };
-    
-    fetchSavedTranscripts();
-  }, []);
-
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -419,91 +368,26 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Effect to handle location state from ScraperPage
-  useEffect(() => {
-    if (locationState?.fromScraper && locationState?.youtubeVideo) {
-      const video = locationState.youtubeVideo;
-      handleVideoSelect({
-        id: video.id,
-        title: video.title || 'YouTube Video',
-        channelName: "From Scraper",
-        thumbnailUrl: video.thumbnailUrl,
-        videoUrl: video.videoUrl,
-        status: 'ready',
-        source: 'youtube',
-        date: new Date().toLocaleDateString(),
-        duration: "Saved"
-      });
-      
-      if (video.transcript) {
-        setTranscriptContent(video.transcript);
-      }
-      
-      // Set form title
-      form.setValue("title", `Carousel: ${video.title || 'YouTube Video'}`);
-    }
-  }, [locationState, form]);
-
-  // Update handleVideoSelect to handle both regular videos and transcripts
-  const handleVideoSelect = (video: YouTubeVideo | any) => {
-    // Check if this is a transcript object (has platformPostId)
-    const isTranscript = 'platformPostId' in video;
-    
-    // Create a standardized video object
-    const videoObject: YouTubeVideo = isTranscript 
-      ? {
-          id: video.platformPostId || 'unknown',
-          title: video.title || 'YouTube Video',
-          channelName: "Saved Transcript",
-          thumbnailUrl: video.platformPostId ? 
-            `https://img.youtube.com/vi/${video.platformPostId}/mqdefault.jpg` : undefined,
-          videoUrl: video.platformPostId ? 
-            `https://youtube.com/watch?v=${video.platformPostId}` : undefined,
-          status: 'ready',
-          source: 'youtube',
-          date: new Date().toLocaleDateString(),
-          duration: "Saved"
-        }
-      : video;
-    
-    setSelectedVideo(videoObject);
+  // Handle video selection
+  const handleVideoSelect = (video: YouTubeVideo) => {
+    setSelectedVideo(video);
     
     // Set video URL to form based on video ID or videoUrl property
-    if (videoObject.videoUrl) {
-      form.setValue("youtubeUrl", videoObject.videoUrl);
-    } else if (videoObject.id) {
-      form.setValue("youtubeUrl", `https://youtube.com/watch?v=${videoObject.id}`);
+    if (video.videoUrl) {
+      form.setValue("youtubeUrl", video.videoUrl);
+    } else if (video.id) {
+      form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
     }
     
-    // If we have transcript content already in the video object
-    if (isTranscript && video.content) {
-      setTranscriptContent(video.content);
-      const slides = processTranscriptToSlides(video.content);
-      setGeneratedTranscript(slides);
-    } else {
-      // Look for a matching transcript from saved transcripts
-      const matchingTranscript = savedTranscripts.find(t => 
-        t.platformPostId === videoObject.id
-      );
-      
-      if (matchingTranscript) {
-        setTranscriptContent(matchingTranscript.content);
-        const slides = processTranscriptToSlides(matchingTranscript.content);
-        setGeneratedTranscript(slides);
-      } else {
-        // Generate dummy transcript if no real one found
-        const transcript = generateDummyTranscript(videoObject.id);
+    // Generate dummy transcript
+    const transcript = generateDummyTranscript(video.id);
     setGeneratedTranscript(transcript);
-        setTranscriptContent(""); // Clear transcript content
-      }
-    }
-    
     setShowTranscript(true);
     setCurrentSlide(0);
     
     toast({
-      title: isTranscript ? "Transcript selected" : "Video selected",
-      description: `Content from this ${isTranscript ? "transcript" : "video"} will be used for your carousel.`,
+      title: "Video selected",
+      description: "Content from this video will be used for your carousel.",
     });
   };
 
@@ -524,97 +408,6 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Function to delete a saved video
-  const handleDeleteVideo = (videoId: string, event: React.MouseEvent) => {
-    // Stop propagation to prevent selecting the video when deleting
-    event.stopPropagation();
-    
-    try {
-      // Remove from savedVideos state
-      setSavedVideos(prevVideos => prevVideos.filter(v => v.id !== videoId));
-      
-      // Remove from localStorage
-      const savedVideosString = localStorage.getItem('savedYoutubeVideos');
-      if (savedVideosString) {
-        const parsedVideos = JSON.parse(savedVideosString);
-        const updatedVideos = parsedVideos.filter((v: any) => v.id !== videoId && v.videoId !== videoId);
-        localStorage.setItem('savedYoutubeVideos', JSON.stringify(updatedVideos));
-      }
-      
-      toast({
-        title: "Video deleted",
-        description: "The saved video has been removed",
-      });
-      
-      // If this was the selected video, clear selection
-      if (selectedVideo?.id === videoId) {
-        setSelectedVideo(null);
-        setShowTranscript(false);
-        setTranscriptContent("");
-      }
-    } catch (error) {
-      console.error('Error deleting video:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete the video",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  // Function to delete a saved transcript
-  const handleDeleteTranscript = async (transcriptId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    try {
-      const token = localStorage.getItem('linkedin-login-token');
-      if (!token) {
-        toast({
-          title: "Authentication required",
-          description: "Please login to delete transcripts",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      await axios.delete(
-        `${baseApiUrl}/posts/${transcriptId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      
-      // Remove from savedTranscripts state
-      setSavedTranscripts(prevTranscripts => 
-        prevTranscripts.filter(t => t._id !== transcriptId)
-      );
-      
-      toast({
-        title: "Transcript deleted",
-        description: "The saved transcript has been removed",
-      });
-      
-      // If this was the selected transcript, clear selection
-      const transcript = savedTranscripts.find(t => t._id === transcriptId);
-      if (transcript && selectedVideo?.id === transcript.platformPostId) {
-        setSelectedVideo(null);
-        setShowTranscript(false);
-        setTranscriptContent("");
-      }
-    } catch (error) {
-      console.error('Error deleting transcript:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete the transcript",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Add the filtering functionality back
   // Filter videos based on search query
   const filteredVideos = searchQuery 
     ? savedVideos.filter(video => 
@@ -623,20 +416,11 @@ const RequestCarouselPage: React.FC = () => {
       )
     : savedVideos;
   
-  // Sort videos by most recent first
-  const sortedVideos = [...filteredVideos].sort((a, b) => {
-    // Convert dates to timestamps for comparison
-    const dateA = a.requestDate instanceof Date ? a.requestDate.getTime() : new Date().getTime();
-    const dateB = b.requestDate instanceof Date ? b.requestDate.getTime() : new Date().getTime();
-    // Sort descending (newest first)
-    return dateB - dateA;
-  });
-  
-  // Paginate the sorted videos
+  // Calculate pagination for YouTube videos
   const indexOfLastVideo = currentPage * videosPerPage;
   const indexOfFirstVideo = indexOfLastVideo - videosPerPage;
-  const currentVideos = sortedVideos.slice(indexOfFirstVideo, indexOfLastVideo);
-  const totalPages = Math.ceil(sortedVideos.length / videosPerPage);
+  const currentVideos = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
+  const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
   
   // Handle page change
   const goToPage = (pageNumber: number) => {
@@ -671,20 +455,6 @@ const RequestCarouselPage: React.FC = () => {
         description: "We'll notify you when your carousel is ready.",
       });
     }, 1500);
-  };
-
-  // Process transcript to generate slides
-  const processTranscriptToSlides = (transcript: string): string[] => {
-    // Simple implementation: split by sentences and take the first 8 sentences
-    // In a real implementation, you would use NLP to extract key points
-    const sentences = transcript
-      .replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
-      .split("|")
-      .map(sentence => sentence.trim())
-      .filter(sentence => sentence.length > 20 && sentence.length < 150)
-      .slice(0, 8);
-    
-    return sentences.length > 0 ? sentences : generateDummyTranscript('default');
   };
 
   // Success view
@@ -734,7 +504,7 @@ const RequestCarouselPage: React.FC = () => {
       </div>
       
       <div className="grid lg:grid-cols-2 gap-8">
-      <Form {...form}>
+        <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
               <CardHeader>
@@ -774,11 +544,11 @@ const RequestCarouselPage: React.FC = () => {
                     
                     <TabsContent value="youtube" className="space-y-4">
                       <div>
-                <FormField
-                  control={form.control}
+                        <FormField
+                          control={form.control}
                           name="youtubeUrl"
-                  render={({ field }) => (
-                    <FormItem>
+                          render={({ field }) => (
+                            <FormItem>
                               <FormLabel>Select a Saved Video</FormLabel>
                               <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -792,10 +562,10 @@ const RequestCarouselPage: React.FC = () => {
                               <FormDescription>
                                 Select one of your saved videos to create a carousel
                               </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                       
                       {isLoadingVideos ? (
@@ -831,14 +601,6 @@ const RequestCarouselPage: React.FC = () => {
                                     </div>
                                   </div>
                                 )}
-                                <Button
-                                  variant="destructive"
-                                  size="icon"
-                                  className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
-                                  onClick={(e) => handleDeleteVideo(video.id, e)}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                                </Button>
                               </div>
                               <div className="p-3">
                                 <h4 className="font-medium text-sm line-clamp-2">{video.title}</h4>
@@ -865,150 +627,54 @@ const RequestCarouselPage: React.FC = () => {
                           </div>
                         </div>
                       )}
-                        
-                        {/* Pagination Controls */}
-                        {sortedVideos.length > videosPerPage && (
-                          <Pagination className="mt-4">
-                            <PaginationContent>
-                              <PaginationItem>
-                                <PaginationPrevious 
-                                  onClick={prevPage} 
-                                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                                />
-                              </PaginationItem>
-                              
-                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <PaginationItem key={page}>
-                                  <PaginationLink 
-                                    isActive={page === currentPage}
-                                    onClick={() => goToPage(page)}
-                                  >
-                                    {page}
-                                  </PaginationLink>
-                                </PaginationItem>
-                              ))}
-                              
-                              <PaginationItem>
-                                <PaginationNext 
-                                  onClick={nextPage}
-                                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                                />
-                              </PaginationItem>
-                            </PaginationContent>
-                          </Pagination>
-                        )}
                       
-                      {/* Saved Transcripts Section */}
-                      <div className="mt-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-md font-medium">Your Saved Transcripts ({savedTranscripts.length})</h3>
-                          {savedTranscripts.length > 0 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate("/dashboard/scraper")}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                              Add New Transcript
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {isLoadingTranscripts ? (
-                          <div className="flex justify-center items-center py-4">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                          </div>
-                        ) : savedTranscripts.length > 0 ? (
-                          <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                            {savedTranscripts
-                              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                              .map((transcript) => (
-                              <div 
-                                key={transcript._id}
-                                className={`border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors ${
-                                  selectedVideo?.id === transcript.platformPostId ? "bg-blue-50 border-blue-500" : ""
-                                }`}
-                              >
-                                <div className="flex gap-3 relative" onClick={() => handleVideoSelect(transcript)}>
-                                  {transcript.platformPostId && (
-                                    <img 
-                                      src={`https://img.youtube.com/vi/${transcript.platformPostId}/mqdefault.jpg`}
-                                      alt={transcript.title || "YouTube Video"}
-                                      className="w-20 h-12 object-cover rounded"
-                                    />
-                                  )}
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-sm line-clamp-1">{transcript.title || "YouTube Video"}</h4>
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                      {transcript.content && transcript.content.substring(0, 80)}...
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Saved {new Date(transcript.createdAt).toLocaleDateString()}
-                                    </p>
-                                  </div>
-                                  <Button 
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-0 right-0 h-6 w-6 opacity-0 hover:opacity-100 transition-opacity"
-                                    onClick={(e) => handleDeleteTranscript(transcript._id, e)}
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                                  </Button>
-                                </div>
-                              </div>
+                      {/* Pagination Controls */}
+                      {filteredVideos.length > videosPerPage && (
+                        <Pagination className="mt-4">
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={prevPage} 
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                              />
+                            </PaginationItem>
+                            
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink 
+                                  isActive={page === currentPage}
+                                  onClick={() => goToPage(page)}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
                             ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-3 border border-dashed rounded-lg">
-                            <p className="text-sm text-muted-foreground mb-3">
-                              No saved transcripts found. Go to Scraper page to extract transcripts from YouTube videos.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate("/dashboard/scraper")}
-                            >
-                              <Youtube className="h-4 w-4 mr-2" />
-                              Extract YouTube Transcripts
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Add Transcript Section */}
-                      {transcriptContent && (
-                        <Card className="mt-6">
-                          <CardHeader>
-                            <CardTitle className="text-lg">Video Transcript</CardTitle>
-                            <CardDescription>
-                              This transcript will be used to generate your carousel slides
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="border rounded-md p-4 max-h-64 overflow-y-auto">
-                              <pre className="whitespace-pre-wrap font-sans text-sm">
-                                {transcriptContent}
-                              </pre>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={nextPage}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
                       )}
-                        
-                        {showTranscript && selectedVideo && (
-                          <div className="mt-4 border rounded-lg p-4">
-                            <h3 className="text-lg font-medium mb-3">Generated Transcript</h3>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              This transcript will be used to create your carousel slides:
-                            </p>
-                            <ScrollArea className="h-48 rounded-md border p-4">
-                              <ol className="list-decimal pl-5 space-y-2">
-                                {generatedTranscript.map((line, index) => (
-                                  <li key={index} className="text-sm">
-                                    {line}
-                                  </li>
-                                ))}
-                              </ol>
-                            </ScrollArea>
+                      
+                      {showTranscript && selectedVideo && (
+                        <div className="mt-4 border rounded-lg p-4">
+                          <h3 className="text-lg font-medium mb-3">Generated Transcript</h3>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            This transcript will be used to create your carousel slides:
+                          </p>
+                          <ScrollArea className="h-48 rounded-md border p-4">
+                            <ol className="list-decimal pl-5 space-y-2">
+                              {generatedTranscript.map((line, index) => (
+                                <li key={index} className="text-sm">
+                                  {line}
+                                </li>
+                              ))}
+                            </ol>
+                          </ScrollArea>
                         </div>
                       )}
                     </TabsContent>
@@ -1067,8 +733,8 @@ const RequestCarouselPage: React.FC = () => {
                     </TabsContent>
                   </Tabs>
                 </div>
-                </CardContent>
-              </Card>
+              </CardContent>
+            </Card>
             
             <div className="flex gap-3">
               <Button type="submit" disabled={isSubmitting} className="flex-1">
@@ -1083,10 +749,10 @@ const RequestCarouselPage: React.FC = () => {
                 <LayoutGrid className="h-4 w-4" />
                 Browse Templates
               </Button>
-          </div>
-        </form>
-      </Form>
-              
+            </div>
+          </form>
+        </Form>
+        
         <Card>
           <CardHeader>
             <CardTitle>Preview & Information</CardTitle>
