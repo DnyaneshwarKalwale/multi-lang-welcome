@@ -239,15 +239,23 @@ const ScraperPage: React.FC = () => {
     try {
       setIsLoading(true);
       
+      // For development, use the local server
+      // For production, use the environment variable
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = baseUrl.endsWith('/')
-        ? `${baseUrl}api/transcript`
-        : baseUrl.endsWith('/api')
-          ? `${baseUrl}/transcript`
-          : `${baseUrl}/api/transcript`;
       
+      // Construct the API URL properly
+      let apiUrl = '';
+      if (baseUrl.endsWith('/api')) {
+        apiUrl = `${baseUrl}/transcript`;
+      } else {
+        apiUrl = `${baseUrl}/api/transcript`;
+      }
+      
+      console.log(`Fetching transcript from: ${apiUrl} for video ID: ${videoId}`);
       
       const response = await axios.post(apiUrl, { videoId });
+      
+      console.log('Transcript API response:', response.data);
       
       if (response.data && response.data.success) {
         setYoutubeTranscript({
