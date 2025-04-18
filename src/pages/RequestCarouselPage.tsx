@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -60,8 +60,9 @@ interface YouTubeVideo {
   videoUrl?: string;
   source?: 'youtube';
   status?: string;
-  transcript?: string | null;
-  thumbnail?: string;
+  transcript?: string;
+  language?: string;
+  is_generated?: boolean;
 }
 
 // Interface for saved carousel videos
@@ -183,7 +184,6 @@ const generateDummyTranscript = (videoId: string): string[] => {
 
 const RequestCarouselPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -335,59 +335,6 @@ const RequestCarouselPage: React.FC = () => {
     loadSavedVideos();
   }, [toast]);
 
-  // Process videos coming from ScraperPage
-  useEffect(() => {
-    const handleLocationState = () => {
-      if (location.state) {
-        const { fromYouTube, videos } = location.state;
-        
-        if (fromYouTube && Array.isArray(videos) && videos.length > 0) {
-          // Process the videos from ScraperPage
-          const processedVideos = videos.map((video: any) => {
-            return {
-              id: video.id,
-              title: video.title || 'YouTube Video',
-              channelName: "Imported from Scraper",
-              status: 'ready',
-              thumbnailUrl: video.thumbnail,
-              requestDate: new Date(),
-              deliveryDate: new Date(),
-              slideCount: 5,
-              videoUrl: video.url,
-              views: video.view_count ? video.view_count.toString() : "Unknown",
-              date: video.upload_date ? new Date(video.upload_date).toLocaleDateString() : "Unknown",
-              duration: video.duration || "Unknown",
-              source: 'youtube',
-              transcript: video.transcript
-            };
-          });
-          
-          // Select the first video automatically
-          if (processedVideos.length > 0) {
-            const firstVideo = processedVideos[0];
-            handleVideoSelect(firstVideo);
-            
-            // Set a success toast
-            toast({
-              title: "Videos imported",
-              description: `${processedVideos.length} videos imported from YouTube scraper.`,
-              variant: "default"
-            });
-          }
-          
-          // Merge with existing saved videos
-          setSavedVideos(prevVideos => [...processedVideos, ...prevVideos]);
-        }
-      }
-    };
-    
-    handleLocationState();
-    // Clear the location state to prevent processing the same data again on re-renders
-    if (location.state) {
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state, toast]);
-
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -435,55 +382,43 @@ const RequestCarouselPage: React.FC = () => {
       form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
     }
     
-    // Check if the video has a transcript, use it, otherwise use dummy
+    // Check if the video already has a transcript
     if (video.transcript) {
-      // Split transcript into bullet points (roughly every 200 characters)
-      const transcriptText = video.transcript;
-      const splitTranscript = [];
-      const sentenceRegex = /[.!?]+\s+/g;
-      
-      // Try to split by sentences first
-      const sentences = transcriptText.split(sentenceRegex);
-      
-      // Combine sentences into reasonable length bullet points
-      let currentPoint = '';
-      for (const sentence of sentences) {
-        if (sentence.trim().length === 0) continue;
-        
-        if ((currentPoint + sentence).length > 200) {
-          if (currentPoint.length > 0) {
-            splitTranscript.push(currentPoint.trim());
-          }
-          currentPoint = sentence;
-        } else {
-          currentPoint += (currentPoint ? ' ' : '') + sentence;
-        }
-      }
-      
-      // Add the last point if it exists
-      if (currentPoint.length > 0) {
-        splitTranscript.push(currentPoint.trim());
-      }
-      
-      // Limit to 8 bullet points
-      const limitedTranscript = splitTranscript.slice(0, 8);
-      
-      setGeneratedTranscript(limitedTranscript.length > 0 ? limitedTranscript : ['No valid transcript content could be extracted from this video.']);
+      setGeneratedTranscript(formatTranscript(video.transcript));
+      setShowTranscript(true);
+      setCurrentSlide(0);
     } else {
-      // Fall back to dummy transcript if no real transcript is available
+      // Generate dummy transcript if no real transcript exists
       const transcript = generateDummyTranscript(video.id);
       setGeneratedTranscript(transcript);
+      setShowTranscript(true);
+      setCurrentSlide(0);
     }
-    
-    setShowTranscript(true);
-    setCurrentSlide(0);
     
     toast({
       title: "Video selected",
-      description: video.transcript 
-        ? "Real transcript from this video will be used for your carousel." 
-        : "Dummy content will be used for your carousel since no transcript was found.",
+      description: "Content from this video will be used for your carousel.",
     });
+  };
+
+  // Format transcript into readable bullet points
+  const formatTranscript = (transcript: string): string[] => {
+    if (!transcript) return [];
+    
+    // Split by sentences and create bullet points
+    const sentences = transcript.replace(/([.?!])\s+/g, "$1|").split("|");
+    const bulletPoints = [];
+    
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim();
+      if (sentence.length > 10) {  // Only include meaningful sentences
+        bulletPoints.push(sentence);
+        // Limit to 10 bullet points
+        if (bulletPoints.length >= 10) break;
+      }
+    }
+    
+    return bulletPoints.length > 0 ? bulletPoints : ["No transcript content available"];
   };
 
   // Watch video handler
