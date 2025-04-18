@@ -414,14 +414,7 @@ const ScraperPage: React.FC = () => {
         
         toast.success(`Saved ${response.data.count} videos as carousels!`);
         setSelectedVideos(new Set());
-        
-        // Navigate to request-carousel page instead of carousels page
-        navigate('/dashboard/request-carousel', {
-          state: {
-            fromScraper: true,
-            savedVideos: savedVideos
-          }
-        });
+        navigate('/dashboard/request-carousel');
       } else {
         throw new Error(response.data?.message || 'Failed to save videos');
       }
@@ -908,6 +901,21 @@ const ScraperPage: React.FC = () => {
       {/* YouTube Transcript Results */}
       {activeTab === 'youtube' && !youtubeChannelResult && (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold">YouTube Transcript</h2>
+            {!youtubeTranscript && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/dashboard/request-carousel')}
+                className="gap-1"
+              >
+                <Youtube className="h-4 w-4 mr-1" />
+                View Saved Transcripts
+              </Button>
+            )}
+          </div>
+
           {youtubeTranscript ? (
           <Card>
               <CardHeader className="pb-3">
@@ -938,13 +946,13 @@ const ScraperPage: React.FC = () => {
                       <span>Copy</span>
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       className="flex items-center gap-1"
                       onClick={() => saveTranscriptToBackend(true)}
                     >
                       <Save className="h-3.5 w-3.5" />
-                      <span>Save</span>
+                      <span>Save & Create Carousel</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -959,30 +967,6 @@ const ScraperPage: React.FC = () => {
                     >
                       <FileText className="h-3.5 w-3.5" />
                       <span>Use in Post</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-1"
-                      onClick={() => {
-                        saveTranscriptToBackend().then(() => {
-                          navigate('/dashboard/request-carousel', { 
-                            state: { 
-                              fromScraper: true,
-                              youtubeVideo: {
-                                id: youtubeTranscript.videoId,
-                                title: youtubeTranscript.videoId,
-                                thumbnailUrl: `https://img.youtube.com/vi/${youtubeTranscript.videoId}/mqdefault.jpg`,
-                                videoUrl: `https://youtube.com/watch?v=${youtubeTranscript.videoId}`,
-                                transcript: youtubeTranscript.transcript
-                              }
-                            } 
-                          });
-                        });
-                      }}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span>Create Carousel</span>
                     </Button>
                   </div>
                 </div>
@@ -1001,8 +985,18 @@ const ScraperPage: React.FC = () => {
                 <div className="text-center py-6 border border-dashed rounded-lg">
                   <p className="text-muted-foreground mb-2">No transcript loaded yet</p>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Enter a YouTube URL and click "Scrape" to get started
+                    Enter a YouTube URL and click "Get Content" to extract a transcript
                   </p>
+                  <div className="flex justify-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/dashboard/request-carousel')}
+                    >
+                      <Youtube className="h-4 w-4 mr-2" />
+                      View Saved Transcripts
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
