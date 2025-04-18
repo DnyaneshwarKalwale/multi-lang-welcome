@@ -240,11 +240,24 @@ const ScraperPage: React.FC = () => {
       setIsLoading(true);
       
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = baseUrl.endsWith('/api') 
-        ? `${baseUrl}/transcript`
-        : `${baseUrl}/api/transcript`;
+      // Ensure the API URL has the correct format
+      let apiUrl = '';
+      if (baseUrl.includes('localhost')) {
+        apiUrl = `${baseUrl}/api/transcript`;
+      } else {
+        // For production environments like Render
+        apiUrl = `${baseUrl}/api/transcript`;
+      }
       
-      const response = await axios.post(apiUrl, { videoId });
+      console.log('Fetching transcript from URL:', apiUrl);
+      
+      const response = await axios.post(apiUrl, { videoId }, {
+        // Include headers to help with potential CORS issues
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       
       if (response.data && response.data.success) {
         setYoutubeTranscript({
@@ -259,9 +272,20 @@ const ScraperPage: React.FC = () => {
       } else {
         throw new Error(response.data?.error || 'Failed to fetch transcript');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching transcript:', error);
-      toast.error('Failed to fetch transcript. The video might not have captions.');
+      
+      // More specific error messages based on error types
+      if (error.response && error.response.status === 401) {
+        toast.error('Authentication error when fetching transcript. Please log in and try again.');
+      } else if (error.response && error.response.status === 404) {
+        toast.error('Transcript not found. The video might not have available captions.');
+      } else if (error.message.includes('Network Error')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error('Failed to fetch transcript. The video might not have captions.');
+      }
+      
       return null;
     } finally {
       setIsLoading(false);
