@@ -421,6 +421,7 @@ const RequestCarouselPage: React.FC = () => {
 
   // Effect to handle location state from ScraperPage
   useEffect(() => {
+    // Handle single video from transcript
     if (locationState?.fromScraper && locationState?.youtubeVideo) {
       const video = locationState.youtubeVideo;
       handleVideoSelect({
@@ -441,6 +442,36 @@ const RequestCarouselPage: React.FC = () => {
       
       // Set form title
       form.setValue("title", `Carousel: ${video.title || 'YouTube Video'}`);
+    }
+    
+    // Handle saved videos from channel
+    if (locationState?.fromScraper && locationState?.savedVideos && locationState.savedVideos.length > 0) {
+      // Update saved videos list with the new ones
+      setSavedVideos(prevVideos => {
+        // Combine existing videos with new ones, avoiding duplicates
+        const newVideoIds = new Set(locationState.savedVideos.map((v: any) => v.id || v.videoId));
+        const filteredPrevVideos = prevVideos.filter(v => !newVideoIds.has(v.id));
+        return [...filteredPrevVideos, ...locationState.savedVideos];
+      });
+      
+      // Select the first video from the saved videos
+      if (locationState.savedVideos[0]) {
+        const firstVideo = locationState.savedVideos[0];
+        handleVideoSelect({
+          id: firstVideo.id || firstVideo.videoId,
+          title: firstVideo.title || 'YouTube Video',
+          channelName: "From Channel",
+          thumbnailUrl: firstVideo.thumbnailUrl,
+          videoUrl: firstVideo.videoUrl,
+          status: 'ready',
+          source: 'youtube',
+          date: new Date().toLocaleDateString(),
+          duration: "Saved"
+        });
+        
+        // Set form title
+        form.setValue("title", `Carousel: ${firstVideo.title || 'YouTube Video'}`);
+      }
     }
   }, [locationState, form]);
 
@@ -831,9 +862,17 @@ const RequestCarouselPage: React.FC = () => {
                           </div>
                         ) : (
                           <div className="text-center py-3 border border-dashed rounded-lg">
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground mb-2">
                               No saved transcripts found. Go to Scraper page to extract transcripts from YouTube videos.
                             </p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate("/dashboard/scraper")}
+                            >
+                              <Youtube className="h-4 w-4 mr-2" />
+                              Extract Video Transcripts
+                            </Button>
                           </div>
                         )}
                       </div>

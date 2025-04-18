@@ -414,7 +414,14 @@ const ScraperPage: React.FC = () => {
         
         toast.success(`Saved ${response.data.count} videos as carousels!`);
         setSelectedVideos(new Set());
-        navigate('/dashboard/carousels');
+        
+        // Navigate to request-carousel page instead of carousels page
+        navigate('/dashboard/request-carousel', {
+          state: {
+            fromScraper: true,
+            savedVideos: savedVideos
+          }
+        });
       } else {
         throw new Error(response.data?.message || 'Failed to save videos');
       }
