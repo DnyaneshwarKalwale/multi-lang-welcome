@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Setup mock API responses when in development and backend is down
+// Setup mock API responses when in development and backend is 
 const setupMockApi = async () => {
   try {
     // Try to ping the backend health check endpoint
