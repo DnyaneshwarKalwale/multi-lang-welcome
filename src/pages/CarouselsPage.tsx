@@ -62,35 +62,6 @@ const CarouselsPage: React.FC = () => {
 
   const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>([]);
 
-  // Safe date formatter function to use throughout the component
-  const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
-    try {
-      if (!date) return 'Unknown date';
-      
-      // If it's already a Date object
-      if (date instanceof Date) {
-        return isNaN(date.getTime()) ? 'Unknown date' : format(date, formatString);
-      }
-      
-      // Try parsing as string
-      if (typeof date === 'string') {
-        const parsedDate = new Date(date);
-        return isNaN(parsedDate.getTime()) ? 'Unknown date' : format(parsedDate, formatString);
-      }
-      
-      // If it's a number (timestamp)
-      if (typeof date === 'number' && !isNaN(date)) {
-        const parsedDate = new Date(date);
-        return isNaN(parsedDate.getTime()) ? 'Unknown date' : format(parsedDate, formatString);
-      }
-      
-      return 'Unknown date';
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return 'Unknown date';
-    }
-  };
-
   useEffect(() => {
     // Load saved videos from localStorage
     const loadSavedVideos = () => {
@@ -103,68 +74,19 @@ const CarouselsPage: React.FC = () => {
           try {
             const savedVideos = JSON.parse(savedVideosString);
             
-            // Convert to CarouselRequest format with extra safety
-            const carousels = savedVideos.map((video: any) => {
-              try {
-                // Create a valid date object or fallback to current date
-                const safeDate = (dateInput: any) => {
-                  if (!dateInput) return new Date();
-                  
-                  try {
-                    // If it's already a Date object
-                    if (dateInput instanceof Date) {
-                      return isNaN(dateInput.getTime()) ? new Date() : dateInput;
-                    }
-                    
-                    // Try parsing as string
-                    if (typeof dateInput === 'string') {
-                      const parsedDate = new Date(dateInput);
-                      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-                    }
-                    
-                    // If it's a number (timestamp)
-                    if (typeof dateInput === 'number' && !isNaN(dateInput)) {
-                      const parsedDate = new Date(dateInput);
-                      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-                    }
-                    
-                    return new Date();
-                  } catch (e) {
-                    console.error("Error parsing date:", e);
-                    return new Date();
-                  }
-                };
-                
-                // Get safe videoId
-                const videoId = video.videoId || video.id || '';
-                
-                return {
-                  id: video.id || videoId || Math.random().toString(36).substring(2, 9),
-                  title: video.title || 'YouTube Video',
-                  status: 'ready',
-                  thumbnailUrl: video.thumbnailUrl || 
-                    (videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : undefined),
-                  requestDate: safeDate(video.requestDate),
-                  deliveryDate: safeDate(video.deliveryDate),
-                  slideCount: video.slideCount || 5,
-                  videoId: videoId,
-                  videoUrl: video.videoUrl || (videoId ? `https://youtube.com/watch?v=${videoId}` : undefined),
-                  source: 'youtube'
-                };
-              } catch (itemError) {
-                console.error("Error processing video item:", itemError);
-                // Return a safe default item if individual parsing fails
-                return {
-                  id: Math.random().toString(36).substring(2, 9),
-                  title: 'YouTube Video',
-                  status: 'ready',
-                  requestDate: new Date(),
-                  deliveryDate: new Date(),
-                  slideCount: 5,
-                  source: 'youtube'
-                };
-              }
-            });
+            // Convert to CarouselRequest format
+            const carousels = savedVideos.map((video: any) => ({
+              id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
+              title: video.title || 'YouTube Video',
+              status: 'ready',
+              thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
+              requestDate: new Date(video.requestDate) || new Date(),
+              deliveryDate: new Date(video.deliveryDate) || new Date(),
+              slideCount: video.slideCount || 5,
+              videoId: video.videoId,
+              videoUrl: video.videoUrl || `https://youtube.com/watch?v=${video.videoId}`,
+              source: 'youtube'
+            }));
             
             setCarouselRequests(carousels);
           } catch (parseError) {
@@ -172,8 +94,35 @@ const CarouselsPage: React.FC = () => {
             setCarouselRequests([]);
           }
         } else {
-          // No saved videos found, show empty state
-          setCarouselRequests([]);
+          // If no saved videos are found, use dummy data for demonstration
+          const dummyCarousels: CarouselRequest[] = [
+            {
+              id: '1',
+              title: 'Why LinkedIn is Important for Professionals',
+              status: 'ready',
+              thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+              requestDate: new Date(),
+              deliveryDate: new Date(),
+              slideCount: 5,
+              videoId: 'dQw4w9WgXcQ',
+              videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+              source: 'youtube'
+            },
+            {
+              id: '2',
+              title: 'Top 10 Resume Tips for 2023',
+              status: 'ready',
+              thumbnailUrl: 'https://i.ytimg.com/vi/UBJq-QHaHyY/hqdefault.jpg',
+              requestDate: new Date(),
+              deliveryDate: new Date(),
+              slideCount: 8,
+              videoId: 'UBJq-QHaHyY',
+              videoUrl: 'https://youtube.com/watch?v=UBJq-QHaHyY',
+              source: 'youtube'
+            }
+          ];
+          
+          setCarouselRequests(dummyCarousels);
         }
       } catch (error) {
         console.error('Error loading saved videos:', error);
@@ -390,7 +339,7 @@ const CarouselsPage: React.FC = () => {
                   <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
                   <CardDescription className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    Added: {safeFormatDate(carousel.requestDate)}
+                    Added: {format(new Date(carousel.requestDate), 'MMM d, yyyy')}
                   </CardDescription>
                 </CardHeader>
                 
@@ -404,7 +353,7 @@ const CarouselsPage: React.FC = () => {
                     {carousel.deliveryDate && (
                       <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                         <Clock className="h-4 w-4" />
-                        <span>{safeFormatDate(carousel.deliveryDate)}</span>
+                        <span>{format(new Date(carousel.deliveryDate), 'MMM d, yyyy')}</span>
                       </div>
                     )}
                   </div>
@@ -492,7 +441,7 @@ const CarouselsPage: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
             {searchQuery || statusFilter 
               ? "No carousels match your current filters. Try adjusting your search criteria."
-              : "You don't have any carousels yet. Please visit the Request Carousel page to browse and select videos for your carousels."}
+              : "You haven't requested any carousels yet. Create your first carousel request to get started."}
           </p>
           
           <Button
@@ -510,7 +459,7 @@ const CarouselsPage: React.FC = () => {
           <div>
             <h3 className="font-medium mb-1">Carousel Credits</h3>
             <p>
-              You have 2 carousel requests remaining this month. Your credits will reset on {safeFormatDate(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1))}.
+              You have 2 carousel requests remaining this month. Your credits will reset on {format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), 'MMMM d, yyyy')}.
             </p>
           </div>
           
