@@ -27,11 +27,7 @@
               className="social-auth-button linkedin"
               onClick={() => {
                 setLoading(true);
-                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const loginUrl = baseUrl.endsWith('/api')
-                  ? `${baseUrl}/auth/linkedin-direct`
-                  : `${baseUrl}/api/auth/linkedin-direct`;
-                window.location.href = loginUrl;
+                window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/linkedin-direct`;
               }}
               disabled={loading}
             >
