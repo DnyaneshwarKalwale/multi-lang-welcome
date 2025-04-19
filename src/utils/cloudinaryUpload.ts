@@ -1,6 +1,5 @@
 /**
- * Utility for uploading images to Cloudinary directly from the frontend
- */
+
 
 /**
  * Upload an image directly to Cloudinary
