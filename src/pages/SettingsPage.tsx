@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { 
   User, 
   Bell, 
@@ -27,7 +28,8 @@ import {
   Clock,
   Calendar,
   Trash2,
-  LogOut
+  LogOut,
+  CheckCircle
 } from 'lucide-react';
 import {
   Select,
@@ -44,7 +46,7 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   email: string;
-  profileImage?: string;
+  profilePicture?: string;
   linkedInUrl?: string;
   bio?: string;
   jobTitle?: string;
@@ -60,7 +62,7 @@ const SettingsPage: React.FC = () => {
     firstName: user?.firstName || 'John',
     lastName: user?.lastName || 'Doe',
     email: user?.email || 'john.doe@example.com',
-    profileImage: user?.profileImage,
+    profilePicture: user?.profilePicture,
     linkedInUrl: 'https://linkedin.com/in/johndoe',
     bio: 'Product Marketing Manager with 5+ years experience in SaaS. Passionate about creating compelling content that drives engagement and conversions.',
     jobTitle: 'Product Marketing Manager',
@@ -143,8 +145,8 @@ const SettingsPage: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex flex-col items-center py-4">
               <Avatar className="w-24 h-24 mb-4">
-                {profile.profileImage ? (
-                  <AvatarImage src={profile.profileImage} />
+                {profile.profilePicture ? (
+                  <AvatarImage src={profile.profilePicture} />
                 ) : (
                   <AvatarFallback className="text-lg">
                     {profile.firstName?.[0]}{profile.lastName?.[0]}
