@@ -34,7 +34,6 @@ import axios from 'axios';
 import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import api from '@/services/api';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useToast } from "@/hooks/use-toast";
 
 interface ScraperResult {
   content: string;
@@ -106,7 +105,6 @@ interface YouTubeChannelResult {
 const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('linkedin');
   const [inputUrl, setInputUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -127,27 +125,10 @@ const ScraperPage: React.FC = () => {
   const [isFetchingChannel, setIsFetchingChannel] = useState(false);
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>("");
-  const [loadingTranscriptIds, setLoadingTranscriptIds] = useState<Set<string>>(new Set());
-  const [retryCount, setRetryCount] = useState<Record<string, number>>({});
-
-  // Helper functions for toast
-  const toastSuccess = (message: string) => {
-    toast({
-      description: message,
-      variant: "default",
-    });
-  };
-
-  const toastError = (message: string) => {
-    toast({
-      description: message,
-      variant: "destructive",
-    });
-  };
 
   const handleYouTubeChannelScrape = async () => {
     if (!inputUrl) {
-      toastError('Please enter a YouTube channel URL or @handle');
+      toast.error('Please enter a YouTube channel URL or @handle');
       return;
     }
 
@@ -163,13 +144,13 @@ const ScraperPage: React.FC = () => {
           videos: response.data.data,
           channelName: inputUrl.includes('@') ? inputUrl.split('@')[1] : inputUrl
         });
-        toastSuccess(`Found ${response.data.data.length} videos`);
+        toast.success(`Found ${response.data.data.length} videos`);
       } else {
         throw new Error(response.data?.message || 'Failed to fetch channel videos');
       }
     } catch (error) {
       console.error('Error fetching YouTube channel:', error);
-      toastError('Failed to fetch channel videos. Please try again.');
+      toast.error('Failed to fetch channel videos. Please try again.');
     } finally {
       setIsFetchingChannel(false);
     }
@@ -177,7 +158,7 @@ const ScraperPage: React.FC = () => {
 
   const handleScrape = async () => {
     if (!inputUrl) {
-      toastError('Please enter a valid URL');
+      toast.error('Please enter a valid URL');
       return;
     }
     
@@ -206,11 +187,11 @@ const ScraperPage: React.FC = () => {
           estimatedReadTime: 2,
           wordCount: 150
         });
-        toastSuccess('Content scraped successfully!');
+        toast.success('Content scraped successfully!');
       }
     } catch (error) {
       console.error(`Error scraping content from ${activeTab}:`, error);
-      toastError(`Failed to scrape content from ${activeTab}. Please try again.`);
+      toast.error(`Failed to scrape content from ${activeTab}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +211,7 @@ const ScraperPage: React.FC = () => {
     }
     
     if (!username) {
-      toastError('Please enter a valid Twitter username');
+      toast.error('Please enter a valid Twitter username');
       return;
     }
     
@@ -245,7 +226,7 @@ const ScraperPage: React.FC = () => {
         profileImageUrl: tweets[0]?.author?.profile_image_url
       });
       
-      toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+      toast.success(`Successfully retrieved ${tweets.length} tweets from @${username}`);
     } else {
       throw new Error(response.data?.message || 'Failed to fetch tweets');
     }
@@ -254,7 +235,7 @@ const ScraperPage: React.FC = () => {
   const handleYouTubeScrape = async () => {
     try {
       if (!inputUrl.includes('youtube.com') && !inputUrl.includes('youtu.be')) {
-        toastError('Please enter a valid YouTube URL');
+        toast.error('Please enter a valid YouTube URL');
         return;
       }
       
@@ -269,20 +250,20 @@ const ScraperPage: React.FC = () => {
         setResult(null);
         setTwitterResult(null);
         
-        toastSuccess('YouTube transcript fetched successfully!');
+        toast.success('YouTube transcript fetched successfully!');
       } else {
         throw new Error(response.data?.message || 'Failed to fetch transcript');
       }
     } catch (error) {
       console.error('Error fetching YouTube transcript:', error);
-      toastError('Failed to fetch YouTube transcript. The video might not have captions or is unavailable.');
+      toast.error('Failed to fetch YouTube transcript. The video might not have captions or is unavailable.');
       throw error;
     }
   };
 
   const handleAnalyzeTranscript = async () => {
     if (!youtubeTranscript || !youtubeTranscript.transcript) {
-      toastError('No transcript available to analyze');
+      toast.error('No transcript available to analyze');
       return;
     }
     
@@ -297,13 +278,13 @@ const ScraperPage: React.FC = () => {
       if (response.data && response.data.success) {
         const content = response.data.data.content;
         setLinkedinContent(content);
-        toastSuccess('Transcript analyzed and LinkedIn content generated!');
+        toast.success('Transcript analyzed and LinkedIn content generated!');
       } else {
         throw new Error(response.data?.message || 'Failed to analyze transcript');
       }
     } catch (error) {
       console.error('Error analyzing transcript:', error);
-      toastError('Failed to generate LinkedIn content from transcript.');
+      toast.error('Failed to generate LinkedIn content from transcript.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -311,11 +292,11 @@ const ScraperPage: React.FC = () => {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    toastSuccess('Copied to clipboard!');
+    toast.success('Copied to clipboard!');
   };
 
   const handleSaveToInspiration = () => {
-    toastSuccess('Saved to Inspiration Vault!');
+    toast.success('Saved to Inspiration Vault!');
   };
 
   const handleCreatePost = () => {
@@ -336,12 +317,12 @@ const ScraperPage: React.FC = () => {
 
   const handleSaveSelectedTweets = async () => {
     if (selectedTweets.size === 0) {
-      toastError('Please select at least one tweet to save');
+      toast.error('Please select at least one tweet to save');
       return;
     }
     
     if (!twitterResult || !twitterResult.tweets) {
-      toastError('No tweets available to save');
+      toast.error('No tweets available to save');
       return;
     }
     
@@ -366,14 +347,14 @@ const ScraperPage: React.FC = () => {
       });
       
       if (response.data && response.data.success) {
-        toastSuccess(`Saved ${response.data.count} tweets successfully!`);
+        toast.success(`Saved ${response.data.count} tweets successfully!`);
         setSelectedTweets(new Set());
       } else {
         throw new Error(response.data?.message || 'Failed to save tweets');
       }
     } catch (error) {
       console.error('Error saving tweets:', error);
-      toastError('Failed to save tweets. Please try again.');
+      toast.error('Failed to save tweets. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -381,7 +362,7 @@ const ScraperPage: React.FC = () => {
 
   const handleSaveSelectedVideos = async () => {
     if (selectedVideos.size === 0 || !youtubeChannelResult) {
-      toastError('Please select at least one video');
+      toast.error('Please select at least one video');
       return;
     }
 
@@ -421,7 +402,7 @@ const ScraperPage: React.FC = () => {
         
         localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
         
-        toastSuccess(`Saved ${response.data.count} videos as carousels!`);
+        toast.success(`Saved ${response.data.count} videos as carousels!`);
         setSelectedVideos(new Set());
         navigate('/dashboard/carousels');
       } else {
@@ -429,7 +410,7 @@ const ScraperPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error saving videos:', error);
-      toastError('Failed to save videos. Please try again.');
+      toast.error('Failed to save videos. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -437,7 +418,7 @@ const ScraperPage: React.FC = () => {
 
   const handleGenerateImageFromContent = async () => {
     if (!linkedinContent && !youtubeTranscript?.transcript) {
-      toastError('No content available to generate an image');
+      toast.error('No content available to generate an image');
       return;
     }
     
@@ -474,114 +455,56 @@ const ScraperPage: React.FC = () => {
           height: imageData.height
         });
         
-        toastSuccess('Image generated successfully!');
+        toast.success('Image generated successfully!');
       } else {
         throw new Error(response.data?.message || 'Failed to generate image');
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      toastError('Failed to generate image. Please try again.');
+      toast.error('Failed to generate image. Please try again.');
     } finally {
       setIsGeneratingImage(false);
     }
   };
 
   const handleGetTranscript = async (videoId: string) => {
-    const maxRetries = 2; // Maximum number of retries
-    let currentRetryCount = 0;
-    let lastError: any = null;
-
-    // Helper function to delay execution
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
     try {
-      setLoadingTranscriptIds(prev => {
-        const newSet = new Set(prev);
-        newSet.add(videoId);
-        return newSet;
+      setIsLoadingTranscript(true);
+      setCurrentVideoId(videoId);
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ videoId })
       });
       
-      setCurrentVideoId(videoId);
-      setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
-      
-      while (currentRetryCount <= maxRetries) {
-        try {
-          // If it's a retry, wait with exponential backoff (3s, 6s)
-          if (currentRetryCount > 0) {
-            const delay = currentRetryCount * 3000; // 3 seconds * retry count
-            console.log(`Retry ${currentRetryCount}/${maxRetries} after ${delay}ms delay`);
-            
-            // Update retry count in state for UI
-            setRetryCount(prev => ({ ...prev, [videoId]: currentRetryCount }));
-            
-            toastSuccess(`Retrying transcript fetch (attempt ${currentRetryCount + 1})...`);
-            await sleep(delay);
-          }
-
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ 
-              videoId,
-              useScraperApi: true // Always use ScraperAPI to avoid rate limits
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            // If rate limited, retry
-            if (response.status === 429 && currentRetryCount < maxRetries) {
-              currentRetryCount++;
-              continue; // Go to next iteration of the loop
-            }
-            throw new Error(errorData.message || "Failed to fetch transcript");
-          }
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            setYoutubeTranscript({
-              videoId: videoId,
-              transcript: data.transcript,
-              language: data.language || "Unknown",
-              language_code: data.language_code,
-              is_generated: data.is_generated,
-              isAutoGenerated: data.is_generated || false
-            });
-            
-            toastSuccess("Successfully retrieved the video transcript.");
-            return; // Success, exit function
-          } else {
-            throw new Error(data.message || "Failed to fetch transcript");
-          }
-        } catch (error: any) {
-          lastError = error;
-          
-          // Only retry on rate limit errors
-          if (error.message && error.message.includes("rate limit") && currentRetryCount < maxRetries) {
-            currentRetryCount++;
-          } else {
-            // For other errors, don't retry
-            break;
-          }
-        }
+      if (!response.ok) {
+        throw new Error("Failed to fetch transcript");
       }
       
-      // If we get here, all retries failed
-      throw lastError;
-    } catch (error: any) {
+      const data = await response.json();
+      
+      if (data.success) {
+        setYoutubeTranscript({
+          videoId: videoId,
+          transcript: data.transcript,
+          language: data.language || "Unknown",
+          language_code: data.language_code,
+          is_generated: data.is_generated,
+          isAutoGenerated: data.is_generated || false
+        });
+        
+        toast.success("Successfully retrieved the video transcript.");
+      } else {
+        throw new Error(data.message || "Failed to fetch transcript");
+      }
+    } catch (error) {
       console.error("Error fetching transcript:", error);
-      toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
+      toast.error(error instanceof Error ? error.message : "Failed to fetch transcript");
     } finally {
-      setLoadingTranscriptIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(videoId);
-        return newSet;
-      });
-      // Reset retry count
-      setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
+      setIsLoadingTranscript(false);
     }
   };
 
@@ -599,7 +522,7 @@ const ScraperPage: React.FC = () => {
 
   const handleSaveSelectedVideosWithTranscript = async () => {
     if (!youtubeTranscript) {
-      toastError("Please fetch a transcript before saving");
+      toast.error("Please fetch a transcript before saving");
       return;
     }
     
@@ -607,7 +530,7 @@ const ScraperPage: React.FC = () => {
     const videoWithTranscript = youtubeChannelResult?.videos.find(v => v.id === youtubeTranscript.videoId);
     
     if (!videoWithTranscript) {
-      toastError("Cannot find the video for this transcript");
+      toast.error("Cannot find the video for this transcript");
       return;
     }
     
@@ -640,32 +563,15 @@ const ScraperPage: React.FC = () => {
       // Save back to localStorage
       localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
       
-      toastSuccess("Video with transcript saved successfully");
+      toast.success("Video with transcript saved successfully");
       
       // Clear the transcript state
       setYoutubeTranscript(null);
       setCurrentVideoId("");
     } catch (error) {
       console.error("Error saving video with transcript:", error);
-      toastError("Failed to save the video with transcript");
+      toast.error("Failed to save the video with transcript");
     }
-  };
-
-  // Update the button text in the video card to show retry status
-  const getTranscriptButtonText = (videoId: string) => {
-    if (loadingTranscriptIds.has(videoId)) {
-      const retry = retryCount[videoId] || 0;
-      if (retry > 0) {
-        return `Retry ${retry}...`;
-      }
-      return "Loading...";
-    }
-    
-    if (youtubeTranscript && youtubeTranscript.videoId === videoId) {
-      return "Transcript Ready";
-    }
-    
-    return "Get Transcript";
   };
 
   useEffect(() => {
@@ -1013,11 +919,15 @@ const ScraperPage: React.FC = () => {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className={`w-full ${loadingTranscriptIds.has(video.id) ? "opacity-70" : ""}`}
+                    className={`w-full ${currentVideoId === video.id && isLoadingTranscript ? "opacity-70" : ""}`}
                     onClick={() => handleGetTranscript(video.id)}
-                    disabled={loadingTranscriptIds.has(video.id)}
+                    disabled={isLoadingTranscript}
                   >
-                    {getTranscriptButtonText(video.id)}
+                    {currentVideoId === video.id && isLoadingTranscript 
+                      ? "Loading..." 
+                      : youtubeTranscript && youtubeTranscript.videoId === video.id 
+                        ? "Transcript Ready" 
+                        : "Get Transcript"}
                   </Button>
                 </CardFooter>
               </Card>
