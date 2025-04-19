@@ -122,8 +122,7 @@ const ScraperPage: React.FC = () => {
   const [generatedContentImage, setGeneratedContentImage] = useState<string | null>(null);
   const [youtubeChannelResult, setYoutubeChannelResult] = useState<YouTubeChannelResult | null>(null);
   const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
-  const [isFetchingChannel, setIsFetchingChannel] = useState(false);
-  const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
+  const [loadingTranscripts, setLoadingTranscripts] = useState<Set<string>>(new Set());
   const [currentVideoId, setCurrentVideoId] = useState<string>("");
 
   const handleYouTubeChannelScrape = async () => {
@@ -132,7 +131,7 @@ const ScraperPage: React.FC = () => {
       return;
     }
 
-    setIsFetchingChannel(true);
+    setIsLoading(true);
     
     try {
       const response = await api.post('/youtube/channel', {
@@ -152,7 +151,7 @@ const ScraperPage: React.FC = () => {
       console.error('Error fetching YouTube channel:', error);
       toast.error('Failed to fetch channel videos. Please try again.');
     } finally {
-      setIsFetchingChannel(false);
+      setIsLoading(false);
     }
   };
 
@@ -469,8 +468,7 @@ const ScraperPage: React.FC = () => {
 
   const handleGetTranscript = async (videoId: string) => {
     try {
-      setIsLoadingTranscript(true);
-      setCurrentVideoId(videoId);
+      setLoadingTranscripts(prev => new Set(prev).add(videoId));
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
         method: "POST",
@@ -504,7 +502,11 @@ const ScraperPage: React.FC = () => {
       console.error("Error fetching transcript:", error);
       toast.error(error instanceof Error ? error.message : "Failed to fetch transcript");
     } finally {
-      setIsLoadingTranscript(false);
+      setLoadingTranscripts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(videoId);
+        return newSet;
+      });
     }
   };
 
@@ -581,6 +583,7 @@ const ScraperPage: React.FC = () => {
     setSelectedTweets(new Set());
     setYoutubeChannelResult(null);
     setSelectedVideos(new Set());
+    setLoadingTranscripts(new Set());
   }, [activeTab]);
 
   return (
@@ -919,11 +922,11 @@ const ScraperPage: React.FC = () => {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className={`w-full ${currentVideoId === video.id && isLoadingTranscript ? "opacity-70" : ""}`}
+                    className={`w-full ${loadingTranscripts.has(video.id) ? "opacity-70" : ""}`}
                     onClick={() => handleGetTranscript(video.id)}
-                    disabled={isLoadingTranscript}
+                    disabled={loadingTranscripts.has(video.id)}
                   >
-                    {currentVideoId === video.id && isLoadingTranscript 
+                    {loadingTranscripts.has(video.id) 
                       ? "Loading..." 
                       : youtubeTranscript && youtubeTranscript.videoId === video.id 
                         ? "Transcript Ready" 
