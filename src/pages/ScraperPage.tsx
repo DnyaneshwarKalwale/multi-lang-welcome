@@ -379,24 +379,6 @@ const ScraperPage: React.FC = () => {
       });
       
       if (response.data && response.data.success) {
-        const savedVideos = response.data.data;
-        
-        const existingSavedVideos = localStorage.getItem('savedYoutubeVideos');
-        let allSavedVideos = [];
-        
-        if (existingSavedVideos) {
-          try {
-            allSavedVideos = JSON.parse(existingSavedVideos);
-          } catch (err) {
-            console.error('Error parsing existing saved videos', err);
-            allSavedVideos = [];
-          }
-        }
-        
-        allSavedVideos = [...allSavedVideos, ...savedVideos];
-        
-        localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
-        
         toast.success(`Saved ${response.data.count} videos as carousels!`);
         setSelectedVideos(new Set());
         navigate('/dashboard/carousels');

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid, Download, Eye, Clock, Filter, PlusCircle,
   Check, AlertCircle, FileDown, Calendar, ChevronDown, 
-  Search, SlidersHorizontal, Youtube, ArrowLeft, ArrowRight
+  Search, SlidersHorizontal, Youtube
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,20 +32,17 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import axios from 'axios';
-import api from '@/services/api';
 
 interface CarouselRequest {
   id: string;
   title: string;
-  status: 'ready' | 'in_progress' | 'delivered';
+  status: 'in_progress' | 'delivered';
   thumbnailUrl?: string;
   requestDate: Date;
   deliveryDate?: Date;
   slideCount: number;
   downloadUrl?: string;
   videoId?: string;
-  videoUrl?: string;
   source?: 'youtube';
 }
 
@@ -54,87 +51,8 @@ const CarouselsPage: React.FC = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
 
   const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>([]);
-
-  useEffect(() => {
-    // Load saved videos from localStorage
-    const loadSavedVideos = () => {
-      setIsLoading(true);
-      try {
-        // Get videos from localStorage
-        const savedVideosString = localStorage.getItem('savedYoutubeVideos');
-        
-        if (savedVideosString) {
-          try {
-            const savedVideos = JSON.parse(savedVideosString);
-            
-            // Convert to CarouselRequest format
-            const carousels = savedVideos.map((video: any) => ({
-              id: video.id || video.videoId || Math.random().toString(36).substring(2, 9),
-              title: video.title || 'YouTube Video',
-              status: 'ready',
-              thumbnailUrl: video.thumbnailUrl || `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`,
-              requestDate: new Date(video.requestDate) || new Date(),
-              deliveryDate: new Date(video.deliveryDate) || new Date(),
-              slideCount: video.slideCount || 5,
-              videoId: video.videoId,
-              videoUrl: video.videoUrl || `https://youtube.com/watch?v=${video.videoId}`,
-              source: 'youtube'
-            }));
-            
-            setCarouselRequests(carousels);
-          } catch (parseError) {
-            console.error('Error parsing saved videos:', parseError);
-            setCarouselRequests([]);
-          }
-        } else {
-          // If no saved videos are found, use dummy data for demonstration
-          const dummyCarousels: CarouselRequest[] = [
-            {
-              id: '1',
-              title: 'Why LinkedIn is Important for Professionals',
-              status: 'ready',
-              thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
-              requestDate: new Date(),
-              deliveryDate: new Date(),
-              slideCount: 5,
-              videoId: 'dQw4w9WgXcQ',
-              videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-              source: 'youtube'
-            },
-            {
-              id: '2',
-              title: 'Top 10 Resume Tips for 2023',
-              status: 'ready',
-              thumbnailUrl: 'https://i.ytimg.com/vi/UBJq-QHaHyY/hqdefault.jpg',
-              requestDate: new Date(),
-              deliveryDate: new Date(),
-              slideCount: 8,
-              videoId: 'UBJq-QHaHyY',
-              videoUrl: 'https://youtube.com/watch?v=UBJq-QHaHyY',
-              source: 'youtube'
-            }
-          ];
-          
-          setCarouselRequests(dummyCarousels);
-        }
-      } catch (error) {
-        console.error('Error loading saved videos:', error);
-        toast.error('Failed to load your saved videos');
-        setCarouselRequests([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadSavedVideos();
-  }, []);
 
   const handleDownload = (carousel: CarouselRequest) => {
     if (carousel.downloadUrl) {
@@ -144,12 +62,8 @@ const CarouselsPage: React.FC = () => {
   };
 
   const handleWatchVideo = (carousel: CarouselRequest) => {
-    if (carousel.videoUrl) {
-      window.open(carousel.videoUrl, '_blank');
-      toast.success('Opening YouTube video');
-    } else if (carousel.videoId) {
+    if (carousel.videoId) {
       window.open(`https://youtube.com/watch?v=${carousel.videoId}`, '_blank');
-      toast.success('Opening YouTube video');
     }
   };
 
@@ -158,24 +72,6 @@ const CarouselsPage: React.FC = () => {
     const matchesStatus = !statusFilter || carousel.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-  
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredCarousels.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentCarousels = filteredCarousels.slice(startIndex, endIndex);
-  
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-  
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -220,7 +116,6 @@ const CarouselsPage: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="ready">Ready</SelectItem>
             <SelectItem value="in_progress">In Progress</SelectItem>
             <SelectItem value="delivered">Delivered</SelectItem>
           </SelectContent>
@@ -262,9 +157,9 @@ const CarouselsPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Ready to Use</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Delivered</p>
                 <p className="text-2xl font-bold mt-1">
-                  {carouselRequests.filter(c => c.status === 'ready' || c.status === 'delivered').length}
+                  {carouselRequests.filter(c => c.status === 'delivered').length}
                 </p>
               </div>
               <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center">
@@ -292,74 +187,60 @@ const CarouselsPage: React.FC = () => {
       </div>
       
       {/* Carousels list */}
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <p>Loading your carousel videos...</p>
-          </div>
-        </div>
-      ) : currentCarousels.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {currentCarousels.map(carousel => (
-              <Card key={carousel.id} className="overflow-hidden">
-                <div className="h-48 bg-gray-100 dark:bg-gray-800 relative">
-                  {carousel.thumbnailUrl ? (
-                    <img 
-                      src={carousel.thumbnailUrl} 
-                      alt={carousel.title} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <LayoutGrid className="h-16 w-16 text-gray-300 dark:text-gray-600" />
+      {filteredCarousels.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCarousels.map(carousel => (
+            <Card key={carousel.id} className="overflow-hidden">
+              <div className="h-48 bg-gray-100 dark:bg-gray-800 relative">
+                {carousel.thumbnailUrl ? (
+                  <img 
+                    src={carousel.thumbnailUrl} 
+                    alt={carousel.title} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <LayoutGrid className="h-16 w-16 text-gray-300 dark:text-gray-600" />
+                  </div>
+                )}
+                
+                <Badge 
+                  className={`absolute top-3 right-3 ${
+                    carousel.status === 'delivered' 
+                      ? 'bg-green-500' 
+                      : 'bg-blue-500'
+                  }`}
+                >
+                  {carousel.status === 'delivered' ? 'Delivered' : 'In Progress'}
+                </Badge>
+              </div>
+              
+              <CardHeader className="pb-2">
+                <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
+                <CardDescription className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Requested: {format(carousel.requestDate, 'MMM d, yyyy')}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                    <LayoutGrid className="h-4 w-4" />
+                    <span>{carousel.slideCount} slides</span>
+                  </div>
+                  
+                  {carousel.deliveryDate && (
+                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                      <Clock className="h-4 w-4" />
+                      <span>{format(carousel.deliveryDate, 'MMM d, yyyy')}</span>
                     </div>
-                  )}
-                  
-                  <Badge 
-                    className={`absolute top-3 right-3 ${
-                      carousel.status === 'delivered' || carousel.status === 'ready'
-                        ? 'bg-green-500' 
-                        : 'bg-blue-500'
-                    }`}
-                  >
-                    {carousel.status === 'delivered' || carousel.status === 'ready' ? 'Ready' : 'In Progress'}
-                  </Badge>
-                  
-                  {carousel.source === 'youtube' && (
-                    <Badge className="absolute top-3 left-3 bg-red-500 flex items-center gap-1">
-                      <Youtube className="h-3 w-3" />
-                      YouTube
-                    </Badge>
                   )}
                 </div>
-                
-                <CardHeader className="pb-2">
-                  <CardTitle className="line-clamp-1">{carousel.title}</CardTitle>
-                  <CardDescription className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Added: {format(new Date(carousel.requestDate), 'MMM d, yyyy')}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="pb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>{carousel.slideCount} slides</span>
-                    </div>
-                    
-                    {carousel.deliveryDate && (
-                      <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                        <Clock className="h-4 w-4" />
-                        <span>{format(new Date(carousel.deliveryDate), 'MMM d, yyyy')}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="border-t border-gray-100 dark:border-gray-800 pt-4">
+              </CardContent>
+              
+              <CardFooter className="border-t border-gray-100 dark:border-gray-800 pt-4">
+                {carousel.status === 'delivered' ? (
                   <div className="flex justify-between w-full">
                     {carousel.source === 'youtube' ? (
                       <Button 
@@ -372,79 +253,48 @@ const CarouselsPage: React.FC = () => {
                         Watch Video
                       </Button>
                     ) : (
-                      <Button variant="outline" size="sm" className="gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-1"
+                        onClick={() => {/* Preview handler */}}
+                      >
                         <Eye className="h-4 w-4" />
                         Preview
                       </Button>
                     )}
                     
                     <Button 
-                      variant="default" 
-                      size="sm"
+                      size="sm" 
                       className="gap-1"
-                      onClick={() => navigate('/dashboard/create-post', { 
-                        state: { 
-                          title: carousel.title,
-                          activeTab: 'carousel',
-                          youtubeVideoId: carousel.videoId
-                        }
-                      })}
+                      onClick={() => handleDownload(carousel)}
                     >
-                      <PlusCircle className="h-4 w-4" />
-                      Create Post
+                      <Download className="h-4 w-4" />
+                      Download
                     </Button>
                   </div>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-          
-          {/* Pagination controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={goToPreviousPage} 
-                  disabled={currentPage === 1}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                
-                <div className="text-sm">
-                  Page {currentPage} of {totalPages}
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={goToNextPage} 
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </>
+                ) : (
+                  <div className="w-full text-center text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    Expected delivery by {format(new Date(carousel.requestDate.getTime() + 24 * 60 * 60 * 1000), 'MMM d, h:mm a')}
+                  </div>
+                )}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-            <LayoutGrid className="h-8 w-8 text-gray-400" />
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+            <AlertCircle className="h-8 w-8 text-gray-400" />
           </div>
-          
           <h3 className="text-lg font-medium mb-2">No carousels found</h3>
-          
-          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
             {searchQuery || statusFilter 
               ? "No carousels match your current filters. Try adjusting your search criteria."
               : "You haven't requested any carousels yet. Create your first carousel request to get started."}
           </p>
-          
-          <Button
+          <Button 
             onClick={() => navigate('/dashboard/request-carousel')}
             className="gap-2"
           >
@@ -454,18 +304,18 @@ const CarouselsPage: React.FC = () => {
         </div>
       )}
       
-      <div className="mt-12 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-medium mb-1">Carousel Credits</h3>
-            <p>
-              You have 2 carousel requests remaining this month. Your credits will reset on {format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), 'MMMM d, yyyy')}.
-            </p>
-          </div>
-          
-          <Button variant="outline" size="sm" onClick={() => toast.info('This feature is coming soon!')}>
-            <PlusCircle className="h-3 w-3 mr-1" />
-            Get More Credits
+      {/* Subscription info */}
+      <div className="mt-10 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/30 rounded-lg p-4 flex items-start gap-3">
+        <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-800/50 flex items-center justify-center flex-shrink-0">
+          <FileDown className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-medium mb-1">Carousel Credits</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            You have 2 carousel requests remaining this month. Your credits will reset on {format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1), 'MMMM d, yyyy')}.
+          </p>
+          <Button variant="link" className="h-auto p-0 text-primary" onClick={() => navigate('/dashboard/billing')}>
+            Upgrade Plan →
           </Button>
         </div>
       </div>
