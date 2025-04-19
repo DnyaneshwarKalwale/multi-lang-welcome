@@ -369,7 +369,7 @@ const ScraperPage: React.FC = () => {
       );
 
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = baseUrl.endsWith('/api')
+      const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/carousels/youtube`
         : `${baseUrl}/api/carousels/youtube`;
       
