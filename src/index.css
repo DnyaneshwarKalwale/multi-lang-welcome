@@ -5,9 +5,14 @@
 @tailwind utilities;
 /* new changes */
 @layer base {
-  /* Force Poppins font throughout the entire website */
-  html, body, *, *::before, *::after {
-    font-family: 'Poppins', sans-serif !important;
+  /* Default font for the website, but allow overrides */
+  html, body {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  /* Allow text elements to use their specified fonts */
+  [data-text-element] {
+    font-family: inherit;
   }
   
   :root {
@@ -322,4 +327,64 @@ input, textarea, select {
   width: 100vw;
   background: white;
   color: hsl(var(--foreground));
+}
+
+/* Import the Agrandir font for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Agrandir', sans-serif;
+}
+
+h1 {
+  font-weight: 800; /* GrandHeavy */
+}
+
+h2, h3 {
+  font-weight: 700; /* TextBold */
+}
+
+h4, h5, h6 {
+  font-weight: 400; /* Regular */
+}
+
+/* Add font-agrandir class for easy application */
+.font-agrandir {
+  font-family: 'Agrandir', sans-serif;
+}
+
+/* Apply to specific UI components */
+.card-title, 
+.dialog-title,
+.drawer-title,
+.sheet-title,
+.tab-title,
+.accordion-title {
+  font-family: 'Agrandir', sans-serif !important;
+}
+
+/* Additional weight classes for Agrandir */
+.font-agrandir-heavy {
+  font-family: 'Agrandir', sans-serif;
+  font-weight: 800;
+}
+
+.font-agrandir-bold {
+  font-family: 'Agrandir', sans-serif;
+  font-weight: 700;
+}
+
+.font-agrandir-light {
+  font-family: 'Agrandir', sans-serif;
+  font-weight: 300;
+}
+
+.font-agrandir-thin {
+  font-family: 'Agrandir', sans-serif;
+  font-weight: 200;
+  font-style: italic;
+}
+
+.font-agrandir-narrow {
+  font-family: 'Agrandir', sans-serif;
+  font-weight: 400;
+  font-stretch: condensed;
 }

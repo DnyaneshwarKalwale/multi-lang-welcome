@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font Declarations */
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../styles/Agrandir-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../styles/Agrandir-TextBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../styles/Agrandir-GrandLight.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../styles/Agrandir-ThinItalic.otf') format('opentype');
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../styles/Agrandir-GrandHeavy.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../styles/Agrandir-Narrow.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-stretch: condensed;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -34,6 +78,19 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Apply Agrandir font to all headings */
+  h1, h2, h3, h4, h5, h6, .card-title {
+    font-family: 'Agrandir', sans-serif;
+  }
+  h1 {
+    font-weight: 800; /* GrandHeavy */
+  }
+  h2, h3 {
+    font-weight: 700; /* TextBold */
+  }
+  h4, h5, h6 {
+    font-weight: 400; /* Regular */
+  }
 }
 
 /* Component styles */
@@ -45,6 +102,12 @@
   
   .text-gradient-blue {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-blue-500;
+  }
+  
+  /* Apply Agrandir font to specific components */
+  .card-header .card-title {
+    font-family: 'Agrandir', sans-serif;
+    font-weight: 700;
   }
   
   /* Glow effects */

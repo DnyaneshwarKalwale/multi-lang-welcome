@@ -40,6 +40,7 @@ import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
 import ImageGalleryPage from "./pages/ImageGalleryPage";
+import EditorPage from "./editor/pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -246,6 +247,9 @@ const AppRoutes = () => {
       
       {/* OAuth callback route - kept separate to avoid invitation check */}
       <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
+      
+      {/* Carousel Editor - accessible without AppLayout for a focused editing experience */}
+      <Route path="/editor" element={<EditorPage />} />
       
       {/* Protected routes with invitation check wrapped in AppLayout */}
       <Route element={<InvitationCheckRoute />}>

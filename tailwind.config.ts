@@ -111,11 +111,12 @@ export default {
       },
       fontFamily: {
         sans: ["Poppins", ...fontFamily.sans],
-        heading: ["Poppins", ...fontFamily.sans],
+        heading: ["Agrandir", "Poppins", ...fontFamily.sans],
         mono: ["Poppins", ...fontFamily.sans],
         base: ["Poppins", ...fontFamily.sans],
         body: ["Poppins", ...fontFamily.sans],
-        display: ["Poppins", ...fontFamily.sans],
+        display: ["Agrandir", "Poppins", ...fontFamily.sans],
+        agrandir: ["Agrandir", ...fontFamily.sans],
       },
       borderRadius: {
         lg: "var(--radius)",

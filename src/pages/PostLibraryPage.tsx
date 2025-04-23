@@ -118,13 +118,13 @@ const CarouselCard: React.FC<{
 
   // If no slides or empty array, render nothing or a placeholder
   if (!slides || slides.length === 0) {
-    return <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white min-h-[280px] flex items-center justify-center">
+    return <div className="relative rounded-md overflow-hidden border bg-white min-h-[280px] flex items-center justify-center">
       <p className="text-gray-400">No slides available</p>
     </div>;
   }
 
   return (
-    <div className="relative rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
+    <div className="relative rounded-md overflow-hidden border bg-white">
       <div className="relative min-h-[280px] w-full">
         {slides.map((slide, index) => (
           <div 
@@ -1173,9 +1173,9 @@ const PostLibraryPage: React.FC = () => {
     };
 
     return (
-      <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col border dark:border-gray-700">
+      <Card key={post.id} className="overflow-hidden h-full min-h-[500px] flex flex-col">
         {/* User Info Header */}
-        <div className="flex items-center p-3 sm:p-4 border-b dark:border-gray-700">
+        <div className="flex items-center p-3 sm:p-4 border-b">
           <Avatar className="h-8 w-8 sm:h-10 sm:w-10 mr-2 sm:mr-3">
             <AvatarImage src={user?.profilePicture || '/placeholder-avatar.png'} alt={`${user?.firstName} ${user?.lastName}` || 'User'} />
             <AvatarFallback>{user?.firstName?.[0] || 'U'}</AvatarFallback>
@@ -1215,7 +1215,7 @@ const PostLibraryPage: React.FC = () => {
           
           {/* Single Post Image (if available and not a carousel) */}
           {post.postImage && actualMediaType === 'image' && (
-            <div className="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
+            <div className="rounded-md overflow-hidden border bg-white">
               <img 
                 src={post.postImage.secure_url} 
                 alt="Post image"
@@ -1233,7 +1233,7 @@ const PostLibraryPage: React.FC = () => {
           {post.hashtags && post.hashtags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {post.hashtags.map(tag => (
-                <Badge key={tag} variant="secondary" className="rounded-sm text-xs font-medium text-blue-600 dark:text-blue-400 bg-transparent hover:bg-blue-50">
+                <Badge key={tag} variant="secondary" className="rounded-sm text-xs font-medium text-blue-600 bg-transparent hover:bg-blue-50">
                   #{tag}
                 </Badge>
               ))}
@@ -1242,14 +1242,14 @@ const PostLibraryPage: React.FC = () => {
           
           {/* Poll (if available) */}
           {post.isPollActive && post.pollOptions && post.pollOptions.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+            <div className="bg-gray-50 p-3 rounded-md border">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart4 size={14} />
                 <span className="text-sm font-medium">Poll</span>
               </div>
               <div className="space-y-2">
                 {post.pollOptions.map((option, index) => (
-                  <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                  <div key={index} className="text-sm p-2 bg-white rounded border flex justify-between items-center">
                     <span>{option}</span>
                   </div>
                 ))}
@@ -1259,7 +1259,7 @@ const PostLibraryPage: React.FC = () => {
         </CardContent>
         
         {/* Interaction Footer */}
-        <CardFooter className="p-0 border-t dark:border-gray-700 mt-auto">
+        <CardFooter className="p-0 border-t mt-auto">
           {type === 'published' ? (
             // For published posts, show basic actions
             <div className="w-full">

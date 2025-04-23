@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube } from "lucide-react";
+import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -38,6 +38,118 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { format } from "date-fns";
+import axios from "axios";
+import { useAuth } from "@/hooks/useAuth";
+import OpenAI from 'openai';
+import { Slide, FontFamily, FontWeight, TextAlign } from "@/editor/types";
+import { v4 as uuidv4 } from 'uuid';
+import { Textarea } from "@/components/ui/textarea";
+
+// OpenAI configuration
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
+  dangerouslyAllowBrowser: true
+});
+
+// Model options with fallbacks
+const AI_MODELS = {
+  primary: "gpt-4.1",
+  fallback: "gpt-3.5-turbo"
+};
+
+// Add a function to try different models with fallback
+async function generateWithOpenAI(messages: any[], modelOptions: typeof AI_MODELS = AI_MODELS) {
+  try {
+    // Try with primary model first
+    console.log(`Attempting to generate content with ${modelOptions.primary} model`);
+    const completion = await openai.chat.completions.create({
+      model: modelOptions.primary,
+      messages,
+      temperature: 0.7,
+      max_tokens: 2048,
+    });
+    
+    return completion;
+  } catch (error: any) {
+    // If we hit a rate limit and have a fallback model, try that
+    if (
+      (error?.message?.includes('429') || 
+       error?.message?.includes('rate limit') || 
+       error?.message?.includes('quota')) && 
+      modelOptions.fallback
+    ) {
+      console.log(`Rate limit hit with ${modelOptions.primary}, trying fallback model ${modelOptions.fallback}`);
+      
+      // Use fallback model
+      const completion = await openai.chat.completions.create({
+        model: modelOptions.fallback,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      
+      return completion;
+    }
+    
+    // If fallback fails or there's another error, rethrow
+    throw error;
+  }
+}
+
+// Define prompts for content generation
+const PROMPTS = {
+  'post-short': `Use this YouTube transcript to write a LinkedIn short-form written post: "\${transcript}"
+
+Apply the following rules **strictly**:
+
+1. **Completely rephrase** everything — including headings, examples, analogies, and figures.
+2. **Do not use this symbol: "-"**
+3. **Change every number, example, and order of pointers** to ensure it's 100 percent untraceable.
+4. **Create a fresh, original headline** that is attention-grabbing and not similar to the video title.
+5. **Restructure the flow** — don't just summarize sequentially. Rearrange points for originality.
+6. Use **short paragraphs** and leave **one line of space between each point**.
+7. Keep the entire post **under 1000 characters**.
+8. **Remove all bold text**, emojis, links, names, tool references, or brand mentions.
+9. Use a **casual, founder-style tone** that feels like expert advice being shared.
+10. Avoid storytelling. Focus on **insights, learnings, and takeaways**.
+11. **No hashtags**, no promotional CTAs. Just a clean, high-value post.
+12. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.`,
+
+  'post-long': `Use this YouTube transcript to write a LinkedIn long-form written post: "\${transcript}"
+
+Apply the following rules **strictly**:
+
+1. **Completely rephrase** everything — including headings, examples, analogies, and figures.
+2. **Do not use this symbol: "-"**
+3. **Change every number, example, and order of pointers** to ensure it's 100 percent untraceable.
+4. **Create a fresh, original headline** that is attention-grabbing and not similar to the video title.
+5. **Restructure the flow** — don't just summarize sequentially. Rearrange points for originality.
+6. Use **short paragraphs** and leave **one line of space between each point**.
+7. Keep the entire post **under 2000 characters**.
+8. **Remove all bold text**, emojis, links, names, tool references, or brand mentions.
+9. Use a **casual, founder-style tone** that feels like expert advice being shared.
+10. Avoid storytelling. Focus on **insights, learnings, and takeaways**.
+11. **No hashtags**, no promotional CTAs. Just a clean, high-value post.
+12. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.`,
+
+  'carousel': `Use this YouTube transcript to turn the content into a LinkedIn carousel post: "\${transcript}"
+
+Follow all the rules below exactly:
+
+1. Create a **new, scroll-stopping hook** for Slide 1 — do not use the YouTube title.
+2. **Do not use this symbol: "-"**
+3. Every slide should contain a **short heading integrated into the paragraph**, not on a separate line.
+4. Each slide must be **fully rephrased** — change examples, numbers, order of points, and structure.
+5. Use **short sentences or bullets**, with clear spacing for readability.
+6. **No names, no brands, no tools**, no external mentions.
+7. Remove all **bold text**, unnecessary line breaks, and symbols.
+8. The tone should be **easy to understand**, like a founder breaking down a playbook.
+9. Include **takeaways or a conclusion slide**, but without CTAs or promotions.
+10. The flow should feel **logical and punchy**, not robotic or templated.
+11. Avoid fluff. Every slide should add **clear value or insight**.
+12. Separate each slide with "\n\n" to indicate a new slide.
+13. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.`,
+};
 
 // Define the form schema for validation
 const formSchema = z.object({
@@ -61,8 +173,11 @@ interface YouTubeVideo {
   source?: 'youtube';
   status?: string;
   transcript?: string;
+  formattedTranscript?: string[];
   language?: string;
   is_generated?: boolean;
+  savedTimestamp?: string;
+  videoId?: string;
 }
 
 // Interface for saved carousel videos
@@ -78,6 +193,24 @@ interface SavedCarouselVideo {
   videoId?: string;
   videoUrl?: string;
   source?: 'youtube';
+}
+
+// Content generation types
+interface ContentGenerationOptions {
+  type: 'post-short' | 'post-long' | 'carousel';
+  title: string;
+  icon: React.ReactNode;
+}
+
+// Add interfaces for saved content
+interface SavedContent {
+  id: string;
+  title: string;
+  content: string;
+  type: 'post-short' | 'post-long' | 'carousel';
+  videoId?: string;
+  videoTitle?: string;
+  createdAt: string;
 }
 
 // Function to generate dummy transcript based on video ID
@@ -182,9 +315,59 @@ const generateDummyTranscript = (videoId: string): string[] => {
   }
 };
 
+// Add function to prepare carousel data for editor
+const prepareCarouselForEditor = (content: string): Slide[] => {
+  if (!content) return [];
+  
+  console.log("Preparing carousel content for editor:", content);
+  
+  const textSlides = content.split('\n\n')
+    .filter(s => s.trim())
+    .map(slideText => slideText.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+  
+  console.log("Created text slides:", textSlides.length);
+  
+  // LinkedIn slide dimensions are 1080x1080
+  const SLIDE_WIDTH = 1080;
+  const SLIDE_HEIGHT = 1080;
+  
+  // Create properly formatted slides with text elements perfectly centered
+  const formattedSlides = textSlides.map((slideText) => ({
+    id: uuidv4(),
+    backgroundColor: '#ffffff',
+    textElements: [
+      {
+        id: uuidv4(),
+        text: slideText,
+        fontFamily: 'inter' as FontFamily,
+        fontSize: 24,
+        fontWeight: '500' as FontWeight,
+        color: '#000000',
+        // Perfect center positioning (text element positioned at 1/2 of slide width and height)
+        position: { 
+          x: SLIDE_WIDTH / 2 - 400, // Center horizontally with offset for width
+          y: SLIDE_HEIGHT / 2 - 250  // Center vertically with offset for height
+        },
+        width: 800, // Fixed width that won't overflow
+        height: 500, // Sufficient height for most content
+        textAlign: 'center' as TextAlign,
+        zIndex: 1
+      }
+    ],
+    imageElements: [],
+    pdfElements: []
+  }));
+  
+  console.log("Formatted slides:", formattedSlides.length);
+  
+  return formattedSlides;
+};
+
 const RequestCarouselPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
@@ -199,6 +382,27 @@ const RequestCarouselPage: React.FC = () => {
   // Saved videos state
   const [savedVideos, setSavedVideos] = useState<YouTubeVideo[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  
+  // Transcript fetching states
+  const [isFetchingTranscript, setIsFetchingTranscript] = useState(false);
+  const [fetchingVideoId, setFetchingVideoId] = useState<string | null>(null);
+
+  // Content generation states
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [selectedContentType, setSelectedContentType] = useState<string | null>(null);
+  const [generatedContent, setGeneratedContent] = useState<string>('');
+  const [showContentGenerator, setShowContentGenerator] = useState(false);
+  const [previewContent, setPreviewContent] = useState<string>('');
+  const [previewTitle, setPreviewTitle] = useState<string>('');
+  const [previewType, setPreviewType] = useState<string>('');
+
+  // Add state for saved content
+  const [savedContents, setSavedContents] = useState<SavedContent[]>([]);
+  const [showSavedContents, setShowSavedContents] = useState(false);
+
+  // Add state for editing
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableContent, setEditableContent] = useState('');
 
   // Safe date formatter function to use throughout the component
   const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
@@ -229,96 +433,140 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Load saved videos from localStorage
+  // Load saved videos from localStorage and backend
   useEffect(() => {
-    const loadSavedVideos = () => {
+    const loadSavedVideos = async () => {
       setIsLoadingVideos(true);
+      let videos = [];
+      
       try {
-        // Get videos from localStorage
-        const savedVideosString = localStorage.getItem('savedYoutubeVideos');
-        
-        if (savedVideosString) {
-          try {
-            const loadedVideos = JSON.parse(savedVideosString);
+        // First try to get videos from the backend
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/get-saved-videos`
+          : `${baseUrl}/api/youtube/get-saved-videos`;
+          
+        try {
+          const response = await axios.get(apiUrl, {
+            params: { userId: user?.id || 'anonymous' }
+          });
+          
+          if (response.data && response.data.success) {
+            const backendVideos = response.data.videos || [];
+            videos = [...backendVideos];
             
-            // Convert to YouTubeVideo format with extra safety
-            const videos = loadedVideos.map((video: any) => {
-              try {
-                // Create a valid date object or fallback to current date
-                const safeDate = (dateInput: any) => {
-                  if (!dateInput) return new Date();
-                  
-                  try {
-                    // If it's already a Date object
-                    if (dateInput instanceof Date) {
-                      return isNaN(dateInput.getTime()) ? new Date() : dateInput;
-                    }
-                    
-                    // Try parsing as string
-                    if (typeof dateInput === 'string') {
-                      const parsedDate = new Date(dateInput);
-                      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-                    }
-                    
-                    // If it's a number (timestamp)
-                    if (typeof dateInput === 'number' && !isNaN(dateInput)) {
-                      const parsedDate = new Date(dateInput);
-                      return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-                    }
-                    
-                    return new Date();
-                  } catch (e) {
-                    console.error("Error parsing date:", e);
-                    return new Date();
-                  }
-                };
-                
-                // Get safe videoId
-                const videoId = video.videoId || video.id || '';
-                
-                return {
-                  id: videoId,
-                  title: video.title || 'YouTube Video',
-                  channelName: "Your Saved Video",
-                  status: video.status || 'ready',
-                  thumbnailUrl: video.thumbnailUrl || 
-                    (videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : undefined),
-                  requestDate: safeDate(video.requestDate),
-                  deliveryDate: safeDate(video.deliveryDate),
-                  slideCount: video.slideCount || 5,
-                  videoUrl: video.videoUrl || (videoId ? `https://youtube.com/watch?v=${videoId}` : undefined),
-                  views: "Saved",
-                  date: safeFormatDate(safeDate(video.requestDate), "MMM d, yyyy"),
-                  duration: "Saved",
-                  source: 'youtube'
-                };
-              } catch (itemError) {
-                console.error("Error processing video item:", itemError);
-                // Return a safe default item if individual parsing fails
-                return {
-                  id: Math.random().toString(36).substring(2, 9),
-                  title: 'YouTube Video',
-                  channelName: "Your Saved Video",
-                  status: 'ready',
-                  requestDate: new Date(),
-                  deliveryDate: new Date(),
-                  slideCount: 5,
-                  source: 'youtube',
-                  views: "Saved",
-                  date: "Unknown",
-                  duration: "Saved"
-                };
-              }
-            });
-            
-            setSavedVideos(videos);
-          } catch (parseError) {
-            console.error('Error parsing saved videos:', parseError);
-            setSavedVideos([]);
+            // Now also get videos from localStorage and merge them
+            const savedVideosString = localStorage.getItem('savedYoutubeVideos');
+            if (savedVideosString) {
+              const localVideos = JSON.parse(savedVideosString);
+              
+              // Create a map of existing backend videos by ID to avoid duplicates
+              const existingVideoIds = new Set(videos.map((v: any) => v.id));
+              
+              // Add local videos that aren't already in backend videos
+              const uniqueLocalVideos = localVideos.filter((v: any) => !existingVideoIds.has(v.id));
+              videos = [...videos, ...uniqueLocalVideos];
+            }
           }
-        } else {
-          setSavedVideos([]);
+        } catch (backendError) {
+          console.warn("Error fetching from backend, using localStorage only:", backendError);
+          // If backend fetch fails, use localStorage only
+          const savedVideosString = localStorage.getItem('savedYoutubeVideos');
+          if (savedVideosString) {
+            videos = JSON.parse(savedVideosString);
+          }
         }
+        
+        // Convert to YouTubeVideo format with extra safety
+        const processedVideos = videos.map((video: any) => {
+          try {
+            // Create a valid date object or fallback to current date
+            const safeDate = (dateInput: any) => {
+              if (!dateInput) return new Date();
+              
+              try {
+                // If it's already a Date object
+                if (dateInput instanceof Date) {
+                  return isNaN(dateInput.getTime()) ? new Date() : dateInput;
+                }
+                
+                // Try parsing as string
+                if (typeof dateInput === 'string') {
+                  const parsedDate = new Date(dateInput);
+                  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+                }
+                
+                // If it's a number (timestamp)
+                if (typeof dateInput === 'number' && !isNaN(dateInput)) {
+                  const parsedDate = new Date(dateInput);
+                  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+                }
+                
+                return new Date();
+              } catch (e) {
+                console.error("Error parsing date:", e);
+                return new Date();
+              }
+            };
+            
+            // Get safe videoId - make sure we're consistently using the same ID field
+            const videoId = video.videoId || video.id || '';
+            
+            // Store the original savedAt/requestDate for sorting
+            const savedTimestamp = video.savedTimestamp || video.savedAt || video.requestDate || video.upload_date || new Date().toISOString();
+            
+            return {
+              id: videoId,
+              title: video.title || 'YouTube Video',
+              channelName: video.channelName || "Your Saved Video",
+              status: video.status || 'ready',
+              thumbnailUrl: video.thumbnailUrl || video.thumbnail || 
+                (videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : undefined),
+              requestDate: safeDate(video.requestDate || video.savedAt), // Try savedAt as fallback
+              deliveryDate: safeDate(video.deliveryDate),
+              slideCount: video.slideCount || 5,
+              videoUrl: video.videoUrl || video.url || (videoId ? `https://youtube.com/watch?v=${videoId}` : undefined),
+              views: video.view_count ? video.view_count.toLocaleString() : "Saved",
+              date: safeFormatDate(safeDate(video.requestDate || video.savedAt || video.upload_date), "MMM d, yyyy"),
+              duration: video.duration || "Saved",
+              source: 'youtube' as const,
+              // Preserve transcript data
+              transcript: video.transcript || "",
+              formattedTranscript: video.formattedTranscript || [],
+              language: video.language || "Unknown",
+              is_generated: video.is_generated || false,
+              videoId: videoId, // Ensure videoId is explicitly set
+              savedTimestamp: savedTimestamp // Keep original timestamp for sorting
+            };
+          } catch (itemError) {
+            console.error("Error processing video item:", itemError);
+            // Return a safe default item if individual parsing fails
+            return {
+              id: Math.random().toString(36).substring(2, 9),
+              title: 'YouTube Video',
+              channelName: "Your Saved Video",
+              status: 'ready',
+              requestDate: new Date(),
+              deliveryDate: new Date(),
+              slideCount: 5,
+              source: 'youtube' as const,
+              views: "Saved",
+              date: "Unknown",
+              duration: "Saved",
+              formattedTranscript: generateDummyTranscript(Math.random().toString(36).substring(2, 9)),
+              savedTimestamp: new Date().toISOString() // Add timestamp for sorting
+            };
+          }
+        });
+        
+        // Sort videos by savedTimestamp (most recent first)
+        processedVideos.sort((a, b) => {
+          const dateA = new Date(a.savedTimestamp || 0);
+          const dateB = new Date(b.savedTimestamp || 0);
+          return dateB.getTime() - dateA.getTime(); // Most recent first
+        });
+        
+        setSavedVideos(processedVideos);
       } catch (error) {
         console.error('Error loading saved videos:', error);
         toast({
@@ -333,7 +581,20 @@ const RequestCarouselPage: React.FC = () => {
     };
     
     loadSavedVideos();
-  }, [toast]);
+    
+    // Set up a listener to reload when localStorage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'savedYoutubeVideos') {
+        loadSavedVideos();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [toast, user?.id]);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -359,6 +620,15 @@ const RequestCarouselPage: React.FC = () => {
 
   // Handle next slide
   const nextSlide = () => {
+    if (previewContent && previewType === 'carousel') {
+      const slides = previewContent.split('\n\n').filter(s => s.trim());
+      if (slides.length > 0) {
+        setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+        return;
+      }
+    }
+    
+    // Fallback for when there's no content yet or for regular transcript slides
     if (generatedTranscript.length > 0) {
       setCurrentSlide((prev) => (prev === generatedTranscript.length - 1 ? 0 : prev + 1));
     }
@@ -366,6 +636,15 @@ const RequestCarouselPage: React.FC = () => {
 
   // Handle previous slide
   const prevSlide = () => {
+    if (previewContent && previewType === 'carousel') {
+      const slides = previewContent.split('\n\n').filter(s => s.trim());
+      if (slides.length > 0) {
+        setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+        return;
+      }
+    }
+    
+    // Fallback for when there's no content yet or for regular transcript slides
     if (generatedTranscript.length > 0) {
       setCurrentSlide((prev) => (prev === 0 ? generatedTranscript.length - 1 : prev - 1));
     }
@@ -382,15 +661,22 @@ const RequestCarouselPage: React.FC = () => {
       form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
     }
     
-    // Check if the video already has a transcript
-    if (video.transcript) {
-      setGeneratedTranscript(formatTranscript(video.transcript));
+    // Check if the video has a formatted transcript (array of bullet points)
+    if (video.formattedTranscript && Array.isArray(video.formattedTranscript) && video.formattedTranscript.length > 0) {
+      setGeneratedTranscript(video.formattedTranscript);
       setShowTranscript(true);
       setCurrentSlide(0);
-    } else {
-      // Generate dummy transcript if no real transcript exists
-      const transcript = generateDummyTranscript(video.id);
-      setGeneratedTranscript(transcript);
+    } 
+    // Check if the video has a regular transcript that needs to be formatted
+    else if (video.transcript && typeof video.transcript === 'string' && video.transcript.length > 10) {
+      const formatted = formatTranscript(video.transcript);
+      setGeneratedTranscript(formatted);
+      setShowTranscript(true);
+      setCurrentSlide(0);
+    } 
+    // Show empty transcript with fetch option
+    else {
+      setGeneratedTranscript([]);
       setShowTranscript(true);
       setCurrentSlide(0);
     }
@@ -436,6 +722,305 @@ const RequestCarouselPage: React.FC = () => {
         description: "Opening YouTube video in a new tab",
       });
     }
+  };
+
+  // Fetch transcript for a video
+  const handleFetchTranscript = async (video: YouTubeVideo) => {
+    if (!video.id && !video.videoId) {
+      toast({
+        title: "Error",
+        description: "Cannot fetch transcript: Video ID is missing",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const videoId = video.videoId || video.id;
+    setFetchingVideoId(videoId);
+    setIsFetchingTranscript(true);
+    
+    try {
+      // Get API URL
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = `${baseUrl}/api/youtube/transcript`;
+      
+      const response = await axios.post(apiUrl, {
+        videoId,
+        useScraperApi: true // Use ScraperAPI to avoid rate limits
+      });
+      
+      if (response.data && response.data.success) {
+        // Format the transcript into bullet points
+        const formatTranscriptToBulletPoints = (text: string): string[] => {
+          // Split by sentences and create bullet points
+          const sentences = text.replace(/([.?!])\s+/g, "$1|").split("|");
+          const bulletPoints = [];
+          
+          for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i].trim();
+            if (sentence.length > 10) {  // Only include meaningful sentences
+              bulletPoints.push(sentence);
+              // Limit to 8 bullet points
+              if (bulletPoints.length >= 8) break;
+            }
+          }
+          
+          return bulletPoints.length > 0 ? bulletPoints : ["No transcript content available"];
+        };
+        
+        const transcriptText = response.data.transcript;
+        const bulletPoints = formatTranscriptToBulletPoints(transcriptText);
+        
+        // Update the saved videos with the new transcript
+        const updatedVideos = savedVideos.map(v => {
+          if (v.id === videoId || v.videoId === videoId) {
+            return {
+              ...v,
+              transcript: transcriptText,
+              formattedTranscript: bulletPoints,
+              language: response.data.language || "Unknown",
+              is_generated: response.data.is_generated || false
+            };
+          }
+          return v;
+        });
+        
+        // Update local state
+        setSavedVideos(updatedVideos);
+        
+        // If this is the currently selected video, update the transcript display
+        if (selectedVideo && (selectedVideo.id === videoId || selectedVideo.videoId === videoId)) {
+          setGeneratedTranscript(bulletPoints);
+          setShowTranscript(true);
+          setCurrentSlide(0);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('savedYoutubeVideos', JSON.stringify(updatedVideos));
+        
+        // Save to backend
+        try {
+          const saveTranscriptApiUrl = baseUrl.endsWith('/api')
+            ? `${baseUrl}/youtube/save-transcript`
+            : `${baseUrl}/api/youtube/save-transcript`;
+            
+          await axios.post(saveTranscriptApiUrl, {
+            userId: user?.id || 'anonymous',
+            videoId: videoId,
+            transcript: transcriptText,
+            formattedTranscript: bulletPoints,
+            language: response.data.language || "Unknown",
+            is_generated: response.data.is_generated || false
+          });
+          
+          console.log("Transcript saved to backend successfully");
+        } catch (backendError) {
+          console.error("Failed to save transcript to backend:", backendError);
+          // Continue with local state update even if backend save fails
+        }
+        
+        toast({
+          title: "Success",
+          description: "Transcript fetched successfully"
+        });
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch transcript');
+      }
+    } catch (error) {
+      console.error('Error fetching transcript:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch transcript. The video might not have captions.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsFetchingTranscript(false);
+      setFetchingVideoId(null);
+    }
+  };
+
+  // LinkedIn content generation options
+  const contentGenerationOptions: ContentGenerationOptions[] = [
+    {
+      type: 'post-short',
+      title: 'Short Post',
+      icon: <MessageSquare className="h-4 w-4" />
+    },
+    {
+      type: 'post-long',
+      title: 'Long Post',
+      icon: <FileText className="h-4 w-4" />
+    },
+    {
+      type: 'carousel',
+      title: 'Carousel',
+      icon: <FileSpreadsheet className="h-4 w-4" />
+    }
+  ];
+
+  // Update the handleGenerateContent function with better error handling and fallback
+  const handleGenerateContent = async (type: string) => {
+    if (!selectedVideo || !selectedVideo.transcript) {
+      toast({
+        title: "No transcript available",
+        description: "Please fetch a transcript first to generate content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSelectedContentType(type);
+    setIsGeneratingContent(true);
+    setShowContentGenerator(true);
+    
+    try {
+      // Get the appropriate prompt based on the selected content type
+      const promptTemplate = PROMPTS[type as keyof typeof PROMPTS];
+      
+      // Replace the transcript placeholder with the actual transcript
+      const prompt = promptTemplate.replace('${transcript}', selectedVideo.transcript || '');
+      
+      // Set up title based on content type
+      let title = '';
+      switch (type) {
+        case 'post-short':
+          title = 'Short LinkedIn Post';
+          break;
+        case 'post-long':
+          title = 'Long LinkedIn Post';
+          break;
+        case 'carousel':
+          title = 'LinkedIn Carousel';
+          break;
+        default:
+          title = 'LinkedIn Content';
+      }
+      
+      try {
+        // Log the request
+        console.log(`Generating ${type} content with OpenAI API`);
+        
+        // Prepare the messages
+        const messages = [
+          { 
+            role: "system", 
+            content: "You are an expert content creator for LinkedIn, generating high-quality posts from YouTube transcripts." 
+          },
+          { 
+            role: "user", 
+            content: prompt 
+          }
+        ];
+        
+        // Call the OpenAI API with fallback support
+        const completion = await generateWithOpenAI(messages);
+        
+        // Log the response
+        console.log(`OpenAI API response received for ${type} content:`, {
+          model: completion.model,
+          usage: completion.usage,
+          finishReason: completion.choices[0]?.finish_reason
+        });
+        
+        // Get the generated content
+        const generatedContent = completion.choices[0]?.message?.content || '';
+        
+        // If it's a carousel, log the number of slides
+        if (type === 'carousel') {
+          const slides = generatedContent.split('\n\n').filter(s => s.trim());
+          console.log(`Generated carousel with ${slides.length} slides`);
+        }
+        
+        // Update state with the generated content
+        setGeneratedContent(generatedContent);
+        setPreviewContent(generatedContent);
+        setPreviewTitle(title);
+        setPreviewType(type);
+        
+        toast({
+          title: "Content Generated",
+          description: `Your ${title} has been created successfully`,
+        });
+      } catch (apiError: any) {
+        console.error('OpenAI API error:', apiError);
+        
+        // Check if this is a rate limit error
+        const isRateLimit = apiError?.message?.includes('429') || 
+                            apiError?.message?.includes('rate limit') ||
+                            apiError?.message?.includes('quota');
+        
+        // Fallback content if API fails
+        let fallbackContent = '';
+        
+        if (type === 'post-short') {
+          fallbackContent = `Unlocking Professional Growth Through Strategic Focus
+
+${selectedVideo.formattedTranscript?.[0] || 'The key to success is identifying your strengths and doubling down on them.'}
+
+I've found that allocating time for deliberate practice makes all the difference. The compound effect of small improvements creates remarkable results over time.
+
+What strategies have worked best for your professional development journey?`;
+        } else if (type === 'post-long') {
+          fallbackContent = `The Untapped Potential of Deliberate Learning
+
+Recently, I've been reflecting on how we approach professional development. Many of us wait for opportunities instead of creating them.
+
+${selectedVideo.formattedTranscript?.[0] || 'The content provides valuable professional insights'}
+
+${selectedVideo.formattedTranscript?.[1] || 'Professional growth requires consistent learning and adaptation'}
+
+${selectedVideo.formattedTranscript?.[2] || 'Connecting with others in your field amplifies your impact'}
+
+These principles have transformed how I approach work challenges. By incorporating structured learning into my weekly schedule, I've been able to develop skills that were previously outside my comfort zone.
+
+What learning methods have yielded the best results for you? I'm curious to hear about your experiences.`;
+        } else {
+          fallbackContent = `Mastering Professional Growth in Today's Landscape
+
+${selectedVideo.formattedTranscript?.[0] || 'First key point from the video'}
+
+${selectedVideo.formattedTranscript?.[1] || 'Second key insight'}
+
+${selectedVideo.formattedTranscript?.[2] || 'Third important concept'}
+
+${selectedVideo.formattedTranscript?.[3] || 'Fourth valuable takeaway'}
+
+Implementation is key. Start small, be consistent, and track your progress.
+
+What strategies have worked best for you? Share your experiences in the comments.`;
+        }
+        
+        setGeneratedContent(fallbackContent);
+        setPreviewContent(fallbackContent);
+        setPreviewTitle(title);
+        setPreviewType(type);
+        
+        toast({
+          title: isRateLimit ? "API Quota Exceeded" : "Using Offline Content",
+          description: isRateLimit 
+            ? "The AI service quota has been exceeded. We've provided alternative content for you to use."
+            : "We couldn't connect to the AI service, but we've generated content for you to use.",
+          variant: isRateLimit ? "destructive" : "default"
+        });
+      }
+    } catch (error) {
+      console.error('Error generating content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate content. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingContent(false);
+    }
+  };
+
+  // Close content generator
+  const handleCloseContentGenerator = () => {
+    setShowContentGenerator(false);
+    setGeneratedContent('');
+    setSelectedContentType(null);
+    localStorage.removeItem('lastGeneratedContent');
   };
 
   // Filter videos based on search query
@@ -485,6 +1070,277 @@ const RequestCarouselPage: React.FC = () => {
         description: "We'll notify you when your carousel is ready.",
       });
     }, 1500);
+  };
+
+  // Add safety checks in the carousel preview section
+  const getCarouselSlides = (content: string | null | undefined) => {
+    if (!content) return [];
+    return content.split('\n\n').filter(s => s.trim());
+  };
+
+  const getCarouselSlideCount = (content: string | null | undefined) => {
+    const slides = getCarouselSlides(content);
+    return slides.length || 7; // Default to 7 if no slides
+  };
+
+  const getCarouselSlideContent = (content: string | null | undefined, index: number) => {
+    const slides = getCarouselSlides(content);
+    if (slides.length === 0) return 'Carousel slide content';
+    
+    // Ensure index is within bounds
+    const safeIndex = Math.min(index, slides.length - 1);
+    let slideContent = slides[safeIndex] || 'Carousel slide content';
+    
+    // Remove "Slide X:" or "Slide X." prefix with any amount of whitespace
+    slideContent = slideContent.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+    
+    return slideContent;
+  };
+
+  // Update the current slide logic to prevent out-of-bounds errors
+  useEffect(() => {
+    // When content changes, reset to first slide
+    setCurrentSlide(0);
+  }, [previewContent, previewType]);
+
+  useEffect(() => {
+    // Ensure current slide is always in bounds
+    if (previewContent && previewType === 'carousel') {
+      const slides = getCarouselSlides(previewContent);
+      if (slides.length > 0 && currentSlide >= slides.length) {
+        setCurrentSlide(slides.length - 1);
+      }
+    }
+  }, [currentSlide, previewContent, previewType]);
+
+  // Add function to load saved content from localStorage
+  const loadSavedContents = () => {
+    try {
+      const savedContentStr = localStorage.getItem('savedLinkedInContents');
+      if (savedContentStr) {
+        const contents = JSON.parse(savedContentStr);
+        setSavedContents(contents);
+      }
+    } catch (error) {
+      console.error('Error loading saved contents:', error);
+    }
+  };
+
+  // Add function to save content to localStorage
+  const saveContent = () => {
+    if (!generatedContent || !previewTitle || !previewType) {
+      toast({
+        title: "Nothing to save",
+        description: "Please generate content first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Clean up any slide prefixes for carousel content
+      let contentToSave = generatedContent;
+      if (previewType === 'carousel') {
+        contentToSave = generatedContent
+          .split('\n\n')
+          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+          .join('\n\n');
+      }
+      
+      // Create new saved content object
+      const newContent: SavedContent = {
+        id: Math.random().toString(36).substring(2, 15),
+        title: previewTitle,
+        content: contentToSave,
+        type: previewType as 'post-short' | 'post-long' | 'carousel',
+        videoId: selectedVideo?.id,
+        videoTitle: selectedVideo?.title,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add to existing saved contents
+      const updatedContents = [...savedContents, newContent];
+      setSavedContents(updatedContents);
+
+      // Save to localStorage
+      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
+
+      toast({
+        title: "Content Saved",
+        description: "The content has been saved and can be accessed anytime",
+      });
+    } catch (error) {
+      console.error('Error saving content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save content",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Add function to delete saved content
+  const deleteSavedContent = (id: string) => {
+    try {
+      const updatedContents = savedContents.filter(content => content.id !== id);
+      setSavedContents(updatedContents);
+      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
+
+      toast({
+        title: "Content Deleted",
+        description: "The saved content has been removed",
+      });
+    } catch (error) {
+      console.error('Error deleting content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete content",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Add function to load saved content into preview
+  const loadSavedContent = (content: SavedContent) => {
+    let cleanedContent = content.content;
+    // Clean up any slide prefixes for carousel content
+    if (content.type === 'carousel') {
+      cleanedContent = content.content
+        .split('\n\n')
+        .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+        .join('\n\n');
+    }
+    
+    setGeneratedContent(cleanedContent);
+    setPreviewContent(cleanedContent);
+    setPreviewTitle(content.title);
+    setPreviewType(content.type);
+    setShowSavedContents(false);
+
+    toast({
+      title: "Content Loaded",
+      description: "The saved content has been loaded to the preview",
+    });
+  };
+
+  // Load saved contents on component mount
+  useEffect(() => {
+    loadSavedContents();
+  }, []);
+
+  // Add function to handle editing in editor
+  const handleEditInEditor = () => {
+    if (!previewContent || previewType !== 'carousel') {
+      toast({
+        title: "Cannot edit",
+        description: "Only carousel content can be edited in the editor",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Prepare slides for editor
+    const slides = prepareCarouselForEditor(previewContent);
+    
+    // Log for debugging
+    console.log("Prepared slides for editor:", slides.length);
+    
+    // Verify slides have correct positioning
+    const validatedSlides = slides.map(slide => ({
+      ...slide,
+      textElements: slide.textElements.map(text => {
+        // Ensure text element is properly centered
+        const SLIDE_WIDTH = 1080;
+        const SLIDE_HEIGHT = 1080;
+        
+        return {
+          ...text,
+          position: {
+            x: (SLIDE_WIDTH / 2) - 400, // Center horizontally 
+            y: (SLIDE_HEIGHT / 2) - 250  // Center vertically
+          },
+          width: 800,
+          height: 500
+        };
+      })
+    }));
+    
+    // Save to localStorage for the editor to read
+    localStorage.setItem('editor_slides', JSON.stringify(validatedSlides));
+    
+    // Navigate to editor
+    navigate('/editor');
+    
+    toast({
+      title: "Opening in editor",
+      description: "Your carousel content is ready to edit"
+    });
+  };
+
+  // Load saved content from localStorage on mount
+  useEffect(() => {
+    const savedContent = localStorage.getItem('lastGeneratedContent');
+    if (savedContent) {
+      try {
+        const { content, title, type } = JSON.parse(savedContent);
+        setGeneratedContent(content);
+        setPreviewContent(content);
+        setPreviewTitle(title);
+        setPreviewType(type);
+        setEditableContent(content);
+        setShowContentGenerator(true);
+      } catch (error) {
+        console.error('Error loading saved content:', error);
+      }
+    }
+  }, []);
+
+  // Save content to localStorage whenever it changes
+  useEffect(() => {
+    if (generatedContent && previewTitle && previewType) {
+      localStorage.setItem('lastGeneratedContent', JSON.stringify({
+        content: generatedContent,
+        title: previewTitle,
+        type: previewType
+      }));
+    }
+  }, [generatedContent, previewTitle, previewType]);
+
+  // Handle content edit
+  const handleContentEdit = (newContent: string) => {
+    // Clean up slide numbers from the content
+    const cleanContent = newContent
+      .split('\n\n')
+      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+      .join('\n\n');
+    
+    setEditableContent(cleanContent);
+    setPreviewContent(cleanContent);
+  };
+
+  // Handle edit mode toggle
+  const toggleEditMode = () => {
+    if (!isEditing) {
+      // Entering edit mode - set content for editing
+      setEditableContent(generatedContent);
+    } else {
+      // Exiting edit mode - save edited content
+      if (previewType === 'carousel') {
+        // Process the content to remove "Slide X:" prefixes from each slide
+        const cleanContent = editableContent
+          .split('\n\n')
+          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+          .join('\n\n');
+        
+        setGeneratedContent(cleanContent);
+        setPreviewContent(cleanContent);
+      } else {
+        setGeneratedContent(editableContent);
+        setPreviewContent(editableContent);
+      }
+    }
+    // Toggle edit mode state
+    setIsEditing(!isEditing);
   };
 
   // Success view
@@ -631,12 +1487,48 @@ const RequestCarouselPage: React.FC = () => {
                                     </div>
                                   </div>
                                 )}
+                                {/* Transcript indicator badge */}
+                                {(video.transcript || (video.formattedTranscript && video.formattedTranscript.length > 0)) && (
+                                  <div className="absolute top-2 left-2 bg-green-500/90 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                                    <FileText className="h-3 w-3" />
+                                    <span>Transcript</span>
+                                  </div>
+                                )}
                               </div>
                               <div className="p-3">
                                 <h4 className="font-medium text-sm line-clamp-2">{video.title}</h4>
                                 <p className="text-xs text-muted-foreground mt-1">{video.channelName}</p>
                                 <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                                   <span>{video.date}</span>
+                                </div>
+                                
+                                {/* Transcript fetch button */}
+                                <div 
+                                  className="mt-2 pt-2 border-t flex justify-end" 
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {isFetchingTranscript && fetchingVideoId === video.id ? (
+                                    <div className="w-full flex justify-center">
+                                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                    </div>
+                                  ) : !(video.transcript || (video.formattedTranscript && video.formattedTranscript.length > 0)) ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleFetchTranscript(video);
+                                      }}
+                                      className="text-xs h-7 px-2"
+                                    >
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      Get Transcript
+                                    </Button>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                                      Transcript Available
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -692,19 +1584,85 @@ const RequestCarouselPage: React.FC = () => {
                       
                       {showTranscript && selectedVideo && (
                         <div className="mt-4 border rounded-lg p-4">
-                          <h3 className="text-lg font-medium mb-3">Generated Transcript</h3>
+                          <div className="flex justify-between items-center mb-3">
+                            <h3 className="text-lg font-medium">Generated Transcript</h3>
+                            {generatedTranscript.length === 0 && !isFetchingTranscript && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleFetchTranscript(selectedVideo)}
+                                className="flex items-center gap-1"
+                              >
+                                <FileText className="h-4 w-4" />
+                                Fetch Transcript
+                              </Button>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground mb-3">
                             This transcript will be used to create your carousel slides:
                           </p>
-                          <ScrollArea className="h-48 rounded-md border p-4">
-                            <ol className="list-decimal pl-5 space-y-2">
-                              {generatedTranscript.map((line, index) => (
-                                <li key={index} className="text-sm">
-                                  {line}
-                                </li>
-                              ))}
-                            </ol>
-                          </ScrollArea>
+                          
+                          {isFetchingTranscript ? (
+                            <div className="py-8 flex items-center justify-center">
+                              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : generatedTranscript.length > 0 ? (
+                            <>
+                              <ScrollArea className="h-[200px] rounded-md border p-4 mb-4">
+                                <div className="space-y-2">
+                                  {generatedTranscript.map((point, index) => (
+                                    <div key={index} className="flex items-start gap-2">
+                                      <div className="min-w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                                        {index + 1}
+                                      </div>
+                                      <p className="text-sm">{point}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                              
+                              {/* LinkedIn Content Generation Section */}
+                              <div className="mt-4 border-t pt-4">
+                                <div className="flex justify-between items-center mb-3">
+                                  <h3 className="text-md font-medium flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-amber-500" />
+                                    Generate LinkedIn Content
+                                  </h3>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setShowSavedContents(true)}
+                                    className="flex items-center gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                                  >
+                                    <Folder className="h-4 w-4 text-blue-600" />
+                                    Saved ({savedContents.length})
+                                  </Button>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                  {contentGenerationOptions.map((option) => (
+                                    <Button 
+                                      key={option.type}
+                                      variant="outline" 
+                                      className="h-auto py-3 px-4 flex flex-col items-center text-center"
+                                      onClick={() => handleGenerateContent(option.type)}
+                                      disabled={isGeneratingContent}
+                                    >
+                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                                        {option.icon}
+                                      </div>
+                                      <span className="font-medium">{option.title}</span>
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="py-8 text-center text-muted-foreground">
+                              <FileText className="h-12 w-12 mx-auto opacity-20 mb-2" />
+                              <p>No transcript loaded yet</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </TabsContent>
@@ -791,7 +1749,7 @@ const RequestCarouselPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {selectedVideo && generatedTranscript.length > 0 ? (
+            {selectedVideo ? (
               <div className="bg-white border rounded-lg overflow-hidden shadow-md">
                 {/* LinkedIn-style header */}
                 <div className="p-3 border-b">
@@ -808,68 +1766,88 @@ const RequestCarouselPage: React.FC = () => {
                 
                 {/* Post content */}
                 <div className="p-3">
-                  <p className="text-sm mb-3">{selectedVideo.title}</p>
-                </div>
-                
-                {/* Carousel slide with 1:1 aspect ratio */}
-                <div className="relative">
-                  <div className="aspect-square w-full relative">
-                    <div className="absolute inset-0 flex flex-col">
-                      {/* Slide content with LinkedIn styling */}
-                      <div className="flex-1 flex flex-col justify-center p-6 bg-gradient-to-br from-blue-50 to-white">
-                        <div className="absolute top-3 right-3 bg-white/80 text-xs px-2 py-1 rounded-full text-gray-700 font-medium">
-                          {currentSlide + 1}/{generatedTranscript.length}
-                        </div>
-                        
-                        <div className="mx-auto max-w-[90%] text-center">
-                          <p className="text-lg font-semibold leading-tight">{generatedTranscript[currentSlide]}</p>
-                        </div>
-                        
-                        {/* LinkedIn logo overlay */}
-                        <div className="absolute bottom-3 left-3">
-                          <div className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded flex items-center">
-                            <span className="font-bold">in</span>
+                  {previewContent ? (
+                    <div>
+                      {previewType?.includes('post') ? (
+                        <p className="text-sm whitespace-pre-line">{previewContent}</p>
+                      ) : previewType === 'carousel' && (
+                        <div className="aspect-square w-full relative">
+                          <div className="absolute inset-0 flex flex-col">
+                            {/* Slide content with LinkedIn styling */}
+                            <div className="flex-1 flex flex-col justify-center p-6 bg-gradient-to-br from-blue-50 to-white">
+                              {/* Remove the slide number indicator that shows in LinkedIn post */}
+                              
+                              <div className="mx-auto max-w-[90%] text-center">
+                                <p className="text-lg font-semibold leading-tight">
+                                  {getCarouselSlideContent(previewContent, currentSlide)}
+                                </p>
+                              </div>
+                              
+                              {/* LinkedIn logo overlay */}
+                              <div className="absolute bottom-3 left-3">
+                                <div className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded flex items-center">
+                                  <span className="font-bold">in</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Navigation buttons */}
+                            <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
+                              <Button 
+                                onClick={prevSlide} 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
+                              >
+                                <ChevronLeft className="h-5 w-5" />
+                                <span className="sr-only">Previous slide</span>
+                              </Button>
+                              <Button 
+                                onClick={nextSlide} 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
+                              >
+                                <ChevronRight className="h-5 w-5" />
+                                <span className="sr-only">Next slide</span>
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Navigation buttons */}
-                      <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
-                        <Button 
-                          onClick={prevSlide} 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
-                        >
-                          <ChevronLeft className="h-5 w-5" />
-                          <span className="sr-only">Previous slide</span>
-                        </Button>
-                        <Button 
-                          onClick={nextSlide} 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
-                        >
-                          <ChevronRight className="h-5 w-5" />
-                          <span className="sr-only">Next slide</span>
-                        </Button>
-                      </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <p className="text-sm mb-3">{selectedVideo.title}</p>
+                  )}
                 </div>
                 
-                {/* Slide indicators */}
-                <div className="flex justify-center p-3 gap-1 border-t">
-                  {generatedTranscript.map((_, index) => (
-                    <div 
-                      key={index}
-                      className={`h-1.5 rounded-full cursor-pointer transition-all ${
-                        index === currentSlide ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
-                      }`}
-                      onClick={() => setCurrentSlide(index)}
-                    />
-                  ))}
-                </div>
+                {previewType === 'carousel' && (
+                  <div className="border-t">
+                    {/* Slide indicators */}
+                    <div className="flex justify-center p-3 gap-1">
+                      {previewContent 
+                        ? getCarouselSlides(previewContent).map((_, index) => (
+                            <div 
+                              key={index}
+                              className={`h-1.5 rounded-full cursor-pointer transition-all ${
+                                index === currentSlide ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
+                              }`}
+                              onClick={() => setCurrentSlide(index)}
+                            />
+                          ))
+                        : Array(7).fill(0).map((_, index) => (
+                            <div 
+                              key={index}
+                              className={`h-1.5 rounded-full cursor-pointer transition-all ${
+                                index === currentSlide % 7 ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
+                              }`}
+                              onClick={() => setCurrentSlide(index)}
+                            />
+                          ))
+                      }
+                    </div>
+                  </div>
+                )}
                 
                 {/* LinkedIn-style engagement actions */}
                 <div className="border-t">
@@ -900,8 +1878,22 @@ const RequestCarouselPage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-medium mb-2">Select a YouTube video</h3>
                 <p className="text-sm text-muted-foreground">
-                  A preview of your carousel will appear here after selecting a video and generating content.
+                  A preview of your content will appear here after selecting a video and generating content.
                 </p>
+              </div>
+            )}
+            
+            {/* Add Edit in Editor button for carousel content */}
+            {previewContent && previewType === 'carousel' && (
+              <div className="mt-4">
+                <Button 
+                  onClick={handleEditInEditor}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Edit in Carousel Editor
+                </Button>
               </div>
             )}
             
@@ -926,8 +1918,183 @@ const RequestCarouselPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Content Generation Modal/Section */}
+      {showContentGenerator && selectedContentType && (
+        <Card className="mt-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-lg">
+                {contentGenerationOptions.find(opt => opt.type === selectedContentType)?.title || 'Generated Content'}
+              </CardTitle>
+              <CardDescription>
+                AI-generated content based on video transcript
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {!isGeneratingContent && generatedContent && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={toggleEditMode}
+                  className="gap-2"
+                >
+                  {isEditing ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Save Edits
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4" />
+                      Edit Content
+                    </>
+                  )}
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleCloseContentGenerator}>
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isGeneratingContent ? (
+              <div className="py-12 flex flex-col items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground">Generating {contentGenerationOptions.find(opt => opt.type === selectedContentType)?.title}...</p>
+              </div>
+            ) : (
+              <div className="border rounded-md p-4 bg-muted/20">
+                {isEditing ? (
+                  <Textarea
+                    value={editableContent}
+                    onChange={(e) => handleContentEdit(e.target.value)}
+                    className="min-h-[200px] font-mono text-sm"
+                    placeholder="Edit your content here..."
+                  />
+                ) : (
+                  <p className="whitespace-pre-line">{generatedContent}</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-between border-t pt-4">
+            <Button variant="outline" onClick={handleCloseContentGenerator}>
+              Close
+            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="secondary" 
+                onClick={saveContent}
+                disabled={isGeneratingContent || !generatedContent}
+                className="flex items-center gap-1"
+              >
+                <Save className="h-4 w-4" />
+                Save
+              </Button>
+              <Button 
+                variant="default" 
+                disabled={isGeneratingContent || !generatedContent} 
+                onClick={() => {
+                  if (generatedContent) {
+                    navigator.clipboard.writeText(isEditing ? editableContent : generatedContent);
+                    toast({
+                      description: "Content copied to clipboard",
+                    });
+                  }
+                }}
+              >
+                Copy Content
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+      )}
+
+      {/* Add modal to show saved contents */}
+      {showSavedContents && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] flex flex-col shadow-xl">
+            <div className="p-4 border-b bg-blue-50 flex items-center justify-between rounded-t-lg">
+              <h3 className="text-lg font-medium text-blue-800 flex items-center gap-2">
+                <Folder className="h-5 w-5 text-blue-600" />
+                Saved Content
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowSavedContents(false)}>
+                ✕
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {savedContents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Folder className="h-16 w-16 text-blue-200 mb-4" />
+                  <p className="text-blue-800 font-medium">No saved content yet</p>
+                  <p className="text-sm text-blue-600 mt-1">Generate and save content to access it anytime</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {savedContents.map((content) => (
+                    <div key={content.id} className="border rounded-lg overflow-hidden border-blue-100 hover:shadow-md transition-shadow">
+                      <div className="p-3 bg-blue-50 flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-blue-900">{content.title}</h4>
+                          <p className="text-xs text-blue-700">
+                            {content.videoTitle && `From: ${content.videoTitle} • `}
+                            {new Date(content.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => deleteSavedContent(content.id)}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white">
+                        <div className="max-h-40 overflow-y-auto mb-3">
+                          <p className="text-sm whitespace-pre-line line-clamp-6 text-gray-800">{content.content}</p>
+                        </div>
+                        <div className="flex justify-end gap-2 border-t pt-3">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              navigator.clipboard.writeText(content.content);
+                              toast({
+                                description: "Content copied to clipboard",
+                              });
+                            }}
+                            className="h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copy
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            onClick={() => loadSavedContent(content)}
+                            className="h-8 bg-blue-600 hover:bg-blue-700"
+                          >
+                            <ArrowRight className="h-3 w-3 mr-1" />
+                            Load
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default RequestCarouselPage; 
+export default RequestCarouselPage;

@@ -57,29 +57,11 @@ export type CarouselTemplate = {
   category: 'listicle' | 'how-to' | 'case-study' | 'industry-insights' | 'educational' | 'promotional';
 };
 
-export type SliderVariant = 
-  | 'basic'
-  | 'pagination'
-  | 'gallery'
-  | 'looped'
-  | 'autoplay'
-  | 'responsive'
-  | 'grid'
-  | 'coverflow'
-  | 'fade'
-  | 'vertical'
-  | 'thumbs'
-  | 'parallax';
+// Simplified to only support LinkedIn's 1080x1080 basic carousel format
+export type SliderVariant = 'basic';
 
 export type SliderOptions = {
   variant: SliderVariant;
-  autoplay?: boolean;
-  autoplaySpeed?: number;
-  loop?: boolean;
-  slidesPerView?: number;
-  spaceBetween?: number;
   navigation?: boolean;
   pagination?: boolean;
-  effect?: 'slide' | 'fade' | 'cube' | 'coverflow' | 'flip';
-  direction?: 'horizontal' | 'vertical';
 }; 
