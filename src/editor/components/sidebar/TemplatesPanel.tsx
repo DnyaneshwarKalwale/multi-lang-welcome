@@ -1,63 +1,48 @@
-
 import React from 'react';
-import { templates } from '../../data/templates';
-import { useCarousel } from '../../contexts/CarouselContext';
 import { Button } from '@/components/ui/button';
+import { useKonvaCarousel } from '../../contexts/KonvaCarouselContext';
 
 const TemplatesPanel = () => {
-  const { addSlide } = useCarousel();
+  const { addSlide, getAvailableTemplates } = useKonvaCarousel();
+  const templates = getAvailableTemplates();
+  
+  const handleTemplateClick = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      addSlide(template);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <h2 className="font-medium text-lg">Templates</h2>
-      
-      <div className="grid grid-cols-2 gap-2">
-        {templates.map((template) => (
+    <div className="p-4">
+      <h3 className="text-lg font-medium mb-4">Templates</h3>
+      <div className="grid grid-cols-2 gap-3">
+        {templates.map(template => (
           <div 
             key={template.id}
-            className="border rounded-md overflow-hidden cursor-pointer hover:border-brand-blue transition-colors"
-            onClick={() => addSlide(template)}
+            className="cursor-pointer border rounded-md overflow-hidden hover:shadow-md transition-shadow"
+            onClick={() => handleTemplateClick(template.id)}
           >
-            <div 
-              className="template-preview"
-              style={{ 
-                backgroundColor: template.backgroundColor,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '8px'
-              }}
-            >
-              {template.textElements.slice(0, 1).map((text, idx) => (
+            <div className="aspect-[4/5] relative bg-gray-100">
+              {template.thumbnail ? (
+                <img 
+                  src={template.thumbnail} 
+                  alt={template.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
                 <div 
-                  key={idx}
-                  style={{
-                    fontFamily: text.fontFamily,
-                    fontSize: `${Math.min(text.fontSize / 5, 24)}px`,
-                    fontWeight: text.fontWeight,
-                    color: text.color,
-                    textAlign: text.align as any
-                  }}
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ backgroundColor: template.backgroundColor }}
                 >
-                  {text.text}
+                  <span className="text-xs text-gray-500">No preview</span>
                 </div>
-              ))}
+              )}
             </div>
-            <div className="p-2 bg-white">
-              <p className="text-xs text-center truncate">{template.name}</p>
-            </div>
+            <div className="p-2 text-xs truncate">{template.name}</div>
           </div>
         ))}
       </div>
-
-      <Button 
-        className="w-full mt-4" 
-        variant="outline"
-        onClick={() => addSlide()}
-      >
-        Blank Slide
-      </Button>
     </div>
   );
 };

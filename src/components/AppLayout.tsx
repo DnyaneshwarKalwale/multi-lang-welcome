@@ -116,7 +116,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </header>
         
         {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 overflow-auto hide-scrollbar">
           {children || <Outlet />}
         </main>
       </div>

@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator';
 
 const Sidebar = () => {
   return (
-    <div className="w-80 border-r h-full bg-white overflow-y-auto shadow-sm">
+    <div className="w-80 border-r h-full bg-white overflow-y-auto shadow-sm hide-scrollbar editor-panel">
       <div className="p-4 border-b">
         <div className="flex items-center gap-2 mb-2">
           <Linkedin className="h-5 w-5 text-blue-600" />

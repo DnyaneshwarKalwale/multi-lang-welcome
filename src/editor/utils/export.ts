@@ -9,6 +9,16 @@ import * as pdfjs from 'pdfjs-dist';
 import { LINKEDIN_SLIDE_WIDTH, LINKEDIN_SLIDE_HEIGHT } from '../constants';
 import { getPdfPageCount, createPdfDataUrl } from './pdfUtils';
 
+// Add TypeScript declaration for window.carouselContext
+declare global {
+  interface Window {
+    carouselContext?: {
+      slides: Slide[];
+      currentSlideIndex: number;
+    };
+  }
+}
+
 // Set worker path for PDF.js
 // Initialize PDF.js (moved from top-level await to function)
 const initPdfJs = () => {
@@ -170,7 +180,7 @@ function getImageSource(img: any): string {
 }
 
 /**
- * Export a carousel as a PDF document
+ * Export a carousel as a PDF document using direct canvas rendering
  */
 export const exportCarouselAsPdf = async () => {
   try {
@@ -181,13 +191,21 @@ export const exportCarouselAsPdf = async () => {
       description: 'Please wait while we generate your PDF.'
     });
 
-    // Get all slides
-    const slides = document.querySelectorAll('[data-export-slide]');
-    if (!slides.length) {
-      throw new Error('No slides found to export');
+    // Use a simpler approach - get slides directly from context
+    const { slides } = window.carouselContext || {};
+    
+    if (!slides || slides.length === 0) {
+      toast({
+        title: 'Export Failed',
+        description: 'No slides found to export',
+        variant: 'destructive'
+      });
+      return;
     }
+    
+    console.log(`Starting export of ${slides.length} slides`);
 
-    // Create PDF with compression settings
+    // Create PDF with the right dimensions
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'px',
@@ -195,74 +213,176 @@ export const exportCarouselAsPdf = async () => {
       compress: true
     });
 
-    // Create a temporary container for rendering all slides
-    const mainContainer = document.createElement('div');
-    mainContainer.style.position = 'fixed';
-    mainContainer.style.left = '-9999px';
-    mainContainer.style.top = '0';
-    mainContainer.style.width = '1080px';
-    mainContainer.style.height = '1080px';
-    document.body.appendChild(mainContainer);
-
     // Process each slide
     for (let i = 0; i < slides.length; i++) {
+      try {
+        console.log(`Processing slide ${i+1} of ${slides.length}`);
       const slide = slides[i];
       
-      // Clear the container for the new slide
-      mainContainer.innerHTML = '';
-
-      // Clone the slide and prepare for export
-      const slideClone = slide.cloneNode(true) as HTMLElement;
-      slideClone.style.transform = 'none';
-      slideClone.style.width = '1080px';
-      slideClone.style.height = '1080px';
-      slideClone.style.position = 'absolute';
-      slideClone.style.top = '0';
-      slideClone.style.left = '0';
-      slideClone.style.display = 'block';
-      
-      // Remove UI controls from clone
-      const controls = slideClone.querySelectorAll('.resize-handle, .drag-handle, .element-controls, .button, .indicator');
-      controls.forEach(control => control.remove());
-      
-      mainContainer.appendChild(slideClone);
-
-      // Wait a bit for images to load
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Convert to canvas with optimized settings
-      const canvas = await html2canvas(mainContainer, {
-        width: 1080,
-        height: 1080,
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        imageTimeout: 15000,
-        logging: false,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('[data-export-slide]') as HTMLElement;
-          if (clonedElement) {
-            clonedElement.style.transform = 'none';
-            clonedElement.style.display = 'block';
+        // Create a canvas for this slide
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1080;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          console.error('Could not get canvas context');
+          continue;
+        }
+        
+        // Fill background
+        ctx.fillStyle = slide.backgroundColor || '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw background images first
+        if (slide.imageElements) {
+          const backgroundImages = slide.imageElements.filter(img => img.type === 'background');
+          
+          // Load and draw each background image
+          for (const img of backgroundImages) {
+            try {
+              const imgObj = await loadImage(img.src || img.imageUrl);
+              ctx.drawImage(imgObj, 0, 0, canvas.width, canvas.height);
+            } catch (err) {
+              console.error('Error loading background image:', err);
+            }
           }
         }
-      });
-
-      // Convert canvas to compressed image
-      const imgData = canvas.toDataURL('image/jpeg', 0.7);
+        
+        // Draw regular images
+        if (slide.imageElements) {
+          const regularImages = slide.imageElements.filter(img => img.type !== 'background');
+          
+          // Load and draw each image
+          for (const img of regularImages) {
+            try {
+              const imgObj = await loadImage(img.src || img.imageUrl);
+              const x = img.position.x - (img.size.width / 2);
+              const y = img.position.y - (img.size.height / 2);
+              
+              if (img.isCircle) {
+                // Draw circular image
+                ctx.save();
+                ctx.beginPath();
+                const centerX = x + img.size.width / 2;
+                const centerY = y + img.size.height / 2;
+                const radius = Math.min(img.size.width, img.size.height) / 2;
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(imgObj, x, y, img.size.width, img.size.height);
+                ctx.restore();
+              } else {
+                // Draw regular image
+                ctx.drawImage(imgObj, x, y, img.size.width, img.size.height);
+              }
+            } catch (err) {
+              console.error('Error loading image:', err);
+            }
+          }
+        }
+        
+        // Draw text elements
+        if (slide.textElements) {
+          for (const text of slide.textElements) {
+            try {
+              // Set text styles
+              ctx.fillStyle = text.color || '#000000';
+              const fontSize = text.fontSize || 24;
+              const fontFamily = text.fontFamily || 'Arial';
+              const fontWeight = text.fontWeight || '400';
+              const fontStyle = text.isItalic ? 'italic' : 'normal';
+              
+              ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+              ctx.textAlign = text.textAlign === 'center' 
+                ? 'center' 
+                : text.textAlign === 'right' ? 'right' : 'left';
+              
+              // Calculate position for text alignment
+              let x = text.position.x;
+              if (text.textAlign === 'center') {
+                x = text.position.x;
+              } else if (text.textAlign === 'right') {
+                x = text.position.x + ((text.width || 300) / 2);
+              } else {
+                x = text.position.x - ((text.width || 300) / 2);
+              }
+              
+              const y = text.position.y - ((text.height || 40) / 2) + fontSize;
+              
+              // If there's a background color, draw a background rectangle
+              if (text.backgroundColor) {
+                ctx.save();
+                ctx.fillStyle = text.backgroundColor;
+                const textWidth = ctx.measureText(text.text).width;
+                const bgX = text.textAlign === 'center' 
+                  ? x - (textWidth / 2) 
+                  : text.textAlign === 'right' 
+                    ? x - textWidth 
+                    : x;
+                const bgY = y - fontSize + 2;
+                ctx.fillRect(bgX, bgY, textWidth, fontSize + 4);
+                ctx.restore();
+                
+                // Reset fill style after drawing background
+                ctx.fillStyle = text.color || '#000000';
+              }
+              
+              // Draw the text
+              ctx.fillText(text.text, x, y);
+            } catch (err) {
+              console.error('Error rendering text:', err);
+            }
+          }
+        }
+        
+        // Add PDF content if needed (showing a placeholder for PDFs)
+        if (slide.pdfElements && slide.pdfElements.length > 0) {
+          for (const pdf of slide.pdfElements) {
+            try {
+              const x = pdf.position.x - (pdf.size.width / 2);
+              const y = pdf.position.y - (pdf.size.height / 2);
+              
+              // Draw a box placeholder for the PDF
+              ctx.strokeStyle = '#cccccc';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(x, y, pdf.size.width, pdf.size.height);
+              
+              // Add PDF icon or label
+              ctx.fillStyle = '#666666';
+              ctx.font = 'bold 24px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillText('PDF content', x + pdf.size.width / 2, y + pdf.size.height / 2);
+              
+              // Add page number indicator
+              ctx.font = '18px Arial';
+              ctx.fillText(`Page ${pdf.currentPage} of ${pdf.totalPages}`, 
+                x + pdf.size.width / 2, y + pdf.size.height / 2 + 30);
+            } catch (err) {
+              console.error('Error rendering PDF placeholder:', err);
+            }
+          }
+        }
 
       // Add new page for slides after the first one
       if (i > 0) {
         pdf.addPage([1080, 1080], 'portrait');
       }
 
-      // Add image to PDF
+        // Add the canvas as image to PDF
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
       pdf.addImage(imgData, 'JPEG', 0, 0, 1080, 1080);
+        
+        console.log(`Added slide ${i+1} to PDF`);
+      } catch (error) {
+        console.error(`Error processing slide ${i+1}:`, error);
+        toast({
+          title: 'Warning',
+          description: `Slide ${i+1} could not be processed properly`,
+          variant: 'destructive' 
+        });
+      }
     }
-
-    // Clean up
-    mainContainer.remove();
 
     // Set PDF metadata
     pdf.setProperties({
@@ -272,11 +392,7 @@ export const exportCarouselAsPdf = async () => {
     });
 
     // Save PDF
-    const pdfData = pdf.output('datauristring');
-    const link = document.createElement('a');
-    link.href = pdfData;
-    link.download = 'linkedin-carousel.pdf';
-    link.click();
+    pdf.save('linkedin-carousel.pdf');
     
     toast({
       title: 'Success',
@@ -294,6 +410,19 @@ export const exportCarouselAsPdf = async () => {
     window.dispatchEvent(new Event('carousel-export-end'));
   }
 };
+
+// Helper function to load an image and return a Promise
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(new Error(`Failed to load image: ${src}`));
+    
+    img.src = src;
+  });
+}
 
 /**
  * Export all slides in a carousel to a zip file

@@ -1,151 +1,226 @@
-import React, { useEffect, useState } from 'react';
-import { CarouselProvider } from '@/editor/contexts/CarouselContext';
-import Header from '@/editor/components/Header';
-import Sidebar from '@/editor/components/Sidebar';
-import Canvas from '@/editor/components/Canvas';
-import SlideNavigator from '@/editor/components/SlideNavigator';
-import { toast } from 'sonner';
-import { Slide } from '@/editor/types';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import KonvaCarouselEditorWithProvider from '../components/KonvaCarouselEditor';
+import { Slide, Node } from '../contexts/KonvaCarouselContext';
+import { toast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
-const Index = () => {
-  const location = useLocation();
-  const [initialSlides, setInitialSlides] = useState<Slide[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Function to create a default blank slide
-  const createBlankSlide = (): Slide => ({
-    id: uuidv4(),
-    backgroundColor: '#ffffff',
-    textElements: [],
-    imageElements: [],
-    pdfElements: []
-  });
-  
-  // Function to validate and position text elements correctly
-  const validateTextElement = (text: any) => {
-    // LinkedIn slide dimensions
-    const SLIDE_WIDTH = 1080;
-    const SLIDE_HEIGHT = 1080;
+// Helper to convert old slide format to Konva format if needed
+const convertToKonvaSlides = (oldSlides: any[]): Slide[] => {
+  try {
+    console.log("Converting old slide format to Konva format:", oldSlides.length);
     
-    return {
-      ...text,
-      id: text.id || uuidv4(),
-      position: text.position || { 
-        x: (SLIDE_WIDTH / 2) - 400, // Center horizontally
-        y: (SLIDE_HEIGHT / 2) - 250  // Center vertically
-      },
-      fontSize: text.fontSize || 24,
-      fontWeight: text.fontWeight || '500',
-      fontFamily: text.fontFamily || 'inter',
-      textAlign: text.textAlign || 'center',
-      color: text.color || '#000000',
-      width: text.width || 800,
-      height: text.height || 500,
-      zIndex: text.zIndex || 1
-    };
-  };
+    // Map from old format (textElements, imageElements) to Konva format (nodes array)
+    return oldSlides.map(slide => {
+      const nodes: Node[] = [];
+      
+      // Convert text elements to nodes
+      if (slide.textElements && Array.isArray(slide.textElements)) {
+        slide.textElements.forEach(text => {
+          nodes.push({
+            id: text.id || uuidv4(),
+            type: 'text',
+            text: text.text,
+            position: text.position || { x: 140, y: 290 },
+            fontSize: text.fontSize || 24,
+            fontFamily: text.fontFamily || 'inter',
+            fill: text.color || '#000000',
+            align: text.textAlign || 'center',
+            fontStyle: text.fontWeight === '700' ? 'bold' : 
+                      text.isItalic ? 'italic' : 'normal',
+            width: text.width || 800,
+            draggable: true,
+            zIndex: text.zIndex || 1
+          });
+        });
+      }
+      
+      // Convert image elements to nodes
+      if (slide.imageElements && Array.isArray(slide.imageElements)) {
+        slide.imageElements.forEach(image => {
+          nodes.push({
+            id: image.id || uuidv4(),
+            type: 'image',
+            src: image.src || image.imageUrl,
+            position: image.position || { x: 140, y: 290 },
+            size: image.size || { width: 400, height: 400 },
+            draggable: true,
+            zIndex: image.zIndex || 0
+          });
+        });
+      }
+      
+      console.log(`Slide ${slide.id}: Converted to ${nodes.length} Konva nodes`);
+      
+      return {
+        id: slide.id,
+        backgroundColor: slide.backgroundColor || '#ffffff',
+        nodes
+      };
+    });
+  } catch (error) {
+    console.error("Error converting slides to Konva format:", error);
+    return [];
+  }
+};
+
+const Index: React.FC = () => {
+  const [initialSlides, setInitialSlides] = useState<Slide[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // First check for slides from RequestCarouselPage
-    const storedSlidesJson = localStorage.getItem('editor_slides');
-    
-    // Then check for pending carousel data (saved when user was redirected to login)
-    const pendingCarouselJson = localStorage.getItem('pending_carousel_data');
+    // Function to create a fallback slide if everything fails
+    const createFallbackSlide = (): Slide[] => {
+      console.log("Creating fallback slide with Konva format");
+      return [{
+        id: uuidv4(),
+        backgroundColor: '#ffffff',
+        nodes: [{
+          id: uuidv4(),
+          type: 'text',
+          text: "Welcome to the Carousel Editor",
+          fontFamily: 'inter',
+          fontSize: 28,
+          fontStyle: 'normal',
+          align: 'center',
+          fill: '#000000',
+          position: { x: 140, y: 290 },
+          width: 800,
+          draggable: true,
+          zIndex: 1
+        }]
+      }];
+    };
     
     try {
-      if (storedSlidesJson) {
-        // Parse the stored slides
-        const storedSlides = JSON.parse(storedSlidesJson) as Slide[];
+      // Try to load slides from localStorage
+      const savedSlides = localStorage.getItem('editor_slides');
+      
+      if (savedSlides) {
+        console.log("Found 'editor_slides' in localStorage");
+        let parsedSlides;
         
-        // Ensure slides are valid and have required properties
-        const validatedSlides = storedSlides.map(slide => ({
-          ...slide,
-          id: slide.id || uuidv4(),
-          backgroundColor: slide.backgroundColor || '#ffffff',
-          textElements: (slide.textElements || []).map(validateTextElement),
-          imageElements: slide.imageElements || [],
-          pdfElements: slide.pdfElements || []
-        }));
-        
-        // Set as initial slides
-        setInitialSlides(validatedSlides);
-        
-        // Clear the storage after retrieving to avoid reloading on refresh
-        localStorage.removeItem('editor_slides');
-        
-        // Debug output
-        console.log("Loaded slides:", validatedSlides.length, validatedSlides);
-        
-        toast.success(`Loaded ${validatedSlides.length} slides from your carousel content`);
-      } else if (pendingCarouselJson) {
-        // Parse the pending carousel data
-        const pendingData = JSON.parse(pendingCarouselJson);
-        
-        if (pendingData.slides && Array.isArray(pendingData.slides) && pendingData.slides.length > 0) {
-          // Set the slides from pending data
-          setInitialSlides(pendingData.slides);
-          
-          toast.success("Restored your unsaved carousel");
-        } else {
-          // Create a default slide if no valid slides in pending data
-          setInitialSlides([createBlankSlide()]);
-          toast.info("Created a blank slide for you");
+        try {
+          parsedSlides = JSON.parse(savedSlides);
+          console.log("Successfully parsed slides from localStorage");
+        } catch (parseError) {
+          console.error("Error parsing 'editor_slides' JSON:", parseError);
+          setInitialSlides(createFallbackSlide());
+          setLoading(false);
+          return;
         }
         
-        // We'll handle title and description in the Header component
-        // Don't remove from localStorage yet - Header component will need it
+        if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
+          console.log(`Parsed ${parsedSlides.length} slides from localStorage`);
+          console.log("First slide format:", Object.keys(parsedSlides[0]));
+          
+          // Check format more robustly
+          const hasNodes = parsedSlides[0].nodes !== undefined;
+          const hasTextElements = parsedSlides[0].textElements !== undefined;
+          
+          console.log(`Slide format detection: hasNodes=${hasNodes}, hasTextElements=${hasTextElements}`);
+          
+          let convertedSlides: Slide[];
+          
+          if (hasNodes) {
+            console.log("Slides already in Konva format (nodes)");
+            convertedSlides = parsedSlides as Slide[];
+          } else if (hasTextElements) {
+            console.log("Converting from old format (textElements) to Konva format");
+            convertedSlides = convertToKonvaSlides(parsedSlides);
+            console.log(`Converted ${parsedSlides.length} old slides to ${convertedSlides.length} Konva slides`);
+          } else {
+            console.warn("Unknown slide format, creating default slides");
+            convertedSlides = createFallbackSlide();
+          }
+          
+          // Make sure we have valid slides
+          if (convertedSlides.length === 0) {
+            console.warn("Conversion resulted in 0 slides, creating fallback");
+            convertedSlides = createFallbackSlide();
+          }
+          
+          // Set the slides state
+          setInitialSlides(convertedSlides);
+          
+          // Set slides globally for debugging
+          (window as any)['editorLoadedSlides'] = convertedSlides;
+          
+          // Show success message
+          toast({
+            title: "Slides loaded",
+            description: `Loaded ${convertedSlides.length} slides for editing`,
+          });
+        } else {
+          console.warn("No valid slides in localStorage, creating fallback");
+          setInitialSlides(createFallbackSlide());
+        }
       } else {
-        // No saved slides, create a blank one
-        setInitialSlides([createBlankSlide()]);
-        toast.info("Welcome to Carousel Builder! Start by selecting a template or create a blank slide");
+        console.log("No 'editor_slides' found in localStorage, checking other keys");
+        
+        // Try alternate keys
+        const alternateKeys = ['carousel_slides', 'slides', 'saved_slides'];
+        let found = false;
+        
+        for (const key of alternateKeys) {
+          const altSlides = localStorage.getItem(key);
+          if (altSlides) {
+            console.log(`Found slides in '${key}'`);
+            try {
+              const parsed = JSON.parse(altSlides);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                console.log(`Using ${parsed.length} slides from '${key}'`);
+                // Convert to Konva format if needed
+                const hasNodes = parsed[0].nodes !== undefined;
+                const slides = hasNodes ? parsed : convertToKonvaSlides(parsed);
+                setInitialSlides(slides);
+                found = true;
+                break;
+              }
+            } catch (e) {
+              console.error(`Error parsing ${key}:`, e);
+            }
+          }
+        }
+        
+        if (!found) {
+          console.log("No slides found in any storage key, creating fallback slide");
+          setInitialSlides(createFallbackSlide());
+        }
       }
     } catch (error) {
-      console.error("Failed to parse stored slides:", error);
-      toast.error("There was a problem loading your carousel content");
-      
-      // If there was an error, ensure we have at least one blank slide
-      setInitialSlides([createBlankSlide()]);
+      console.error("Error loading slides:", error);
+      setInitialSlides(createFallbackSlide());
+      toast({
+        title: "Error",
+        description: "Failed to load saved slides, created a new slide",
+        variant: "destructive"
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-    
-    // Clean up function
-    return () => {
-      // Note: We don't remove pending_carousel_data here to allow Header component to use it
-    };
   }, []);
-
-  // Force a re-render if loading state changes
+  
+  // Auto-focus window on load for keyboard shortcuts
   useEffect(() => {
-    if (!isLoading && initialSlides.length > 0) {
-      console.log("Editor initialized with slides:", initialSlides.length);
-    }
-  }, [isLoading, initialSlides]);
-
-  if (isLoading) {
+    window.focus();
+  }, []);
+  
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading your carousel...</p>
+      <div className="h-screen w-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Loading slides...</p>
         </div>
       </div>
     );
   }
-
+  
   return (
-    <CarouselProvider initialSlides={initialSlides}>
-      <div className="flex flex-col h-screen">
-        <Header />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar />
-          <Canvas />
-        </div>
-        <SlideNavigator />
-      </div>
-    </CarouselProvider>
+    <div className="h-screen w-screen overflow-hidden">
+      <KonvaCarouselEditorWithProvider initialSlides={initialSlides} />
+    </div>
   );
 };
 

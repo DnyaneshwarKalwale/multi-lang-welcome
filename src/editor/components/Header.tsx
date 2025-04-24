@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exportSlideToPng, exportSlideAsPdf, exportCarouselAsPdf } from '../utils/export';
 import { createCarousel } from '../utils/api';
-import { useCarousel } from '../contexts/CarouselContext';
+import { useKonvaCarousel } from '../contexts/KonvaCarouselContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,9 +35,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Header = () => {
-  const { slides, currentSlideIndex } = useCarousel();
+  const { slides, currentSlideIndex } = useKonvaCarousel();
   const currentSlide = slides[currentSlideIndex];
   const navigate = useNavigate();
   const { user, isAuthenticated, token } = useAuth();
@@ -125,7 +127,7 @@ const Header = () => {
       
       if (error.response && error.response.status === 401) {
         toast.error("Your session has expired. Please log in again.");
-        
+      
         // Clear any invalid tokens
         localStorage.removeItem('token');
         
@@ -138,7 +140,7 @@ const Header = () => {
         
         toast.info("Your carousel data has been temporarily saved");
         navigate('/', { state: { returnTo: '/editor' } });
-      } else {
+    } else {
         toast.error("There was a problem saving your carousel. Please try again.");
       }
     } finally {

@@ -329,3 +329,54 @@ input, textarea, select {
   background: linear-gradient(to right, #0077E6, #0055AD);
   box-shadow: 0 10px 15px -3px rgba(0, 136, 255, 0.2);
 }
+
+/* Custom scrollbar styling */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Hide scrollbars when not in use */
+.hide-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.hide-scrollbar:not(:hover)::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+/* Editor-specific scrollbar styling */
+.editor-panel::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.editor-panel:not(:hover)::-webkit-scrollbar-thumb {
+  background: transparent;
+}

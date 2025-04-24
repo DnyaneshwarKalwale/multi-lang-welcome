@@ -137,7 +137,7 @@ Apply the following rules **strictly**:
 Follow all the rules below exactly:
 
 1. Create a **new, scroll-stopping hook** for Slide 1 — do not use the YouTube title.
-2. **Do not use this symbol: "-"**
+2. **Do not use this symbol: "-" "--**
 3. Every slide should contain a **short heading integrated into the paragraph**, not on a separate line.
 4. Each slide must be **fully rephrased** — change examples, numbers, order of points, and structure.
 5. Use **short sentences or bullets**, with clear spacing for readability.
@@ -148,7 +148,8 @@ Follow all the rules below exactly:
 10. The flow should feel **logical and punchy**, not robotic or templated.
 11. Avoid fluff. Every slide should add **clear value or insight**.
 12. Separate each slide with "\n\n" to indicate a new slide.
-13. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.`,
+13. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.
+14. Make sure the carousel is not too long, it should be 8-10 slides max.`
 };
 
 // Define the form schema for validation
@@ -321,9 +322,21 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   
   console.log("Preparing carousel content for editor:", content);
   
-  const textSlides = content.split('\n\n')
-    .filter(s => s.trim())
-    .map(slideText => slideText.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+  // Process the content to remove standalone "Slide X" slides and clean slide content
+  const rawSlides = content.split('\n\n').filter(s => s.trim());
+  const textSlides = [];
+  
+  for (let i = 0; i < rawSlides.length; i++) {
+    const current = rawSlides[i].trim();
+    
+    // Skip slides that only contain "Slide X" and nothing else
+    if (/^Slide\s*\d+\s*$/.test(current)) {
+      continue;
+    }
+    
+    // Remove "Slide X:" prefix if it exists
+    textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+  }
   
   console.log("Created text slides:", textSlides.length);
   
@@ -331,36 +344,34 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   const SLIDE_WIDTH = 1080;
   const SLIDE_HEIGHT = 1080;
   
-  // Create properly formatted slides with text elements perfectly centered
-  const formattedSlides = textSlides.map((slideText) => ({
+  // Create slides in Konva-compatible format
+  const konvaSlides = textSlides.map((slideText) => ({
     id: uuidv4(),
     backgroundColor: '#ffffff',
-    textElements: [
+    nodes: [
       {
         id: uuidv4(),
+        type: 'text', 
         text: slideText,
-        fontFamily: 'inter' as FontFamily,
-        fontSize: 24,
-        fontWeight: '500' as FontWeight,
-        color: '#000000',
-        // Perfect center positioning (text element positioned at 1/2 of slide width and height)
         position: { 
-          x: SLIDE_WIDTH / 2 - 400, // Center horizontally with offset for width
-          y: SLIDE_HEIGHT / 2 - 250  // Center vertically with offset for height
+          x: 140, 
+          y: 290
         },
-        width: 800, // Fixed width that won't overflow
-        height: 500, // Sufficient height for most content
-        textAlign: 'center' as TextAlign,
+        fontSize: 24,
+        fontFamily: 'inter',
+        fill: '#000000',
+        width: 800,
+        height: 500,
+        align: 'center',
+        draggable: true,
         zIndex: 1
       }
-    ],
-    imageElements: [],
-    pdfElements: []
+    ]
   }));
   
-  console.log("Formatted slides:", formattedSlides.length);
+  console.log("Formatted konva slides:", konvaSlides.length);
   
-  return formattedSlides;
+  return konvaSlides as unknown as Slide[];
 };
 
 const RequestCarouselPage: React.FC = () => {
@@ -691,20 +702,8 @@ const RequestCarouselPage: React.FC = () => {
   const formatTranscript = (transcript: string): string[] => {
     if (!transcript) return [];
     
-    // Split by sentences and create bullet points
-    const sentences = transcript.replace(/([.?!])\s+/g, "$1|").split("|");
-    const bulletPoints = [];
-    
-    for (let i = 0; i < sentences.length; i++) {
-      const sentence = sentences[i].trim();
-      if (sentence.length > 10) {  // Only include meaningful sentences
-        bulletPoints.push(sentence);
-        // Limit to 10 bullet points
-        if (bulletPoints.length >= 10) break;
-      }
-    }
-    
-    return bulletPoints.length > 0 ? bulletPoints : ["No transcript content available"];
+    // Just return the raw transcript as a single item in the array
+    return [transcript];
   };
 
   // Watch video handler
@@ -750,26 +749,7 @@ const RequestCarouselPage: React.FC = () => {
       });
       
       if (response.data && response.data.success) {
-        // Format the transcript into bullet points
-        const formatTranscriptToBulletPoints = (text: string): string[] => {
-          // Split by sentences and create bullet points
-          const sentences = text.replace(/([.?!])\s+/g, "$1|").split("|");
-          const bulletPoints = [];
-          
-          for (let i = 0; i < sentences.length; i++) {
-            const sentence = sentences[i].trim();
-            if (sentence.length > 10) {  // Only include meaningful sentences
-              bulletPoints.push(sentence);
-              // Limit to 8 bullet points
-              if (bulletPoints.length >= 8) break;
-            }
-          }
-          
-          return bulletPoints.length > 0 ? bulletPoints : ["No transcript content available"];
-        };
-        
         const transcriptText = response.data.transcript;
-        const bulletPoints = formatTranscriptToBulletPoints(transcriptText);
         
         // Update the saved videos with the new transcript
         const updatedVideos = savedVideos.map(v => {
@@ -777,7 +757,7 @@ const RequestCarouselPage: React.FC = () => {
             return {
               ...v,
               transcript: transcriptText,
-              formattedTranscript: bulletPoints,
+              formattedTranscript: [transcriptText], // Store as a single item
               language: response.data.language || "Unknown",
               is_generated: response.data.is_generated || false
             };
@@ -790,7 +770,7 @@ const RequestCarouselPage: React.FC = () => {
         
         // If this is the currently selected video, update the transcript display
         if (selectedVideo && (selectedVideo.id === videoId || selectedVideo.videoId === videoId)) {
-          setGeneratedTranscript(bulletPoints);
+          setGeneratedTranscript([transcriptText]);
           setShowTranscript(true);
           setCurrentSlide(0);
         }
@@ -803,12 +783,12 @@ const RequestCarouselPage: React.FC = () => {
           const saveTranscriptApiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube/save-transcript`
             : `${baseUrl}/api/youtube/save-transcript`;
-            
+          
           await axios.post(saveTranscriptApiUrl, {
             userId: user?.id || 'anonymous',
             videoId: videoId,
             transcript: transcriptText,
-            formattedTranscript: bulletPoints,
+            formattedTranscript: [transcriptText], // Store as a single item
             language: response.data.language || "Unknown",
             is_generated: response.data.is_generated || false
           });
@@ -923,12 +903,29 @@ const RequestCarouselPage: React.FC = () => {
         });
         
         // Get the generated content
-        const generatedContent = completion.choices[0]?.message?.content || '';
+        let generatedContent = completion.choices[0]?.message?.content || '';
         
-        // If it's a carousel, log the number of slides
+        // If it's a carousel, clean up slide prefixes and any standalone "Slide X" occurrences
         if (type === 'carousel') {
-          const slides = generatedContent.split('\n\n').filter(s => s.trim());
-          console.log(`Generated carousel with ${slides.length} slides`);
+          // Split by double newlines to get individual slides
+          const rawSlides = generatedContent.split('\n\n').filter(s => s.trim());
+          
+          // Process slides to remove "Slide X" prefix slides and clean remaining slide content
+          const cleanedSlides = [];
+          for (let i = 0; i < rawSlides.length; i++) {
+            const current = rawSlides[i].trim();
+            
+            // Skip slides that only contain "Slide X" and nothing else
+            if (/^Slide\s*\d+\s*$/.test(current)) {
+              continue;
+            }
+            
+            // Remove "Slide X:" prefix if it exists
+            cleanedSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+          }
+          
+          generatedContent = cleanedSlides.join('\n\n');
+          console.log(`Generated carousel with ${cleanedSlides.length} cleaned slides`);
         }
         
         // Update state with the generated content
@@ -977,13 +974,13 @@ What learning methods have yielded the best results for you? I'm curious to hear
         } else {
           fallbackContent = `Mastering Professional Growth in Today's Landscape
 
-${selectedVideo.formattedTranscript?.[0] || 'First key point from the video'}
+First key point from the video
 
-${selectedVideo.formattedTranscript?.[1] || 'Second key insight'}
+Second key insight
 
-${selectedVideo.formattedTranscript?.[2] || 'Third important concept'}
+Third important concept
 
-${selectedVideo.formattedTranscript?.[3] || 'Fourth valuable takeaway'}
+Fourth valuable takeaway
 
 Implementation is key. Start small, be consistent, and track your progress.
 
@@ -1075,7 +1072,25 @@ What strategies have worked best for you? Share your experiences in the comments
   // Add safety checks in the carousel preview section
   const getCarouselSlides = (content: string | null | undefined) => {
     if (!content) return [];
-    return content.split('\n\n').filter(s => s.trim());
+    
+    // First, split by double newlines to get individual slides
+    const rawSlides = content.split('\n\n').filter(s => s.trim());
+    
+    // Now process slides to remove "Slide X" prefix slides and clean remaining slide content
+    const processedSlides = [];
+    for (let i = 0; i < rawSlides.length; i++) {
+      const current = rawSlides[i].trim();
+      
+      // Skip slides that only contain "Slide X" and nothing else
+      if (/^Slide\s*\d+\s*$/.test(current)) {
+        continue;
+      }
+      
+      // Remove "Slide X:" prefix if it exists
+      processedSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+    }
+    
+    return processedSlides;
   };
 
   const getCarouselSlideCount = (content: string | null | undefined) => {
@@ -1089,12 +1104,7 @@ What strategies have worked best for you? Share your experiences in the comments
     
     // Ensure index is within bounds
     const safeIndex = Math.min(index, slides.length - 1);
-    let slideContent = slides[safeIndex] || 'Carousel slide content';
-    
-    // Remove "Slide X:" or "Slide X." prefix with any amount of whitespace
-    slideContent = slideContent.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
-    
-    return slideContent;
+    return slides[safeIndex] || 'Carousel slide content';
   };
 
   // Update the current slide logic to prevent out-of-bounds errors
@@ -1239,42 +1249,127 @@ What strategies have worked best for you? Share your experiences in the comments
       return;
     }
     
-    // Prepare slides for editor
-    const slides = prepareCarouselForEditor(previewContent);
-    
-    // Log for debugging
-    console.log("Prepared slides for editor:", slides.length);
-    
-    // Verify slides have correct positioning
-    const validatedSlides = slides.map(slide => ({
-      ...slide,
-      textElements: slide.textElements.map(text => {
-        // Ensure text element is properly centered
-        const SLIDE_WIDTH = 1080;
-        const SLIDE_HEIGHT = 1080;
+    try {
+      // Log the content being processed for debugging
+      console.log("Processing content for editor:", previewContent);
+      
+      // Create a mutable copy of the content to process
+      let contentToProcess = previewContent;
+      
+      // First check if we have content with at least newlines
+      if (!contentToProcess.includes('\n\n')) {
+        // Try adding double newlines if it has single newlines
+        if (contentToProcess.includes('\n')) {
+          console.log("Content has single newlines, converting to double newlines");
+          contentToProcess = contentToProcess.replace(/\n/g, '\n\n');
+        } else {
+          // If no newlines at all, this might be a single slide
+          console.log("Content has no newlines, treating as single slide");
+          contentToProcess = contentToProcess.trim();
+        }
+      }
+      
+      // Split by double newlines to get individual slides
+      const rawSlides = contentToProcess.split('\n\n').filter(s => s.trim());
+      console.log("Raw slides count:", rawSlides.length);
+      
+      // Process slides to remove any standalone "Slide X" slides and clean content
+      const textSlides = [];
+      for (let i = 0; i < rawSlides.length; i++) {
+        const current = rawSlides[i].trim();
+        
+        // Skip slides that only contain "Slide X" and nothing else
+        if (/^Slide\s*\d+\s*$/.test(current)) {
+          continue;
+        }
+        
+        // Remove "Slide X:" prefix if it exists
+        textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+      }
+      
+      console.log("Processed slides for editor:", textSlides.length, textSlides);
+      
+      // If we have no slides after processing, try to create at least one slide
+      if (textSlides.length === 0) {
+        console.warn("No valid slides found, creating a fallback slide");
+        textSlides.push(contentToProcess.trim() || "Your carousel content");
+      }
+      
+      // LinkedIn slide dimensions - use 4:5 portrait ratio (1080x1350)
+      const SLIDE_WIDTH = 1080;
+      const SLIDE_HEIGHT = 1350;
+      
+      // Create slides in the exact format expected by the KonvaCarouselContext
+      const konvaSlides = textSlides.map((slideText) => {
+        // Create a unique ID for the slide
+        const slideId = uuidv4();
+        
+        // Create a unique ID for the text node
+        const textNodeId = uuidv4();
         
         return {
-          ...text,
-          position: {
-            x: (SLIDE_WIDTH / 2) - 400, // Center horizontally 
-            y: (SLIDE_HEIGHT / 2) - 250  // Center vertically
-          },
-          width: 800,
-          height: 500
+          id: slideId,
+          backgroundColor: '#ffffff',
+          nodes: [
+            {
+              id: textNodeId,
+              type: 'text',
+              text: slideText,
+              position: { 
+                x: Math.floor(SLIDE_WIDTH / 2 - 400), // Center horizontally (subtract half the width)
+                y: Math.floor(SLIDE_HEIGHT / 2 - 200)  // Center vertically in the 4:5 format
+              },
+              fontSize: 28,
+              fontFamily: 'inter',
+              fill: '#000000',
+              width: 800,
+              height: 400,
+              align: 'center',
+              draggable: true,
+              zIndex: 1
+            }
+          ]
         };
-      })
-    }));
-    
-    // Save to localStorage for the editor to read
-    localStorage.setItem('editor_slides', JSON.stringify(validatedSlides));
-    
-    // Navigate to editor
-    navigate('/editor');
-    
-    toast({
-      title: "Opening in editor",
-      description: "Your carousel content is ready to edit"
-    });
+      });
+      
+      console.log("Created Konva slides for editor:", konvaSlides.length);
+      
+      // Set Canvas Size preference to PORTRAIT format (4:5 ratio)
+      localStorage.setItem('canvas_size_preference', 'portrait');
+      
+      // Save to localStorage with the key the editor expects
+      localStorage.setItem('editor_slides', JSON.stringify(konvaSlides));
+      console.log("Saved Konva slides to localStorage");
+      
+      // Save additional debug info
+      localStorage.setItem('slides_debug', JSON.stringify({
+        format: 'konva',
+        originalContent: previewContent,
+        processedContent: contentToProcess,
+        processedSlides: textSlides,
+        konvaSlides: konvaSlides
+      }));
+      
+      // Create a direct global variable for debugging (will be available in the browser console)
+      // Using bracket notation to avoid TypeScript errors
+      (window as any)['editorSlides'] = konvaSlides;
+      (window as any)['slideCount'] = konvaSlides.length;
+      
+      // Navigate to editor
+      navigate('/editor');
+      
+      toast({
+        title: "Opening in editor",
+        description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`
+      });
+    } catch (error) {
+      console.error("Error preparing slides for editor:", error);
+      toast({
+        title: "Error",
+        description: "Could not prepare slides for editing. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Load saved content from localStorage on mount
@@ -1609,15 +1704,8 @@ What strategies have worked best for you? Share your experiences in the comments
                           ) : generatedTranscript.length > 0 ? (
                             <>
                               <ScrollArea className="h-[200px] rounded-md border p-4 mb-4">
-                                <div className="space-y-2">
-                                  {generatedTranscript.map((point, index) => (
-                                    <div key={index} className="flex items-start gap-2">
-                                      <div className="min-w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                                        {index + 1}
-                                      </div>
-                                      <p className="text-sm">{point}</p>
-                                    </div>
-                                  ))}
+                                <div>
+                                  <p className="text-sm whitespace-pre-line">{generatedTranscript[0]}</p>
                                 </div>
                               </ScrollArea>
                               

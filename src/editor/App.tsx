@@ -37,11 +37,11 @@ const EditorRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
+    <TooltipProvider>
         <EditorRoutes />
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
+      <Toaster />
+      <Sonner />
+    </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
