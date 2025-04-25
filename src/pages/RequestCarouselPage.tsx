@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
@@ -43,6 +43,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Slide, FontFamily, FontWeight, TextAlign } from "@/editor/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from "@/components/ui/textarea";
+import api from '@/services/api';
 
 // Model options with fallbacks
 const AI_MODELS = {
@@ -644,7 +645,7 @@ const RequestCarouselPage: React.FC = () => {
         : `${baseUrl}/api/youtube/transcript`;
       
       try {
-        const response = await axios.post(apiUrl, {
+      const response = await axios.post(apiUrl, {
           videoId: videoId,
           useScraperApi: true
         });
@@ -718,7 +719,7 @@ const RequestCarouselPage: React.FC = () => {
     // Set the formatted transcript for display
     const formattedData = data.formattedTranscript || formatTranscript(data.transcript);
     setGeneratedTranscript(formattedData);
-    setCurrentSlide(0);
+          setCurrentSlide(0);
     
     // Save to local and backend storage
     await saveVideoWithTranscript(updatedVideo);
@@ -761,9 +762,9 @@ const RequestCarouselPage: React.FC = () => {
       }
       
       localStorage.setItem('savedYoutubeVideos', JSON.stringify(savedVideos));
-      
-      // Save to backend
-      try {
+        
+        // Save to backend
+        try {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
@@ -783,7 +784,7 @@ const RequestCarouselPage: React.FC = () => {
           videos: [video],
           userId: user?.id || 'anonymous'
         });
-      } catch (backendError) {
+        } catch (backendError) {
         console.error("Error saving to backend:", backendError);
         // Continue with local updates even if backend fails
       }
@@ -805,7 +806,7 @@ const RequestCarouselPage: React.FC = () => {
             status: 'ready',
             updatedAt: new Date().toISOString()
           };
-        } else {
+      } else {
           updatedVideos.push({
             ...video,
             savedAt: new Date().toISOString(),
@@ -1097,21 +1098,8 @@ What strategies have worked best for you? Share your experiences in the comments
     }
   }, [currentSlide, previewContent, previewType]);
 
-  // Add function to load saved content from localStorage
-  const loadSavedContents = () => {
-    try {
-      const savedContentStr = localStorage.getItem('savedLinkedInContents');
-      if (savedContentStr) {
-        const contents = JSON.parse(savedContentStr);
-        setSavedContents(contents);
-      }
-    } catch (error) {
-      console.error('Error loading saved contents:', error);
-    }
-  };
-
-  // Add function to save content to localStorage
-  const saveContent = () => {
+  // Update function to save content to backend and localStorage
+  const saveContent = async () => {
     if (!generatedContent || !previewTitle || !previewType) {
       toast({
         title: "Nothing to save",
@@ -1142,17 +1130,44 @@ What strategies have worked best for you? Share your experiences in the comments
         createdAt: new Date().toISOString()
       };
 
-      // Add to existing saved contents
+      // Add to existing saved contents for UI update
       const updatedContents = [...savedContents, newContent];
       setSavedContents(updatedContents);
 
-      // Save to localStorage
-      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
+      // Try to save to backend first
+      let backendSaveSuccess = false;
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents`
+          : `${baseUrl}/api/carousel-contents`;
 
+        const backendResponse = await axios.post(apiUrl, {
+          content: newContent,
+          userId: user?.id || 'anonymous'
+        });
+
+        if (backendResponse.data.success) {
+          backendSaveSuccess = true;
       toast({
         title: "Content Saved",
-        description: "The content has been saved and can be accessed anytime",
-      });
+            description: "The content has been saved to your account",
+          });
+        }
+      } catch (backendError) {
+        console.error('Error saving content to backend:', backendError);
+        // Will fall back to localStorage
+      }
+
+      // Always save to localStorage as backup
+      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
+
+      if (!backendSaveSuccess) {
+        toast({
+          title: "Content Saved Locally",
+          description: "The content has been saved to your device",
+        });
+      }
     } catch (error) {
       console.error('Error saving content:', error);
       toast({
@@ -1160,19 +1175,134 @@ What strategies have worked best for you? Share your experiences in the comments
         description: "Failed to save content",
         variant: "destructive"
       });
+
+      // Attempt to save to localStorage as last resort
+      try {
+        // Create new saved content object
+        const newContent: SavedContent = {
+          id: Math.random().toString(36).substring(2, 15),
+          title: previewTitle || "Untitled Content",
+          content: generatedContent,
+          type: previewType as 'post-short' | 'post-long' | 'carousel',
+          videoId: selectedVideo?.id,
+          videoTitle: selectedVideo?.title,
+          createdAt: new Date().toISOString()
+        };
+        
+        const existingContents = JSON.parse(localStorage.getItem('savedLinkedInContents') || '[]');
+        const updatedContents = [...existingContents, newContent];
+        localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
+        
+        toast({
+          title: "Backup Save Successful",
+          description: "Content saved locally despite the error",
+        });
+      } catch (localError) {
+        console.error('Failed to save locally:', localError);
+      }
     }
   };
 
-  // Add function to delete saved content
-  const deleteSavedContent = (id: string) => {
+  // Add function to load saved contents from both backend and localStorage
+  const loadSavedContents = async () => {
     try {
+      // Try to load from backend first
+      let backendContents: SavedContent[] = [];
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents`
+          : `${baseUrl}/api/carousel-contents`;
+
+        const response = await axios.get(apiUrl, {
+          params: { userId: user?.id || 'anonymous' }
+        });
+
+        if (response.data.success && Array.isArray(response.data.data)) {
+          backendContents = response.data.data;
+        }
+      } catch (backendError) {
+        console.error('Error loading content from backend:', backendError);
+        // Will fall back to localStorage
+      }
+
+      // Load from localStorage
+      const localContentJSON = localStorage.getItem('savedLinkedInContents');
+      let localContents: SavedContent[] = [];
+      
+      if (localContentJSON) {
+        localContents = JSON.parse(localContentJSON);
+      }
+
+      // Merge contents giving preference to backend contents
+      const mergedContents = [...localContents];
+      
+      // Only add backend contents that don't exist locally
+      backendContents.forEach(backendContent => {
+        const exists = mergedContents.some(
+          localContent => localContent.id === backendContent.id
+        );
+        
+        if (!exists) {
+          mergedContents.push(backendContent);
+        }
+      });
+      
+      // Sort by most recent first
+      mergedContents.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      setSavedContents(mergedContents);
+    } catch (error) {
+      console.error('Error loading saved contents:', error);
+      
+      // Attempt to load from localStorage only as fallback
+      try {
+        const localContentJSON = localStorage.getItem('savedLinkedInContents');
+        
+        if (localContentJSON) {
+          setSavedContents(JSON.parse(localContentJSON));
+        }
+      } catch (localError) {
+        console.error('Failed to load local contents:', localError);
+      }
+    }
+  };
+
+  // Update delete function to also delete from backend
+  const deleteSavedContent = async (id: string) => {
+    try {
+      // Try to delete from backend first
+      let backendDeleteSuccess = false;
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents/${id}`
+          : `${baseUrl}/api/carousel-contents/${id}`;
+
+        const deleteResponse = await axios.delete(apiUrl, {
+          params: { userId: user?.id || 'anonymous' }
+        });
+
+        if (deleteResponse.data.success) {
+          backendDeleteSuccess = true;
+        }
+      } catch (backendError) {
+        console.error('Error deleting content from backend:', backendError);
+        // Continue with local delete
+      }
+
+      // Update local state and localStorage
       const updatedContents = savedContents.filter(content => content.id !== id);
       setSavedContents(updatedContents);
       localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
 
       toast({
         title: "Content Deleted",
-        description: "The saved content has been removed",
+        description: backendDeleteSuccess 
+          ? "The content has been removed from your account" 
+          : "The content has been removed locally",
       });
     } catch (error) {
       console.error('Error deleting content:', error);
@@ -1182,29 +1312,6 @@ What strategies have worked best for you? Share your experiences in the comments
         variant: "destructive"
       });
     }
-  };
-
-  // Add function to load saved content into preview
-  const loadSavedContent = (content: SavedContent) => {
-    let cleanedContent = content.content;
-    // Clean up any slide prefixes for carousel content
-    if (content.type === 'carousel') {
-      cleanedContent = content.content
-        .split('\n\n')
-        .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
-        .join('\n\n');
-    }
-    
-    setGeneratedContent(cleanedContent);
-    setPreviewContent(cleanedContent);
-    setPreviewTitle(content.title);
-    setPreviewType(content.type);
-    setShowSavedContents(false);
-
-    toast({
-      title: "Content Loaded",
-      description: "The saved content has been loaded to the preview",
-    });
   };
 
   // Load saved contents on component mount
@@ -1526,6 +1633,29 @@ What strategies have worked best for you? Share your experiences in the comments
         variant: "destructive"
       });
     }
+  };
+
+  // Add function to load saved content into preview
+  const loadSavedContent = (content: SavedContent) => {
+    let cleanedContent = content.content;
+    // Clean up any slide prefixes for carousel content
+    if (content.type === 'carousel') {
+      cleanedContent = content.content
+        .split('\n\n')
+        .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+        .join('\n\n');
+    }
+    
+    setGeneratedContent(cleanedContent);
+    setPreviewContent(cleanedContent);
+    setPreviewTitle(content.title);
+    setPreviewType(content.type);
+    setShowSavedContents(false);
+  
+    toast({
+      title: "Content Loaded",
+      description: "The saved content has been loaded to the preview",
+    });
   };
 
   return (
