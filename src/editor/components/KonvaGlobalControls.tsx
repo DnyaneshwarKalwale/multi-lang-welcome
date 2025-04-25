@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useKonvaCarousel, CANVAS_SIZES } from '../contexts/KonvaCarouselContext';
+import { useKonvaCarousel, CANVAS_SIZES, TextNode, ImageNode } from '../contexts/KonvaCarouselContext';
 import { HexColorPicker } from 'react-colorful';
 import { 
   PaintBucket, 
@@ -10,7 +10,8 @@ import {
   Download,
   Palette,
   Image as ImageIcon,
-  CopyCheck
+  CopyCheck,
+  ChevronDown
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -65,7 +66,7 @@ const KonvaGlobalControls: React.FC = () => {
       align: 'center',
       draggable: true,
       zIndex: 10
-    });
+    } as Omit<TextNode, 'id'>);
   };
   
   // Add a new image
@@ -117,7 +118,7 @@ const KonvaGlobalControls: React.FC = () => {
             },
             draggable: true,
             zIndex: 1
-          });
+          } as Omit<ImageNode, 'id'>);
         };
         img.src = event.target.result as string;
       }
@@ -169,15 +170,45 @@ const KonvaGlobalControls: React.FC = () => {
       // Store original slide index to restore it later
       const originalSlideIndex = currentSlideIndex;
       
-      // Create PDF with slide dimensions
+      // Create PDF with optimized settings for smaller file size
       const pdf = new jsPDF({
         orientation: currentCanvasSize.width > currentCanvasSize.height ? 'landscape' : 'portrait',
         unit: 'px',
-        format: [currentCanvasSize.width, currentCanvasSize.height]
+        format: [currentCanvasSize.width, currentCanvasSize.height],
+        compress: true, // Always compress for smaller file size
+        precision: 6, // Lower precision for smaller file
+        putOnlyUsedFonts: true // Only include used fonts
       });
       
       // Dispatch event to prepare for export
       window.dispatchEvent(new CustomEvent('carousel-export-start'));
+      
+      // Ensure fonts are loaded before rendering
+      await document.fonts.ready;
+      
+      // Create and inject temporary CSS for better text rendering during export
+      const optimizeTextCSS = document.createElement('style');
+      optimizeTextCSS.textContent = `
+        .konvajs-content * {
+          text-rendering: geometricPrecision !important;
+          -webkit-font-smoothing: antialiased !important;
+          -moz-osx-font-smoothing: grayscale !important;
+        }
+        .konvajs-content text {
+          font-family: inherit !important;
+          shape-rendering: geometricPrecision !important;
+        }
+        .konvajs-content canvas {
+          image-rendering: -webkit-optimize-contrast !important;
+          image-rendering: crisp-edges !important;
+        }
+        /* Improve text sharpness for Konva text nodes */
+        .konvajs-content [data-type="text"] {
+          font-feature-settings: "kern" 1, "liga" 1 !important;
+          letter-spacing: -0.01em !important;
+        }
+      `;
+      document.head.appendChild(optimizeTextCSS);
       
       for (let i = 0; i < slides.length; i++) {
         // Update progress
@@ -186,53 +217,119 @@ const KonvaGlobalControls: React.FC = () => {
         // Change to the slide we want to export
         setCurrentSlideIndex(i);
         
-        // Wait for the slide to be fully rendered
+        // Wait for the slide to be fully rendered (increased wait time for better font loading)
         await new Promise(resolve => setTimeout(resolve, 300));
         
         // Get the stage element
         const stageElement = document.querySelector(`#slide-${slides[i].id}`);
         if (!stageElement) continue;
         
-        // Get canvas from stage
+        // Apply text rendering optimizations before capturing
+        const enhanceTextRendering = (element: HTMLElement) => {
+          // Apply CSS text rendering improvements
+          element.querySelectorAll('div, span, p, text').forEach((textEl: Element) => {
+            const el = textEl as HTMLElement;
+            el.style.textRendering = 'geometricPrecision';
+            // Proper way to set vendor prefixed properties
+            el.style.setProperty('-webkit-font-smoothing', 'antialiased');
+            el.style.setProperty('-moz-osx-font-smoothing', 'grayscale');
+            el.style.setProperty('letter-spacing', '-0.01em'); // Slightly tighter letter spacing for better rendering
+            el.style.setProperty('font-feature-settings', '"kern" 1, "liga" 1'); // Enable kerning and ligatures
+          });
+          
+          // Optimize SVG elements if present
+          element.querySelectorAll('svg').forEach((svg) => {
+            svg.setAttribute('text-rendering', 'geometricPrecision');
+            svg.setAttribute('shape-rendering', 'geometricPrecision');
+            
+            // Optimize path elements in SVGs
+            svg.querySelectorAll('path').forEach(path => {
+              path.setAttribute('shape-rendering', 'geometricPrecision');
+            });
+          });
+          
+          // Find Konva canvas elements and set pixel ratio
+          element.querySelectorAll('canvas').forEach((canvas) => {
+            // Add a crisp-edges class to improve canvas rendering
+            canvas.style.setProperty('image-rendering', '-webkit-optimize-contrast');
+            canvas.style.setProperty('image-rendering', 'crisp-edges');
+          });
+        };
+        
+        // Apply text optimizations to the original DOM
+        enhanceTextRendering(stageElement as HTMLElement);
+        
+        // Force a repaint to apply the style changes
+        stageElement.getBoundingClientRect();
+        
+        // Get canvas from stage with optimized settings
         const canvas = await html2canvas(stageElement as HTMLElement, {
-          scale: 2, // Higher quality
+          scale: 3, // Balance between quality and file size (was 5 for high quality)
           logging: false,
           backgroundColor: slides[i].backgroundColor,
           useCORS: true, // Allow cross-origin images
-          allowTaint: true
+          allowTaint: true,
+          imageTimeout: 5000, // Longer timeout for images
+          onclone: (clonedDoc) => {
+            // Get the cloned slide element
+            const clonedStage = clonedDoc.querySelector(`#slide-${slides[i].id}`);
+            if (clonedStage) {
+              // Apply text rendering enhancements to the clone
+              enhanceTextRendering(clonedStage as HTMLElement);
+              
+              // Remove any unwanted elements from the clone
+              const elementsToRemove = clonedDoc.querySelectorAll('.controls, .resize-handle, .button, .watermark');
+              elementsToRemove.forEach(el => el.remove());
+            }
+            return clonedDoc;
+          }
         });
         
         // Add to PDF
-        const imgData = canvas.toDataURL('image/png');
-        
         if (i > 0) {
-          pdf.addPage();
+          pdf.addPage([currentCanvasSize.width, currentCanvasSize.height]);
         }
         
-        pdf.addImage(
-          imgData, 
-          'PNG', 
-          0, 
-          0, 
-          currentCanvasSize.width, 
-          currentCanvasSize.height
-        );
+        // Use JPEG for better compression
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
         
-        // Small delay to ensure PDF processing is complete
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Add image with optimized settings
+        pdf.addImage({
+          imageData: imgData,
+          format: 'JPEG',
+          x: 0,
+          y: 0, 
+          width: currentCanvasSize.width,
+          height: currentCanvasSize.height,
+          compression: 'MEDIUM', // Use medium compression for smaller file
+          rotation: 0,
+          alias: `slide_${i + 1}` // Helps reduce PDF size for repeated elements
+        });
       }
       
-      // Save PDF
-      pdf.save('carousel-slides.pdf');
+      // Remove temporary CSS
+      document.head.removeChild(optimizeTextCSS);
+      
+      // Set PDF metadata
+      pdf.setProperties({
+        title: 'LinkedIn Carousel',
+        creator: 'BrandOut',
+        subject: 'LinkedIn Carousel Export',
+        keywords: 'linkedin,carousel,presentation'
+      });
+      
+      // Save PDF with a descriptive name
+      pdf.save(`linkedin-carousel-${new Date().toISOString().slice(0, 10)}.pdf`);
       
       // Restore original slide index
       setCurrentSlideIndex(originalSlideIndex);
       
+      // Complete progress
+      setExportProgress(100);
     } catch (error) {
       console.error('Error exporting PDF:', error);
     } finally {
       setExportLoading(false);
-      setExportProgress(100);
       // Dispatch event to indicate export is done
       window.dispatchEvent(new CustomEvent('carousel-export-end'));
     }

@@ -76,18 +76,20 @@ export const exportSlideToPng = async (slideId: string) => {
     
     const canvas = await html2canvas(slideClone, {
       backgroundColor: null,
-      scale: 2, // Higher scale for better quality
+      scale: 2, // Good balance between quality and file size
       width: LINKEDIN_SLIDE_WIDTH,
       height: LINKEDIN_SLIDE_HEIGHT,
       useCORS: true,
       allowTaint: true,
+      logging: false,
+      imageTimeout: 0 // No timeout for image loading
     });
 
     // Clean up the temporary container
     document.body.removeChild(tempContainer);
     
-    // Convert to a data URL and trigger download
-    const dataUrl = canvas.toDataURL('image/png');
+    // For PNG we keep a higher quality but use browser compression
+    const dataUrl = canvas.toDataURL('image/png', 0.92);
     const link = document.createElement('a');
     link.href = dataUrl;
     link.download = `slide-${slideId}.png`;
@@ -140,24 +142,48 @@ export const exportSlideAsPdf = async (slideId: string) => {
     
     const canvas = await html2canvas(slideClone, {
       backgroundColor: null,
-      scale: 2, // Higher scale for better quality
+      scale: 2.5, // Good balance between quality and file size
       width: LINKEDIN_SLIDE_WIDTH,
       height: LINKEDIN_SLIDE_HEIGHT,
       useCORS: true,
       allowTaint: true,
+      logging: false // Disable logging for better performance
     });
 
     // Clean up the temporary container
     document.body.removeChild(tempContainer);
 
-    const imgData = canvas.toDataURL('image/png');
+    // Use JPEG format with optimized compression
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'px',
       format: [LINKEDIN_SLIDE_WIDTH, LINKEDIN_SLIDE_HEIGHT],
+      compress: true,
+      precision: 3, // Good precision but not excessive
+      putOnlyUsedFonts: true
     });
     
-    pdf.addImage(imgData, 'PNG', 0, 0, LINKEDIN_SLIDE_WIDTH, LINKEDIN_SLIDE_HEIGHT);
+    // Add image with optimized settings
+    pdf.addImage({
+      imageData: imgData,
+      format: 'JPEG',
+      x: 0,
+      y: 0,
+      width: LINKEDIN_SLIDE_WIDTH,
+      height: LINKEDIN_SLIDE_HEIGHT,
+      compression: 'MEDIUM',
+      rotation: 0
+    });
+    
+    // Set PDF metadata for better organization
+    pdf.setProperties({
+      title: 'LinkedIn Slide Export',
+      creator: 'BrandOut',
+      subject: 'LinkedIn Slide'
+    });
+    
+    // Save the PDF
     pdf.save(`slide-${slideId}.pdf`);
     
     // Dispatch event to show controls again after export
@@ -205,12 +231,15 @@ export const exportCarouselAsPdf = async () => {
     
     console.log(`Starting export of ${slides.length} slides`);
 
-    // Create PDF with the right dimensions
+    // Create PDF with optimized settings for size reduction
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'px',
-      format: [1080, 1080],
-      compress: true
+      format: [1080, 1350], // 4:5 ratio (1080x1350)
+      compress: true,
+      precision: 3, // Good precision but not excessive
+      putOnlyUsedFonts: true, // Only include used fonts
+      userUnit: 1.0 // Keep default user unit
     });
 
     // Process each slide
@@ -219,11 +248,11 @@ export const exportCarouselAsPdf = async () => {
         console.log(`Processing slide ${i+1} of ${slides.length}`);
       const slide = slides[i];
       
-        // Create a canvas for this slide
+        // Create a canvas for this slide - use 1.2x resolution instead of 1.5x for better size/quality balance
         const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1080;
-        const ctx = canvas.getContext('2d');
+        canvas.width = 1296; // 1.2x the original width (1080 * 1.2)
+        canvas.height = 1620; // 1.2x the original height (1350 * 1.2)
+        const ctx = canvas.getContext('2d', { alpha: false });
         
         if (!ctx) {
           console.error('Could not get canvas context');
@@ -233,6 +262,13 @@ export const exportCarouselAsPdf = async () => {
         // Fill background
         ctx.fillStyle = slide.backgroundColor || '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Enable image smoothing for better quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Scale factor for elements due to our increased canvas size
+        const scaleFactor = canvas.width / 1080;
         
         // Draw background images first
         if (slide.imageElements) {
@@ -257,24 +293,26 @@ export const exportCarouselAsPdf = async () => {
           for (const img of regularImages) {
             try {
               const imgObj = await loadImage(img.src || img.imageUrl);
-              const x = img.position.x - (img.size.width / 2);
-              const y = img.position.y - (img.size.height / 2);
+              const x = (img.position.x - (img.size.width / 2)) * scaleFactor;
+              const y = (img.position.y - (img.size.height / 2)) * scaleFactor;
+              const width = img.size.width * scaleFactor;
+              const height = img.size.height * scaleFactor;
               
               if (img.isCircle) {
                 // Draw circular image
                 ctx.save();
                 ctx.beginPath();
-                const centerX = x + img.size.width / 2;
-                const centerY = y + img.size.height / 2;
-                const radius = Math.min(img.size.width, img.size.height) / 2;
+                const centerX = x + width / 2;
+                const centerY = y + height / 2;
+                const radius = Math.min(width, height) / 2;
                 ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.clip();
-                ctx.drawImage(imgObj, x, y, img.size.width, img.size.height);
+                ctx.drawImage(imgObj, x, y, width, height);
                 ctx.restore();
               } else {
                 // Draw regular image
-                ctx.drawImage(imgObj, x, y, img.size.width, img.size.height);
+                ctx.drawImage(imgObj, x, y, width, height);
               }
             } catch (err) {
               console.error('Error loading image:', err);
@@ -282,13 +320,13 @@ export const exportCarouselAsPdf = async () => {
           }
         }
         
-        // Draw text elements
+        // Draw text elements with improved rendering
         if (slide.textElements) {
           for (const text of slide.textElements) {
             try {
               // Set text styles
               ctx.fillStyle = text.color || '#000000';
-              const fontSize = text.fontSize || 24;
+              const fontSize = (text.fontSize || 24) * scaleFactor;
               const fontFamily = text.fontFamily || 'Arial';
               const fontWeight = text.fontWeight || '400';
               const fontStyle = text.isItalic ? 'italic' : 'normal';
@@ -299,16 +337,16 @@ export const exportCarouselAsPdf = async () => {
                 : text.textAlign === 'right' ? 'right' : 'left';
               
               // Calculate position for text alignment
-              let x = text.position.x;
+              let x = text.position.x * scaleFactor;
               if (text.textAlign === 'center') {
-                x = text.position.x;
+                x = text.position.x * scaleFactor;
               } else if (text.textAlign === 'right') {
-                x = text.position.x + ((text.width || 300) / 2);
+                x = (text.position.x + ((text.width || 300) / 2)) * scaleFactor;
               } else {
-                x = text.position.x - ((text.width || 300) / 2);
+                x = (text.position.x - ((text.width || 300) / 2)) * scaleFactor;
               }
               
-              const y = text.position.y - ((text.height || 40) / 2) + fontSize;
+              const y = (text.position.y - ((text.height || 40) / 2) + text.fontSize) * scaleFactor;
               
               // If there's a background color, draw a background rectangle
               if (text.backgroundColor) {
@@ -328,7 +366,8 @@ export const exportCarouselAsPdf = async () => {
                 ctx.fillStyle = text.color || '#000000';
               }
               
-              // Draw the text
+              // Draw the text with optimized rendering
+              ctx.textRendering = 'optimizeLegibility';
               ctx.fillText(text.text, x, y);
             } catch (err) {
               console.error('Error rendering text:', err);
@@ -340,24 +379,26 @@ export const exportCarouselAsPdf = async () => {
         if (slide.pdfElements && slide.pdfElements.length > 0) {
           for (const pdf of slide.pdfElements) {
             try {
-              const x = pdf.position.x - (pdf.size.width / 2);
-              const y = pdf.position.y - (pdf.size.height / 2);
+              const x = pdf.position.x * scaleFactor - (pdf.size.width * scaleFactor / 2);
+              const y = pdf.position.y * scaleFactor - (pdf.size.height * scaleFactor / 2);
+              const width = pdf.size.width * scaleFactor;
+              const height = pdf.size.height * scaleFactor;
               
               // Draw a box placeholder for the PDF
               ctx.strokeStyle = '#cccccc';
-              ctx.lineWidth = 2;
-              ctx.strokeRect(x, y, pdf.size.width, pdf.size.height);
+              ctx.lineWidth = 2 * scaleFactor;
+              ctx.strokeRect(x, y, width, height);
               
-              // Add PDF icon or label
+              // Add PDF icon or label with optimized text
               ctx.fillStyle = '#666666';
-              ctx.font = 'bold 24px Arial';
+              ctx.font = `bold ${24 * scaleFactor}px Arial`;
               ctx.textAlign = 'center';
-              ctx.fillText('PDF content', x + pdf.size.width / 2, y + pdf.size.height / 2);
+              ctx.fillText('PDF content', x + width / 2, y + height / 2);
               
               // Add page number indicator
-              ctx.font = '18px Arial';
+              ctx.font = `${18 * scaleFactor}px Arial`;
               ctx.fillText(`Page ${pdf.currentPage} of ${pdf.totalPages}`, 
-                x + pdf.size.width / 2, y + pdf.size.height / 2 + 30);
+                x + width / 2, y + height / 2 + 30 * scaleFactor);
             } catch (err) {
               console.error('Error rendering PDF placeholder:', err);
             }
@@ -366,12 +407,25 @@ export const exportCarouselAsPdf = async () => {
 
       // Add new page for slides after the first one
       if (i > 0) {
-        pdf.addPage([1080, 1080], 'portrait');
-      }
+          pdf.addPage([1080, 1350], 'portrait');
+        }
 
-        // Add the canvas as image to PDF
-        const imgData = canvas.toDataURL('image/jpeg', 0.9);
-      pdf.addImage(imgData, 'JPEG', 0, 0, 1080, 1080);
+        // Add the canvas as image to PDF with optimized compression
+        // Use a lower JPEG quality (0.85) for much better compression with minimal quality loss
+        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        
+        // Add image with optimized settings for better compression
+        pdf.addImage({
+          imageData: imgData,
+          format: 'JPEG',
+          x: 0,
+          y: 0,
+          width: 1080,
+          height: 1350,
+          compression: 'MEDIUM', // Use MEDIUM compression (FAST compresses less)
+          rotation: 0,
+          alias: `slide_${i + 1}`
+        });
         
         console.log(`Added slide ${i+1} to PDF`);
       } catch (error) {
@@ -384,14 +438,22 @@ export const exportCarouselAsPdf = async () => {
       }
     }
 
+    // Apply additional PDF optimization
+    const pdfOptions = {
+      compress: true,
+      precision: 3,
+      optimalPdfSize: true
+    };
+
     // Set PDF metadata
     pdf.setProperties({
       title: 'LinkedIn Carousel',
       creator: 'BrandOut',
-      subject: 'LinkedIn Carousel Export'
+      subject: 'LinkedIn Carousel Export',
+      keywords: 'linkedin,carousel,export'
     });
 
-    // Save PDF
+    // Save PDF with optimized compression
     pdf.save('linkedin-carousel.pdf');
     
     toast({

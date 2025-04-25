@@ -448,146 +448,129 @@ const RequestCarouselPage: React.FC = () => {
   useEffect(() => {
     const loadSavedVideos = async () => {
       setIsLoadingVideos(true);
-      let videos = [];
       
       try {
-        // First try to get videos from the backend
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/youtube/get-saved-videos`
-          : `${baseUrl}/api/youtube/get-saved-videos`;
-          
-        try {
-          const response = await axios.get(apiUrl, {
-            params: { userId: user?.id || 'anonymous' }
-          });
-          
-          if (response.data && response.data.success) {
-            const backendVideos = response.data.videos || [];
-            videos = [...backendVideos];
-            
-            // Now also get videos from localStorage and merge them
-            const savedVideosString = localStorage.getItem('savedYoutubeVideos');
-            if (savedVideosString) {
-              const localVideos = JSON.parse(savedVideosString);
-              
-              // Create a map of existing backend videos by ID to avoid duplicates
-              const existingVideoIds = new Set(videos.map((v: any) => v.id));
-              
-              // Add local videos that aren't already in backend videos
-              const uniqueLocalVideos = localVideos.filter((v: any) => !existingVideoIds.has(v.id));
-              videos = [...videos, ...uniqueLocalVideos];
-            }
-          }
-        } catch (backendError) {
-          console.warn("Error fetching from backend, using localStorage only:", backendError);
-          // If backend fetch fails, use localStorage only
-          const savedVideosString = localStorage.getItem('savedYoutubeVideos');
-          if (savedVideosString) {
-            videos = JSON.parse(savedVideosString);
-          }
-        }
+        let backendVideos: YouTubeVideo[] = [];
+        let storageVideos: YouTubeVideo[] = [];
         
-        // Convert to YouTubeVideo format with extra safety
-        const processedVideos = videos.map((video: any) => {
-          try {
-            // Create a valid date object or fallback to current date
-            const safeDate = (dateInput: any) => {
-              if (!dateInput) return new Date();
-              
-              try {
-                // If it's already a Date object
-                if (dateInput instanceof Date) {
-                  return isNaN(dateInput.getTime()) ? new Date() : dateInput;
-                }
-                
-                // Try parsing as string
-                if (typeof dateInput === 'string') {
-                  const parsedDate = new Date(dateInput);
-                  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-                }
-                
-                // If it's a number (timestamp)
-                if (typeof dateInput === 'number' && !isNaN(dateInput)) {
-                  const parsedDate = new Date(dateInput);
-                  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
-                }
-                
-                return new Date();
-              } catch (e) {
-                console.error("Error parsing date:", e);
-                return new Date();
-              }
-            };
-            
-            // Get safe videoId - make sure we're consistently using the same ID field
-            const videoId = video.videoId || video.id || '';
-            
-            // Store the original savedAt/requestDate for sorting
-            const savedTimestamp = video.savedTimestamp || video.savedAt || video.requestDate || video.upload_date || new Date().toISOString();
-            
-            return {
-              id: videoId,
-              title: video.title || 'YouTube Video',
-              channelName: video.channelName || "Your Saved Video",
-              status: video.status || 'ready',
-              thumbnailUrl: video.thumbnailUrl || video.thumbnail || 
-                (videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : undefined),
-              requestDate: safeDate(video.requestDate || video.savedAt), // Try savedAt as fallback
-              deliveryDate: safeDate(video.deliveryDate),
-              slideCount: video.slideCount || 5,
-              videoUrl: video.videoUrl || video.url || (videoId ? `https://youtube.com/watch?v=${videoId}` : undefined),
-              views: video.view_count ? video.view_count.toLocaleString() : "Saved",
-              date: safeFormatDate(safeDate(video.requestDate || video.savedAt || video.upload_date), "MMM d, yyyy"),
-              duration: video.duration || "Saved",
-              source: 'youtube' as const,
-              // Preserve transcript data
+        // Try to load videos from backend first
+        try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const apiUrl = baseUrl.endsWith('/api')
+            ? `${baseUrl}/youtube/saved/${user?.id || 'anonymous'}`
+            : `${baseUrl}/api/youtube/saved/${user?.id || 'anonymous'}`;
+          
+          const response = await axios.get(apiUrl);
+          
+          if (response.data.success && response.data.savedVideos) {
+            // Transform backend data to match our YouTubeVideo interface
+            backendVideos = response.data.savedVideos.map((video: any) => ({
+              id: video.videoId,
+              videoId: video.videoId,
+              title: video.title,
+              thumbnail: video.thumbnailUrl,
+              thumbnailUrl: video.thumbnailUrl,
+              channelName: video.channelTitle,
+              url: `https://www.youtube.com/watch?v=${video.videoId}`,
+              videoUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
               transcript: video.transcript || "",
               formattedTranscript: video.formattedTranscript || [],
               language: video.language || "Unknown",
-              is_generated: video.is_generated || false,
-              videoId: videoId, // Ensure videoId is explicitly set
-              savedTimestamp: savedTimestamp // Keep original timestamp for sorting
-            };
-          } catch (itemError) {
-            console.error("Error processing video item:", itemError);
-            // Return a safe default item if individual parsing fails
-            return {
-              id: Math.random().toString(36).substring(2, 9),
-              title: 'YouTube Video',
-              channelName: "Your Saved Video",
+              is_generated: video.is_generated,
               status: 'ready',
-              requestDate: new Date(),
-              deliveryDate: new Date(),
-              slideCount: 5,
-              source: 'youtube' as const,
-              views: "Saved",
-              date: "Unknown",
-              duration: "Saved",
-              formattedTranscript: generateDummyTranscript(Math.random().toString(36).substring(2, 9)),
-              savedTimestamp: new Date().toISOString() // Add timestamp for sorting
-            };
+              savedAt: new Date(video.savedAt || video.createdAt).toISOString(),
+              savedTimestamp: new Date(video.savedAt || video.createdAt).toISOString(),
+              source: 'youtube'
+            }));
+            
+            console.log(`Loaded ${backendVideos.length} videos from backend`);
+            
+            // If we got videos from the backend, we can update state
+            if (backendVideos.length > 0) {
+              setSavedVideos(backendVideos);
+            }
           }
-        });
+        } catch (backendError) {
+          console.error("Error loading videos from backend:", backendError);
+          // Fall back to localStorage in case of error
+        }
         
-        // Sort videos by savedTimestamp (most recent first)
-        processedVideos.sort((a, b) => {
-          const dateA = new Date(a.savedTimestamp || 0);
-          const dateB = new Date(b.savedTimestamp || 0);
-          return dateB.getTime() - dateA.getTime(); // Most recent first
-        });
+        // Also load from localStorage as a fallback or to supplement backend data
+        try {
+          const savedVideosJSON = localStorage.getItem('savedYoutubeVideos');
+          
+          if (savedVideosJSON) {
+            const parsedVideos = JSON.parse(savedVideosJSON);
+            
+            if (Array.isArray(parsedVideos) && parsedVideos.length > 0) {
+              // Map the videos to ensure they have consistent structure
+              storageVideos = parsedVideos.map((video: any) => ({
+                id: video.id || video.videoId,
+                videoId: video.videoId || video.id,
+                title: video.title,
+                thumbnail: video.thumbnailUrl || video.thumbnail,
+                thumbnailUrl: video.thumbnailUrl || video.thumbnail,
+                channelName: video.channelTitle || video.channelName,
+                url: video.url || `https://www.youtube.com/watch?v=${video.videoId || video.id}`,
+                videoUrl: video.videoUrl || `https://www.youtube.com/watch?v=${video.videoId || video.id}`,
+                transcript: video.transcript || "",
+                formattedTranscript: video.formattedTranscript || [],
+                language: video.language || "Unknown",
+                is_generated: video.is_generated,
+                status: video.status || 'ready',
+                savedAt: video.savedAt || video.savedTimestamp || new Date().toISOString(),
+                savedTimestamp: video.savedTimestamp || video.savedAt || new Date().toISOString(),
+                source: 'youtube'
+              }));
+              
+              console.log(`Loaded ${storageVideos.length} videos from localStorage`);
+            }
+          }
+        } catch (localStorageError) {
+          console.error("Error loading videos from localStorage:", localStorageError);
+        }
         
-        setSavedVideos(processedVideos);
-      } catch (error) {
-        console.error('Error loading saved videos:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load your saved videos",
-          variant: "destructive"
-        });
-        setSavedVideos([]);
-      } finally {
+        // Merge backend and localStorage videos, prioritizing backend data
+        if (backendVideos.length > 0 || storageVideos.length > 0) {
+          // Create a map to deduplicate videos by ID
+          const videoMap = new Map();
+          
+          // Add backend videos first (higher priority)
+          backendVideos.forEach(video => {
+            videoMap.set(video.id, video);
+          });
+          
+          // Add localStorage videos (only if not already present from backend)
+          storageVideos.forEach(video => {
+            if (!videoMap.has(video.id)) {
+              videoMap.set(video.id, video);
+            }
+          });
+          
+          // Convert the map back to an array and sort by saved timestamp (newest first)
+          const allVideos = Array.from(videoMap.values())
+            .sort((a, b) => {
+              // Parse dates and compare (newer first)
+              const dateA = new Date(a.savedTimestamp || a.savedAt || 0).getTime();
+              const dateB = new Date(b.savedTimestamp || b.savedAt || 0).getTime();
+              return dateB - dateA;
+            });
+          
+          setSavedVideos(allVideos);
+          console.log(`Total: ${allVideos.length} unique videos after merging`);
+        } else {
+          // No videos found in either source
+          setSavedVideos([]);
+        }
+        
+        // Always set loading to false, whether we found videos or not
         setIsLoadingVideos(false);
+      } catch (error) {
+        console.error("Error in loadSavedVideos:", error);
+        setIsLoadingVideos(false);
+        
+        // In case of complete failure, ensure we display an empty array
+        setSavedVideos([]);
       }
     };
     
@@ -783,7 +766,7 @@ const RequestCarouselPage: React.FC = () => {
           const saveTranscriptApiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube/save-transcript`
             : `${baseUrl}/api/youtube/save-transcript`;
-          
+            
           await axios.post(saveTranscriptApiUrl, {
             userId: user?.id || 'anonymous',
             videoId: videoId,
@@ -1354,12 +1337,12 @@ What strategies have worked best for you? Share your experiences in the comments
       // Using bracket notation to avoid TypeScript errors
       (window as any)['editorSlides'] = konvaSlides;
       (window as any)['slideCount'] = konvaSlides.length;
-      
-      // Navigate to editor
-      navigate('/editor');
-      
-      toast({
-        title: "Opening in editor",
+    
+    // Navigate to editor
+    navigate('/editor');
+    
+    toast({
+      title: "Opening in editor",
         description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`
       });
     } catch (error) {

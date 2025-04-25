@@ -95,7 +95,7 @@ const Index: React.FC = () => {
     try {
       // Try to load slides from localStorage
       const savedSlides = localStorage.getItem('editor_slides');
-      
+    
       if (savedSlides) {
         console.log("Found 'editor_slides' in localStorage");
         let parsedSlides;
@@ -113,7 +113,7 @@ const Index: React.FC = () => {
         if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
           console.log(`Parsed ${parsedSlides.length} slides from localStorage`);
           console.log("First slide format:", Object.keys(parsedSlides[0]));
-          
+        
           // Check format more robustly
           const hasNodes = parsedSlides[0].nodes !== undefined;
           const hasTextElements = parsedSlides[0].textElements !== undefined;
@@ -147,14 +147,14 @@ const Index: React.FC = () => {
           (window as any)['editorLoadedSlides'] = convertedSlides;
           
           // Show success message
-          toast({
+    toast({
             title: "Slides loaded",
             description: `Loaded ${convertedSlides.length} slides for editing`,
           });
         } else {
           console.warn("No valid slides in localStorage, creating fallback");
           setInitialSlides(createFallbackSlide());
-        }
+    }
       } else {
         console.log("No 'editor_slides' found in localStorage, checking other keys");
         
@@ -205,9 +205,9 @@ const Index: React.FC = () => {
   useEffect(() => {
     window.focus();
   }, []);
-  
+
   if (loading) {
-    return (
+  return (
       <div className="h-screen w-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin" />

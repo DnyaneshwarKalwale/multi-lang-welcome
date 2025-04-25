@@ -21,6 +21,11 @@ const TextNodeComponent: React.FC<NodeComponentProps<TextNode>> = ({ node, isSel
   
   // Add fontLoaded state to track when custom fonts are loaded
   const [fontLoaded, setFontLoaded] = useState(true);
+  // State to track editing mode
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Text input ref for editing
+  const textInputRef = useRef<HTMLTextAreaElement | null>(null);
   
   // Check if the font is custom and needs to be loaded
   useEffect(() => {
@@ -50,6 +55,133 @@ const TextNodeComponent: React.FC<NodeComponentProps<TextNode>> = ({ node, isSel
       transformerRef.current.getLayer()?.batchDraw();
     }
   }, [isSelected]);
+  
+  // Handle double click to edit text
+  const handleDblClick = () => {
+    if (!textRef.current) return;
+    
+    // Enter editing mode
+    setIsEditing(true);
+    onSelect(node);
+    
+    // Create textarea overlay
+    const textNode = textRef.current;
+    const stage = textNode.getStage();
+    if (!stage) return;
+    
+    // Get absolute position and dimensions
+    const { x, y } = textNode.absolutePosition();
+    const stageContainer = stage.container();
+    
+    // Create textarea and style it
+    const textarea = document.createElement('textarea');
+    stageContainer.appendChild(textarea);
+    
+    // Calculate scaled position based on stage scale
+    const scale = stage.scaleX();
+    const areaPosition = {
+      x: x * scale,
+      y: y * scale
+    };
+    
+    textarea.value = node.text;
+    textarea.style.position = 'absolute';
+    textarea.style.top = `${areaPosition.y}px`;
+    textarea.style.left = `${areaPosition.x}px`;
+    textarea.style.width = `${(node.width || textNode.width()) * scale}px`;
+    textarea.style.height = `${(node.height || textNode.height()) * scale}px`;
+    textarea.style.fontSize = `${node.fontSize * scale}px`;
+    textarea.style.fontFamily = node.fontFamily || 'Arial';
+    textarea.style.color = node.fill || '#000000';
+    textarea.style.border = 'none';
+    textarea.style.padding = '0px';
+    textarea.style.margin = '0px';
+    textarea.style.overflow = 'hidden';
+    textarea.style.background = 'none';
+    textarea.style.outline = 'none';
+    textarea.style.resize = 'none';
+    textarea.style.lineHeight = '1';
+    textarea.style.textAlign = node.align || 'left';
+    
+    // Handle font weight and style
+    if (node.fontStyle) {
+      if (node.fontStyle.includes('bold')) {
+        textarea.style.fontWeight = 'bold';
+      }
+      if (node.fontStyle.includes('italic')) {
+        textarea.style.fontStyle = 'italic';
+      }
+    }
+    
+    // Apply background color if it exists
+    if (node.backgroundColor) {
+      textarea.style.background = node.backgroundColor;
+      textarea.style.padding = '5px';
+    }
+    
+    // Set text area properties
+    textarea.focus();
+    
+    // Save reference to the textarea
+    textInputRef.current = textarea;
+    
+    // Hide the text node while editing
+    textNode.visible(false);
+    stage.batchDraw();
+    
+    // Handle text area events
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (e.target !== textarea) {
+        completeEditing();
+      }
+    };
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        completeEditing();
+      }
+      if (e.key === 'Escape') {
+        completeEditing(true); // Cancel editing (revert to original text)
+      }
+    };
+    
+    // Complete the editing process
+    const completeEditing = (cancel = false) => {
+      if (!textInputRef.current) return;
+      
+      window.removeEventListener('click', handleOutsideClick);
+      window.removeEventListener('keydown', handleKeyDown);
+      
+      const newText = cancel ? node.text : textInputRef.current.value;
+      
+      // Remove the textarea
+      if (textInputRef.current.parentNode) {
+        textInputRef.current.parentNode.removeChild(textInputRef.current);
+      }
+      textInputRef.current = null;
+      
+      // Show text node again
+      if (textRef.current) {
+        textRef.current.visible(true);
+        textRef.current.getStage()?.batchDraw();
+      }
+      
+      // Exit editing mode
+      setIsEditing(false);
+      
+      // Update the text if changed
+      if (newText !== node.text) {
+        onChange({ text: newText });
+      }
+    };
+    
+    // Add event listeners
+    textarea.addEventListener('keydown', handleKeyDown);
+    // Delay adding the click event listener to prevent immediate trigger
+    setTimeout(() => {
+      window.addEventListener('click', handleOutsideClick);
+    }, 10);
+  };
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
     onChange({
@@ -97,6 +229,7 @@ const TextNodeComponent: React.FC<NodeComponentProps<TextNode>> = ({ node, isSel
         onDragEnd={handleDragEnd}
         onClick={() => onSelect(node)}
         onTap={() => onSelect(node)}
+        onDblClick={handleDblClick}
         onTransformEnd={handleTransformEnd}
         opacity={fontLoaded ? 1 : 0.5} // Show text as semi-transparent while font is loading
         // Add background color support
@@ -328,10 +461,13 @@ const KonvaCanvas: React.FC = () => {
     // Temporarily set to full size for export
     stageRef.current.scale({ x: 1, y: 1 });
     
-    // Create the image
+    // Create the image with improved quality settings
     const dataURL = stageRef.current.toDataURL({ 
-      pixelRatio: 2, 
-      mimeType: 'image/png' 
+      pixelRatio: 3, // Increased from 2 to 3 for higher quality
+      mimeType: 'image/png',
+      quality: 1,
+      width: currentCanvasSize.width,
+      height: currentCanvasSize.height
     });
     
     // Reset scale
@@ -344,6 +480,61 @@ const KonvaCanvas: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+  
+  // Export slide as PDF
+  const exportSlideToPdf = () => {
+    if (!stageRef.current) return;
+    
+    // Temporarily set to full size for export
+    stageRef.current.scale({ x: 1, y: 1 });
+    
+    // Create high quality image
+    const dataURL = stageRef.current.toDataURL({ 
+      pixelRatio: 7.5, // Good balance between quality and file size
+      mimeType: 'image/jpeg',
+      quality: 2, // Optimized quality
+      width: currentCanvasSize.width,
+      height: currentCanvasSize.height
+    });
+    
+    // Reset scale
+    stageRef.current.scale({ x: stageScale, y: stageScale });
+    
+    // Import jsPDF dynamically to avoid slowdown
+    import('jspdf').then(({ default: jsPDF }) => {
+      // Create PDF with optimized settings
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [currentCanvasSize.width, currentCanvasSize.height],
+        compress: true,
+        precision: 16, // Good precision but not excessive
+        putOnlyUsedFonts: true
+      });
+      
+      // Add image with optimized settings
+      pdf.addImage({
+        imageData: dataURL,
+        format: 'JPEG',
+        x: 0,
+        y: 0,
+        width: currentCanvasSize.width, 
+        height: currentCanvasSize.height,
+        compression: 'MEDIUM',
+        rotation: 0
+      });
+      
+      // Set PDF metadata
+      pdf.setProperties({
+        title: 'LinkedIn Slide Export',
+        creator: 'BrandOut',
+        subject: 'LinkedIn Slide'
+      });
+      
+      // Save the PDF
+      pdf.save(`slide-${currentSlideIndex + 1}.pdf`);
+    });
   };
   
   // Return empty state if no slides
@@ -427,18 +618,6 @@ const KonvaCanvas: React.FC = () => {
           </div>
         )}
       </div>
-      
-      {/* Export button */}
-      {!isPrinting && (
-        <div className="mt-4">
-          <button
-            onClick={exportSlideToPng}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Export as PNG
-          </button>
-        </div>
-      )}
     </div>
   );
 };

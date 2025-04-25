@@ -93,6 +93,7 @@ interface KonvaCarouselContextType {
   applyTextStylingToAllSlides: (nodeId: string) => void;
   copyNodeToAllSlides: (nodeId: string) => void;
   getAvailableTemplates: () => Template[];
+  clearState: () => void;
 }
 
 const KonvaCarouselContext = createContext<KonvaCarouselContextType | undefined>(undefined);
@@ -595,7 +596,14 @@ export const KonvaCarouselProvider: React.FC<KonvaCarouselProviderProps> = ({
     applyNodeToOtherSlides,
     applyTextStylingToAllSlides,
     copyNodeToAllSlides,
-    getAvailableTemplates
+    getAvailableTemplates,
+    clearState: () => {
+      localStorage.removeItem(CAROUSEL_STORAGE_KEY);
+      setSlides([createEmptySlide()]);
+      setCurrentSlideIndex(0);
+      setSelectedNodeId(null);
+      setCurrentCanvasSize(CANVAS_SIZES.LINKEDIN_PORTRAIT);
+    }
   };
 
   return (

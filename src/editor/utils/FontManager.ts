@@ -74,7 +74,11 @@ export class FontManager {
       
       // Merge with existing fonts, avoiding duplicates
       const existingFontIds = this.customFonts.map(f => f.id);
-      const newFonts = fonts.filter(f => !existingFontIds.includes(f.id));
+      const existingFontFamilies = this.customFonts.map(f => f.family.toLowerCase());
+      const newFonts = fonts.filter(f => 
+        !existingFontIds.includes(f.id) && 
+        !existingFontFamilies.includes(f.family.toLowerCase())
+      );
       
       this.customFonts = [...this.customFonts, ...newFonts];
       
@@ -94,7 +98,11 @@ export class FontManager {
         
         // Filter out any fonts that might already be in our array
         const existingFontIds = this.customFonts.map(f => f.id);
-        const newLocalFonts = localFonts.filter(f => !existingFontIds.includes(f.id));
+        const existingFontFamilies = this.customFonts.map(f => f.family.toLowerCase());
+        const newLocalFonts = localFonts.filter(f => 
+          !existingFontIds.includes(f.id) && 
+          !existingFontFamilies.includes(f.family.toLowerCase())
+        );
         
         this.customFonts = [...this.customFonts, ...newLocalFonts];
         
@@ -131,6 +139,20 @@ export class FontManager {
         throw new Error('Invalid font file format. Supported formats: .ttf, .otf, .woff, .woff2');
       }
       
+      // Normalize the font name to create a unique family name
+      const normalizedName = name.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+      
+      // Check if a font with the same name already exists
+      const existingFontWithSameName = this.customFonts.find(
+        f => f.name?.toLowerCase() === name.toLowerCase() || 
+             f.family.toLowerCase() === normalizedName
+      );
+      
+      if (existingFontWithSameName) {
+        console.log(`Font with name "${name}" already exists. Using existing font.`);
+        return existingFontWithSameName;
+      }
+      
       // Try to upload to the API first
       const formData = new FormData();
       formData.append('fontFile', file);
@@ -143,14 +165,31 @@ export class FontManager {
           'Content-Type': 'multipart/form-data',
         };
         
-        // Try to get token from localStorage if available
+        // Try to get token from localStorage using proper auth method pattern
         try {
-          const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+          // Check for auth method first
+          const authMethod = localStorage.getItem('auth-method');
+          let token = null;
+          
+          if (authMethod) {
+            // Get token based on auth method
+            token = localStorage.getItem(`${authMethod}-login-token`);
+          } else {
+            // Fallback to legacy token keys
+            token = localStorage.getItem('token') || 
+                   localStorage.getItem('userToken') || 
+                   localStorage.getItem('linkedin-login-token') || 
+                   localStorage.getItem('google-login-token');
+          }
+          
           if (token) {
             headers['Authorization'] = `Bearer ${token}`;
+            console.log('Using authentication token for font upload');
+          } else {
+            console.log('No valid auth token found for font upload');
           }
         } catch (tokenError) {
-          console.log('No auth token available, proceeding as anonymous');
+          console.log('Error accessing localStorage for auth token:', tokenError);
         }
         
         const response = await axios.post(`${API_BASE_URL}/api/fonts`, formData, { headers });
@@ -213,6 +252,17 @@ export class FontManager {
     // Create a normalized family name (no spaces, lowercase)
     const family = `custom-${name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${Date.now()}`;
     
+    // Check if a font with the same name already exists
+    const existingFontWithSameName = this.customFonts.find(
+      f => f.name?.toLowerCase() === name.toLowerCase() || 
+           f.family.toLowerCase().includes(name.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-'))
+    );
+    
+    if (existingFontWithSameName) {
+      console.log(`Font with name "${name}" already exists locally. Using existing font.`);
+      return existingFontWithSameName;
+    }
+    
     // Register the font
     const font = this.registerFont(family, url);
     font.name = name;
@@ -225,6 +275,16 @@ export class FontManager {
   }
   
   public registerFont(family: string, url: string): CustomFont {
+    // Check for existing font with the same family name
+    const existingFont = this.customFonts.find(f => 
+      f.family.toLowerCase() === family.toLowerCase()
+    );
+    
+    if (existingFont) {
+      console.log(`Font with family "${family}" already registered.`);
+      return existingFont;
+    }
+    
     const id = `local-${Date.now()}`;
     const newFont: CustomFont = {
       id,

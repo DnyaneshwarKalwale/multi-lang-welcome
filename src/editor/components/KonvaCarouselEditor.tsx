@@ -6,6 +6,8 @@ import KonvaTextToolbar from './KonvaTextToolbar';
 import KonvaImageToolbar from './KonvaImageToolbar';
 import KonvaGlobalControls from './KonvaGlobalControls';
 import Sidebar from './Sidebar';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Editor toolbar that shows either text or image controls based on selection
 const EditorToolbar: React.FC = () => {
@@ -33,6 +35,33 @@ const EditorToolbar: React.FC = () => {
   );
 };
 
+// Exit button component
+const ExitButton: React.FC = () => {
+  const { clearState } = useKonvaCarousel();
+  const navigate = useNavigate();
+  
+  const handleExit = () => {
+    // Clear localStorage state
+    clearState();
+    
+    // Navigate back to main page
+    navigate('/');
+    
+    // Additional logic to ensure state is cleared even if navigation fails
+    localStorage.removeItem('linkedinCarouselState');
+  };
+  
+  return (
+    <button
+      className="absolute top-4 left-4 z-50 flex items-center justify-center gap-1 py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md shadow-sm transition-colors"
+      onClick={handleExit}
+    >
+      <ArrowLeft className="h-4 w-4" />
+      <span className="text-sm">Exit Editor</span>
+    </button>
+  );
+};
+
 // Main editor layout - wrapped with context provider
 interface KonvaCarouselEditorProps {
   initialSlides?: Slide[];
@@ -42,7 +71,10 @@ const KonvaCarouselEditor: React.FC = () => {
   const { selectedNodeId, slides, currentSlideIndex } = useKonvaCarousel();
   
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 relative">
+      {/* Exit button */}
+      <ExitButton />
+      
       {/* Header with global controls */}
       <KonvaGlobalControls />
       

@@ -446,12 +446,12 @@ const ScraperPage: React.FC = () => {
 
       let backendSaveSuccess = false;
       
-      // Save to backend first
+      // Save to backend first - this should be the primary storage
       try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/youtube/save-videos`
-          : `${baseUrl}/api/youtube/save-videos`;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+            ? `${baseUrl}/youtube/save-videos`
+            : `${baseUrl}/api/youtube/save-videos`;
         
         const backendResponse = await axios.post(apiUrl, {
           videos: enhancedVideos,
@@ -460,17 +460,17 @@ const ScraperPage: React.FC = () => {
         
         if (backendResponse.data.success) {
           backendSaveSuccess = true;
-          toastSuccess("Videos saved to cloud successfully!");
+          toastSuccess(`Saved ${backendResponse.data.count} videos to cloud!`);
         } else {
           console.warn("Backend save warning:", backendResponse.data.message);
+          toastError("Failed to save videos to cloud: " + backendResponse.data.message);
         }
       } catch (backendError) {
-        console.error("Error saving videos:", backendError);
-        toastError("Failed to save videos to cloud. Saving locally only.");
+        console.error("Error saving videos to backend:", backendError);
+        toastError("Failed to save videos to cloud. Saving locally as backup.");
       }
 
-      // Always save videos locally (even if backend save fails)
-      // This ensures users can still access their saved videos
+      // Save videos locally as a backup/fallback (even if backend save succeeds)
       let existingSavedVideos = [];
       try {
         const existingSavedVideosStr = localStorage.getItem('savedYoutubeVideos');
@@ -497,28 +497,37 @@ const ScraperPage: React.FC = () => {
       // Convert map back to array
       const allSavedVideos = Array.from(allVideoIds.values());
       
-      // Save to localStorage
-        localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
-        
+      // Save to localStorage as backup
+      localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
+      
       // Let user know videos were saved
-      toastSuccess(`Saved ${enhancedVideos.length} videos successfully!`);
-        setSelectedVideos(new Set());
+      if (!backendSaveSuccess) {
+        toastSuccess(`Saved ${enhancedVideos.length} videos to local storage as backup`);
+      } else {
+        toastSuccess(`Videos saved successfully to cloud and local storage!`);
+      }
+      
+      setSelectedVideos(new Set());
       
       // Try creating carousels only if backend save was successful
       if (backendSaveSuccess) {
         try {
           const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           const carouselApiUrl = baseUrl.endsWith('/api')
-            ? `${baseUrl}/carousels/youtube`
-            : `${baseUrl}/api/carousels/youtube`;
+            ? `${baseUrl}/youtube-carousels` // Use the new non-protected endpoint
+            : `${baseUrl}/api/youtube-carousels`; // Use the new non-protected endpoint
           
-          await axios.post(carouselApiUrl, {
+          const carouselResponse = await axios.post(carouselApiUrl, {
             videos: enhancedVideos,
             userId: user?.id || 'anonymous'
           });
+          
+          if (carouselResponse.data.success) {
+            toastSuccess(`Created ${carouselResponse.data.count} carousel(s)!`);
+          }
         } catch (carouselError) {
           console.error("Error creating carousels:", carouselError);
-          // Don't show error to user since we already saved the videos
+          toastError("Failed to create carousels, but videos were saved successfully.");
         }
       }
       
@@ -721,6 +730,8 @@ const ScraperPage: React.FC = () => {
         userId: user?.id || 'anonymous'
       };
       
+      let backendSaveSuccess = false;
+      
       // Save to backend first
       try {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -734,16 +745,19 @@ const ScraperPage: React.FC = () => {
         });
         
         if (backendResponse.data.success) {
+          backendSaveSuccess = true;
           toastSuccess("Video saved to cloud with transcript!");
         } else {
           console.warn("Backend save warning:", backendResponse.data.message);
+          toastError("Failed to save video to cloud: " + backendResponse.data.message);
         }
       } catch (backendError) {
         console.error("Error saving to backend:", backendError);
+        toastError("Failed to save to cloud. Saving locally as backup.");
         // Continue with local storage save even if backend save fails
       }
       
-      // Save the video and transcript to localStorage
+      // Save the video and transcript to localStorage as backup
       const existingVideosJSON = localStorage.getItem("savedYoutubeVideos");
       let existingVideos = existingVideosJSON ? JSON.parse(existingVideosJSON) : [];
       
@@ -760,6 +774,28 @@ const ScraperPage: React.FC = () => {
       
       // Save back to localStorage
       localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
+      
+      // Try creating carousel entry if backend save was successful
+      if (backendSaveSuccess) {
+        try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const carouselApiUrl = baseUrl.endsWith('/api')
+            ? `${baseUrl}/youtube-carousels`
+            : `${baseUrl}/api/youtube-carousels`;
+          
+          const carouselResponse = await axios.post(carouselApiUrl, {
+            videos: [enhancedVideo],
+            userId: user?.id || 'anonymous'
+          });
+          
+          if (carouselResponse.data.success) {
+            toastSuccess("Created carousel for the video!");
+          }
+        } catch (carouselError) {
+          console.error("Error creating carousel:", carouselError);
+          // Don't show error to user since we already saved the video
+        }
+      }
       
       // Navigate to request-carousel page
       navigate('/dashboard/request-carousel');

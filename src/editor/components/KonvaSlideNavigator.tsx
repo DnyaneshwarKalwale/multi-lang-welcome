@@ -15,6 +15,20 @@ const SlideThumbnail: React.FC<{
   const THUMBNAIL_WIDTH = 120;
   const THUMBNAIL_HEIGHT = 150;
   const THUMBNAIL_SCALE = 0.1; // Scale for rendering elements
+  
+  // Force re-render when slide content changes
+  const slideVersion = React.useMemo(() => {
+    // Create a unique "version" string based on slide content
+    const nodesFingerprint = slide.nodes.map(node => {
+      if (node.type === 'text') {
+        // Include text content in the fingerprint
+        return `${node.id}-${node.text}-${node.position.x}-${node.position.y}`;
+      }
+      return node.id;
+    }).join('|');
+    
+    return `${slide.id}-${nodesFingerprint}`;
+  }, [slide]);
 
   // Render a thumbnail of the slide
   return (
@@ -23,6 +37,7 @@ const SlideThumbnail: React.FC<{
         isSelected ? 'bg-blue-100 ring-2 ring-blue-500' : 'hover:bg-gray-100'
       }`}
       onClick={onClick}
+      key={slideVersion} // Force re-render when content changes
     >
       <div className="bg-white border rounded overflow-hidden" style={{ width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT }}>
         <Stage width={THUMBNAIL_WIDTH} height={THUMBNAIL_HEIGHT}>
@@ -50,8 +65,21 @@ const SlideThumbnail: React.FC<{
                     perfectDrawEnabled={false}
                   />
                 );
+              } else if (node.type === 'image') {
+                // Render image placeholder in thumbnail
+                return (
+                  <Rect
+                    key={node.id}
+                    x={node.position.x * THUMBNAIL_SCALE}
+                    y={node.position.y * THUMBNAIL_SCALE}
+                    width={(node.size?.width || 100) * THUMBNAIL_SCALE}
+                    height={(node.size?.height || 100) * THUMBNAIL_SCALE}
+                    fill="#ccc"
+                    perfectDrawEnabled={false}
+                  />
+                );
               }
-              return null; // Skip other types for the thumbnail
+              return null;
             })}
           </Layer>
         </Stage>
