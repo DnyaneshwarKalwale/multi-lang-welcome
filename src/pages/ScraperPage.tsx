@@ -391,52 +391,17 @@ const ScraperPage: React.FC = () => {
         selectedVideos.has(video.id)
       );
 
-      // Generate dummy transcript for each video
-      const generateDummyTranscript = (videoId: string): string[] => {
-        // Generate 8 bullet points based on the video ID
-        // This ensures each video gets consistent dummy content
-        const base = [
-          "This is an automatically generated bullet point for video content.",
-          "Key insights from the video are presented in this format.",
-          "Each point represents an important concept from the original content.",
-          "These points will be used to create your carousel slides.",
-          "Professional insights are extracted to maximize engagement.",
-          "Content is formatted for optimal LinkedIn presentation.",
-          "Use these points as the foundation for your carousel design.",
-          "The final carousel will reflect these key concepts with visual appeal."
-        ];
-        
-        // Add some variety based on video ID's first character code
-        const seed = videoId.charCodeAt(0) % 5;
-        for (let i = 0; i < base.length; i++) {
-          if ((i + seed) % 3 === 0) {
-            base[i] = `The ${i + 1}${getOrdinalSuffix(i + 1)} key point highlights important aspects from this video.`;
-          }
-        }
-        
-        return base;
-      };
-      
-      // Helper for ordinal suffixes
-      const getOrdinalSuffix = (i: number): string => {
-        const j = i % 10;
-        const k = i % 100;
-        if (j === 1 && k !== 11) return "st";
-        if (j === 2 && k !== 12) return "nd";
-        if (j === 3 && k !== 13) return "rd";
-        return "th";
-      };
-
       // Current timestamp to ensure all videos in this batch have the same save time
       const savedTimestamp = new Date().toISOString();
 
-      // Enhance videos with dummy transcripts
+      // Enhance videos but WITHOUT dummy transcripts
       const enhancedVideos = videosToSave.map(video => ({
         ...video,
-        transcript: "This is a placeholder transcript. The real transcript would contain the full text from the video.", // Dummy full transcript
-        formattedTranscript: generateDummyTranscript(video.id), // Array of bullet points
+        // Don't include transcript data if we haven't fetched it
+        // transcript: "This is a placeholder transcript. The real transcript would contain the full text from the video.", // Dummy full transcript - REMOVED
+        // formattedTranscript: generateDummyTranscript(video.id), // Array of bullet points - REMOVED
         language: "English",
-        is_generated: true,
+        is_generated: false,
         savedAt: savedTimestamp,
         status: 'ready',
         videoId: video.id, // Ensure videoId is explicitly set

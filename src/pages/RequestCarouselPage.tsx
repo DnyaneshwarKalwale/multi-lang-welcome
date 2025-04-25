@@ -77,6 +77,10 @@ interface YouTubeVideo {
   is_generated?: boolean;
   savedTimestamp?: string;
   videoId?: string;
+  thumbnail?: string;
+  savedAt?: string;
+  updatedAt?: string;
+  url?: string;
 }
 
 // Interface for saved carousel videos
@@ -355,8 +359,8 @@ const RequestCarouselPage: React.FC = () => {
         
         // Try to load videos from backend first
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const apiUrl = baseUrl.endsWith('/api')
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube/saved/${user?.id || 'anonymous'}`
             : `${baseUrl}/api/youtube/saved/${user?.id || 'anonymous'}`;
           
@@ -460,7 +464,7 @@ const RequestCarouselPage: React.FC = () => {
           console.log(`Total: ${allVideos.length} unique videos after merging`);
         } else {
           // No videos found in either source
-          setSavedVideos([]);
+        setSavedVideos([]);
         }
         
         // Always set loading to false, whether we found videos or not
@@ -555,14 +559,20 @@ const RequestCarouselPage: React.FC = () => {
       form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
     }
     
-    // Check if the video has a formatted transcript (array of bullet points)
-    if (video.formattedTranscript && Array.isArray(video.formattedTranscript) && video.formattedTranscript.length > 0) {
+    // Check if the video has a valid formatted transcript (array of bullet points)
+    if (video.formattedTranscript && 
+        Array.isArray(video.formattedTranscript) && 
+        video.formattedTranscript.length > 0 &&
+        // Make sure it's not just empty strings
+        video.formattedTranscript.some(point => point && point.trim().length > 10)) {
       setGeneratedTranscript(video.formattedTranscript);
       setShowTranscript(true);
       setCurrentSlide(0);
     } 
     // Check if the video has a regular transcript that needs to be formatted
-    else if (video.transcript && typeof video.transcript === 'string' && video.transcript.length > 10) {
+    else if (video.transcript && 
+             typeof video.transcript === 'string' && 
+             video.transcript.trim().length > 10) {
       const formatted = formatTranscript(video.transcript);
       setGeneratedTranscript(formatted);
       setShowTranscript(true);
@@ -611,94 +621,204 @@ const RequestCarouselPage: React.FC = () => {
     if (!video.id && !video.videoId) {
       toast({
         title: "Error",
-        description: "Cannot fetch transcript: Video ID is missing",
+        description: "Video ID not found",
         variant: "destructive"
       });
       return;
     }
     
-    const videoId = video.videoId || video.id;
+    const videoId = video.id || video.videoId;
     setFetchingVideoId(videoId);
     setIsFetchingTranscript(true);
     
     try {
-      // Get API URL
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = `${baseUrl}/api/youtube/transcript`;
-      
-      const response = await axios.post(apiUrl, {
-        videoId,
-        useScraperApi: true // Use ScraperAPI to avoid rate limits
+      toast({
+        title: "Fetching transcript",
+        description: "Please wait while we fetch the transcript...",
       });
       
-      if (response.data && response.data.success) {
-        const transcriptText = response.data.transcript;
-        
-        // Update the saved videos with the new transcript
-        const updatedVideos = savedVideos.map(v => {
-          if (v.id === videoId || v.videoId === videoId) {
-            return {
-              ...v,
-              transcript: transcriptText,
-              formattedTranscript: [transcriptText], // Store as a single item
-              language: response.data.language || "Unknown",
-              is_generated: response.data.is_generated || false
-            };
-          }
-          return v;
+      // First try the regular transcript API
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/youtube/transcript`
+        : `${baseUrl}/api/youtube/transcript`;
+      
+      try {
+        const response = await axios.post(apiUrl, {
+          videoId: videoId,
+          useScraperApi: true
         });
         
-        // Update local state
-        setSavedVideos(updatedVideos);
-        
-        // If this is the currently selected video, update the transcript display
-        if (selectedVideo && (selectedVideo.id === videoId || selectedVideo.videoId === videoId)) {
-          setGeneratedTranscript([transcriptText]);
-          setShowTranscript(true);
-          setCurrentSlide(0);
+        if (response.data?.success && response.data?.transcript) {
+          await handleTranscriptSuccess(video, response.data);
+          return;
         }
         
-        // Save to localStorage
-        localStorage.setItem('savedYoutubeVideos', JSON.stringify(updatedVideos));
+        // If we get here, the first API didn't succeed, try yt-dlp as fallback
+        throw new Error("Primary transcript method failed, trying fallback");
+      } catch (primaryError) {
+        console.log("Trying fallback yt-dlp method for transcript extraction");
         
-        // Save to backend
-        try {
-          const saveTranscriptApiUrl = baseUrl.endsWith('/api')
-            ? `${baseUrl}/youtube/save-transcript`
-            : `${baseUrl}/api/youtube/save-transcript`;
-            
-          await axios.post(saveTranscriptApiUrl, {
-            userId: user?.id || 'anonymous',
-            videoId: videoId,
-            transcript: transcriptText,
-            formattedTranscript: [transcriptText], // Store as a single item
-            language: response.data.language || "Unknown",
-            is_generated: response.data.is_generated || false
+        // Use the yt-dlp fallback API
+        const fallbackApiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/transcript-yt-dlp`
+          : `${baseUrl}/api/youtube/transcript-yt-dlp`;
+        
+        const fallbackResponse = await axios.post(fallbackApiUrl, {
+          videoId: videoId
+        });
+        
+        if (fallbackResponse.data?.success && fallbackResponse.data?.transcript) {
+          toast({
+            title: "Fallback method succeeded",
+            description: "Successfully extracted transcript using yt-dlp",
           });
           
-          console.log("Transcript saved to backend successfully");
-        } catch (backendError) {
-          console.error("Failed to save transcript to backend:", backendError);
-          // Continue with local state update even if backend save fails
+          await handleTranscriptSuccess(video, fallbackResponse.data);
+          return;
         }
         
-        toast({
-          title: "Success",
-          description: "Transcript fetched successfully"
-        });
-      } else {
-        throw new Error(response.data?.message || 'Failed to fetch transcript');
+        throw new Error("Both transcript extraction methods failed");
       }
-    } catch (error) {
-      console.error('Error fetching transcript:', error);
+    } catch (error: any) {
+      console.error("Error fetching transcript:", error);
+      
+      let errorMessage = "Failed to fetch transcript";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to fetch transcript. The video might not have captions.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setIsFetchingTranscript(false);
       setFetchingVideoId(null);
+    }
+  };
+  
+  // Helper function to handle successful transcript retrieval
+  const handleTranscriptSuccess = async (video: YouTubeVideo, data: any) => {
+    // Update the video with the transcript
+    const updatedVideo: YouTubeVideo = {
+      ...video,
+      transcript: data.transcript,
+      formattedTranscript: data.formattedTranscript || formatTranscript(data.transcript),
+      language: data.language || "en",
+      is_generated: data.is_generated || false
+    };
+    
+    // Update selected video state
+    setSelectedVideo(updatedVideo);
+    
+    // Set the formatted transcript for display
+    const formattedData = data.formattedTranscript || formatTranscript(data.transcript);
+    setGeneratedTranscript(formattedData);
+    setCurrentSlide(0);
+    
+    // Save to local and backend storage
+    await saveVideoWithTranscript(updatedVideo);
+    
+    toast({
+      title: "Transcript fetched",
+      description: "Successfully retrieved and saved transcript",
+    });
+  };
+  
+  // Helper function to save video with transcript
+  const saveVideoWithTranscript = async (video: YouTubeVideo) => {
+    try {
+      // Update in localStorage
+      const savedVideosStr = localStorage.getItem('savedYoutubeVideos');
+      const savedVideos = savedVideosStr ? JSON.parse(savedVideosStr) : [];
+      
+      // Find and update the video if it exists
+      const existingIndex = savedVideos.findIndex((v: any) => 
+        (v.id === video.id) || (v.videoId === video.id) || (v.id === video.videoId) || (v.videoId === video.videoId)
+      );
+      
+      if (existingIndex !== -1) {
+        savedVideos[existingIndex] = {
+          ...savedVideos[existingIndex],
+          transcript: video.transcript,
+          formattedTranscript: video.formattedTranscript,
+          language: video.language,
+          is_generated: video.is_generated,
+          status: 'ready',
+          updatedAt: new Date().toISOString()
+        };
+      } else {
+        savedVideos.push({
+          ...video,
+          savedAt: new Date().toISOString(),
+          savedTimestamp: new Date().toISOString(),
+          status: 'ready'
+        });
+      }
+      
+      localStorage.setItem('savedYoutubeVideos', JSON.stringify(savedVideos));
+      
+      // Save to backend
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/save-video-transcript`
+          : `${baseUrl}/api/youtube/save-video-transcript`;
+        
+        await axios.post(apiUrl, {
+          video: video,
+          userId: user?.id || 'anonymous'
+        });
+        
+        // Create carousel with the updated transcript
+        const carouselApiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube-carousels`
+          : `${baseUrl}/api/youtube-carousels`;
+        
+        await axios.post(carouselApiUrl, {
+          videos: [video],
+          userId: user?.id || 'anonymous'
+        });
+      } catch (backendError) {
+        console.error("Error saving to backend:", backendError);
+        // Continue with local updates even if backend fails
+      }
+      
+      // Update the local state with the saved videos
+      setSavedVideos(prevVideos => {
+        const updatedVideos = [...prevVideos];
+        const existingIdx = updatedVideos.findIndex(v => 
+          (v.id === video.id) || (v.videoId === video.id) || (v.id === video.videoId) || (v.videoId === video.videoId)
+        );
+        
+        if (existingIdx !== -1) {
+          updatedVideos[existingIdx] = {
+            ...updatedVideos[existingIdx],
+            transcript: video.transcript,
+            formattedTranscript: video.formattedTranscript,
+            language: video.language,
+            is_generated: video.is_generated,
+            status: 'ready',
+            updatedAt: new Date().toISOString()
+          };
+        } else {
+          updatedVideos.push({
+            ...video,
+            savedAt: new Date().toISOString(),
+            savedTimestamp: new Date().toISOString(),
+            status: 'ready'
+          });
+        }
+        
+        return updatedVideos;
+      });
+    } catch (error) {
+      console.error("Error saving video with transcript:", error);
+      throw error;
     }
   };
 
@@ -731,29 +851,29 @@ const RequestCarouselPage: React.FC = () => {
       });
       return;
     }
-    
+
     setSelectedContentType(type);
     setIsGeneratingContent(true);
     setShowContentGenerator(true);
     
     // Set up title based on content type - moved outside try/catch blocks
     let contentTitle = '';
-    switch (type) {
-      case 'post-short':
+      switch (type) {
+        case 'post-short':
         contentTitle = 'Short LinkedIn Post';
-        break;
-      case 'post-long':
+          break;
+        case 'post-long':
         contentTitle = 'Long LinkedIn Post';
-        break;
-      case 'carousel':
+          break;
+        case 'carousel':
         contentTitle = 'LinkedIn Carousel';
-        break;
-      default:
+          break;
+        default:
         contentTitle = 'LinkedIn Content';
-    }
-    
-    try {
-      // Log the request
+      }
+      
+      try {
+        // Log the request
       console.log(`Generating ${type} content with API`);
       
       // Call the backend API which now handles all prompts securely
@@ -773,17 +893,17 @@ const RequestCarouselPage: React.FC = () => {
         
         // Check for valid response
         if (response.data?.content) {
-          // Get the generated content
+        // Get the generated content
           const generatedContent = response.data.content;
-          
-          // Update state with the generated content
-          setGeneratedContent(generatedContent);
-          setPreviewContent(generatedContent);
+        
+        // Update state with the generated content
+        setGeneratedContent(generatedContent);
+        setPreviewContent(generatedContent);
           setPreviewTitle(contentTitle);
-          setPreviewType(type);
-          
-          toast({
-            title: "Content Generated",
+        setPreviewType(type);
+        
+        toast({
+          title: "Content Generated",
             description: `Your ${contentTitle} has been created successfully`,
           });
           
@@ -798,25 +918,28 @@ const RequestCarouselPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error generating content:', error);
-      
-      // Check if this is a rate limit error
+        
+        // Check if this is a rate limit error
       const isRateLimit = error?.response?.status === 429 || 
                           error?.message?.includes('rate limit') ||
                           error?.message?.includes('quota');
-      
-      // Fallback content if API fails
-      let fallbackContent = '';
-      
-      if (type === 'post-short') {
-        fallbackContent = `Unlocking Professional Growth Through Strategic Focus
+        
+        // Fallback content if API fails
+        let fallbackContent = '';
+      // Define the title inside this scope
+      let contentTitle = '';
+        
+        if (type === 'post-short') {
+          fallbackContent = `Unlocking Professional Growth Through Strategic Focus
 
 ${selectedVideo.formattedTranscript?.[0] || 'The key to success is identifying your strengths and doubling down on them.'}
 
 I've found that allocating time for deliberate practice makes all the difference. The compound effect of small improvements creates remarkable results over time.
 
 What strategies have worked best for your professional development journey?`;
-      } else if (type === 'post-long') {
-        fallbackContent = `The Untapped Potential of Deliberate Learning
+        contentTitle = 'Short LinkedIn Post';
+        } else if (type === 'post-long') {
+          fallbackContent = `The Untapped Potential of Deliberate Learning
 
 Recently, I've been reflecting on how we approach professional development. Many of us wait for opportunities instead of creating them.
 
@@ -829,8 +952,9 @@ ${selectedVideo.formattedTranscript?.[2] || 'Connecting with others in your fiel
 These principles have transformed how I approach work challenges. By incorporating structured learning into my weekly schedule, I've been able to develop skills that were previously outside my comfort zone.
 
 What learning methods have yielded the best results for you? I'm curious to hear about your experiences.`;
-      } else {
-        fallbackContent = `Mastering Professional Growth in Today's Landscape
+        contentTitle = 'Long LinkedIn Post';
+        } else {
+          fallbackContent = `Mastering Professional Growth in Today's Landscape
 
 First key point from the video
 
@@ -843,19 +967,19 @@ Fourth valuable takeaway
 Implementation is key. Start small, be consistent, and track your progress.
 
 What strategies have worked best for you? Share your experiences in the comments.`;
-      }
-      
-      setGeneratedContent(fallbackContent);
-      setPreviewContent(fallbackContent);
+        }
+        
+        setGeneratedContent(fallbackContent);
+        setPreviewContent(fallbackContent);
       setPreviewTitle(contentTitle);
-      setPreviewType(type);
-      
-      toast({
-        title: isRateLimit ? "API Quota Exceeded" : "Using Offline Content",
-        description: isRateLimit 
-          ? "The AI service quota has been exceeded. We've provided alternative content for you to use."
-          : "We couldn't connect to the AI service, but we've generated content for you to use.",
-        variant: isRateLimit ? "destructive" : "default"
+        setPreviewType(type);
+        
+        toast({
+          title: isRateLimit ? "API Quota Exceeded" : "Using Offline Content",
+          description: isRateLimit 
+            ? "The AI service quota has been exceeded. We've provided alternative content for you to use."
+            : "We couldn't connect to the AI service, but we've generated content for you to use.",
+          variant: isRateLimit ? "destructive" : "default"
       });
     } finally {
       setIsGeneratingContent(false);
@@ -1325,6 +1449,85 @@ What strategies have worked best for you? Share your experiences in the comments
     );
   }
 
+  // Add the delete video functionality after the handleVideoSelect function
+  const handleDeleteVideo = async (video: YouTubeVideo, e: React.MouseEvent) => {
+    // Stop event propagation to prevent selecting the video while deleting
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (!video.id && !video.videoId) {
+      toast({
+        title: "Error",
+        description: "Cannot identify video to delete",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const videoId = video.id || video.videoId;
+    
+    // Confirm before deleting
+    if (!confirm(`Are you sure you want to delete "${video.title}"?`)) {
+      return;
+    }
+    
+    try {
+      // Update local state first
+      setSavedVideos(prevVideos => prevVideos.filter(v => 
+        v.id !== videoId && v.videoId !== videoId
+      ));
+      
+      // If this was the selected video, clear the selection
+      if (selectedVideo && (selectedVideo.id === videoId || selectedVideo.videoId === videoId)) {
+        setSelectedVideo(null);
+        setGeneratedTranscript([]);
+        setShowTranscript(false);
+      }
+      
+      // Update local storage
+      try {
+        const savedVideosStr = localStorage.getItem('savedYoutubeVideos');
+        if (savedVideosStr) {
+          const savedVideos = JSON.parse(savedVideosStr);
+          const updatedVideos = savedVideos.filter((v: any) => 
+            v.id !== videoId && v.videoId !== videoId
+          );
+          localStorage.setItem('savedYoutubeVideos', JSON.stringify(updatedVideos));
+        }
+      } catch (localError) {
+        console.error("Error updating localStorage:", localError);
+      }
+      
+      // Delete from backend
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/delete-video`
+          : `${baseUrl}/api/youtube/delete-video`;
+        
+        await axios.post(apiUrl, {
+          videoId: videoId,
+          userId: user?.id || 'anonymous'
+        });
+      } catch (backendError) {
+        console.error("Error deleting from backend:", backendError);
+        // Continue even if backend delete fails
+      }
+      
+      toast({
+        title: "Video deleted",
+        description: "The video has been removed from your saved videos"
+      });
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete video",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="container max-w-6xl py-8">
       <div className="mb-8">
@@ -1411,7 +1614,7 @@ What strategies have worked best for you? Share your experiences in the comments
                           {currentVideos.map((video) => (
                             <div 
                               key={video.id}
-                              className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md relative ${
+                              className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md relative group ${
                                 selectedVideo?.id === video.id ? "ring-2 ring-blue-500" : ""
                               }`}
                               onClick={() => handleVideoSelect(video)}
@@ -1439,6 +1642,25 @@ What strategies have worked best for you? Share your experiences in the comments
                                     <span>Transcript</span>
                                   </div>
                                 )}
+                                
+                                {/* Delete button */}
+                                <div 
+                                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 rounded-full"
+                                    onClick={(e) => handleDeleteVideo(video, e)}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M3 6h18"></path>
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                  </Button>
+                                </div>
                               </div>
                               <div className="p-3">
                                 <h4 className="font-medium text-sm line-clamp-2">{video.title}</h4>
