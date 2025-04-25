@@ -40,116 +40,14 @@ import {
 import { format } from "date-fns";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
-import OpenAI from 'openai';
 import { Slide, FontFamily, FontWeight, TextAlign } from "@/editor/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from "@/components/ui/textarea";
 
-// OpenAI configuration
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-  dangerouslyAllowBrowser: true
-});
-
 // Model options with fallbacks
 const AI_MODELS = {
-  primary: "gpt-4.1",
+  primary: "gpt-4o-mini", // Updated to align with backend
   fallback: "gpt-3.5-turbo"
-};
-
-// Add a function to try different models with fallback
-async function generateWithOpenAI(messages: any[], modelOptions: typeof AI_MODELS = AI_MODELS) {
-  try {
-    // Try with primary model first
-    console.log(`Attempting to generate content with ${modelOptions.primary} model`);
-    const completion = await openai.chat.completions.create({
-      model: modelOptions.primary,
-      messages,
-      temperature: 0.7,
-      max_tokens: 2048,
-    });
-    
-    return completion;
-  } catch (error: any) {
-    // If we hit a rate limit and have a fallback model, try that
-    if (
-      (error?.message?.includes('429') || 
-       error?.message?.includes('rate limit') || 
-       error?.message?.includes('quota')) && 
-      modelOptions.fallback
-    ) {
-      console.log(`Rate limit hit with ${modelOptions.primary}, trying fallback model ${modelOptions.fallback}`);
-      
-      // Use fallback model
-      const completion = await openai.chat.completions.create({
-        model: modelOptions.fallback,
-        messages,
-        temperature: 0.7,
-        max_tokens: 2048,
-      });
-      
-      return completion;
-    }
-    
-    // If fallback fails or there's another error, rethrow
-    throw error;
-  }
-}
-
-// Define prompts for content generation
-const PROMPTS = {
-  'post-short': `Use this YouTube transcript to write a LinkedIn short-form written post: "\${transcript}"
-
-Apply the following rules **strictly**:
-
-1. **Completely rephrase** everything — including headings, examples, analogies, and figures.
-2. **Do not use this symbol: "-"**
-3. **Change every number, example, and order of pointers** to ensure it's 100 percent untraceable.
-4. **Create a fresh, original headline** that is attention-grabbing and not similar to the video title.
-5. **Restructure the flow** — don't just summarize sequentially. Rearrange points for originality.
-6. Use **short paragraphs** and leave **one line of space between each point**.
-7. Keep the entire post **under 1000 characters**.
-8. **Remove all bold text**, emojis, links, names, tool references, or brand mentions.
-9. Use a **casual, founder-style tone** that feels like expert advice being shared.
-10. Avoid storytelling. Focus on **insights, learnings, and takeaways**.
-11. **No hashtags**, no promotional CTAs. Just a clean, high-value post.
-12. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.`,
-
-  'post-long': `Use this YouTube transcript to write a LinkedIn long-form written post: "\${transcript}"
-
-Apply the following rules **strictly**:
-
-1. **Completely rephrase** everything — including headings, examples, analogies, and figures.
-2. **Do not use this symbol: "-"**
-3. **Change every number, example, and order of pointers** to ensure it's 100 percent untraceable.
-4. **Create a fresh, original headline** that is attention-grabbing and not similar to the video title.
-5. **Restructure the flow** — don't just summarize sequentially. Rearrange points for originality.
-6. Use **short paragraphs** and leave **one line of space between each point**.
-7. Keep the entire post **under 2000 characters**.
-8. **Remove all bold text**, emojis, links, names, tool references, or brand mentions.
-9. Use a **casual, founder-style tone** that feels like expert advice being shared.
-10. Avoid storytelling. Focus on **insights, learnings, and takeaways**.
-11. **No hashtags**, no promotional CTAs. Just a clean, high-value post.
-12. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.`,
-
-  'carousel': `Use this YouTube transcript to turn the content into a LinkedIn carousel post: "\${transcript}"
-
-Follow all the rules below exactly:
-
-1. Create a **new, scroll-stopping hook** for Slide 1 — do not use the YouTube title.
-2. **Do not use this symbol: "-" "--**
-3. Every slide should contain a **short heading integrated into the paragraph**, not on a separate line.
-4. Each slide must be **fully rephrased** — change examples, numbers, order of points, and structure.
-5. Use **short sentences or bullets**, with clear spacing for readability.
-6. **No names, no brands, no tools**, no external mentions.
-7. Remove all **bold text**, unnecessary line breaks, and symbols.
-8. The tone should be **easy to understand**, like a founder breaking down a playbook.
-9. Include **takeaways or a conclusion slide**, but without CTAs or promotions.
-10. The flow should feel **logical and punchy**, not robotic or templated.
-11. Avoid fluff. Every slide should add **clear value or insight**.
-12. Separate each slide with "\n\n" to indicate a new slide.
-13. Make sure the Hook/introduction line is not completely out of place, it should be an opener to the whole content to follow.
-14. Make sure the carousel is not too long, it should be 8-10 slides max.`
 };
 
 // Define the form schema for validation
@@ -403,6 +301,8 @@ const RequestCarouselPage: React.FC = () => {
   const [selectedContentType, setSelectedContentType] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [showContentGenerator, setShowContentGenerator] = useState(false);
+  
+  // Preview state for content generator
   const [previewContent, setPreviewContent] = useState<string>('');
   const [previewTitle, setPreviewTitle] = useState<string>('');
   const [previewType, setPreviewType] = useState<string>('');
@@ -831,117 +731,92 @@ const RequestCarouselPage: React.FC = () => {
       });
       return;
     }
-
+    
     setSelectedContentType(type);
     setIsGeneratingContent(true);
     setShowContentGenerator(true);
     
+    // Set up title based on content type - moved outside try/catch blocks
+    let contentTitle = '';
+    switch (type) {
+      case 'post-short':
+        contentTitle = 'Short LinkedIn Post';
+        break;
+      case 'post-long':
+        contentTitle = 'Long LinkedIn Post';
+        break;
+      case 'carousel':
+        contentTitle = 'LinkedIn Carousel';
+        break;
+      default:
+        contentTitle = 'LinkedIn Content';
+    }
+    
     try {
-      // Get the appropriate prompt based on the selected content type
-      const promptTemplate = PROMPTS[type as keyof typeof PROMPTS];
+      // Log the request
+      console.log(`Generating ${type} content with API`);
       
-      // Replace the transcript placeholder with the actual transcript
-      const prompt = promptTemplate.replace('${transcript}', selectedVideo.transcript || '');
-      
-      // Set up title based on content type
-      let title = '';
-      switch (type) {
-        case 'post-short':
-          title = 'Short LinkedIn Post';
-          break;
-        case 'post-long':
-          title = 'Long LinkedIn Post';
-          break;
-        case 'carousel':
-          title = 'LinkedIn Carousel';
-          break;
-        default:
-          title = 'LinkedIn Content';
-      }
-      
+      // Call the backend API which now handles all prompts securely
       try {
-        // Log the request
-        console.log(`Generating ${type} content with OpenAI API`);
+        // Prepare API request parameters
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/generate-content`
+          : `${baseUrl}/api/generate-content`;
         
-        // Prepare the messages
-        const messages = [
-          { 
-            role: "system", 
-            content: "You are an expert content creator for LinkedIn, generating high-quality posts from YouTube transcripts." 
-          },
-          { 
-            role: "user", 
-            content: prompt 
-          }
-        ];
-        
-        // Call the OpenAI API with fallback support
-        const completion = await generateWithOpenAI(messages);
-        
-        // Log the response
-        console.log(`OpenAI API response received for ${type} content:`, {
-          model: completion.model,
-          usage: completion.usage,
-          finishReason: completion.choices[0]?.finish_reason
+        // Make API request with the transcript and content type
+        const response = await axios.post(apiUrl, {
+          type: type,
+          transcript: selectedVideo.transcript,
+          model: AI_MODELS.primary,
         });
         
-        // Get the generated content
-        let generatedContent = completion.choices[0]?.message?.content || '';
-        
-        // If it's a carousel, clean up slide prefixes and any standalone "Slide X" occurrences
-        if (type === 'carousel') {
-          // Split by double newlines to get individual slides
-          const rawSlides = generatedContent.split('\n\n').filter(s => s.trim());
+        // Check for valid response
+        if (response.data?.content) {
+          // Get the generated content
+          const generatedContent = response.data.content;
           
-          // Process slides to remove "Slide X" prefix slides and clean remaining slide content
-          const cleanedSlides = [];
-          for (let i = 0; i < rawSlides.length; i++) {
-            const current = rawSlides[i].trim();
-            
-            // Skip slides that only contain "Slide X" and nothing else
-            if (/^Slide\s*\d+\s*$/.test(current)) {
-              continue;
-            }
-            
-            // Remove "Slide X:" prefix if it exists
-            cleanedSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
-          }
+          // Update state with the generated content
+          setGeneratedContent(generatedContent);
+          setPreviewContent(generatedContent);
+          setPreviewTitle(contentTitle);
+          setPreviewType(type);
           
-          generatedContent = cleanedSlides.join('\n\n');
-          console.log(`Generated carousel with ${cleanedSlides.length} cleaned slides`);
+          toast({
+            title: "Content Generated",
+            description: `Your ${contentTitle} has been created successfully`,
+          });
+          
+          return; // Success, we're done
         }
         
-        // Update state with the generated content
-        setGeneratedContent(generatedContent);
-        setPreviewContent(generatedContent);
-        setPreviewTitle(title);
-        setPreviewType(type);
-        
-        toast({
-          title: "Content Generated",
-          description: `Your ${title} has been created successfully`,
-        });
-      } catch (apiError: any) {
-        console.error('OpenAI API error:', apiError);
-        
-        // Check if this is a rate limit error
-        const isRateLimit = apiError?.message?.includes('429') || 
-                            apiError?.message?.includes('rate limit') ||
-                            apiError?.message?.includes('quota');
-        
-        // Fallback content if API fails
-        let fallbackContent = '';
-        
-        if (type === 'post-short') {
-          fallbackContent = `Unlocking Professional Growth Through Strategic Focus
+        // If we get here, response was invalid - throw error to try fallback
+        throw new Error('Invalid response from content generation API');
+      } catch (apiError) {
+        console.error('API error:', apiError);
+        throw apiError; // Re-throw to be caught by outer try/catch for fallback
+      }
+    } catch (error: any) {
+      console.error('Error generating content:', error);
+      
+      // Check if this is a rate limit error
+      const isRateLimit = error?.response?.status === 429 || 
+                          error?.message?.includes('rate limit') ||
+                          error?.message?.includes('quota');
+      
+      // Fallback content if API fails
+      let fallbackContent = '';
+      
+      if (type === 'post-short') {
+        fallbackContent = `Unlocking Professional Growth Through Strategic Focus
 
 ${selectedVideo.formattedTranscript?.[0] || 'The key to success is identifying your strengths and doubling down on them.'}
 
 I've found that allocating time for deliberate practice makes all the difference. The compound effect of small improvements creates remarkable results over time.
 
 What strategies have worked best for your professional development journey?`;
-        } else if (type === 'post-long') {
-          fallbackContent = `The Untapped Potential of Deliberate Learning
+      } else if (type === 'post-long') {
+        fallbackContent = `The Untapped Potential of Deliberate Learning
 
 Recently, I've been reflecting on how we approach professional development. Many of us wait for opportunities instead of creating them.
 
@@ -954,8 +829,8 @@ ${selectedVideo.formattedTranscript?.[2] || 'Connecting with others in your fiel
 These principles have transformed how I approach work challenges. By incorporating structured learning into my weekly schedule, I've been able to develop skills that were previously outside my comfort zone.
 
 What learning methods have yielded the best results for you? I'm curious to hear about your experiences.`;
-        } else {
-          fallbackContent = `Mastering Professional Growth in Today's Landscape
+      } else {
+        fallbackContent = `Mastering Professional Growth in Today's Landscape
 
 First key point from the video
 
@@ -968,27 +843,19 @@ Fourth valuable takeaway
 Implementation is key. Start small, be consistent, and track your progress.
 
 What strategies have worked best for you? Share your experiences in the comments.`;
-        }
-        
-        setGeneratedContent(fallbackContent);
-        setPreviewContent(fallbackContent);
-        setPreviewTitle(title);
-        setPreviewType(type);
-        
-        toast({
-          title: isRateLimit ? "API Quota Exceeded" : "Using Offline Content",
-          description: isRateLimit 
-            ? "The AI service quota has been exceeded. We've provided alternative content for you to use."
-            : "We couldn't connect to the AI service, but we've generated content for you to use.",
-          variant: isRateLimit ? "destructive" : "default"
-        });
       }
-    } catch (error) {
-      console.error('Error generating content:', error);
+      
+      setGeneratedContent(fallbackContent);
+      setPreviewContent(fallbackContent);
+      setPreviewTitle(contentTitle);
+      setPreviewType(type);
+      
       toast({
-        title: "Error",
-        description: "Failed to generate content. Please try again later.",
-        variant: "destructive"
+        title: isRateLimit ? "API Quota Exceeded" : "Using Offline Content",
+        description: isRateLimit 
+          ? "The AI service quota has been exceeded. We've provided alternative content for you to use."
+          : "We couldn't connect to the AI service, but we've generated content for you to use.",
+        variant: isRateLimit ? "destructive" : "default"
       });
     } finally {
       setIsGeneratingContent(false);
