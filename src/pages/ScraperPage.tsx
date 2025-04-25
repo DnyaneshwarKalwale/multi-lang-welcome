@@ -575,71 +575,155 @@ const ScraperPage: React.FC = () => {
       setCurrentVideoId(videoId);
       setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
       
-      while (currentRetryCount <= maxRetries) {
-        try {
-          // If it's a retry, wait with exponential backoff (3s, 6s)
-          if (currentRetryCount > 0) {
-            const delay = currentRetryCount * 3000; // 3 seconds * retry count
-            console.log(`Retry ${currentRetryCount}/${maxRetries} after ${delay}ms delay`);
-            
-            // Update retry count in state for UI
-            setRetryCount(prev => ({ ...prev, [videoId]: currentRetryCount }));
-            
-            toastSuccess(`Retrying transcript fetch (attempt ${currentRetryCount + 1})...`);
-            await sleep(delay);
-          }
+      // Try both methods in parallel
+      let ytdlpPromise: Promise<any> | null = null;
+      let ytTranscriptPromise: Promise<any> | null = null;
+      let transcriptData: any = null;
+      let failedMethods = 0;
+      
+      // Start both API calls
+      toast({
+        description: "Fetching transcript using multiple methods...",
+        variant: "default",
+      });
+      
+      // Start primary method (youtube-transcript-api)
+      ytTranscriptPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId, useScraperApi: true })
+      }).then(res => {
+        if (!res.ok) throw new Error(`Primary method failed: ${res.status}`);
+        return res.json();
+      });
+      
+      // Start fallback method (yt-dlp)
+      ytdlpPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId })
+      }).then(res => {
+        if (!res.ok) throw new Error(`Fallback method failed: ${res.status}`);
+        return res.json();
+      });
+      
+      // Create a race between both methods
+      try {
+        // Try Promise.any which resolves with the first successful promise
+        transcriptData = await Promise.any([
+          ytTranscriptPromise.then(data => {
+            console.log("Primary method succeeded");
+            toastSuccess("Transcript fetched successfully (primary method)");
+            return data;
+          }),
+          ytdlpPromise.then(data => {
+            console.log("Fallback method succeeded");
+            toastSuccess("Transcript fetched successfully (fallback method)");
+            return data;
+          })
+        ]);
+      } catch (aggregateError) {
+        // Both methods failed, try with retries for the primary method
+        console.error("Both transcript methods failed initially");
+        
+        while (currentRetryCount <= maxRetries) {
+          try {
+            // If it's a retry, wait with exponential backoff (3s, 6s)
+            if (currentRetryCount > 0) {
+              const delay = currentRetryCount * 3000; // 3 seconds * retry count
+              console.log(`Retry ${currentRetryCount}/${maxRetries} after ${delay}ms delay`);
+              
+              // Update retry count in state for UI
+              setRetryCount(prev => ({ ...prev, [videoId]: currentRetryCount }));
+              
+              toastSuccess(`Retrying transcript fetch (attempt ${currentRetryCount + 1})...`);
+              await sleep(delay);
+            }
 
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ 
-              videoId,
-              useScraperApi: true // Always use ScraperAPI to avoid rate limits
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            // If rate limited, retry
-            if (response.status === 429 && currentRetryCount < maxRetries) {
-              currentRetryCount++;
-              continue; // Go to next iteration of the loop
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ 
+                videoId,
+                useScraperApi: true // Always use ScraperAPI to avoid rate limits
+              })
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Failed with status: ${response.status}`);
             }
-            throw new Error(errorData.message || "Failed to fetch transcript");
-          }
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            // Instead of setting youtubeTranscript state, directly handle saving the video with transcript
-            const video = youtubeChannelResult?.videos.find(v => v.id === videoId);
-            if (video) {
-              await handleSaveVideoWithTranscript(video, data.transcript, data.language || "Unknown", data.is_generated || false);
-              toastSuccess("Successfully retrieved and saved the video transcript.");
+            
+            transcriptData = await response.json();
+            
+            if (transcriptData.success) {
+              break; // Success, exit the retry loop
             } else {
-              toastError("Could not find the video data for the transcript.");
+              throw new Error(transcriptData.message || "Failed to fetch transcript");
             }
-            return; // Success, exit function
-          } else {
-            throw new Error(data.message || "Failed to fetch transcript");
-          }
-        } catch (error: any) {
-          lastError = error;
-          
-          // Only retry on rate limit errors
-          if (error.message && error.message.includes("rate limit") && currentRetryCount < maxRetries) {
-            currentRetryCount++;
-          } else {
-            // For other errors, don't retry
-            break;
+          } catch (error: any) {
+            lastError = error;
+            
+            // Only retry on rate limit errors
+            if (error.message && error.message.includes("rate limit") && currentRetryCount < maxRetries) {
+              currentRetryCount++;
+            } else {
+              // For other errors, try the yt-dlp method again
+              try {
+                const fallbackResponse = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ videoId })
+                });
+                
+                if (!fallbackResponse.ok) {
+                  throw new Error(`Fallback method failed again: ${fallbackResponse.status}`);
+                }
+                
+                transcriptData = await fallbackResponse.json();
+                
+                if (transcriptData.success) {
+                  toastSuccess("Transcript fetched successfully with fallback method");
+                  break; // Success with fallback, exit the retry loop
+                } else {
+                  throw new Error(transcriptData.message || "Fallback method failed");
+                }
+              } catch (fallbackError) {
+                console.error("Fallback method also failed:", fallbackError);
+                // Continue with retries if we haven't hit the limit
+                if (currentRetryCount < maxRetries) {
+                  currentRetryCount++;
+                } else {
+                  // We've tried everything, give up
+                  break;
+                }
+              }
+            }
           }
         }
       }
       
-      // If we get here, all retries failed
-      throw lastError;
+      // If we found transcript data from any method, handle it
+      if (transcriptData && transcriptData.success) {
+        const video = youtubeChannelResult?.videos.find(v => v.id === videoId);
+        if (video) {
+          await handleSaveVideoWithTranscript(
+            video, 
+            transcriptData.transcript, 
+            transcriptData.language || "Unknown", 
+            transcriptData.is_generated || false,
+            transcriptData.formattedTranscript || null
+          );
+          toastSuccess("Successfully retrieved and saved the video transcript.");
+        } else {
+          toastError("Could not find the video data for the transcript.");
+        }
+        return;
+      }
+      
+      // If we get here, all methods and retries failed
+      throw new Error("All transcript retrieval methods failed");
     } catch (error: any) {
       console.error("Error fetching transcript:", error);
       toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
@@ -655,28 +739,17 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Update: Instead of handling youtubeTranscript, create a direct method for saving with transcript
-  const handleSaveVideoWithTranscript = async (video: YouTubeVideo, transcript: string, language: string, is_generated: boolean) => {
+  // Update: modified to handle formatted transcript from yt-dlp
+  const handleSaveVideoWithTranscript = async (
+    video: YouTubeVideo, 
+    transcript: string, 
+    language: string, 
+    is_generated: boolean,
+    formattedTranscript: string[] | null = null
+  ) => {
     try {
-      // Format the transcript into bullet points
-      const formatTranscriptToBulletPoints = (text: string): string[] => {
-        // Split by sentences and create bullet points
-        const sentences = text.replace(/([.?!])\s+/g, "$1|").split("|");
-        const bulletPoints = [];
-        
-        for (let i = 0; i < sentences.length; i++) {
-          const sentence = sentences[i].trim();
-          if (sentence.length > 10) {  // Only include meaningful sentences
-            bulletPoints.push(sentence);
-            // Limit to 10 bullet points
-            if (bulletPoints.length >= 8) break;
-          }
-        }
-        
-        return bulletPoints.length > 0 ? bulletPoints : ["No transcript content available"];
-      };
-      
-      const bulletPoints = formatTranscriptToBulletPoints(transcript);
+      // Format the transcript into bullet points if not already provided
+      const bulletPoints = formattedTranscript || formatTranscriptToBulletPoints(transcript);
       
       // Current timestamp for consistent sorting
       const savedTimestamp = new Date().toISOString();
@@ -768,6 +841,51 @@ const ScraperPage: React.FC = () => {
       console.error("Error saving video with transcript:", error);
       toastError("Failed to save the video with transcript");
     }
+  };
+
+  // Add a helper function to format transcript to bullet points
+  const formatTranscriptToBulletPoints = (text: string): string[] => {
+    if (!text || text.length < 10) {
+      return ["No transcript content available"];
+    }
+    
+    // Split by sentences and create bullet points
+    const sentences = text.replace(/([.?!])\s+/g, "$1|").split("|");
+    const bulletPoints = [];
+    
+    // Process sentences to create meaningful bullet points
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim();
+      
+      // Only include meaningful sentences with proper length
+      if (sentence.length > 15 && sentence.length < 200) {
+        // Filter out timestamps, speaker identification, and other non-content
+        if (!sentence.match(/^\d+:\d+/) && !sentence.match(/^speaker\s\d+:/i)) {
+          bulletPoints.push(sentence);
+          
+          // Limit to 8 bullet points for carousel use
+          if (bulletPoints.length >= 8) break;
+        }
+      }
+    }
+    
+    // If we couldn't extract meaningful bullets, create some based on the text length
+    if (bulletPoints.length === 0) {
+      const words = text.split(' ');
+      const chunkSize = Math.floor(words.length / 8);
+      
+      for (let i = 0; i < 8; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, words.length);
+        const chunk = words.slice(start, end).join(' ');
+        
+        if (chunk.length > 10) {
+          bulletPoints.push(chunk);
+        }
+      }
+    }
+    
+    return bulletPoints.length > 0 ? bulletPoints : ["No meaningful transcript content available"];
   };
 
   // Update the button text in the video card to show retry status
