@@ -36,7 +36,7 @@ const MobileMenu = () => {
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden" onClick={closeMenu}>
+        <div className="fixed inset-0 z-50 bg-white/80 backdrop-blur-sm lg:hidden" onClick={closeMenu}>
           <motion.div 
             className="fixed top-0 right-0 h-full w-3/4 max-w-sm bg-white dark:bg-gray-900 shadow-xl p-6 overflow-hidden"
             initial={{ x: "100%" }}

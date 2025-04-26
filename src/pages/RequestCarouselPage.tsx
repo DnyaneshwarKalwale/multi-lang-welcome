@@ -43,7 +43,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Slide, FontFamily, FontWeight, TextAlign } from "@/editor/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from "@/components/ui/textarea";
-import api from '@/services/api';
+import api, { tokenManager } from '@/services/api';
 
 // Model options with fallbacks
 const AI_MODELS = {
@@ -890,22 +890,45 @@ const RequestCarouselPage: React.FC = () => {
 
   // Update the part in handleGenerateContent where content is set to save to localStorage
   const handleGenerateContent = async (type: string) => {
+    // Only allow carousel type for carousel requests
+    if (type !== 'carousel') {
+      toast({
+        title: "Invalid content type",
+        description: "Only carousel content can be used for carousel requests",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedVideo) {
+      toast({
+        title: "Video required",
+        description: "Please select a video before generating content",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGeneratingContent(true);
     
     try {
       // Implementation of content generation logic
-      // When content is successfully generated:
-      const generatedText = "Your generated content will appear here"; // Replace with actual implementation
+      const generatedCarouselContent = "Your generated carousel content will appear here"; // Replace with actual implementation
       
-      // Save the content
-      setGeneratedContent(generatedText);
-      await saveGeneratedContent(generatedText, selectedVideo?.id);
+      // Save the content with video ID association
+      setGeneratedContent(generatedCarouselContent);
+      await saveGeneratedContent(generatedCarouselContent, selectedVideo.id);
       
       // Update UI state
       setShowContentGenerator(true);
       setSelectedContentType(type);
-      setPreviewContent(generatedText);
+      setPreviewContent(generatedCarouselContent);
+      setPreviewType('carousel');
       
+      toast({
+        title: "Content generated",
+        description: "Carousel content has been generated for your selected video",
+      });
     } catch (error) {
       console.error("Error generating content:", error);
       toast({
@@ -961,7 +984,7 @@ const RequestCarouselPage: React.FC = () => {
 
   // Update the form submit handler
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    // Check if video is selected and content is generated before showing modal
+    // Check if video is selected
     if (!selectedVideo) {
       toast({
         title: "Video required",
@@ -971,10 +994,32 @@ const RequestCarouselPage: React.FC = () => {
       return;
     }
 
-    if (!generatedContent && !previewContent) {
+    // Check if content is generated AND explicitly selected
+    if (!previewContent) {
       toast({
         title: "Content required",
-        description: "Please generate content for your carousel",
+        description: "Please generate and select carousel content for your video",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Make sure the content type is "carousel"
+    if (previewType !== 'carousel') {
+      toast({
+        title: "Invalid content type",
+        description: "Only carousel content can be used for carousel requests",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if the selected content corresponds to the selected video
+    const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
+    if (savedVideoId !== selectedVideo.id) {
+      toast({
+        title: "Content mismatch",
+        description: "The selected content does not match the selected video. Please generate content for this video.",
         variant: "destructive"
       });
       return;
@@ -986,17 +1031,20 @@ const RequestCarouselPage: React.FC = () => {
 
   // Add a function to submit the final request
   const submitCarouselRequest = async () => {
+    if (!form.getValues('title')) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your carousel request",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmittingRequest(true);
     
     try {
-      // Get the JWT token
-      const directToken = localStorage.getItem('token');
-      const authMethod = localStorage.getItem('auth-method');
-      const methodToken = authMethod ? localStorage.getItem(`${authMethod}-login-token`) : null;
-      const linkedinToken = localStorage.getItem('linkedin-login-token');
-      const googleToken = localStorage.getItem('google-login-token');
-      
-      const token = directToken || methodToken || linkedinToken || googleToken;
+      // Use tokenManager to retrieve the token instead of direct localStorage access
+      const token = tokenManager.getToken();
       
       if (!token) {
         throw new Error('Authentication token not found. Please login again.');
@@ -1010,26 +1058,34 @@ const RequestCarouselPage: React.FC = () => {
         // Create an array of upload promises
         const uploadPromises = uploadedFiles.map(file => {
           return new Promise<string>((resolve, reject) => {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', import.meta.env.VITE_UPLOAD_PRESET || 'eventapp');
-            formData.append('cloud_name', import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv');
+            // For files larger than 10MB, use chunked upload approach
+            const CHUNK_SIZE = 10485760; // 10MB chunks
             
-            fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv'}/auto/upload`, {
-              method: 'POST',
-              body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.secure_url) {
-                resolve(data.secure_url);
-              } else {
-                reject(new Error('Failed to upload file to Cloudinary'));
-              }
-            })
-            .catch(error => {
-              reject(error);
-            });
+            if (file.size > CHUNK_SIZE) {
+              handleLargeFileUpload(file, resolve, reject);
+            } else {
+              // Standard upload for smaller files
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('upload_preset', import.meta.env.VITE_UPLOAD_PRESET || 'eventapp');
+              formData.append('cloud_name', import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv');
+              
+              fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv'}/auto/upload`, {
+                method: 'POST',
+                body: formData
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.secure_url) {
+                  resolve(data.secure_url);
+                } else {
+                  reject(new Error('Failed to upload file to Cloudinary'));
+                }
+              })
+              .catch(error => {
+                reject(error);
+              });
+            }
           });
         });
         
@@ -1046,12 +1102,16 @@ const RequestCarouselPage: React.FC = () => {
         fileUrls: string[];
         videoId?: string;
         videoTitle?: string;
+        userName?: string;
+        userEmail?: string;
       } = {
         title: form.getValues('title'),
         youtubeUrl: selectedVideo?.url || form.getValues('youtubeUrl') || '',
         carouselType: 'professional',
         content: generatedContent || previewContent || '',
-        fileUrls
+        fileUrls,
+        userName: user?.firstName || (user as any)?.name || 'Unknown User',
+        userEmail: user?.email || ''
       };
       
       if (selectedVideo) {
@@ -1094,7 +1154,7 @@ const RequestCarouselPage: React.FC = () => {
       
       // Clear uploaded files
       setUploadedFiles([]);
-      
+
       toast({
         title: "Carousel request submitted",
         description: "We'll notify you when your carousel is ready.",
@@ -1109,6 +1169,77 @@ const RequestCarouselPage: React.FC = () => {
     } finally {
       setIsSubmittingRequest(false);
     }
+  };
+
+  // Helper function for chunked upload of large files
+  const handleLargeFileUpload = (file: File, resolve: (url: string) => void, reject: (error: Error) => void) => {
+    const CHUNK_SIZE = 10485760; // 10MB chunks
+    const cloudName = import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv';
+    const uploadPreset = import.meta.env.VITE_UPLOAD_PRESET || 'eventapp';
+    
+    // Generate a unique public ID for this file
+    const publicId = `large_${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    let bytesUploaded = 0;
+    let totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    let chunkIndex = 0;
+
+      toast({
+      title: "Large file detected",
+      description: `Uploading ${file.name} in chunks (${Math.round(file.size / 1048576)}MB)`,
+    });
+
+    const uploadChunk = async () => {
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+      
+      const formData = new FormData();
+      formData.append('file', chunk);
+      formData.append('cloud_name', cloudName);
+      formData.append('upload_preset', uploadPreset);
+      
+      // For first chunk, initialize the upload
+      if (chunkIndex === 0) {
+        formData.append('public_id', publicId);
+      } else {
+        // For subsequent chunks, include the upload ID
+        formData.append('public_id', publicId);
+        formData.append('resource_type', 'raw');
+      }
+      
+      try {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        bytesUploaded += chunk.size;
+        
+        // Update progress
+        const progressPercent = Math.round((bytesUploaded / file.size) * 100);
+        console.log(`Upload progress for ${file.name}: ${progressPercent}%`);
+        
+        if (chunkIndex < totalChunks - 1) {
+          // Upload next chunk
+          chunkIndex++;
+          await uploadChunk();
+        } else {
+          // All chunks uploaded
+          console.log(`File ${file.name} uploaded successfully`);
+          resolve(result.secure_url);
+        }
+      } catch (error) {
+        console.error('Error uploading chunk:', error);
+        reject(new Error(`Failed to upload ${file.name}`));
+      }
+    };
+    
+    // Start the upload process with the first chunk
+    uploadChunk().catch(error => {
+      console.error('Chunked upload failed:', error);
+      reject(error);
+    });
   };
 
   // Add these carousel type options 
@@ -1611,26 +1742,59 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Add function to load saved content into preview
+  // Update loadSavedContent to ensure it only loads carousel content for the selected video
   const loadSavedContent = (content: SavedContent) => {
+    // Check if it's carousel content (only allow carousel type)
+    if (content.type !== 'carousel') {
+      toast({
+        title: "Invalid content type",
+        description: "Only carousel content can be used for carousel requests",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if a video is selected
+    if (!selectedVideo) {
+      toast({
+        title: "Video required",
+        description: "Please select a video before loading content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if the content matches the selected video
+    if (content.videoId && content.videoId !== selectedVideo.id) {
+      toast({
+        title: "Content mismatch",
+        description: "This content was created for a different video. Please select content that matches your video.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     let cleanedContent = content.content;
     // Clean up any slide prefixes for carousel content
-    if (content.type === 'carousel') {
-      cleanedContent = content.content
-        .split('\n\n')
-        .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
-        .join('\n\n');
-    }
+    cleanedContent = content.content
+      .split('\n\n')
+      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+      .join('\n\n');
     
     setGeneratedContent(cleanedContent);
     setPreviewContent(cleanedContent);
     setPreviewTitle(content.title);
-    setPreviewType(content.type);
+    setPreviewType('carousel');
     setShowSavedContents(false);
   
+    // Save to localStorage to maintain association with the selected video
+    localStorage.setItem('ai_generated_content', cleanedContent);
+    localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
+    localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
+    
     toast({
       title: "Content Loaded",
-      description: "The saved content has been loaded to the preview",
+      description: "The saved carousel content has been loaded for your selected video",
     });
   };
 
@@ -1650,17 +1814,33 @@ const RequestCarouselPage: React.FC = () => {
       return;
     }
     
-    // Convert FileList to array and add to uploadedFiles state
-    const newFiles = Array.from(files);
-    setUploadedFiles([...uploadedFiles, ...newFiles]);
+    // Check file size limits - 50MB per file
+    const MAX_FILE_SIZE = 52428800; // 50MB in bytes
+    const oversizedFiles = Array.from(files).filter(file => file.size > MAX_FILE_SIZE);
+    
+    if (oversizedFiles.length > 0) {
+      toast({
+        title: "File too large",
+        description: `${oversizedFiles.length > 1 ? 'Some files exceed' : 'One file exceeds'} the 50MB size limit`,
+        variant: "destructive"
+      });
+      
+      // Only add files that are within size limits
+      const validFiles = Array.from(files).filter(file => file.size <= MAX_FILE_SIZE);
+      setUploadedFiles([...uploadedFiles, ...validFiles]);
+    } else {
+      // All files are within size limits
+      const newFiles = Array.from(files);
+      setUploadedFiles([...uploadedFiles, ...newFiles]);
+      
+      toast({
+        title: "Files uploaded",
+        description: `Added ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`,
+      });
+    }
     
     // Reset the input value so the same file can be selected again
     e.target.value = '';
-    
-    toast({
-      title: "Files uploaded",
-      description: `Added ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`,
-    });
   };
   
   // Function to remove a file from the uploaded files list

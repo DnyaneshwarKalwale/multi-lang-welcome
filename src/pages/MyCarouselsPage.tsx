@@ -50,6 +50,10 @@ import { CarouselPreview } from '@/components/CarouselPreview';
 
 // API base URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Server base URL for static files (remove /api from API_URL)
+const SERVER_BASE_URL = API_URL.endsWith('/api') 
+  ? API_URL.substring(0, API_URL.length - 4) 
+  : API_URL;
 
 // Enhanced carousel status type to include requests
 type CarouselStatus = 'draft' | 'scheduled' | 'published' | 'pending' | 'in_progress' | 'completed' | 'rejected';
@@ -351,24 +355,37 @@ const MyCarouselsPage: React.FC = () => {
 
   // Helper function to get the proper URL for a file
   const getProperFileUrl = (url: string = '') => {
-    // For files stored on the server with relative paths
-    if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      // Make sure we don't have double slashes in the URL
-      if (url.startsWith('/')) {
-        return `${baseUrl}${url}`;
-      } else {
-        return `${baseUrl}/${url}`;
-      }
-    }
-    
-    // For Cloudinary URLs or other full URLs
+    // If URL is already absolute, return it
     if (url.startsWith('http')) {
       return url;
     }
     
-    // For other relative URLs that don't start with "/uploads" or "uploads"
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // The base URL for API endpoints
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    
+    // For uploads, we need to access them at the server root level, not through /api
+    const uploadsBaseUrl = baseUrl.endsWith('/api') 
+      ? baseUrl.substring(0, baseUrl.length - 4) 
+      : baseUrl;
+    
+    // For files stored on the server with relative paths
+    if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
+      // Make sure we don't have double slashes in the URL
+      if (url.startsWith('/')) {
+        return `${uploadsBaseUrl}${url}`;
+      } else {
+        return `${uploadsBaseUrl}/${url}`;
+      }
+    }
+    
+    // For files stored in the uploads directory with files- prefix
+    if (url.includes('files-')) {
+      // Ensure we're using the proper path format
+      const fileName = url.split('/').pop();
+      return `${uploadsBaseUrl}/uploads/${fileName}`;
+    }
+    
+    // For other relative URLs (API endpoints) - keep the /api suffix
     return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
   };
 
@@ -823,15 +840,15 @@ const MyCarouselsPage: React.FC = () => {
       
       {/* Carousel Preview Dialog */}
       <Dialog open={!!selectedCarousel} onOpenChange={(open) => !open && setSelectedCarousel(null)}>
-        <DialogContent className="max-w-2xl w-[90vw]">
+        <DialogContent className="max-w-2xl w-[90vw]" aria-labelledby="carousel-dialog-title" aria-describedby="carousel-dialog-description">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between text-base">
+            <DialogTitle className="flex items-center justify-between text-base" id="carousel-dialog-title">
               <span>{selectedCarousel?.title}</span>
               <div>
                 <StatusBadge status={selectedCarousel?.status || 'draft'} />
               </div>
             </DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogDescription className="text-sm" id="carousel-dialog-description">
               {selectedCarousel?.description}
             </DialogDescription>
           </DialogHeader>
@@ -950,12 +967,12 @@ const MyCarouselsPage: React.FC = () => {
         open={!!selectedRequest} 
         onOpenChange={(open) => !open && setSelectedRequest(null)}
       >
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl" aria-labelledby="request-dialog-title" aria-describedby="request-dialog-description">
           {selectedRequest && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-xl">{selectedRequest.title}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl" id="request-dialog-title">{selectedRequest.title}</DialogTitle>
+                <DialogDescription id="request-dialog-description">
                   Completed carousel request - Submitted on {formatDate(selectedRequest.createdAt)}
                 </DialogDescription>
               </DialogHeader>

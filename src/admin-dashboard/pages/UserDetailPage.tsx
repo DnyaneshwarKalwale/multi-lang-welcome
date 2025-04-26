@@ -365,12 +365,12 @@ const UserDetailPage: React.FC = () => {
                           alt={video.title} 
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+                        <div className="absolute bottom-2 right-2 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded shadow-sm">
                           <Clock className="inline h-3 w-3 mr-1" />
                           {video.duration || 'N/A'}
                         </div>
-                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all flex items-center justify-center">
-                          <ExternalLink className="h-8 w-8 text-white opacity-0 hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-blue-100/0 hover:bg-blue-100/30 transition-all flex items-center justify-center">
+                          <ExternalLink className="h-8 w-8 text-blue-700 opacity-0 hover:opacity-100 transition-opacity" />
                         </div>
                       </div>
                       <div className="p-4 flex-grow flex flex-col">

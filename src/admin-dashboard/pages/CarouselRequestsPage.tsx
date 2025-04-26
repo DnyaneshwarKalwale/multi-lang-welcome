@@ -216,33 +216,33 @@ const CarouselRequestsPage: React.FC = () => {
     setViewDialogOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'in_progress':
-        return 'bg-blue-500 hover:bg-blue-600';
-      case 'completed':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'rejected':
-        return 'bg-red-500 hover:bg-red-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200">Pending</Badge>;
       case 'in_progress':
-        return <Badge className="bg-blue-500">In Progress</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200">In Progress</Badge>;
       case 'completed':
-        return <Badge className="bg-green-500">Completed</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200">Completed</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-500">Rejected</Badge>;
+        return <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">Rejected</Badge>;
       default:
-        return <Badge>Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Unknown</Badge>;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300';
+      case 'completed':
+        return 'bg-green-100 text-green-800 hover:bg-green-200 border-green-300';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 hover:bg-red-200 border-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300';
     }
   };
 
@@ -419,8 +419,8 @@ const CarouselRequestsPage: React.FC = () => {
 
         {/* Preview modal */}
         {showPreview && isImage && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
-            <div className="bg-white p-2 rounded-lg max-w-3xl max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
+            <div className="bg-white p-2 rounded-lg max-w-3xl max-h-[90vh] overflow-auto shadow-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium text-lg">{getFileName(file)}</h3>
                 <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-gray-200 rounded-full">
@@ -788,7 +788,7 @@ const CarouselRequestsPage: React.FC = () => {
                   {selectedRequest.status !== 'in_progress' && (
                     <Button 
                       onClick={() => updateRequestStatus(selectedRequest.id, 'in_progress')}
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      className="bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300"
                     >
                       Mark In Progress
                     </Button>
@@ -797,7 +797,7 @@ const CarouselRequestsPage: React.FC = () => {
                   {selectedRequest.status !== 'completed' && (
                     <Button 
                       onClick={() => setUploadModalOpen(true)}
-                      className="bg-green-500 hover:bg-green-600 text-white"
+                      className="bg-green-100 text-green-800 hover:bg-green-200 border border-green-300"
                     >
                       Complete & Send
                     </Button>
@@ -806,7 +806,7 @@ const CarouselRequestsPage: React.FC = () => {
                   {selectedRequest.status !== 'rejected' && (
                     <Button 
                       onClick={() => updateRequestStatus(selectedRequest.id, 'rejected')}
-                      className="bg-red-500 hover:bg-red-600 text-white"
+                      className="bg-red-100 text-red-800 hover:bg-red-200 border border-red-300"
                     >
                       Reject
                     </Button>
@@ -923,7 +923,7 @@ const CarouselRequestsPage: React.FC = () => {
             </Button>
             <Button 
               onClick={submitCompletedCarousel} 
-              className="bg-green-500 hover:bg-green-600 text-white" 
+              className="bg-green-100 text-green-800 hover:bg-green-200 border border-green-300" 
               disabled={completionFiles.length === 0 || uploadingCarousel}
             >
               {uploadingCarousel ? (
