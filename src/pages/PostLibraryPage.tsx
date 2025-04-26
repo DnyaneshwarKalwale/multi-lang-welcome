@@ -64,6 +64,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePostCount } from '@/components/CollapsibleSidebar';
 
 // Define interfaces for post types
 interface BasePost {
@@ -187,6 +188,7 @@ const PostLibraryPage: React.FC = () => {
   const location = useLocation();
   const locationState = location.state as any;
   const { user } = useAuth();
+  const { updatePostCounts } = usePostCount();
   
   const [activeTab, setActiveTab] = useState(locationState?.activeTab || 'drafts');
   const [isLoading, setIsLoading] = useState(true);
@@ -264,6 +266,8 @@ const PostLibraryPage: React.FC = () => {
         toast.success(`Successfully migrated ${result.migratedCount} posts to the database`);
         // Reload posts from the server
         await loadUserContent();
+        // Update post counts in sidebar
+        updatePostCounts();
       } else {
         toast.error('Failed to migrate some posts. Please try again later.');
       }
@@ -505,6 +509,10 @@ const PostLibraryPage: React.FC = () => {
         // Fallback to localStorage if API fails
         fallbackToLocalStorage();
       }
+      
+      // Update post counts in sidebar after loading content
+      updatePostCounts();
+      
     } catch (error) {
       console.error('Error in loadUserContent:', error);
       toast.error('Failed to load content');
@@ -609,12 +617,15 @@ const PostLibraryPage: React.FC = () => {
       if (draftId.startsWith('draft_')) {
         // Remove from localStorage
         localStorage.removeItem(draftId);
-      toast.success('Draft deleted successfully');
+        toast.success('Draft deleted successfully');
       } else {
         // Delete from backend API
         await linkedInApi.deleteDBPost(draftId);
         toast.success('Draft deleted successfully');
       }
+      
+      // Update post counts in sidebar
+      updatePostCounts();
     } catch (error) {
       console.error('Error deleting draft:', error);
       toast.error('Failed to delete draft');
@@ -720,12 +731,15 @@ const PostLibraryPage: React.FC = () => {
       if (postId.startsWith('scheduled_')) {
         // Remove from localStorage
         localStorage.removeItem(postId);
-      toast.success('Scheduled post cancelled');
+        toast.success('Scheduled post cancelled');
       } else {
         // Delete from backend API
         await linkedInApi.deleteDBPost(postId);
         toast.success('Scheduled post cancelled');
       }
+      
+      // Update post counts in sidebar
+      updatePostCounts();
     } catch (error) {
       console.error('Error cancelling scheduled post:', error);
       toast.error('Failed to cancel scheduled post');
@@ -905,6 +919,9 @@ const PostLibraryPage: React.FC = () => {
           setPublished(prevPublished => prevPublished.filter(p => p.id !== `temp_${draftId}`));
         }
       }
+      
+      // Update post counts in sidebar after publishing
+      updatePostCounts();
     } catch (error) {
       console.error('Error publishing draft:', error);
       toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
@@ -1083,6 +1100,9 @@ const PostLibraryPage: React.FC = () => {
           setPublished(prevPublished => prevPublished.filter(p => p.id !== `temp_${postId}`));
         }
       }
+      
+      // Update post counts in sidebar after publishing
+      updatePostCounts();
     } catch (error) {
       console.error('Error publishing scheduled post:', error);
       toast.error('Failed to publish post: ' + (error.message || 'Unknown error'));
@@ -1110,6 +1130,9 @@ const PostLibraryPage: React.FC = () => {
       await linkedInApi.deleteDBPost(post.id);
       
       toast.success('Post deleted successfully from LinkedIn and local library');
+      
+      // Update post counts in sidebar
+      updatePostCounts();
     } catch (error) {
       console.error('Error deleting published post:', error);
       toast.error('Failed to delete post');
@@ -1412,6 +1435,9 @@ const PostLibraryPage: React.FC = () => {
         setTimeout(() => {
           loadUserContent();
         }, 1000);
+        
+        // Update post counts in sidebar after scheduling
+        updatePostCounts();
       } else {
         throw new Error('Failed to schedule post');
       }

@@ -413,10 +413,10 @@ const ScraperPage: React.FC = () => {
       
       // Save to backend first - this should be the primary storage
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-            ? `${baseUrl}/youtube/save-videos`
-            : `${baseUrl}/api/youtube/save-videos`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/save-videos`
+          : `${baseUrl}/api/youtube/save-videos`;
         
         const backendResponse = await axios.post(apiUrl, {
           videos: enhancedVideos,
@@ -463,8 +463,8 @@ const ScraperPage: React.FC = () => {
       const allSavedVideos = Array.from(allVideoIds.values());
       
       // Save to localStorage as backup
-      localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
-      
+        localStorage.setItem('savedYoutubeVideos', JSON.stringify(allSavedVideos));
+        
       // Let user know videos were saved
       if (!backendSaveSuccess) {
         toastSuccess(`Saved ${enhancedVideos.length} videos to local storage as backup`);
@@ -472,7 +472,7 @@ const ScraperPage: React.FC = () => {
         toastSuccess(`Videos saved successfully to cloud and local storage!`);
       }
       
-      setSelectedVideos(new Set());
+        setSelectedVideos(new Set());
       
       // Try creating carousels only if backend save was successful
       if (backendSaveSuccess) {
@@ -586,7 +586,7 @@ const ScraperPage: React.FC = () => {
         description: "Fetching transcript using multiple methods...",
         variant: "default",
       });
-      
+            
       // Start primary method (youtube-transcript-api)
       ytTranscriptPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
         method: "POST",
@@ -599,7 +599,7 @@ const ScraperPage: React.FC = () => {
       
       // Start fallback method (yt-dlp)
       ytdlpPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
-        method: "POST",
+            method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId })
       }).then(res => {
@@ -607,123 +607,27 @@ const ScraperPage: React.FC = () => {
         return res.json();
       });
       
-      // Create a race between both methods
-      try {
-        // Try Promise.any which resolves with the first successful promise
-        transcriptData = await Promise.any([
-          ytTranscriptPromise.then(data => {
+      // Use Promise.race with promises that handle their own rejection
+      const safePromises = [
+        ytTranscriptPromise.then(
+          data => {
             console.log("Primary method succeeded");
             toastSuccess("Transcript fetched successfully (primary method)");
             return data;
-          }),
-          ytdlpPromise.then(data => {
+          },
+          () => new Promise((_, reject) => setTimeout(() => reject(new Error("Primary method failed")), 100000))
+        ),
+        ytdlpPromise.then(
+          data => {
             console.log("Fallback method succeeded");
             toastSuccess("Transcript fetched successfully (fallback method)");
             return data;
-          })
-        ]);
-      } catch (aggregateError) {
-        // Both methods failed, try with retries for the primary method
-        console.error("Both transcript methods failed initially");
-        
-        while (currentRetryCount <= maxRetries) {
-          try {
-            // If it's a retry, wait with exponential backoff (3s, 6s)
-            if (currentRetryCount > 0) {
-              const delay = currentRetryCount * 3000; // 3 seconds * retry count
-              console.log(`Retry ${currentRetryCount}/${maxRetries} after ${delay}ms delay`);
-              
-              // Update retry count in state for UI
-              setRetryCount(prev => ({ ...prev, [videoId]: currentRetryCount }));
-              
-              toastSuccess(`Retrying transcript fetch (attempt ${currentRetryCount + 1})...`);
-              await sleep(delay);
-            }
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ 
-                videoId,
-                useScraperApi: true // Always use ScraperAPI to avoid rate limits
-              })
-            });
-            
-            if (!response.ok) {
-              throw new Error(`Failed with status: ${response.status}`);
-            }
-            
-            transcriptData = await response.json();
-            
-            if (transcriptData.success) {
-              break; // Success, exit the retry loop
-            } else {
-              throw new Error(transcriptData.message || "Failed to fetch transcript");
-            }
-          } catch (error: any) {
-            lastError = error;
-            
-            // Only retry on rate limit errors
-            if (error.message && error.message.includes("rate limit") && currentRetryCount < maxRetries) {
-              currentRetryCount++;
-            } else {
-              // For other errors, try the yt-dlp method again
-              try {
-                const fallbackResponse = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ videoId })
-                });
-                
-                if (!fallbackResponse.ok) {
-                  throw new Error(`Fallback method failed again: ${fallbackResponse.status}`);
-                }
-                
-                transcriptData = await fallbackResponse.json();
-                
-                if (transcriptData.success) {
-                  toastSuccess("Transcript fetched successfully with fallback method");
-                  break; // Success with fallback, exit the retry loop
-                } else {
-                  throw new Error(transcriptData.message || "Fallback method failed");
-                }
-              } catch (fallbackError) {
-                console.error("Fallback method also failed:", fallbackError);
-                // Continue with retries if we haven't hit the limit
-                if (currentRetryCount < maxRetries) {
-                  currentRetryCount++;
-                } else {
-                  // We've tried everything, give up
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
+          },
+          () => new Promise((_, reject) => setTimeout(() => reject(new Error("Fallback method failed")), 100000))
+        )
+      ];
       
-      // If we found transcript data from any method, handle it
-      if (transcriptData && transcriptData.success) {
-        const video = youtubeChannelResult?.videos.find(v => v.id === videoId);
-        if (video) {
-          await handleSaveVideoWithTranscript(
-            video, 
-            transcriptData.transcript, 
-            transcriptData.language || "Unknown", 
-            transcriptData.is_generated || false,
-            transcriptData.formattedTranscript || null
-          );
-          toastSuccess("Successfully retrieved and saved the video transcript.");
-        } else {
-          toastError("Could not find the video data for the transcript.");
-        }
-        return;
-      }
-      
-      // If we get here, all methods and retries failed
-      throw new Error("All transcript retrieval methods failed");
+      transcriptData = await Promise.race(safePromises);
     } catch (error: any) {
       console.error("Error fetching transcript:", error);
       toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
@@ -743,7 +647,7 @@ const ScraperPage: React.FC = () => {
   const handleSaveVideoWithTranscript = async (
     video: YouTubeVideo, 
     transcript: string, 
-    language: string, 
+    language: string,
     is_generated: boolean,
     formattedTranscript: string[] | null = null
   ) => {

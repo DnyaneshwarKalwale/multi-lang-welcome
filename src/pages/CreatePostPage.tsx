@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -102,6 +102,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import axios from 'axios';
+import { usePostCount } from '@/components/CollapsibleSidebar';
 
 // Extend CloudinaryImage interface to include properties used in the component
 interface ExtendedCloudinaryImage extends CloudinaryImage {
@@ -371,11 +372,12 @@ const InlineCarouselPreview: React.FC<{ slides: {id: string, content: string, im
 };
 
 const CreatePostPage: React.FC = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { clearState } = useAppState();
+  const { updatePostCounts } = usePostCount();
   
   // Add state for tracking save status
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -953,6 +955,31 @@ const CreatePostPage: React.FC = () => {
           // Save to the database
           const dbResponse = await linkedInApi.createDBPost(dbPostData);
           console.log('Published post saved to database:', dbResponse);
+          
+          // If saving to database
+          if (process.env.NODE_ENV === 'production' || true) {
+            // ... existing code ...
+            
+            // Publish the post using the DB ID
+            const response = await linkedInApi.publishDBPost(dbResponse.data._id);
+            
+            if (response && response.success) {
+              // ... existing success handling ...
+              
+              // Update post counts in sidebar
+              updatePostCounts();
+              
+              // Navigate to post library
+              navigate('/dashboard/posts', { state: { newPost: true, activeTab: 'published' } });
+            } else {
+              throw new Error('LinkedIn API returned an error');
+            }
+          } else {
+            // ... existing localStorage-only code ...
+            
+            // Update post counts in sidebar
+            updatePostCounts();
+          }
         } catch (dbError) {
           console.error('Error saving published post to database:', dbError);
           // Continue anyway, as the post was published to LinkedIn
@@ -1089,9 +1116,7 @@ const CreatePostPage: React.FC = () => {
       localStorage.removeItem('editingDraftId');
       
       // Success message
-      toast.success('Post saved as draft', {
-        description: 'You can find it in your Post Library'
-      });
+      toast.success("Draft saved successfully");
       
       // Navigate to the post library
       navigate('/dashboard/posts', {
@@ -1100,6 +1125,9 @@ const CreatePostPage: React.FC = () => {
           activeTab: 'drafts'
         }
       });
+      
+      // Update post counts in sidebar
+      updatePostCounts();
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error('Failed to save draft', {
@@ -1228,6 +1256,33 @@ const CreatePostPage: React.FC = () => {
         
         // Navigate to the post library scheduled tab - use /posts not /library
         navigate('/dashboard/posts', { state: { scheduled: true, activeTab: 'scheduled' } });
+        
+        // If sending to database
+        if (process.env.NODE_ENV === 'production' || true) {
+          // ... existing code ...
+          
+          // Schedule post in database
+          const response = await linkedInApi.createDBPost({
+            // ... existing post data ...
+          });
+          
+          if (response && response.success) {
+            // ... existing success handling ...
+            
+            // Update post counts in sidebar
+            updatePostCounts();
+            
+            // Navigate to the post library showing scheduled posts
+            navigate('/dashboard/posts', { state: { scheduled: true, activeTab: 'scheduled' } });
+          } else {
+            throw new Error('Failed to schedule post');
+          }
+        } else {
+          // ... existing localStorage-only code ...
+          
+          // Update post counts in sidebar
+          updatePostCounts();
+        }
       } else {
         toast.error('Failed to schedule post. Please try again.');
       }

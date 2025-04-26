@@ -6,7 +6,8 @@ import {
   ChevronRight, LayoutGrid, Sparkles, Calendar, 
   Edit3, Eye, Clock, PlusCircle, Download,
   Share2, MoreHorizontal, Trash2, Search,
-  FileText, ChevronLeft, ChevronDown, AlertCircle
+  FileText, ChevronLeft, ChevronDown, AlertCircle,
+  Inbox, CheckCircle, FileImage, File
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,8 +51,8 @@ import { CarouselPreview } from '@/components/CarouselPreview';
 // API base URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Carousel status type
-type CarouselStatus = 'draft' | 'scheduled' | 'published';
+// Enhanced carousel status type to include requests
+type CarouselStatus = 'draft' | 'scheduled' | 'published' | 'pending' | 'in_progress' | 'completed' | 'rejected';
 
 // User carousel interface
 interface UserCarousel {
@@ -73,14 +74,43 @@ interface UserCarousel {
   }[];
 }
 
+// Add interface for carousel requests
+interface CarouselRequest {
+  _id: string;
+  id: string;
+  title: string;
+  description?: string;
+  carouselType: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+  files: {
+    url: string;
+    filename?: string;
+    originalName?: string;
+    mimetype?: string;
+    size?: number;
+  }[];
+  completedFiles?: {
+    url: string;
+    filename?: string;
+    originalName?: string;
+    mimetype?: string;
+    size?: number;
+  }[];
+}
+
 const MyCarouselsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, token } = useAuth();
   const [carousels, setCarousels] = useState<UserCarousel[]>([]);
+  const [carouselRequests, setCarouselRequests] = useState<CarouselRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedCarousel, setSelectedCarousel] = useState<UserCarousel | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<CarouselRequest | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,11 +136,39 @@ const MyCarouselsPage: React.FC = () => {
     }
   }, [token]);
 
+  // Fetch user's carousel requests from backend
+  const fetchCarouselRequests = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const response = await axios.get(`${API_URL}/carousels/user/requests`, config);
+      
+      if (response.data && response.data.success && Array.isArray(response.data.data)) {
+        setCarouselRequests(response.data.data);
+      } else if (response.data && Array.isArray(response.data)) {
+        setCarouselRequests(response.data);
+      } else {
+        console.error('Unexpected response format:', response.data);
+        setCarouselRequests([]);
+      }
+    } catch (err) {
+      console.error('Error fetching carousel requests:', err);
+      toast.error('Failed to fetch carousel requests');
+    }
+  }, [token]);
+
   useEffect(() => {
     if (token) {
+      // Fetch both carousels and requests
       fetchCarousels();
+      fetchCarouselRequests();
     }
-  }, [token, fetchCarousels]);
+  }, [token, fetchCarousels, fetchCarouselRequests]);
   
   // When user arrives from the editor
   useEffect(() => {
@@ -267,6 +325,140 @@ const MyCarouselsPage: React.FC = () => {
     }
   };
 
+  // Helper to determine if a file is an image
+  const isImageFile = (url: string = '') => {
+    return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url) || 
+           url.includes('/image/upload/') ||
+           url.includes('cloudinary') && url.includes('/image/');
+  };
+
+  // Helper to get file name from URL
+  const getFileNameFromUrl = (url: string = '') => {
+    const urlParts = url.split('/');
+    const lastPart = urlParts[urlParts.length - 1];
+    const nameWithoutParams = lastPart.split('?')[0];
+    
+    // If it's a Cloudinary URL, clean up the ID
+    if (url.includes('cloudinary') || url.includes('res.cloudinary.com')) {
+      const cloudinaryParts = nameWithoutParams.split('.');
+      if (cloudinaryParts.length > 1) {
+        return cloudinaryParts[0].substring(0, 15) + '.' + cloudinaryParts[cloudinaryParts.length - 1];
+      }
+    }
+    
+    return nameWithoutParams || 'file';
+  };
+
+  // Helper function to get the proper URL for a file
+  const getProperFileUrl = (url: string = '') => {
+    // For files stored on the server with relative paths
+    if (url.startsWith('/uploads/') || url.startsWith('uploads/')) {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Make sure we don't have double slashes in the URL
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      } else {
+        return `${baseUrl}/${url}`;
+      }
+    }
+    
+    // For Cloudinary URLs or other full URLs
+    if (url.startsWith('http')) {
+      return url;
+    }
+    
+    // For other relative URLs that don't start with "/uploads" or "uploads"
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
+  };
+
+  // Determine which requests to show based on the active tab
+  const filteredRequests = carouselRequests.filter(request => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'completed') return request.status === 'completed';
+    return false;
+  }).filter(request => {
+    if (!searchQuery.trim()) return true;
+    return request.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           (request.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  // Function to download all files from a completed request
+  const downloadCompletedFiles = async (request: CarouselRequest) => {
+    const completedFiles = request.completedFiles || [];
+    
+    if (completedFiles.length === 0) {
+      toast.error('No completed files available to download');
+      return;
+    }
+    
+    toast.info(`Preparing ${completedFiles.length} files for download...`);
+    
+    // Debug the file URLs
+    console.log('Completed files to download:', completedFiles.map(file => ({
+      originalUrl: file.url,
+      processedUrl: getProperFileUrl(file.url),
+      fileName: file.originalName || getFileNameFromUrl(file.url)
+    })));
+    
+    // For a single file, just trigger the download directly
+    if (completedFiles.length === 1) {
+      const file = completedFiles[0];
+      const fileUrl = getProperFileUrl(file.url);
+      console.log('Downloading single file from URL:', fileUrl);
+      
+      try {
+        // Create and click the download link
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = file.originalName || getFileNameFromUrl(file.url);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('File download started');
+      } catch (error) {
+        console.error('Download error:', error);
+        toast.error('Failed to download file. Please try again or contact support.');
+      }
+      return;
+    }
+    
+    // For multiple files, download them sequentially with a slight delay
+    let downloadCount = 0;
+    
+    const downloadNext = (index: number) => {
+      if (index >= completedFiles.length) {
+        toast.success(`All ${completedFiles.length} files downloaded successfully`);
+        return;
+      }
+      
+      const file = completedFiles[index];
+      const fileUrl = getProperFileUrl(file.url);
+      console.log(`Downloading file ${index + 1}/${completedFiles.length} from URL:`, fileUrl);
+      
+      try {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = file.originalName || getFileNameFromUrl(file.url);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        downloadCount++;
+        toast.info(`Downloading file ${downloadCount} of ${completedFiles.length}`);
+        
+        // Add small delay between downloads to prevent browser blocking
+        setTimeout(() => downloadNext(index + 1), 1500);
+      } catch (error) {
+        console.error(`Error downloading file ${index + 1}:`, error);
+        toast.error(`Failed to download file ${index + 1}. Continuing with next file...`);
+        setTimeout(() => downloadNext(index + 1), 1000);
+      }
+    };
+    
+    downloadNext(0);
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -316,6 +508,7 @@ const MyCarouselsPage: React.FC = () => {
             <TabsTrigger value="published">Published</TabsTrigger>
             <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
             <TabsTrigger value="draft">Drafts</TabsTrigger>
+            <TabsTrigger value="completed">Completed Requests</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -344,7 +537,7 @@ const MyCarouselsPage: React.FC = () => {
       )}
       
       {/* No results message */}
-      {!loading && !error && filteredCarousels.length === 0 && (
+      {!loading && !error && filteredCarousels.length === 0 && filteredRequests.length === 0 && (
         <div className="bg-white border-2 border-blue-200 rounded-lg p-8 text-center mb-8">
           <FileText className="h-12 w-12 text-blue-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No carousels found</h3>
@@ -526,6 +719,108 @@ const MyCarouselsPage: React.FC = () => {
         </div>
       )}
       
+      {/* Completed Requests from Admin */}
+      {filteredRequests.filter(r => r.status === 'completed').length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-4">Completed Carousel Requests</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRequests
+              .filter(request => request.status === 'completed')
+              .map((request) => (
+                <Card 
+                  key={request._id || request.id} 
+                  className="overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{request.title}</CardTitle>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Completed
+                      </Badge>
+                    </div>
+                    <CardDescription className="line-clamp-2">
+                      {request.description || "No description"}
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="pb-2">
+                    {/* Show preview of completed files */}
+                    <div className="mt-2">
+                      <p className="text-sm font-medium mb-2">Completed Files:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(request.completedFiles || []).slice(0, 4).map((file, index) => (
+                          <div 
+                            key={index}
+                            className="border rounded p-2 flex items-center"
+                          >
+                            {isImageFile(file.url) ? (
+                              <FileImage className="h-4 w-4 mr-2 text-blue-500" />
+                            ) : (
+                              <FileText className="h-4 w-4 mr-2 text-orange-500" />
+                            )}
+                            <span className="text-xs truncate">
+                              {file.originalName || getFileNameFromUrl(file.url)}
+                            </span>
+                          </div>
+                        ))}
+                        
+                        {(request.completedFiles || []).length > 4 && (
+                          <div className="border rounded p-2 flex items-center justify-center">
+                            <span className="text-xs text-gray-500">
+                              +{(request.completedFiles || []).length - 4} more
+                            </span>
+                          </div>
+                        )}
+                        
+                        {(request.completedFiles || []).length === 0 && (
+                          <div className="col-span-2 border rounded p-2 text-center">
+                            <span className="text-xs text-gray-500">No files available</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Admin notes if available */}
+                    {request.adminNotes && (
+                      <div className="mt-4 text-sm bg-blue-50 p-2 rounded">
+                        <p className="font-medium text-blue-700">Admin Note:</p>
+                        <p className="text-gray-700">{request.adminNotes}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                  
+                  <CardFooter className="pt-0 flex justify-between">
+                    <div className="text-xs text-gray-500 flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {formatDate(request.createdAt)}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedRequest(request)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      
+                      <Button 
+                        size="sm"
+                        onClick={() => downloadCompletedFiles(request)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
+      
       {/* Carousel Preview Dialog */}
       <Dialog open={!!selectedCarousel} onOpenChange={(open) => !open && setSelectedCarousel(null)}>
         <DialogContent className="max-w-2xl w-[90vw]">
@@ -647,6 +942,101 @@ const MyCarouselsPage: React.FC = () => {
               </Button>
       </div>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Completed Request Preview Dialog */}
+      <Dialog 
+        open={!!selectedRequest} 
+        onOpenChange={(open) => !open && setSelectedRequest(null)}
+      >
+        <DialogContent className="max-w-3xl">
+          {selectedRequest && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl">{selectedRequest.title}</DialogTitle>
+                <DialogDescription>
+                  Completed carousel request - Submitted on {formatDate(selectedRequest.createdAt)}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                {selectedRequest.adminNotes && (
+                  <div className="bg-blue-50 p-3 rounded">
+                    <h3 className="font-medium text-blue-700 mb-1">Note from the creator:</h3>
+                    <p>{selectedRequest.adminNotes}</p>
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="font-medium mb-2">Completed Files:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-1">
+                    {(selectedRequest.completedFiles || []).map((file, index) => {
+                      const fileUrl = getProperFileUrl(file.url);
+                      const fileName = file.originalName || getFileNameFromUrl(file.url);
+                      
+                      return (
+                        <div key={index} className="border rounded overflow-hidden">
+                          {isImageFile(file.url) ? (
+                            <div className="relative aspect-video bg-gray-100">
+                              <img 
+                                src={fileUrl} 
+                                alt={`Slide ${index + 1}`}
+                                className="absolute inset-0 w-full h-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="p-4 flex items-center justify-center bg-gray-50 aspect-video">
+                              <FileText className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                          
+                          <div className="p-2 flex justify-between items-center">
+                            <p className="text-sm truncate">
+                              {fileName}
+                            </p>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => {
+                                console.log("Downloading file:", fileUrl);
+                                const link = document.createElement('a');
+                                link.href = fileUrl;
+                                link.download = fileName;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                toast.success(`Downloading ${fileName}`);
+                              }}
+                              className="text-blue-500 hover:text-blue-700"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {(selectedRequest.completedFiles || []).length === 0 && (
+                      <div className="col-span-2 border rounded p-8 text-center text-gray-500">
+                        No completed files available
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button
+                  onClick={() => downloadCompletedFiles(selectedRequest)}
+                  className="w-full sm:w-auto"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download All Files
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

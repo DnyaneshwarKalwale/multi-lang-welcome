@@ -458,8 +458,8 @@ const Index = () => {
       </section>
       
       {/* Footer */}
-      <footer className="bg-gray-50 py-16">
-        <div className="container mx-auto px-6">
+      <footer className="bg-gray-100 dark:bg-gray-900 py-12 mt-20">
+        <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <BrandOutHorizontalLogo className="h-8 mb-6" />
@@ -518,6 +518,12 @@ const Index = () => {
                 </svg>
               </a>
             </div>
+          </div>
+          
+          <div className="flex justify-center mt-8">
+            <Link to="/admin/login" className="text-sm text-gray-500 hover:text-primary transition-colors">
+              Admin Portal
+            </Link>
           </div>
         </div>
       </footer>

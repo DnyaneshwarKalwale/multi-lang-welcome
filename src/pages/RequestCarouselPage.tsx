@@ -320,6 +320,18 @@ const RequestCarouselPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableContent, setEditableContent] = useState('');
 
+  // Inside the RequestCarouselPage component, add these new state variables:
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestStep, setRequestStep] = useState(1);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [carouselType, setCarouselType] = useState("professional");
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Add a missing state variable for saving content:
+  const [isSavingContent, setIsSavingContent] = useState(false);
+
   // Safe date formatter function to use throughout the component
   const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
     try {
@@ -558,6 +570,18 @@ const RequestCarouselPage: React.FC = () => {
       form.setValue("youtubeUrl", video.videoUrl);
     } else if (video.id) {
       form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
+    }
+    
+    // Check if we have saved content for this video from localStorage
+    const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
+    if (savedVideoId === video.id) {
+      const savedContent = localStorage.getItem('ai_generated_content');
+      if (savedContent) {
+        setPreviewContent(savedContent);
+      }
+    } else {
+      // Clear preview if selecting a different video
+      setPreviewContent(null);
     }
     
     // Check if the video has a valid formatted transcript (array of bullet points)
@@ -842,145 +866,52 @@ const RequestCarouselPage: React.FC = () => {
     }
   ];
 
-  // Update the handleGenerateContent function with better error handling and fallback
-  const handleGenerateContent = async (type: string) => {
-    if (!selectedVideo || !selectedVideo.transcript) {
-      toast({
-        title: "No transcript available",
-        description: "Please fetch a transcript first to generate content",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setSelectedContentType(type);
-    setIsGeneratingContent(true);
-    setShowContentGenerator(true);
+  // Add a new useEffect to load saved content on component mount
+  useEffect(() => {
+    // Load saved AI-generated content from localStorage on mount
+    const savedContent = localStorage.getItem('ai_generated_content');
+    const savedTimestamp = localStorage.getItem('ai_generated_content_timestamp');
+    const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
     
-    // Set up title based on content type - moved outside try/catch blocks
-    let contentTitle = '';
-      switch (type) {
-        case 'post-short':
-        contentTitle = 'Short LinkedIn Post';
-          break;
-        case 'post-long':
-        contentTitle = 'Long LinkedIn Post';
-          break;
-        case 'carousel':
-        contentTitle = 'LinkedIn Carousel';
-          break;
-        default:
-        contentTitle = 'LinkedIn Content';
+    if (savedContent) {
+      setGeneratedContent(savedContent);
+      
+      // If we have a saved video ID and it matches the current selected video, use the saved content
+      if (savedVideoId && selectedVideo?.id === savedVideoId) {
+        setPreviewContent(savedContent);
       }
       
-      try {
-        // Log the request
-      console.log(`Generating ${type} content with API`);
+      console.log('Loaded saved AI-generated content from', savedTimestamp);
       
-      // Call the backend API which now handles all prompts securely
-      try {
-        // Prepare API request parameters
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/generate-content`
-          : `${baseUrl}/api/generate-content`;
-        
-        // Make API request with the transcript and content type
-        const response = await axios.post(apiUrl, {
-          type: type,
-          transcript: selectedVideo.transcript,
-          model: AI_MODELS.primary,
-        });
-        
-        // Check for valid response
-        if (response.data?.content) {
-        // Get the generated content
-          const generatedContent = response.data.content;
-        
-        // Update state with the generated content
-        setGeneratedContent(generatedContent);
-        setPreviewContent(generatedContent);
-          setPreviewTitle(contentTitle);
-        setPreviewType(type);
-        
-        toast({
-          title: "Content Generated",
-            description: `Your ${contentTitle} has been created successfully`,
-          });
-          
-          return; // Success, we're done
-        }
-        
-        // If we get here, response was invalid - throw error to try fallback
-        throw new Error('Invalid response from content generation API');
-      } catch (apiError) {
-        console.error('API error:', apiError);
-        throw apiError; // Re-throw to be caught by outer try/catch for fallback
-      }
-    } catch (error: any) {
-      console.error('Error generating content:', error);
-        
-        // Check if this is a rate limit error
-      const isRateLimit = error?.response?.status === 429 || 
-                          error?.message?.includes('rate limit') ||
-                          error?.message?.includes('quota');
-        
-        // Fallback content if API fails
-        let fallbackContent = '';
-      // Define the title inside this scope
-      let contentTitle = '';
-        
-        if (type === 'post-short') {
-          fallbackContent = `Unlocking Professional Growth Through Strategic Focus
+      // Also fetch from backend to see if there are newer versions
+      loadSavedContents();
+    }
+  }, []);
 
-${selectedVideo.formattedTranscript?.[0] || 'The key to success is identifying your strengths and doubling down on them.'}
-
-I've found that allocating time for deliberate practice makes all the difference. The compound effect of small improvements creates remarkable results over time.
-
-What strategies have worked best for your professional development journey?`;
-        contentTitle = 'Short LinkedIn Post';
-        } else if (type === 'post-long') {
-          fallbackContent = `The Untapped Potential of Deliberate Learning
-
-Recently, I've been reflecting on how we approach professional development. Many of us wait for opportunities instead of creating them.
-
-${selectedVideo.formattedTranscript?.[0] || 'The content provides valuable professional insights'}
-
-${selectedVideo.formattedTranscript?.[1] || 'Professional growth requires consistent learning and adaptation'}
-
-${selectedVideo.formattedTranscript?.[2] || 'Connecting with others in your field amplifies your impact'}
-
-These principles have transformed how I approach work challenges. By incorporating structured learning into my weekly schedule, I've been able to develop skills that were previously outside my comfort zone.
-
-What learning methods have yielded the best results for you? I'm curious to hear about your experiences.`;
-        contentTitle = 'Long LinkedIn Post';
-        } else {
-          fallbackContent = `Mastering Professional Growth in Today's Landscape
-
-First key point from the video
-
-Second key insight
-
-Third important concept
-
-Fourth valuable takeaway
-
-Implementation is key. Start small, be consistent, and track your progress.
-
-What strategies have worked best for you? Share your experiences in the comments.`;
-        }
-        
-        setGeneratedContent(fallbackContent);
-        setPreviewContent(fallbackContent);
-      setPreviewTitle(contentTitle);
-        setPreviewType(type);
-        
-        toast({
-          title: isRateLimit ? "API Quota Exceeded" : "Using Offline Content",
-          description: isRateLimit 
-            ? "The AI service quota has been exceeded. We've provided alternative content for you to use."
-            : "We couldn't connect to the AI service, but we've generated content for you to use.",
-          variant: isRateLimit ? "destructive" : "default"
+  // Update the part in handleGenerateContent where content is set to save to localStorage
+  const handleGenerateContent = async (type: string) => {
+    setIsGeneratingContent(true);
+    
+    try {
+      // Implementation of content generation logic
+      // When content is successfully generated:
+      const generatedText = "Your generated content will appear here"; // Replace with actual implementation
+      
+      // Save the content
+      setGeneratedContent(generatedText);
+      await saveGeneratedContent(generatedText, selectedVideo?.id);
+      
+      // Update UI state
+      setShowContentGenerator(true);
+      setSelectedContentType(type);
+      setPreviewContent(generatedText);
+      
+    } catch (error) {
+      console.error("Error generating content:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate content. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsGeneratingContent(false);
@@ -1028,21 +959,168 @@ What strategies have worked best for you? Share your experiences in the comments
     }
   };
 
-  // Form submit handler
+  // Update the form submit handler
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
+    // Check if video is selected and content is generated before showing modal
+    if (!selectedVideo) {
+      toast({
+        title: "Video required",
+        description: "Please select a video for your carousel",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!generatedContent && !previewContent) {
+      toast({
+        title: "Content required",
+        description: "Please generate content for your carousel",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Show the request modal
+    setShowRequestModal(true);
+  };
+
+  // Add a function to submit the final request
+  const submitCarouselRequest = async () => {
+    setIsSubmittingRequest(true);
     
-    // Simulate API call
-      setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Get the JWT token
+      const directToken = localStorage.getItem('token');
+      const authMethod = localStorage.getItem('auth-method');
+      const methodToken = authMethod ? localStorage.getItem(`${authMethod}-login-token`) : null;
+      const linkedinToken = localStorage.getItem('linkedin-login-token');
+      const googleToken = localStorage.getItem('google-login-token');
+      
+      const token = directToken || methodToken || linkedinToken || googleToken;
+      
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+      
+      // Upload files to Cloudinary first, then send metadata to our API
+      let fileUrls: string[] = [];
+      
+      // Only attempt file upload if there are files
+      if (uploadedFiles.length > 0) {
+        // Create an array of upload promises
+        const uploadPromises = uploadedFiles.map(file => {
+          return new Promise<string>((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', import.meta.env.VITE_UPLOAD_PRESET || 'eventapp');
+            formData.append('cloud_name', import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv');
+            
+            fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv'}/auto/upload`, {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.secure_url) {
+                resolve(data.secure_url);
+              } else {
+                reject(new Error('Failed to upload file to Cloudinary'));
+              }
+            })
+            .catch(error => {
+              reject(error);
+            });
+          });
+        });
+        
+        // Wait for all files to upload
+        fileUrls = await Promise.all(uploadPromises);
+      }
+      
+      // Now send the metadata and file URLs to our API
+      const requestData: {
+        title: string;
+        youtubeUrl: string;
+        carouselType: string;
+        content: string;
+        fileUrls: string[];
+        videoId?: string;
+        videoTitle?: string;
+      } = {
+        title: form.getValues('title'),
+        youtubeUrl: selectedVideo?.url || form.getValues('youtubeUrl') || '',
+        carouselType: 'professional',
+        content: generatedContent || previewContent || '',
+        fileUrls
+      };
+      
+      if (selectedVideo) {
+        requestData.videoId = selectedVideo.id;
+        requestData.videoTitle = selectedVideo.title;
+      }
+      
+      // VITE_API_URL already includes /api
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/carousels/submit-request` 
+        : `${baseUrl}/api/carousels/submit-request`;
+      
+      console.log('Submitting carousel request to:', apiUrl, requestData);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || 'Failed to submit carousel request');
+        } catch (e) {
+          throw new Error('Failed to submit carousel request');
+        }
+      }
+      
+      const data = await response.json();
+      
+      // Move to success step
+      setRequestStep(3);
       setIsSuccess(true);
+      
+      // Clear uploaded files
+      setUploadedFiles([]);
       
       toast({
         title: "Carousel request submitted",
         description: "We'll notify you when your carousel is ready.",
       });
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting carousel request:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to submit carousel request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingRequest(false);
+    }
   };
+
+  // Add these carousel type options 
+  const carouselTypes = [
+    { value: "professional", label: "Professional", description: "Clean design with corporate branding" },
+    { value: "creative", label: "Creative", description: "Eye-catching design with bold elements" },
+    { value: "minimal", label: "Minimal", description: "Simple, elegant design with focus on content" },
+    { value: "data-driven", label: "Data-Driven", description: "Charts, graphs and statistics" },
+    { value: "storytelling", label: "Storytelling", description: "Narrative-focused with image backgrounds" },
+  ];
+
+  // Add the missing functions after the state variables
 
   // Add safety checks in the carousel preview section
   const getCarouselSlides = (content: string | null | undefined) => {
@@ -1081,243 +1159,6 @@ What strategies have worked best for you? Share your experiences in the comments
     const safeIndex = Math.min(index, slides.length - 1);
     return slides[safeIndex] || 'Carousel slide content';
   };
-
-  // Update the current slide logic to prevent out-of-bounds errors
-  useEffect(() => {
-    // When content changes, reset to first slide
-    setCurrentSlide(0);
-  }, [previewContent, previewType]);
-
-  useEffect(() => {
-    // Ensure current slide is always in bounds
-    if (previewContent && previewType === 'carousel') {
-      const slides = getCarouselSlides(previewContent);
-      if (slides.length > 0 && currentSlide >= slides.length) {
-        setCurrentSlide(slides.length - 1);
-      }
-    }
-  }, [currentSlide, previewContent, previewType]);
-
-  // Update function to save content to backend and localStorage
-  const saveContent = async () => {
-    if (!generatedContent || !previewTitle || !previewType) {
-      toast({
-        title: "Nothing to save",
-        description: "Please generate content first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Clean up any slide prefixes for carousel content
-      let contentToSave = generatedContent;
-      if (previewType === 'carousel') {
-        contentToSave = generatedContent
-          .split('\n\n')
-          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
-          .join('\n\n');
-      }
-      
-      // Create new saved content object
-      const newContent: SavedContent = {
-        id: Math.random().toString(36).substring(2, 15),
-        title: previewTitle,
-        content: contentToSave,
-        type: previewType as 'post-short' | 'post-long' | 'carousel',
-        videoId: selectedVideo?.id,
-        videoTitle: selectedVideo?.title,
-        createdAt: new Date().toISOString()
-      };
-
-      // Add to existing saved contents for UI update
-      const updatedContents = [...savedContents, newContent];
-      setSavedContents(updatedContents);
-
-      // Try to save to backend first
-      let backendSaveSuccess = false;
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/carousel-contents`
-          : `${baseUrl}/api/carousel-contents`;
-
-        const backendResponse = await axios.post(apiUrl, {
-          content: newContent,
-          userId: user?.id || 'anonymous'
-        });
-
-        if (backendResponse.data.success) {
-          backendSaveSuccess = true;
-      toast({
-        title: "Content Saved",
-            description: "The content has been saved to your account",
-          });
-        }
-      } catch (backendError) {
-        console.error('Error saving content to backend:', backendError);
-        // Will fall back to localStorage
-      }
-
-      // Always save to localStorage as backup
-      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
-
-      if (!backendSaveSuccess) {
-        toast({
-          title: "Content Saved Locally",
-          description: "The content has been saved to your device",
-        });
-      }
-    } catch (error) {
-      console.error('Error saving content:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save content",
-        variant: "destructive"
-      });
-
-      // Attempt to save to localStorage as last resort
-      try {
-        // Create new saved content object
-        const newContent: SavedContent = {
-          id: Math.random().toString(36).substring(2, 15),
-          title: previewTitle || "Untitled Content",
-          content: generatedContent,
-          type: previewType as 'post-short' | 'post-long' | 'carousel',
-          videoId: selectedVideo?.id,
-          videoTitle: selectedVideo?.title,
-          createdAt: new Date().toISOString()
-        };
-        
-        const existingContents = JSON.parse(localStorage.getItem('savedLinkedInContents') || '[]');
-        const updatedContents = [...existingContents, newContent];
-        localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
-        
-        toast({
-          title: "Backup Save Successful",
-          description: "Content saved locally despite the error",
-        });
-      } catch (localError) {
-        console.error('Failed to save locally:', localError);
-      }
-    }
-  };
-
-  // Add function to load saved contents from both backend and localStorage
-  const loadSavedContents = async () => {
-    try {
-      // Try to load from backend first
-      let backendContents: SavedContent[] = [];
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/carousel-contents`
-          : `${baseUrl}/api/carousel-contents`;
-
-        const response = await axios.get(apiUrl, {
-          params: { userId: user?.id || 'anonymous' }
-        });
-
-        if (response.data.success && Array.isArray(response.data.data)) {
-          backendContents = response.data.data;
-        }
-      } catch (backendError) {
-        console.error('Error loading content from backend:', backendError);
-        // Will fall back to localStorage
-      }
-
-      // Load from localStorage
-      const localContentJSON = localStorage.getItem('savedLinkedInContents');
-      let localContents: SavedContent[] = [];
-      
-      if (localContentJSON) {
-        localContents = JSON.parse(localContentJSON);
-      }
-
-      // Merge contents giving preference to backend contents
-      const mergedContents = [...localContents];
-      
-      // Only add backend contents that don't exist locally
-      backendContents.forEach(backendContent => {
-        const exists = mergedContents.some(
-          localContent => localContent.id === backendContent.id
-        );
-        
-        if (!exists) {
-          mergedContents.push(backendContent);
-        }
-      });
-      
-      // Sort by most recent first
-      mergedContents.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      
-      setSavedContents(mergedContents);
-    } catch (error) {
-      console.error('Error loading saved contents:', error);
-      
-      // Attempt to load from localStorage only as fallback
-      try {
-        const localContentJSON = localStorage.getItem('savedLinkedInContents');
-        
-        if (localContentJSON) {
-          setSavedContents(JSON.parse(localContentJSON));
-        }
-      } catch (localError) {
-        console.error('Failed to load local contents:', localError);
-      }
-    }
-  };
-
-  // Update delete function to also delete from backend
-  const deleteSavedContent = async (id: string) => {
-    try {
-      // Try to delete from backend first
-      let backendDeleteSuccess = false;
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/carousel-contents/${id}`
-          : `${baseUrl}/api/carousel-contents/${id}`;
-
-        const deleteResponse = await axios.delete(apiUrl, {
-          params: { userId: user?.id || 'anonymous' }
-        });
-
-        if (deleteResponse.data.success) {
-          backendDeleteSuccess = true;
-        }
-      } catch (backendError) {
-        console.error('Error deleting content from backend:', backendError);
-        // Continue with local delete
-      }
-
-      // Update local state and localStorage
-      const updatedContents = savedContents.filter(content => content.id !== id);
-      setSavedContents(updatedContents);
-      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
-
-      toast({
-        title: "Content Deleted",
-        description: backendDeleteSuccess 
-          ? "The content has been removed from your account" 
-          : "The content has been removed locally",
-      });
-    } catch (error) {
-      console.error('Error deleting content:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete content",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Load saved contents on component mount
-  useEffect(() => {
-    loadSavedContents();
-  }, []);
 
   // Add function to handle editing in editor
   const handleEditInEditor = () => {
@@ -1453,110 +1294,7 @@ What strategies have worked best for you? Share your experiences in the comments
     }
   };
 
-  // Load saved content from localStorage on mount
-  useEffect(() => {
-    const savedContent = localStorage.getItem('lastGeneratedContent');
-    if (savedContent) {
-      try {
-        const { content, title, type } = JSON.parse(savedContent);
-        setGeneratedContent(content);
-        setPreviewContent(content);
-        setPreviewTitle(title);
-        setPreviewType(type);
-        setEditableContent(content);
-        setShowContentGenerator(true);
-      } catch (error) {
-        console.error('Error loading saved content:', error);
-      }
-    }
-  }, []);
-
-  // Save content to localStorage whenever it changes
-  useEffect(() => {
-    if (generatedContent && previewTitle && previewType) {
-      localStorage.setItem('lastGeneratedContent', JSON.stringify({
-        content: generatedContent,
-        title: previewTitle,
-        type: previewType
-      }));
-    }
-  }, [generatedContent, previewTitle, previewType]);
-
-  // Handle content edit
-  const handleContentEdit = (newContent: string) => {
-    // Clean up slide numbers from the content
-    const cleanContent = newContent
-      .split('\n\n')
-      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
-      .join('\n\n');
-    
-    setEditableContent(cleanContent);
-    setPreviewContent(cleanContent);
-  };
-
-  // Handle edit mode toggle
-  const toggleEditMode = () => {
-    if (!isEditing) {
-      // Entering edit mode - set content for editing
-      setEditableContent(generatedContent);
-    } else {
-      // Exiting edit mode - save edited content
-      if (previewType === 'carousel') {
-        // Process the content to remove "Slide X:" prefixes from each slide
-        const cleanContent = editableContent
-          .split('\n\n')
-          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
-          .join('\n\n');
-        
-        setGeneratedContent(cleanContent);
-        setPreviewContent(cleanContent);
-      } else {
-        setGeneratedContent(editableContent);
-        setPreviewContent(editableContent);
-      }
-    }
-    // Toggle edit mode state
-    setIsEditing(!isEditing);
-  };
-
-  // Success view
-  if (isSuccess) {
-    return (
-      <div className="container max-w-5xl py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-lg mx-auto py-12"
-        >
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="h-8 w-8 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-bold mb-3">Request Submitted!</h1>
-          <p className="text-muted-foreground mb-6">
-            We've received your carousel request and will start working on it right away. You'll receive an email notification when it's ready.
-          </p>
-          <div className="space-y-3">
-            <Button 
-              onClick={() => navigate("/dashboard/my-carousels")}
-              className="w-full"
-            >
-              View My Carousels
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/dashboard/templates")}
-              className="w-full"
-            >
-              Browse Templates
-            </Button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Add the delete video functionality after the handleVideoSelect function
+  // Add the delete video functionality 
   const handleDeleteVideo = async (video: YouTubeVideo, e: React.MouseEvent) => {
     // Stop event propagation to prevent selecting the video while deleting
     e.stopPropagation();
@@ -1635,6 +1373,244 @@ What strategies have worked best for you? Share your experiences in the comments
     }
   };
 
+  // Handle content edit
+  const handleContentEdit = (newContent: string) => {
+    // Clean up slide numbers from the content
+    const cleanContent = newContent
+      .split('\n\n')
+      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+      .join('\n\n');
+    
+    setEditableContent(cleanContent);
+    setPreviewContent(cleanContent);
+  };
+
+  // Handle edit mode toggle
+  const toggleEditMode = () => {
+    if (!isEditing) {
+      // Entering edit mode - set content for editing
+      setEditableContent(generatedContent);
+    } else {
+      // Exiting edit mode - save edited content
+      if (previewType === 'carousel') {
+        // Process the content to remove "Slide X:" prefixes from each slide
+        const cleanContent = editableContent
+          .split('\n\n')
+          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+          .join('\n\n');
+        
+        setGeneratedContent(cleanContent);
+        setPreviewContent(cleanContent);
+      } else {
+        setGeneratedContent(editableContent);
+        setPreviewContent(editableContent);
+      }
+    }
+    // Toggle edit mode state
+    setIsEditing(!isEditing);
+  };
+
+  // Update function to save content to backend and localStorage
+  const saveContent = async () => {
+    if (!generatedContent && !previewContent) {
+      toast({
+        title: "No content to save",
+        description: "Please generate content before saving",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSavingContent(true);
+    
+    try {
+      const content = generatedContent || previewContent;
+      const contentId = uuidv4();
+      const contentType = selectedContentType || 'carousel';
+      const contentTitle = selectedVideo?.title || 'LinkedIn Carousel';
+      
+      // Create data object for storage
+      const contentData: {
+        id: string;
+        title: string;
+        content: string;
+        type: string;
+        videoId?: string;
+        videoTitle?: string;
+        createdAt: string;
+      } = {
+        id: contentId,
+        title: contentTitle,
+        content: content,
+        type: contentType,
+        createdAt: new Date().toISOString()
+      };
+      
+      if (selectedVideo) {
+        contentData.videoId = selectedVideo.id;
+        contentData.videoTitle = selectedVideo.title;
+      }
+      
+      // Save to localStorage
+      const savedContentsStr = localStorage.getItem('savedContents');
+      const savedContents = savedContentsStr ? JSON.parse(savedContentsStr) : [];
+      
+      // Add new content to the beginning of the array
+      savedContents.unshift(contentData);
+      
+      // Save back to localStorage
+      localStorage.setItem('savedContents', JSON.stringify(savedContents));
+      
+      // Also save to localStorage for quick retrieval
+      localStorage.setItem('ai_generated_content', content);
+      localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
+      if (selectedVideo) {
+        localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
+      }
+      
+      // Save to backend API
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/carousel-contents`
+        : `${baseUrl}/api/carousel-contents`;
+      
+      const userId = localStorage.getItem('userId');
+      
+      await axios.post(apiUrl, {
+        content: contentData,
+        userId: userId || 'anonymous'
+      });
+      
+      toast({
+        title: "Content saved",
+        description: "Your content has been saved successfully",
+      });
+      
+      // Refresh the list of saved contents
+      await loadSavedContents();
+    } catch (error) {
+      console.error("Error saving content:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingContent(false);
+    }
+  };
+
+  // Add function to load saved contents from both backend and localStorage
+  const loadSavedContents = async () => {
+    try {
+      // Try to load from backend first
+      let backendContents: SavedContent[] = [];
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents`
+          : `${baseUrl}/api/carousel-contents`;
+
+        const response = await axios.get(apiUrl, {
+          params: { userId: user?.id || 'anonymous' }
+        });
+
+        if (response.data.success && Array.isArray(response.data.data)) {
+          backendContents = response.data.data;
+        }
+      } catch (backendError) {
+        console.error('Error loading content from backend:', backendError);
+        // Will fall back to localStorage
+      }
+
+      // Load from localStorage
+      const localContentJSON = localStorage.getItem('savedLinkedInContents');
+      let localContents: SavedContent[] = [];
+      
+      if (localContentJSON) {
+        localContents = JSON.parse(localContentJSON);
+      }
+
+      // Merge contents giving preference to backend contents
+      const mergedContents = [...localContents];
+      
+      // Only add backend contents that don't exist locally
+      backendContents.forEach(backendContent => {
+        const exists = mergedContents.some(
+          localContent => localContent.id === backendContent.id
+        );
+        
+        if (!exists) {
+          mergedContents.push(backendContent);
+        }
+      });
+      
+      // Sort by most recent first
+      mergedContents.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      setSavedContents(mergedContents);
+    } catch (error) {
+      console.error('Error loading saved contents:', error);
+      
+      // Attempt to load from localStorage only as fallback
+      try {
+        const localContentJSON = localStorage.getItem('savedLinkedInContents');
+        
+        if (localContentJSON) {
+          setSavedContents(JSON.parse(localContentJSON));
+        }
+      } catch (localError) {
+        console.error('Failed to load local contents:', localError);
+      }
+    }
+  };
+
+  // Update delete function to also delete from backend
+  const deleteSavedContent = async (id: string) => {
+    try {
+      // Try to delete from backend first
+      let backendDeleteSuccess = false;
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents/${id}`
+          : `${baseUrl}/api/carousel-contents/${id}`;
+
+        const deleteResponse = await axios.delete(apiUrl, {
+          params: { userId: user?.id || 'anonymous' }
+        });
+
+        if (deleteResponse.data.success) {
+          backendDeleteSuccess = true;
+        }
+      } catch (backendError) {
+        console.error('Error deleting content from backend:', backendError);
+        // Continue with local delete
+      }
+
+      // Update local state and localStorage
+      const updatedContents = savedContents.filter(content => content.id !== id);
+      setSavedContents(updatedContents);
+      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
+
+      toast({
+        title: "Content Deleted",
+        description: backendDeleteSuccess 
+          ? "The content has been removed from your account" 
+          : "The content has been removed locally",
+      });
+    } catch (error) {
+      console.error('Error deleting content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete content",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Add function to load saved content into preview
   const loadSavedContent = (content: SavedContent) => {
     let cleanedContent = content.content;
@@ -1656,6 +1632,97 @@ What strategies have worked best for you? Share your experiences in the comments
       title: "Content Loaded",
       description: "The saved content has been loaded to the preview",
     });
+  };
+
+  // Add file upload handlers
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    
+    if (!files || files.length === 0) return;
+    
+    // Check if adding these files would exceed the limit
+    if (uploadedFiles.length + files.length > 5) {
+      toast({
+        title: "Too many files",
+        description: "You can upload a maximum of 5 files",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Convert FileList to array and add to uploadedFiles state
+    const newFiles = Array.from(files);
+    setUploadedFiles([...uploadedFiles, ...newFiles]);
+    
+    // Reset the input value so the same file can be selected again
+    e.target.value = '';
+    
+    toast({
+      title: "Files uploaded",
+      description: `Added ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`,
+    });
+  };
+  
+  // Function to remove a file from the uploaded files list
+  const removeFile = (index: number) => {
+    const newFiles = [...uploadedFiles];
+    newFiles.splice(index, 1);
+    setUploadedFiles(newFiles);
+  };
+
+  // Add a function to save generated content to both localStorage and backend
+  const saveGeneratedContent = async (content: string, videoId?: string) => {
+    try {
+      // Save to localStorage for quick retrieval
+      localStorage.setItem('ai_generated_content', content);
+      localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
+      if (videoId) {
+        localStorage.setItem('ai_generated_content_videoId', videoId);
+      }
+      
+      // Also save to the backend if possible
+      const contentId = uuidv4();
+      const contentData: {
+        id: string;
+        title: string;
+        content: string;
+        type: string;
+        videoId?: string;
+        videoTitle?: string;
+        createdAt: string;
+      } = {
+        id: contentId,
+        title: selectedVideo?.title || 'Generated Content',
+        content: content,
+        type: 'carousel',
+        videoId: selectedVideo?.id,
+        videoTitle: selectedVideo?.title,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Save to backend API
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/carousel-contents`
+        : `${baseUrl}/api/carousel-contents`;
+      
+      const userId = localStorage.getItem('userId') || user?.id;
+      
+      await axios.post(apiUrl, {
+        content: contentData,
+        userId: userId || 'anonymous'
+      });
+      
+      console.log('Content saved to backend:', contentId);
+      
+      // Update the local savedContents list
+      await loadSavedContents();
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving generated content:', error);
+      return false;
+    }
   };
 
   return (
@@ -2015,7 +2082,12 @@ What strategies have worked best for you? Share your experiences in the comments
             </Card>
             
             <div className="flex gap-3">
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
+              <Button 
+                type="button" 
+                onClick={form.handleSubmit(onSubmit)} 
+                disabled={isSubmitting} 
+                className="flex-1"
+              >
                 {isSubmitting ? "Submitting..." : "Submit Carousel Request"}
               </Button>
               <Button 
@@ -2381,6 +2453,321 @@ What strategies have worked best for you? Share your experiences in the comments
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Carousel Request Modal */}
+      {showRequestModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  {requestStep === 3 ? "Request Submitted" : "Carousel Request Details"}
+                </CardTitle>
+                {requestStep !== 3 && (
+                  <Button variant="ghost" size="sm" onClick={() => setShowRequestModal(false)}>
+                    ✕
+                  </Button>
+                )}
+              </div>
+              <CardDescription>
+                {requestStep === 1 && "Provide additional details for your carousel request"}
+                {requestStep === 2 && "Review your request before submitting"}
+                {requestStep === 3 && "We'll create your carousel within 24 hours"}
+              </CardDescription>
+            </CardHeader>
+            
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Step 1: Additional Details */}
+              {requestStep === 1 && (
+                <CardContent className="p-6 space-y-6">
+                  {/* Type Selection */}
+                  <div className="space-y-3">
+                    <Label>Carousel Type</Label>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                      {carouselTypes.map((type) => (
+                        <div 
+                          key={type.value}
+                          className={`border rounded-lg p-3 cursor-pointer transition-all hover:bg-primary-50 ${
+                            carouselType === type.value ? "ring-2 ring-primary bg-primary-50" : ""
+                          }`}
+                          onClick={() => setCarouselType(type.value)}
+                        >
+                          <div className="font-medium">{type.label}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{type.description}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* File Upload */}
+                  <div className="space-y-3">
+                    <Label>Additional Files <span className="text-xs text-muted-foreground">(Optional)</span></Label>
+                    <div className="border-2 border-dashed rounded-lg p-4">
+                      {uploadedFiles.length > 0 ? (
+                        <div className="space-y-3">
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center mr-2">
+                                  {file.type.includes('image') ? (
+                                    <ImageIcon className="h-4 w-4 text-primary" />
+                                  ) : file.type.includes('pdf') ? (
+                                    <FileText className="h-4 w-4 text-primary" />
+                                  ) : (
+                                    <Folder className="h-4 w-4 text-primary" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium truncate max-w-[200px]">{file.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  </div>
+                                </div>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => removeFile(index)}
+                                className="h-8 w-8 p-0 text-muted-foreground"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ))}
+                          
+                          {uploadedFiles.length < 5 && (
+                            <Button 
+                              variant="outline" 
+                              onClick={() => fileInputRef.current?.click()}
+                              className="w-full mt-3"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Add More Files
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                          <div className="font-medium">Drag and drop or click to upload</div>
+                          <p className="text-xs text-muted-foreground mt-1 mb-3">
+                            Upload your logo, brand guidelines, or any other files (max 5 files)
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Select Files
+                          </Button>
+                        </div>
+                      )}
+                      <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        className="hidden" 
+                        multiple 
+                        onChange={handleFileUpload} 
+                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt" 
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Additional Notes */}
+                  <div className="space-y-3">
+                    <Label>Additional Notes <span className="text-xs text-muted-foreground">(Optional)</span></Label>
+                    <Textarea 
+                      placeholder="Any specific requests or instructions for your carousel? (e.g., branding preferences, design elements, content emphasis)"
+                      className="min-h-[100px]"
+                      value={additionalNotes}
+                      onChange={(e) => setAdditionalNotes(e.target.value)}
+                    />
+                  </div>
+                </CardContent>
+              )}
+              
+              {/* Step 2: Review */}
+              {requestStep === 2 && (
+                <CardContent className="p-6 space-y-6">
+                  <div className="space-y-4">
+                    {/* Video Preview */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="p-3 bg-muted/30 border-b">
+                        <h3 className="font-medium">Selected Video</h3>
+                      </div>
+                      <div className="p-3 flex items-center gap-3">
+                        <div className="w-32 h-20 bg-black/5 rounded overflow-hidden flex-shrink-0">
+                          <img 
+                            src={selectedVideo?.thumbnailUrl || selectedVideo?.thumbnail} 
+                            alt={selectedVideo?.title} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium line-clamp-1">{selectedVideo?.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1">{selectedVideo?.channelName}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Content Preview */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="p-3 bg-muted/30 border-b">
+                        <h3 className="font-medium">Generated Content</h3>
+                      </div>
+                      <div className="p-3">
+                        <div className="max-h-32 overflow-y-auto">
+                          <p className="text-sm whitespace-pre-line">{previewContent || generatedContent}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Carousel Type */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="p-3 bg-muted/30 border-b">
+                        <h3 className="font-medium">Carousel Type</h3>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="capitalize">
+                            {carouselType}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {carouselTypes.find(t => t.value === carouselType)?.description}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Files */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="p-3 bg-muted/30 border-b">
+                          <h3 className="font-medium">Uploaded Files</h3>
+                        </div>
+                        <div className="p-3">
+                          <div className="space-y-2">
+                            {uploadedFiles.map((file, index) => (
+                              <div key={index} className="flex items-center text-sm">
+                                {file.type.includes('image') ? (
+                                  <ImageIcon className="h-3 w-3 text-muted-foreground mr-2" />
+                                ) : file.type.includes('pdf') ? (
+                                  <FileText className="h-3 w-3 text-muted-foreground mr-2" />
+                                ) : (
+                                  <Folder className="h-3 w-3 text-muted-foreground mr-2" />
+                                )}
+                                <span>{file.name}</span>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Notes */}
+                    {additionalNotes && (
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="p-3 bg-muted/30 border-b">
+                          <h3 className="font-medium">Additional Notes</h3>
+                        </div>
+                        <div className="p-3">
+                          <p className="text-sm whitespace-pre-line">{additionalNotes}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              )}
+              
+              {/* Step 3: Success */}
+              {requestStep === 3 && (
+                <CardContent className="p-8 text-center">
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Check className="h-10 w-10 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-3">Request Submitted!</h2>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    We've received your carousel request and will start working on it right away. 
+                    You'll receive an email notification when it's ready, typically within 24 hours.
+                  </p>
+                  <div className="border rounded-lg p-4 bg-muted/20 mb-6 max-w-md mx-auto">
+                    <div className="flex items-center mb-2">
+                      <Clock4 className="h-4 w-4 text-muted-foreground mr-2" />
+                      <h3 className="font-medium">What happens next?</h3>
+                    </div>
+                    <ol className="text-sm text-left space-y-2 pl-6 list-decimal">
+                      <li>Our design team will review your request</li>
+                      <li>We'll create a professional carousel based on your content</li>
+                      <li>You'll receive an email when it's ready to review</li>
+                      <li>You can request revisions if needed</li>
+                    </ol>
+                  </div>
+                </CardContent>
+              )}
+            </div>
+            
+            {/* Footer */}
+            <CardFooter className="border-t p-4 flex justify-between">
+              {requestStep === 1 && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowRequestModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setRequestStep(2)}>
+                    Continue to Review
+                  </Button>
+                </>
+              )}
+              
+              {requestStep === 2 && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setRequestStep(1)}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    onClick={submitCarouselRequest}
+                    disabled={isSubmittingRequest}
+                  >
+                    {isSubmittingRequest ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Request"
+                    )}
+                  </Button>
+                </>
+              )}
+              
+              {requestStep === 3 && (
+                <>
+                  <div></div> {/* Empty div for spacing */}
+                  <div className="space-x-3">
+                    <Button 
+                      onClick={() => navigate("/dashboard/my-carousels")}
+                      className="gap-2"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                      View My Carousels
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardFooter>
+          </Card>
         </div>
       )}
     </div>

@@ -41,6 +41,8 @@ import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
 import ImageGalleryPage from "./pages/ImageGalleryPage";
 import EditorPage from "./editor/pages/Index";
+import { PostCountProvider } from "./components/CollapsibleSidebar";
+import AdminRouter from "./admin-dashboard/AdminRouter";
 
 const queryClient = new QueryClient();
 
@@ -242,23 +244,28 @@ const AppRoutes = () => {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
       
+      {/* Admin routes */}
+      <Route path="/admin/*" element={<AdminRouter />} />
+      
       {/* Handle invitation token links */}
       <Route path="/invitations" element={<PendingInvitationsPage />} />
       
       {/* OAuth callback route - kept separate to avoid invitation check */}
       <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
       
+      {/* Protected onboarding route */}
+      <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
+      
+      {/* Protected dashboard route */}
+      <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
+      
       {/* Carousel Editor - accessible without AppLayout for a focused editing experience */}
       <Route path="/editor" element={<EditorPage />} />
       
       {/* Protected routes with invitation check wrapped in AppLayout */}
       <Route element={<InvitationCheckRoute />}>
-        {/* Onboarding routes - without AppLayout */}
-        <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
-        
         {/* Dashboard and other pages - with AppLayout */}
         <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<Navigate to="/dashboard/home" replace />} />
           <Route path="/dashboard/home" element={<DashboardPage />} />
           <Route path="/dashboard/post" element={<CreatePostPage />} />
           <Route path="/dashboard/posts" element={<PostLibraryPage />} />
@@ -277,33 +284,36 @@ const AppRoutes = () => {
         </Route>
       </Route>
       
+      {/* Fallback route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
 
+// The App component with providers
 const App = () => (
+  <QueryClientProvider client={queryClient}>
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <StateProvider>
+        <LanguageProvider>
           <AuthProvider>
-            <LanguageProvider>
+            <StateProvider>
+              <OnboardingProvider>
+                <PostCountProvider>
               <TooltipProvider>
-                <ContextVerifier>
-                  <OnboardingProvider>
+                    <ContextVerifier />
                     <AppRoutes />
                     <Toaster />
                     <Sonner position="top-right" />
+                  </TooltipProvider>
+                </PostCountProvider>
                   </OnboardingProvider>
-                </ContextVerifier>
-              </TooltipProvider>
-            </LanguageProvider>
+            </StateProvider>
           </AuthProvider>
-        </StateProvider>
+        </LanguageProvider>
       </ThemeProvider>
+    </ErrorBoundary>
     </QueryClientProvider>
-  </ErrorBoundary>
 );
 
 export default App;

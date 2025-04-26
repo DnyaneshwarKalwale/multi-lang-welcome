@@ -15,6 +15,79 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BrandOutIcon } from './BrandOutIcon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { linkedInApi } from '@/utils/linkedinApi';
+
+// Create PostCountContext to share post count data between components
+const PostCountContext = React.createContext<{
+  totalPostCount: number;
+  updatePostCounts: () => Promise<void>;
+}>({
+  totalPostCount: 0,
+  updatePostCounts: async () => {}
+});
+
+export const usePostCount = () => React.useContext(PostCountContext);
+
+export const PostCountProvider = ({ children }: { children: React.ReactNode }) => {
+  const [draftCount, setDraftCount] = useState(0);
+  const [scheduledCount, setScheduledCount] = useState(0);
+  const [publishedCount, setPublishedCount] = useState(0);
+  const [totalPostCount, setTotalPostCount] = useState(0);
+  
+  const updatePostCounts = async () => {
+    try {
+      // Check for LinkedIn authentication directly from localStorage
+      const linkedInToken = localStorage.getItem('linkedin-login-token');
+      
+      if (!linkedInToken) {
+        return;
+      }
+      
+      // Get counts from API
+      const draftData = await linkedInApi.getDBPosts('draft');
+      const scheduledData = await linkedInApi.getDBPosts('scheduled');
+      const publishedData = await linkedInApi.getDBPosts('published');
+
+      // Count also posts from localStorage
+      let localDraftCount = 0;
+      let localScheduledCount = 0;
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('draft_')) {
+          localDraftCount++;
+        } else if (key?.startsWith('scheduled_')) {
+          localScheduledCount++;
+        }
+      }
+      
+      const apiDraftCount = draftData?.data?.length || 0;
+      const apiScheduledCount = scheduledData?.data?.length || 0;
+      const apiPublishedCount = publishedData?.data?.length || 0;
+      
+      setDraftCount(apiDraftCount + localDraftCount);
+      setScheduledCount(apiScheduledCount + localScheduledCount);
+      setPublishedCount(apiPublishedCount);
+      setTotalPostCount(apiDraftCount + localDraftCount + apiScheduledCount + localScheduledCount + apiPublishedCount);
+    } catch (error) {
+      console.error('Error getting post counts:', error);
+    }
+  };
+  
+  useEffect(() => {
+    updatePostCounts();
+    
+    // Update counts every 5 minutes
+    const interval = setInterval(updatePostCounts, 300000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <PostCountContext.Provider value={{ totalPostCount, updatePostCounts }}>
+      {children}
+    </PostCountContext.Provider>
+  );
+};
 
 interface NavItem {
   title: string;
@@ -36,6 +109,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
   const { user, logout } = useAuth();
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const { totalPostCount } = usePostCount();
   
   // Stabilize the onClose handler with useCallback
   const handleClose = useCallback(() => {
@@ -72,7 +146,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
   const navItems: NavItem[] = [
     { title: 'Home', icon: Home, path: '/dashboard/home' },
     { title: 'Create Post', icon: PlusCircle, path: '/dashboard/post' },
-    { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: 3, variant: 'primary' } },
+    { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: totalPostCount, variant: 'primary' } },
     { title: 'Request Carousel', icon: Upload, path: '/dashboard/request-carousel' },
     { title: 'My Carousels', icon: LayoutGrid, path: '/dashboard/my-carousels' },
     { title: 'Team', icon: Users, path: '/dashboard/team' },
@@ -146,7 +220,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
                       <span className="font-medium flex-1 whitespace-nowrap">{item.title}</span>
-                      {item.badge && (
+                      {item.badge && item.badge.count > 0 && (
                         <Badge 
                           variant="outline" 
                           className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
@@ -223,7 +297,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
               <span className="font-medium flex-1 whitespace-nowrap">{item.title}</span>
-              {item.badge && (
+              {item.badge && item.badge.count > 0 && (
                 <Badge 
                   variant="outline" 
                   className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"

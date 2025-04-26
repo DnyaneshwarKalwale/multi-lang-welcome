@@ -57,8 +57,8 @@ export type CarouselTemplate = {
   category: 'listicle' | 'how-to' | 'case-study' | 'industry-insights' | 'educational' | 'promotional';
 };
 
-// Simplified to only support LinkedIn's 1080x1080 basic carousel format
-export type SliderVariant = 'basic';
+// Update to support all carousel formats
+export type SliderVariant = 'basic' | 'pagination' | 'gallery' | 'looped' | 'autoplay' | 'responsive' | 'grid' | 'coverflow' | 'fade' | 'vertical' | 'thumbs' | 'parallax';
 
 export type SliderOptions = {
   variant: SliderVariant;
