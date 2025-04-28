@@ -110,6 +110,11 @@ const AdminLayout: React.FC = () => {
       path: "/admin/users" 
     },
     { 
+      label: "User Limits", 
+      icon: <Layers className="h-5 w-5" />,
+      path: "/admin/user-limits" 
+    },
+    { 
       label: "Content", 
       icon: <FileText className="h-5 w-5" />,
       path: "/admin/content" 

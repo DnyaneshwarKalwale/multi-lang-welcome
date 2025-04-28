@@ -52,6 +52,8 @@ interface CarouselRequest {
     name: string;
     email: string;
   };
+  userName?: string; // New field for user name
+  userEmail?: string; // New field for user email
   title: string;
   description?: string;
   videoId?: string;
@@ -313,6 +315,15 @@ const CarouselRequestsPage: React.FC = () => {
 
   // Helper function to get user information regardless of structure
   const getUserInfo = (request: CarouselRequest): UserInfo => {
+    // First check for direct userName and userEmail fields (new format)
+    if (request.userName || request.userEmail) {
+      return {
+        name: request.userName || 'Unknown user',
+        email: request.userEmail || 'No email available',
+        id: typeof request.userId === 'object' ? request.userId._id : (request.userId as string)
+      };
+    }
+    
     // If userId is an object with name and email
     if (typeof request.userId === 'object' && request.userId) {
       // Check if it has name property (UserWithName interface)

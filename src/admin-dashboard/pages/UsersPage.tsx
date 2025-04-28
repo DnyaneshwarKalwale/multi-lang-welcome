@@ -50,6 +50,10 @@ interface User {
   authMethod: string;
   role: string;
   createdAt: string;
+  userLimit?: {
+    limit: number;
+    count: number;
+  };
 }
 
 const UsersPage: React.FC = () => {
@@ -89,7 +93,8 @@ const UsersPage: React.FC = () => {
             onboardingCompleted: user.onboardingCompleted,
             authMethod: user.authMethod || 'email',
             role: user.role || 'user',
-            createdAt: user.createdAt
+            createdAt: user.createdAt,
+            userLimit: user.userLimit
           }));
           
           setUsers(formattedUsers);
@@ -278,7 +283,7 @@ const UsersPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Users Management</h1>
+          <h1 className="text-3xl font-bold text-black dark:text-white">Users Management</h1>
           <p className="text-gray-500 dark:text-gray-400">
             Total: {filteredUsers.length} users
           </p>
@@ -368,6 +373,7 @@ const UsersPage: React.FC = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Auth Method</TableHead>
+                <TableHead>Usage Limit</TableHead>
                 <TableHead>Join Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -409,6 +415,25 @@ const UsersPage: React.FC = () => {
                     >
                       {user.authMethod.charAt(0).toUpperCase() + user.authMethod.slice(1)}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.userLimit ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ 
+                              width: `${Math.min((user.userLimit.count / user.userLimit.limit) * 100, 100)}%` 
+                            }}
+                          />
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {user.userLimit.count} / {user.userLimit.limit}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No limit set</span>
+                    )}
                   </TableCell>
                   <TableCell>{formatDate(user.createdAt)}</TableCell>
                   <TableCell className="text-right">

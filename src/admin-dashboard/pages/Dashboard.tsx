@@ -171,7 +171,7 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
+          <h1 className="text-3xl font-bold text-black dark:text-white">Dashboard Overview</h1>
           <p className="text-gray-500 dark:text-gray-400">{formatDate()}</p>
         </div>
         <Tabs defaultValue="monthly" className="mt-4 md:mt-0" onValueChange={setPeriod}>

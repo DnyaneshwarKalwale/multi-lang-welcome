@@ -275,7 +275,7 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   console.log("Formatted konva slides:", konvaSlides.length);
   
   return konvaSlides as unknown as Slide[];
-};
+}
 
 const RequestCarouselPage: React.FC = () => {
   const navigate = useNavigate();
@@ -331,6 +331,37 @@ const RequestCarouselPage: React.FC = () => {
 
   // Add a missing state variable for saving content:
   const [isSavingContent, setIsSavingContent] = useState(false);
+
+  const [userLimit, setUserLimit] = useState<{ limit: number; count: number } | null>(null);
+
+  useEffect(() => {
+    const fetchUserLimit = async () => {
+      try {
+        const token = tokenManager.getToken();
+        if (!token) {
+          console.error("No authentication token found");
+          return;
+        }
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        if (response.data) {
+          setUserLimit(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching user limit:", error);
+      }
+    };
+    
+    fetchUserLimit();
+  }, []);
 
   // Safe date formatter function to use throughout the component
   const safeFormatDate = (date: any, formatString: string = 'MMM d, yyyy'): string => {
@@ -890,6 +921,24 @@ const RequestCarouselPage: React.FC = () => {
 
   // Update the part in handleGenerateContent where content is set to save to localStorage
   const handleGenerateContent = async (type: string) => {
+    if (!userLimit) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to verify your usage limits. Please try again later.",
+      });
+      return;
+    }
+    
+    if (userLimit.count >= userLimit.limit) {
+      toast({
+        variant: "destructive",
+        title: "Limit Reached",
+        description: "You have reached your content generation limit. Please contact support to increase your limit.",
+      });
+      return;
+    }
+    
     // Only allow carousel type for carousel requests
     if (type !== 'carousel') {
       toast({
@@ -909,26 +958,66 @@ const RequestCarouselPage: React.FC = () => {
       return;
     }
 
+    if (!selectedVideo.transcript) {
+        toast({
+        title: "Transcript required",
+        description: "Please ensure the video has a transcript before generating content",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGeneratingContent(true);
     
     try {
-      // Implementation of content generation logic
-      const generatedCarouselContent = "Your generated carousel content will appear here"; // Replace with actual implementation
-      
-      // Save the content with video ID association
-      setGeneratedContent(generatedCarouselContent);
-      await saveGeneratedContent(generatedCarouselContent, selectedVideo.id);
+      // Call the backend API to generate content
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/generate-content`
+        : `${baseUrl}/api/generate-content`;
+
+      const response = await axios.post(apiUrl, {
+        type: 'carousel',
+        transcript: selectedVideo.transcript,
+        videoId: selectedVideo.id,
+        videoTitle: selectedVideo.title
+      });
+
+      if (!response.data.success || !response.data.content) {
+        throw new Error('Failed to generate content');
+      }
+
+      const generatedContent = response.data.content;
       
       // Update UI state
+      setGeneratedContent(generatedContent);
       setShowContentGenerator(true);
       setSelectedContentType(type);
-      setPreviewContent(generatedCarouselContent);
+      setPreviewContent(generatedContent);
       setPreviewType('carousel');
-      
-      toast({
+        
+        toast({
         title: "Content generated",
         description: "Carousel content has been generated for your selected video",
       });
+      
+      // Increment user count after successful generation
+      const token = tokenManager.getToken();
+      await axios.post(
+        `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Update local state
+      setUserLimit(prev => prev ? {
+        ...prev,
+        count: prev.count + 1
+      } : null);
     } catch (error) {
       console.error("Error generating content:", error);
       toast({
@@ -1557,46 +1646,20 @@ const RequestCarouselPage: React.FC = () => {
     try {
       const content = generatedContent || previewContent;
       const contentId = uuidv4();
-      const contentType = selectedContentType || 'carousel';
       const contentTitle = selectedVideo?.title || 'LinkedIn Carousel';
       
-      // Create data object for storage
-      const contentData: {
-        id: string;
-        title: string;
-        content: string;
-        type: string;
-        videoId?: string;
-        videoTitle?: string;
-        createdAt: string;
-      } = {
+      // Create data object for storage with proper typing
+      const contentData: SavedContent = {
         id: contentId,
         title: contentTitle,
         content: content,
-        type: contentType,
+        type: 'carousel' as 'carousel', // Explicitly type as 'carousel'
         createdAt: new Date().toISOString()
       };
       
       if (selectedVideo) {
         contentData.videoId = selectedVideo.id;
         contentData.videoTitle = selectedVideo.title;
-      }
-      
-      // Save to localStorage
-      const savedContentsStr = localStorage.getItem('savedContents');
-      const savedContents = savedContentsStr ? JSON.parse(savedContentsStr) : [];
-      
-      // Add new content to the beginning of the array
-      savedContents.unshift(contentData);
-      
-      // Save back to localStorage
-      localStorage.setItem('savedContents', JSON.stringify(savedContents));
-      
-      // Also save to localStorage for quick retrieval
-      localStorage.setItem('ai_generated_content', content);
-      localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
-      if (selectedVideo) {
-        localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
       }
       
       // Save to backend API
@@ -1607,10 +1670,42 @@ const RequestCarouselPage: React.FC = () => {
       
       const userId = localStorage.getItem('userId');
       
-      await axios.post(apiUrl, {
+      const response = await axios.post(apiUrl, {
         content: contentData,
         userId: userId || 'anonymous'
       });
+
+      if (!response.data.success) {
+        throw new Error('Failed to save content to backend');
+      }
+      
+      // Save to localStorage only after successful backend save
+      localStorage.setItem('ai_generated_content', content);
+      localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
+      if (selectedVideo) {
+        localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
+      }
+      
+      // Update the savedContents state with the new content
+      setSavedContents(prevContents => {
+        // Check if content with same ID already exists
+        const existingIndex = prevContents.findIndex(c => c.id === contentId);
+        if (existingIndex !== -1) {
+          // Update existing content
+          const updatedContents = [...prevContents];
+          updatedContents[existingIndex] = contentData;
+          return updatedContents;
+        } else {
+          // Add new content at the beginning
+          return [contentData, ...prevContents];
+        }
+      });
+      
+      // Also save to localStorage for persistence
+      const savedContentsStr = localStorage.getItem('savedLinkedInContents');
+      const savedContents = savedContentsStr ? JSON.parse(savedContentsStr) : [];
+      const updatedSavedContents = [contentData, ...savedContents];
+      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedSavedContents));
       
       toast({
         title: "Content saved",
@@ -1907,6 +2002,27 @@ const RequestCarouselPage: React.FC = () => {
 
   return (
     <div className="container max-w-6xl py-8">
+      {userLimit && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Usage Limit</h3>
+              <p className="text-sm text-gray-500">
+                {userLimit.count} / {userLimit.limit} requests used
+              </p>
+            </div>
+            <div className="w-48 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full" 
+                style={{ 
+                  width: `${Math.min((userLimit.count / userLimit.limit) * 100, 100)}%` 
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Request a Carousel</h1>
         <p className="text-muted-foreground mt-1">

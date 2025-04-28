@@ -49,6 +49,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 
 interface UserData {
   id: string;
@@ -61,6 +62,10 @@ interface UserData {
   role: string;
   createdAt: string;
   profilePicture?: string;
+  userLimit?: {
+    limit: number;
+    count: number;
+  };
 }
 
 interface YouTubeVideo {
@@ -102,6 +107,8 @@ const UserDetailPage: React.FC = () => {
   const { toast } = useToast();
   const [showTranscriptDialog, setShowTranscriptDialog] = useState(false);
   const [showContentDialog, setShowContentDialog] = useState(false);
+  const [newLimit, setNewLimit] = useState<number>(0);
+  const [isUpdatingLimit, setIsUpdatingLimit] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -202,6 +209,46 @@ const UserDetailPage: React.FC = () => {
     window.open(`https://youtube.com/watch?v=${videoId}`, '_blank');
   };
   
+  const handleUpdateLimit = async () => {
+    if (!user || !newLimit) return;
+    
+    try {
+      setIsUpdatingLimit(true);
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/admin/user-limits/${user.id}`,
+        { limit: newLimit },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("admin-token")}`
+          }
+        }
+      );
+      
+      // Update local state
+      setUser(prev => prev ? {
+        ...prev,
+        userLimit: {
+          ...prev.userLimit,
+          limit: newLimit
+        }
+      } : null);
+      
+      toast({
+        title: "Success",
+        description: "User limit updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating user limit:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update user limit. Please try again.",
+      });
+    } finally {
+      setIsUpdatingLimit(false);
+    }
+  };
+  
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-6rem)]">
@@ -238,7 +285,7 @@ const UserDetailPage: React.FC = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-black dark:text-white">
           User Details
         </h1>
       </div>
@@ -257,6 +304,7 @@ const UserDetailPage: React.FC = () => {
             <FileText className="h-4 w-4 mr-2" />
             Generated Content {contents.length > 0 && `(${contents.length})`}
           </TabsTrigger>
+          <TabsTrigger value="limits">Usage Limits</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile" className="space-y-6">
@@ -334,6 +382,19 @@ const UserDetailPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                {user.userLimit && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Usage Limit</h3>
+                    <div className="flex items-center gap-2">
+                      <p className="text-base">
+                        {user.userLimit.count} / {user.userLimit.limit} requests used
+                      </p>
+                      <Badge variant={user.userLimit.count >= user.userLimit.limit ? "destructive" : "default"}>
+                        {user.userLimit.count >= user.userLimit.limit ? 'Limit Reached' : 'Active'}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -489,6 +550,70 @@ const UserDetailPage: React.FC = () => {
                   </Table>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="limits" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Usage Limits</CardTitle>
+              <CardDescription>Manage user's content generation limits</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {user.userLimit ? (
+                  <>
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Current Usage</h3>
+                      <div className="flex items-center gap-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className="bg-primary h-2.5 rounded-full" 
+                            style={{ 
+                              width: `${Math.min((user.userLimit.count / user.userLimit.limit) * 100, 100)}%` 
+                            }}
+                          />
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {user.userLimit.count} / {user.userLimit.limit}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Update Limit</h3>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={newLimit}
+                          onChange={(e) => setNewLimit(Number(e.target.value))}
+                          placeholder="Enter new limit"
+                          className="max-w-[200px]"
+                        />
+                        <Button 
+                          onClick={handleUpdateLimit}
+                          disabled={isUpdatingLimit || !newLimit}
+                        >
+                          {isUpdatingLimit ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Updating...
+                            </>
+                          ) : (
+                            'Update Limit'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">No usage limits set for this user.</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
