@@ -99,44 +99,118 @@ const AnalyticsPage: React.FC = () => {
       try {
         setLoading(true);
         
-        // Fetch real data from the backend
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/admin/analytics`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("admin-token")}`
-            }
-          }
-        );
+        // In a real application, we would fetch this data from the backend
+        // For now, we'll use mock data similar to what we'd expect from the API
         
-        if (response.data && response.data.success) {
-          const data = response.data.data;
+        // Mock data generation similar to what the backend would provide
+        setTimeout(() => {
+          // YouTube analytics mock data
+          const languages = ["English", "Spanish", "Hindi", "French", "German"];
+          const languageDistribution = languages.map(lang => ({
+            name: lang,
+            value: Math.floor(Math.random() * 100) + 10
+          }));
           
-          // Transform the data to match our frontend interface
+          const dates = Array.from({ length: 14 }, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (13 - i));
+            return date.toISOString().split('T')[0];
+          });
+          
+          const videosByDate = dates.map(date => ({
+            date,
+            count: Math.floor(Math.random() * 15) + 1
+          }));
+          
+          const channels = [
+            "TechInsights", 
+            "Marketing Pro", 
+            "LinkedIn Learning", 
+            "Business Daily", 
+            "Social Media Tips"
+          ];
+          
+          const topChannels = channels.map(channel => ({
+            channel,
+            count: Math.floor(Math.random() * 50) + 5
+          })).sort((a, b) => b.count - a.count);
+          
+          // Content analytics mock data
+          const contentTypes = ["carousel", "post-short", "post-long"];
+          const byType = contentTypes.map(type => ({
+            type: type === "carousel" ? "Carousel" : 
+                  type === "post-short" ? "Short Post" : "Long Post",
+            count: Math.floor(Math.random() * 100) + 20
+          }));
+          
+          const generationTrend = dates.map(date => ({
+            date,
+            count: Math.floor(Math.random() * 10) + 1
+          }));
+          
+          const sources = ["YouTube videos", "Manual input", "Uploaded files"];
+          const sourceDistribution = sources.map(source => ({
+            source,
+            count: Math.floor(Math.random() * 100) + 10
+          }));
+          
+          // User engagement mock data
+          const engagement = [
+            { metric: "Avg. Videos Saved", value: (Math.random() * 10 + 2).toFixed(1) },
+            { metric: "Avg. Content Generated", value: (Math.random() * 5 + 1).toFixed(1) },
+            { metric: "Retention Rate", value: (Math.random() * 30 + 70).toFixed(1) + "%" },
+            { metric: "Daily Active Users", value: Math.floor(Math.random() * 20) + 10 },
+          ];
+          
+          const users = [
+            "John Smith", 
+            "Sarah Johnson", 
+            "Ahmed Khan", 
+            "Maria Garcia", 
+            "Robert Chen"
+          ];
+          
+          const videosByUser = users.map(user => ({
+            user,
+            count: Math.floor(Math.random() * 30) + 5
+          })).sort((a, b) => b.count - a.count);
+          
+          const contentByUser = users.map(user => ({
+            user,
+            count: Math.floor(Math.random() * 20) + 2
+          })).sort((a, b) => b.count - a.count);
+          
+          // Calculate total values and percentages
+          const totalVideos = videosByDate.reduce((sum, item) => sum + item.count, 0);
+          const videosWithTranscripts = Math.floor(totalVideos * (Math.random() * 0.3 + 0.6));
+          const transcriptPercentage = Math.round((videosWithTranscripts / totalVideos) * 100);
+          const totalContent = byType.reduce((sum, item) => sum + item.count, 0);
+          
           setAnalytics({
             youtube: {
-              totalVideos: data.youtube.totalSavedVideos || 0,
-              videosWithTranscripts: data.youtube.videosWithTranscripts || 0,
-              transcriptPercentage: data.youtube.transcriptPercentage || 0,
-              languageDistribution: data.youtube.languageDistribution || [],
-              videosByDate: data.youtube.videosByDate || [],
-              topChannels: data.youtube.topChannels || []
+              totalVideos,
+              videosWithTranscripts,
+              transcriptPercentage,
+              languageDistribution,
+              videosByDate,
+              topChannels,
             },
             content: {
-              total: data.content.total || 0,
-              byType: data.content.byType || [],
-              generationTrend: data.content.generationTrend || [],
-              sourceDistribution: data.content.sourceDistribution || []
+              total: totalContent,
+              byType,
+              generationTrend,
+              sourceDistribution,
             },
             users: {
-              engagement: data.users.engagement || [],
-              videosByUser: data.users.videosByUser || [],
-              contentByUser: data.users.contentByUser || []
-            }
+              engagement,
+              videosByUser,
+              contentByUser,
+            },
           });
-        }
+          
+          setLoading(false);
+        }, 800);
         
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching analytics data:", error);
         toast({

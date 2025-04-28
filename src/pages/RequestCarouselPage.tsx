@@ -338,13 +338,8 @@ const RequestCarouselPage: React.FC = () => {
     const fetchUserLimit = async () => {
       try {
         const token = tokenManager.getToken();
-        if (!token) {
-          console.error("No authentication token found");
-          return;
-        }
-
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/me`,
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`
