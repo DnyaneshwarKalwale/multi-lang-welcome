@@ -1738,53 +1738,28 @@ const RequestCarouselPage: React.FC = () => {
 
         if (response.data.success && Array.isArray(response.data.data)) {
           backendContents = response.data.data;
+          // Set the contents from backend directly
+          setSavedContents(backendContents);
+          // Also update localStorage with backend data
+          localStorage.setItem('savedLinkedInContents', JSON.stringify(backendContents));
+          return; // Exit early if we got data from backend
         }
       } catch (backendError) {
         console.error('Error loading content from backend:', backendError);
         // Will fall back to localStorage
       }
 
-      // Load from localStorage
+      // Only load from localStorage if backend failed
       const localContentJSON = localStorage.getItem('savedLinkedInContents');
-      let localContents: SavedContent[] = [];
-      
       if (localContentJSON) {
-        localContents = JSON.parse(localContentJSON);
+        const localContents = JSON.parse(localContentJSON);
+        setSavedContents(localContents);
+      } else {
+        setSavedContents([]);
       }
-
-      // Merge contents giving preference to backend contents
-      const mergedContents = [...localContents];
-      
-      // Only add backend contents that don't exist locally
-      backendContents.forEach(backendContent => {
-        const exists = mergedContents.some(
-          localContent => localContent.id === backendContent.id
-        );
-        
-        if (!exists) {
-          mergedContents.push(backendContent);
-        }
-      });
-      
-      // Sort by most recent first
-      mergedContents.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      
-      setSavedContents(mergedContents);
     } catch (error) {
       console.error('Error loading saved contents:', error);
-      
-      // Attempt to load from localStorage only as fallback
-      try {
-        const localContentJSON = localStorage.getItem('savedLinkedInContents');
-        
-        if (localContentJSON) {
-          setSavedContents(JSON.parse(localContentJSON));
-        }
-      } catch (localError) {
-        console.error('Failed to load local contents:', localError);
-      }
+      setSavedContents([]);
     }
   };
 
