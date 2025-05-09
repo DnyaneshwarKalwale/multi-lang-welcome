@@ -19,8 +19,10 @@ const getLinkedInToken = (accessToken?: string): string => {
 
 // Function to handle LinkedIn token refresh
 const refreshLinkedInToken = (): void => {
-  // Clear existing token
+  // Clear existing tokens
   localStorage.removeItem('linkedin-login-token');
+  localStorage.removeItem('linkedin-refresh-token');
+  localStorage.removeItem('linkedin-token-expiry');
   
   // Get the backend URL from environment variable or fallback to Render deployed URL
   const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
@@ -29,8 +31,11 @@ const refreshLinkedInToken = (): void => {
   // Store current URL in localStorage to redirect back after LinkedIn reconnection
   localStorage.setItem('redirectAfterAuth', window.location.pathname);
   
-  // Redirect to LinkedIn OAuth endpoint
-  window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+  // Add a timestamp to prevent caching issues with OAuth redirect
+  const timestamp = Date.now();
+  
+  // Redirect to LinkedIn OAuth endpoint with timestamp to force new auth flow
+  window.location.href = `${baseUrl}/api/auth/linkedin-direct?t=${timestamp}`;
 };
 
 // Types for LinkedIn API requests
@@ -182,14 +187,28 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error getting LinkedIn user ID:', error);
       
-      // Handle token expiration
-      if (error.response && error.response.data && 
-          (error.response.status === 401 || 
-           (error.response.status === 500 && 
+      // Handle token expiration or revocation
+      if (error.response && error.response.data) {
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
+        
+        if (error.response.status === 401 || 
+            isTokenRevoked || 
+            (error.response.status === 500 && 
             error.response.data.details && 
-            error.response.data.details.includes('token has expired')))) {
-        console.error('LinkedIn token expired. Redirecting to reauthorization.');
-        refreshLinkedInToken();
+            error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
+          refreshLinkedInToken();
+        }
       }
       
       throw error;
@@ -227,18 +246,31 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error creating LinkedIn post:', error);
       
-      // Check for token expiration in the response
+      // Check for token expiration or revocation in the response
       if (error.response && error.response.data) {
         console.error('LinkedIn API error response:', error.response.data);
         
-        // Handle token expiration
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
+        
+        // Handle token expiration or revocation
         if (error.response.status === 401 || 
+            isTokenRevoked || 
             (error.response.status === 500 && 
              error.response.data.details && 
              error.response.data.details.includes('token has expired'))) {
-          console.error('LinkedIn token expired. Redirecting to reauthorization.');
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
           refreshLinkedInToken();
-          throw new Error("LinkedIn authentication expired. Please login again.");
+          throw new Error("LinkedIn authentication expired or was revoked. Please login again.");
         }
       }
       
@@ -438,15 +470,29 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error creating LinkedIn Cloudinary image post:', error);
       
-      // Handle token expiration
-      if (error.response && error.response.data && 
-          (error.response.status === 401 || 
-           (error.response.status === 500 && 
+      // Handle token expiration or revocation
+      if (error.response && error.response.data) {
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
+        
+        if (error.response.status === 401 || 
+            isTokenRevoked || 
+            (error.response.status === 500 && 
             error.response.data.details && 
-            error.response.data.details.includes('token has expired')))) {
-        console.error('LinkedIn token expired. Redirecting to reauthorization.');
-        refreshLinkedInToken();
-        throw new Error("LinkedIn authentication expired. Please login again.");
+            error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
+          refreshLinkedInToken();
+          throw new Error("LinkedIn authentication expired or was revoked. Please login again.");
+        }
       }
       
       throw error;
@@ -491,15 +537,29 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error publishing to LinkedIn:', error);
       
-      // Handle token expiration
-      if (error.response && error.response.data && 
-          (error.response.status === 401 || 
-           (error.response.status === 500 && 
+      // Handle token expiration or revocation
+      if (error.response && error.response.data) {
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
+        
+        if (error.response.status === 401 || 
+            isTokenRevoked || 
+            (error.response.status === 500 && 
             error.response.data.details && 
-            error.response.data.details.includes('token has expired')))) {
-        console.error('LinkedIn token expired. Redirecting to reauthorization.');
-        refreshLinkedInToken();
-        throw new Error("LinkedIn authentication expired. Please login again.");
+            error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
+          refreshLinkedInToken();
+          throw new Error("LinkedIn authentication expired or was revoked. Please login again.");
+        }
       }
       
       throw error;
@@ -544,18 +604,28 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error creating LinkedIn document post:', error);
       
-      // Check for token expiration in the response
+      // Handle token expiration or revocation
       if (error.response && error.response.data) {
-        console.error('LinkedIn API error response:', error.response.data);
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
         
-        // Handle token expiration
         if (error.response.status === 401 || 
+            isTokenRevoked || 
             (error.response.status === 500 && 
-             error.response.data.details && 
-             error.response.data.details.includes('token has expired'))) {
-          console.error('LinkedIn token expired. Redirecting to reauthorization.');
+            error.response.data.details && 
+            error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
           refreshLinkedInToken();
-          throw new Error("LinkedIn authentication expired. Please login again.");
+          throw new Error("LinkedIn authentication expired or was revoked. Please login again.");
         }
       }
       
@@ -624,18 +694,28 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error creating LinkedIn carousel post:', error);
       
-      // Check for token expiration in the response
+      // Handle token expiration or revocation
       if (error.response && error.response.data) {
-        console.error('LinkedIn API error response:', error.response.data);
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
         
-        // Handle token expiration
         if (error.response.status === 401 || 
+            isTokenRevoked || 
             (error.response.status === 500 && 
-             error.response.data.details && 
-             error.response.data.details.includes('token has expired'))) {
-          console.error('LinkedIn token expired. Redirecting to reauthorization.');
+            error.response.data.details && 
+            error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
           refreshLinkedInToken();
-          throw new Error("LinkedIn authentication expired. Please login again.");
+          throw new Error("LinkedIn authentication expired or was revoked. Please login again.");
         }
       }
       
@@ -692,15 +772,29 @@ class LinkedInApi {
     } catch (error: any) {
       console.error('Error creating LinkedIn poll:', error);
       
-      // Handle token expiration
-      if (error.response && error.response.data && 
-          (error.response.status === 401 || 
-           (error.response.status === 500 && 
+      // Handle token expiration or revocation
+      if (error.response && error.response.data) {
+        // Check for LinkedIn token revocation error codes
+        const isTokenRevoked = error.response.data.details && 
+          (error.response.data.details.code === 'REVOKED_ACCESS_TOKEN' || 
+           error.response.data.details.serviceErrorCode === 65601);
+        
+        if (error.response.status === 401 || 
+            isTokenRevoked || 
+            (error.response.status === 500 && 
             error.response.data.details && 
-            error.response.data.details.includes('token has expired')))) {
-        console.error('LinkedIn token expired. Redirecting to reauthorization.');
-        refreshLinkedInToken();
-        throw new Error("LinkedIn authentication expired. Please login again.");
+            error.response.data.details.includes('token has expired'))) {
+          console.error('LinkedIn token expired or revoked. Clearing tokens and redirecting to reauthorization.');
+          
+          // Clear all LinkedIn tokens from localStorage
+          localStorage.removeItem('linkedin-login-token');
+          localStorage.removeItem('linkedin-refresh-token');
+          localStorage.removeItem('linkedin-token-expiry');
+          
+          // Redirect to reauthorization
+          refreshLinkedInToken();
+          throw new Error("LinkedIn authentication expired or was revoked. Please login again.");
+        }
       }
       
       throw error;

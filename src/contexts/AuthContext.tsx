@@ -9,6 +9,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  token: string;
   profilePicture?: string;
   isEmailVerified: boolean;
   onboardingCompleted: boolean;

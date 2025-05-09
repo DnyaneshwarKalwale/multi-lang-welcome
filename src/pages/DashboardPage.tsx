@@ -9,7 +9,7 @@ import {
   Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
   Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
   Layers, LayoutGrid, ArrowUp, CreditCard, Building, Loader2,
-  AlertCircle, Linkedin
+  AlertCircle, Linkedin, CheckCircle, Youtube
 } from "lucide-react";
 import { 
   Card, CardContent, CardDescription, CardFooter, 
@@ -70,6 +70,25 @@ interface Workspace {
   createdAt: string;
 }
 
+interface DashboardData {
+  totalPosts: number;
+  draftPosts: number;
+  scheduledPosts: number;
+  publishedPosts: number;
+  aiGeneratedContent: number;
+  savedAiPosts: number;
+  videoTranscripts: number;
+  carouselRequests: number;
+  pendingCarousels: number;
+  completedCarousels: number;
+  carouselContent: number;
+  lastMonthStats: {
+    totalPosts: number;
+    aiGeneratedContent: number;
+    carouselRequests: number;
+  };
+}
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,19 +111,6 @@ const DashboardPage: React.FC = () => {
   
   // Generate a LinkedIn username based on user's name
   const [linkedInUsername, setLinkedInUsername] = useState<string>('');
-  
-  // Update LinkedIn connection status and username when user data changes
-  useEffect(() => {
-    setIsLinkedInConnected(
-      user?.authMethod === 'linkedin' || !!user?.linkedinId || !!user?.linkedinConnected
-    );
-    
-    if (user) {
-      setLinkedInUsername(
-        `${user.firstName.toLowerCase()}${user.lastName ? user.lastName.toLowerCase() : ''}`
-      );
-    }
-  }, [user]);
   
   // State for workspaces
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
@@ -134,6 +140,26 @@ const DashboardPage: React.FC = () => {
   const [weeklyTip, setWeeklyTip] = useState({
     title: "Boost Your Engagement This Week",
     content: "When sharing achievements, focus on the lessons learned rather than the accolade itself. This approach creates more value for your audience and increases engagement."
+  });
+
+  // State for dashboard data
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalPosts: 0,
+    draftPosts: 0,
+    scheduledPosts: 0,
+    publishedPosts: 0,
+    aiGeneratedContent: 0,
+    savedAiPosts: 0,
+    videoTranscripts: 0,
+    carouselRequests: 0,
+    pendingCarousels: 0,
+    completedCarousels: 0,
+    carouselContent: 0,
+    lastMonthStats: {
+      totalPosts: 0,
+      aiGeneratedContent: 0,
+      carouselRequests: 0
+    }
   });
 
   // Load LinkedIn profile data from extension if available
@@ -258,6 +284,116 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Fetch posts data
+      const postsResponse = await axios.get(`${apiBaseUrl}/posts`, { headers });
+      const posts = postsResponse.data.data || [];
+
+      // Fetch carousel requests
+      const carouselRequestsResponse = await axios.get(`${apiBaseUrl}/carousels/user/requests`, { headers });
+      const carouselRequests = carouselRequestsResponse.data.data || [];
+      
+      // Fetch carousels data
+      const carouselsResponse = await axios.get(`${apiBaseUrl}/carousels`, { headers });
+      const carousels = carouselsResponse.data.data || [];
+      
+      // Get saved videos from localStorage
+      const savedVideos = JSON.parse(localStorage.getItem('savedYoutubeVideos') || '[]');
+
+      // Calculate AI content statistics
+      const savedAiPosts = posts.filter(post => {
+        const content = post.content?.toLowerCase() || '';
+        const title = post.title?.toLowerCase() || '';
+        return content.includes('ai') || content.includes('artificial intelligence') || 
+               title.includes('ai') || title.includes('artificial intelligence') ||
+               post.isAI === true || post.aiGenerated === true;
+      }).length;
+
+      const videoTranscripts = savedVideos.filter(video => 
+        video.transcript && video.transcript.length > 0
+      ).length;
+
+      const totalAiContent = savedAiPosts + videoTranscripts;
+
+      // Calculate carousel request statistics
+      const pendingRequests = carouselRequests.filter(request => 
+        request.status === 'pending' || request.status === 'in_progress'
+      ).length;
+      
+      const completedRequests = carouselRequests.filter(request => 
+        request.status === 'completed'
+      ).length;
+
+      // Calculate carousel content statistics
+      const carouselContent = savedVideos.filter(video => 
+        video.source === 'youtube' && video.status === 'ready'
+      ).length;
+
+      // Get last month's date
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+      // Update dashboard data
+      setDashboardData({
+        totalPosts: posts.length,
+        draftPosts: posts.filter(post => post.status === 'draft').length,
+        scheduledPosts: posts.filter(post => post.status === 'scheduled').length,
+        publishedPosts: posts.filter(post => post.status === 'published').length,
+        aiGeneratedContent: totalAiContent,
+        savedAiPosts: savedAiPosts,
+        videoTranscripts: videoTranscripts,
+        carouselRequests: carouselRequests.length,
+        pendingCarousels: pendingRequests,
+        completedCarousels: completedRequests,
+        carouselContent: carouselContent,
+        lastMonthStats: {
+          totalPosts: posts.filter(post => new Date(post.createdAt) >= lastMonth).length,
+          aiGeneratedContent: posts.filter(post => {
+            const content = post.content?.toLowerCase() || '';
+            const title = post.title?.toLowerCase() || '';
+            return new Date(post.createdAt) >= lastMonth && 
+                   (content.includes('ai') || content.includes('artificial intelligence') || 
+                    title.includes('ai') || title.includes('artificial intelligence') ||
+                    post.isAI === true || post.aiGenerated === true);
+          }).length + savedVideos.filter(video => 
+            new Date(video.savedAt || video.createdAt) >= lastMonth && 
+            video.transcript && video.transcript.length > 0
+          ).length,
+          carouselRequests: carouselRequests.filter(request => 
+            new Date(request.createdAt) >= lastMonth
+          ).length
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data', {
+        description: error.response?.data?.message || 'Please try again later',
+        duration: 5000
+      });
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    if (token) {
+      fetchDashboardData();
+    }
+  }, [token]);
+
+  // Calculate percentage changes
+  const calculatePercentageChange = (current: number, lastMonth: number) => {
+    if (lastMonth === 0) return 0;
+    return Math.round(((current - lastMonth) / lastMonth) * 100);
+  };
+
   const getUserInitials = () => {
     if (!user) return 'U';
     const firstName = user.firstName || '';
@@ -342,7 +478,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Posts</p>
-                <h3 className="text-2xl font-bold mt-1">12</h3>
+                <h3 className="text-2xl font-bold mt-1">{dashboardData.totalPosts}</h3>
               </div>
               <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
                 <FileText className="h-6 w-6 text-primary" />
@@ -350,7 +486,7 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1 mt-4 text-primary text-sm">
               <ArrowUp className="h-3 w-3" />
-              <span>16%</span>
+              <span>{calculatePercentageChange(dashboardData.totalPosts, dashboardData.lastMonthStats.totalPosts)}%</span>
               <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
             </div>
           </CardContent>
@@ -360,8 +496,8 @@ const DashboardPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Engagement</p>
-                <h3 className="text-2xl font-bold mt-1">4.8%</h3>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">AI Generated Content</p>
+                <h3 className="text-2xl font-bold mt-1">{dashboardData.aiGeneratedContent}</h3>
               </div>
               <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
                 <MessageSquare className="h-6 w-6 text-primary" />
@@ -369,7 +505,7 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1 mt-4 text-primary text-sm">
               <ArrowUp className="h-3 w-3" />
-              <span>3.2%</span>
+              <span>{calculatePercentageChange(dashboardData.aiGeneratedContent, dashboardData.lastMonthStats.aiGeneratedContent)}%</span>
               <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
             </div>
           </CardContent>
@@ -379,21 +515,111 @@ const DashboardPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Follower Growth</p>
-                <h3 className="text-2xl font-bold mt-1">+47</h3>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Carousel Requests</p>
+                <h3 className="text-2xl font-bold mt-1">{dashboardData.carouselRequests}</h3>
               </div>
               <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
-                <Users className="h-6 w-6 text-primary" />
+                <LayoutGrid className="h-6 w-6 text-primary" />
               </div>
             </div>
             <div className="flex items-center gap-1 mt-4 text-primary text-sm">
               <ArrowUp className="h-3 w-3" />
-              <span>8.7%</span>
+              <span>{calculatePercentageChange(dashboardData.carouselRequests, dashboardData.lastMonthStats.carouselRequests)}%</span>
               <span className="text-gray-500 dark:text-gray-400 ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
       </div>
+      
+      {/* Content Creation Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Post Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Draft Posts</span>
+                </div>
+                <span className="font-medium">{dashboardData.draftPosts}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Scheduled Posts</span>
+                </div>
+                <span className="font-medium">{dashboardData.scheduledPosts}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Published Posts</span>
+                </div>
+                <span className="font-medium">{dashboardData.publishedPosts}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">AI Content Stats</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Saved AI Posts</span>
+                </div>
+                <span className="font-medium">{dashboardData.savedAiPosts}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Youtube className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Video Transcripts</span>
+                </div>
+                <span className="font-medium">{dashboardData.videoTranscripts}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4 text-primary" />
+                  <span className="text-sm">Carousel Requests</span>
+                </div>
+                <span className="font-medium">{dashboardData.carouselRequests}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Carousel Request Status */}
+      <Card className="mb-8">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Carousel Request Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm">Pending Requests</span>
+              </div>
+              <span className="font-medium">{dashboardData.pendingCarousels}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <span className="text-sm">Completed Carousels</span>
+              </div>
+              <span className="font-medium">{dashboardData.completedCarousels}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Main content area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

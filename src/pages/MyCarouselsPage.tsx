@@ -7,7 +7,7 @@ import {
   Edit3, Eye, Clock, PlusCircle, Download,
   Share2, MoreHorizontal, Trash2, Search,
   FileText, ChevronLeft, ChevronDown, AlertCircle,
-  Inbox, CheckCircle, FileImage, File
+  Inbox, CheckCircle, FileImage, File, FileUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +44,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { CarouselPreview } from '@/components/CarouselPreview';
@@ -55,8 +57,8 @@ const SERVER_BASE_URL = API_URL.endsWith('/api')
   ? API_URL.substring(0, API_URL.length - 4) 
   : API_URL;
 
-// Enhanced carousel status type to include requests
-type CarouselStatus = 'draft' | 'scheduled' | 'published' | 'pending' | 'in_progress' | 'completed' | 'rejected';
+// Carousel status type definition
+type CarouselStatus = 'pending' | 'in_progress' | 'completed' | 'rejected';
 
 // User carousel interface
 interface UserCarousel {
@@ -84,11 +86,33 @@ interface CarouselRequest {
   id: string;
   title: string;
   description?: string;
+  videoId?: string;
+  videoTitle?: string;
+  youtubeUrl?: string;
+  content?: string;
   carouselType: string;
   status: 'pending' | 'in_progress' | 'completed' | 'rejected';
   adminNotes?: string;
   createdAt: string;
   updatedAt: string;
+  resendCount?: number;
+  isModified?: boolean;
+  originalContent?: {
+    title?: string;
+    description?: string;
+    carouselType?: string;
+    content?: string;
+    videoId?: string;
+    videoTitle?: string;
+    youtubeUrl?: string;
+    files?: {
+      url: string;
+      filename?: string;
+      originalName?: string;
+      mimetype?: string;
+      size?: number;
+    }[];
+  };
   files: {
     url: string;
     filename?: string;
@@ -118,6 +142,19 @@ const MyCarouselsPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedRequest, setEditedRequest] = useState<{
+    title?: string;
+    description?: string;
+    carouselType?: string;
+    content?: string;
+    videoId?: string;
+    videoTitle?: string;
+    youtubeUrl?: string;
+    filesToDelete?: string[];
+    newFiles?: File[];
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
   // Fetch user's carousels from backend
   const fetchCarousels = useCallback(async () => {
@@ -318,14 +355,16 @@ const MyCarouselsPage: React.FC = () => {
   // Status Badge component
   const StatusBadge = ({ status }: { status: CarouselStatus }) => {
     switch (status) {
-      case 'published':
-        return <Badge className="bg-green-500 hover:bg-green-600">Published</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Scheduled</Badge>;
-      case 'draft':
-        return <Badge className="bg-gray-500 hover:bg-gray-600">Draft</Badge>;
+      case 'completed':
+        return <Badge className="bg-white text-green-600 border border-green-300 hover:bg-green-50">Completed</Badge>;
+      case 'pending':
+        return <Badge className="bg-white text-yellow-600 border border-yellow-300 hover:bg-yellow-50">Pending</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-white text-blue-600 border border-blue-300 hover:bg-blue-50">In Progress</Badge>;
+      case 'rejected':
+        return <Badge className="bg-white text-red-600 border border-red-300 hover:bg-red-50">Rejected</Badge>;
       default:
-        return null;
+        return <Badge className="bg-white text-gray-600 border border-gray-300">Unknown</Badge>;
     }
   };
 
@@ -389,11 +428,10 @@ const MyCarouselsPage: React.FC = () => {
     return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
   };
 
-  // Determine which requests to show based on the active tab
+  // Filter requests based on the active tab
   const filteredRequests = carouselRequests.filter(request => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'completed') return request.status === 'completed';
-    return false;
+    return request.status === activeTab;
   }).filter(request => {
     if (!searchQuery.trim()) return true;
     return request.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -476,6 +514,169 @@ const MyCarouselsPage: React.FC = () => {
     downloadNext(0);
   };
 
+  // Add function to open edit mode for resending a request
+  const openEditMode = (request: CarouselRequest, startEditing: boolean = false) => {
+    setSelectedRequest(request);
+    setEditedRequest({
+      title: request.title,
+      description: request.description,
+      carouselType: request.carouselType,
+      content: request.content,
+      videoId: request.videoId,
+      videoTitle: request.videoTitle,
+      youtubeUrl: request.youtubeUrl,
+      filesToDelete: []
+    });
+    setIsEditing(startEditing);
+  }
+
+  // Enhanced resendRejectedRequest function with better error handling and loading state
+  const resendRejectedRequest = async (requestId: string, editedData?: any) => {
+    try {
+      // Prevent multiple submissions
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+
+      // Find the request in our local state
+      const request = carouselRequests.find(r => (r._id === requestId || r.id === requestId));
+      
+      // Check if the request has already been resent - frontend validation
+      if (request && request.resendCount && request.resendCount >= 1) {
+        toast.error('This request has already been resent once and cannot be resent again');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+      
+      // Create a FormData object to handle files
+      const formData = new FormData();
+      
+      // Add edited data to form data
+      if (editedData) {
+        if (editedData.title) formData.append('title', editedData.title);
+        if (editedData.description) formData.append('description', editedData.description);
+        if (editedData.carouselType) formData.append('carouselType', editedData.carouselType);
+        if (editedData.content) formData.append('content', editedData.content);
+        if (editedData.videoId) formData.append('videoId', editedData.videoId);
+        if (editedData.videoTitle) formData.append('videoTitle', editedData.videoTitle);
+        if (editedData.youtubeUrl) formData.append('youtubeUrl', editedData.youtubeUrl);
+        
+        // Add files to delete as a stringified JSON array
+        if (editedData.filesToDelete && editedData.filesToDelete.length > 0) {
+          formData.append('filesToDelete', JSON.stringify(editedData.filesToDelete));
+        }
+        
+        // Add new files - handle as a regular form upload
+        if (editedData.newFiles && editedData.newFiles.length > 0) {
+          // Cast to explicitly typed array of Files
+          const fileArray: File[] = editedData.newFiles as File[];
+          fileArray.forEach(file => {
+            // Ensure it's a valid File object
+            if (file instanceof File) {
+              formData.append('files', file);
+            }
+          });
+        }
+      } else {
+        // Simple resend without changes
+        formData.append('resend', 'true');
+      }
+      
+      // Add resendCount to the request payload
+      const resendResponse = await axios.post(
+        `${API_URL}/carousels/requests/${requestId}/resend`, 
+        formData,
+        config
+      );
+      
+      if (resendResponse.data && resendResponse.data.success) {
+        toast.success('Request resubmitted successfully');
+        
+        // Close edit mode if active
+        setIsEditing(false);
+        
+        // Update the local state to reflect the changes
+        setCarouselRequests(prevRequests => 
+          prevRequests.map(req => 
+            (req._id === requestId || req.id === requestId) 
+              ? { 
+                  ...req, 
+                  status: 'pending', 
+                  resendCount: 1, // Explicitly set to 1 to match the backend behavior
+                  updatedAt: new Date().toISOString(),
+                  // Only update the fields that were included in editedData
+                  ...(editedData?.title ? { title: editedData.title } : {}),
+                  ...(editedData?.description ? { description: editedData.description } : {}),
+                  ...(editedData?.carouselType ? { carouselType: editedData.carouselType } : {}),
+                  ...(editedData?.content ? { content: editedData.content } : {}),
+                  ...(editedData?.videoId ? { videoId: editedData.videoId } : {}),
+                  ...(editedData?.videoTitle ? { videoTitle: editedData.videoTitle } : {}),
+                  ...(editedData?.youtubeUrl ? { youtubeUrl: editedData.youtubeUrl } : {})
+                } 
+              : req
+          )
+        );
+        
+        // Refresh data after resubmission
+        fetchCarouselRequests();
+        
+        // Close the dialog
+        setSelectedRequest(null);
+      } else {
+        toast.error(resendResponse.data?.message || 'Failed to resubmit request');
+      }
+    } catch (err) {
+      console.error('Error resubmitting request:', err);
+      
+      // Handle the specific error for already resent requests
+      if (err.response && err.response.data && err.response.data.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error('Failed to resubmit request. Please try again later.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to delete a carousel request
+  const deleteCarouselRequest = async (requestId: string) => {
+    if (!token) return;
+
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      
+      // Confirm with the user before deleting
+      if (!window.confirm('Are you sure you want to delete this request? This action cannot be undone.')) {
+        return;
+      }
+      
+      // Delete the request from the backend
+      await axios.delete(`${API_URL}/carousels/requests/${requestId}`, config);
+      
+      // Update the state to remove the deleted request
+      setCarouselRequests(carouselRequests.filter(request => request.id !== requestId && request._id !== requestId));
+      
+      // Close any open dialogs that might be showing the deleted request
+      setSelectedRequest(null);
+      
+      toast.success('Carousel request deleted successfully');
+    } catch (err: any) {
+      console.error('Error deleting carousel request:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete carousel request');
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -522,10 +723,9 @@ const MyCarouselsPage: React.FC = () => {
         >
           <TabsList className="w-full grid grid-cols-4 sm:w-auto">
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="published">Published</TabsTrigger>
-            <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-            <TabsTrigger value="draft">Drafts</TabsTrigger>
-            <TabsTrigger value="completed">Completed Requests</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -561,7 +761,13 @@ const MyCarouselsPage: React.FC = () => {
           <p className="text-black mb-6">
             {searchQuery 
               ? `No carousels match your search for "${searchQuery}"`
-              : `You don't have any ${activeTab !== 'all' ? activeTab : ''} carousels yet`
+              : activeTab === 'pending' 
+                ? "You don't have any pending carousel requests"
+                : activeTab === 'rejected'
+                ? "You don't have any rejected carousel requests"
+                : activeTab === 'completed'
+                ? "You don't have any completed carousels yet"
+                : "You don't have any carousels yet"
             }
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
@@ -649,7 +855,7 @@ const MyCarouselsPage: React.FC = () => {
                         <Calendar className="h-3 w-3 mr-1 text-blue-500" />
                           {formatDate(carousel.createdAt)}
                       </span>
-                        {carousel.status === 'published' && carousel.views && (
+                        {carousel.status === 'completed' && carousel.views && (
                         <span className="flex items-center">
                           <Eye className="h-3 w-3 mr-1 text-green-500" />
                           {carousel.views} views
@@ -680,7 +886,6 @@ const MyCarouselsPage: React.FC = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="flex items-center gap-2"
                       onClick={() => {
@@ -715,9 +920,8 @@ const MyCarouselsPage: React.FC = () => {
                       <Download className="h-4 w-4" />
                         <span>Download PDF</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      className="flex items-center gap-2 text-red-500 focus:text-red-500"
+                      className="flex items-center gap-2"
                         onClick={() => {
                           if (window.confirm(`Are you sure you want to delete "${carousel.title}"?`)) {
                             deleteCarouselHandler(carousel._id);
@@ -736,13 +940,13 @@ const MyCarouselsPage: React.FC = () => {
         </div>
       )}
       
-      {/* Completed Requests from Admin */}
-      {filteredRequests.filter(r => r.status === 'completed').length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Completed Carousel Requests</h2>
+      {/* Pending Carousel Requests Section */}
+      {!loading && filteredRequests.filter(r => r.status === 'pending' || r.status === 'in_progress').length > 0 && (
+        <div className="mt-8 mb-8">
+          <h2 className="text-lg font-semibold mb-4">Pending Carousel Requests</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredRequests
-              .filter(request => request.status === 'completed')
+              .filter(request => request.status === 'pending' || request.status === 'in_progress')
               .map((request) => (
                 <Card 
                   key={request._id || request.id} 
@@ -751,10 +955,7 @@ const MyCarouselsPage: React.FC = () => {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{request.title}</CardTitle>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Completed
-                      </Badge>
+                      <StatusBadge status={request.status} />
                     </div>
                     <CardDescription className="line-clamp-2">
                       {request.description || "No description"}
@@ -762,11 +963,11 @@ const MyCarouselsPage: React.FC = () => {
                   </CardHeader>
                   
                   <CardContent className="pb-2">
-                    {/* Show preview of completed files */}
+                    {/* Show preview of files the user uploaded */}
                     <div className="mt-2">
-                      <p className="text-sm font-medium mb-2">Completed Files:</p>
+                      <p className="text-sm font-medium mb-2">Your Uploaded Files:</p>
                       <div className="grid grid-cols-2 gap-2">
-                        {(request.completedFiles || []).slice(0, 4).map((file, index) => (
+                        {(request.files || []).slice(0, 4).map((file, index) => (
                           <div 
                             key={index}
                             className="border rounded p-2 flex items-center"
@@ -782,15 +983,219 @@ const MyCarouselsPage: React.FC = () => {
                           </div>
                         ))}
                         
-                        {(request.completedFiles || []).length > 4 && (
+                        {(request.files || []).length > 4 && (
                           <div className="border rounded p-2 flex items-center justify-center">
                             <span className="text-xs text-gray-500">
+                              +{(request.files || []).length - 4} more
+                            </span>
+                          </div>
+                        )}
+                        
+                        {(request.files || []).length === 0 && (
+                          <div className="col-span-2 border rounded p-2 text-center">
+                            <span className="text-xs text-gray-500">No files available</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Show request type */}
+                    {request.carouselType && (
+                      <div className="mt-4">
+                        <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                          {request.carouselType} carousel
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                  
+                  <CardFooter className="pt-0 flex justify-between">
+                    <div className="text-xs text-gray-500 flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {request.resendCount && request.resendCount >= 1 ? formatDate(request.updatedAt) : formatDate(request.createdAt)}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 mt-2 justify-end">
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditMode(request)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => deleteCarouselRequest(request.id || request._id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Completed Carousel Requests Section */}
+      {!loading && filteredRequests.filter(r => r.status === 'completed').length > 0 && (
+        <div className="mt-8 mb-8">
+          <h2 className="text-lg font-semibold mb-4">Completed Carousels</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRequests
+              .filter(request => request.status === 'completed')
+              .map((request) => (
+                <Card 
+                  key={request._id || request.id} 
+                  className="overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{request.title}</CardTitle>
+                      <StatusBadge status={request.status} />
+                    </div>
+                    </CardHeader>
+                    
+                    <CardContent className="pb-2">
+                      {/* Only show files delivered by admin */}
+                      <div className="mt-2">
+                        <p className="text-sm font-medium mb-2">Delivered Files:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(request.completedFiles || []).slice(0, 4).map((file, index) => (
+                            <div 
+                              key={index}
+                              className="border rounded p-2 flex flex-col bg-green-50 border-green-100"
+                            >
+                              <div className="flex items-center mb-1">
+                                {isImageFile(file.url) ? (
+                                  <FileImage className="h-4 w-4 mr-2 text-green-600" />
+                                ) : (
+                                  <FileText className="h-4 w-4 mr-2 text-green-600" />
+                                )}
+                                <span className="text-xs truncate font-medium">
+                                  {file.originalName || getFileNameFromUrl(file.url)}
+                                </span>
+                              </div>
+                              
+                              {/* Show image preview for image files */}
+                              {isImageFile(file.url) && (
+                                <div className="mb-1 bg-white rounded p-1">
+                                  <img 
+                                    src={getProperFileUrl(file.url)} 
+                                    alt={file.originalName || "Preview"} 
+                                    className="max-h-16 mx-auto object-contain"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          
+                          {(request.completedFiles || []).length > 4 && (
+                            <div className="border rounded p-2 flex items-center justify-center bg-green-50 border-green-100">
+                              <span className="text-xs text-green-700">
                               +{(request.completedFiles || []).length - 4} more
                             </span>
                           </div>
                         )}
                         
                         {(request.completedFiles || []).length === 0 && (
+                            <div className="col-span-2 border rounded p-2 text-center">
+                              <span className="text-xs text-gray-500">No delivered files available</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                    
+                    <CardFooter className="pt-0 flex justify-between">
+                      <div className="text-xs text-gray-500 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {formatDate(request.updatedAt)}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditMode(request)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="text-green-600 border-green-300 hover:bg-green-50"
+                          onClick={() => downloadCompletedFiles(request)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download All
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Rejected Carousel Requests Section */}
+      {!loading && filteredRequests.filter(r => r.status === 'rejected').length > 0 && (
+        <div className="mt-8 mb-8">
+          <h2 className="text-lg font-semibold mb-4">Rejected Requests</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRequests
+              .filter(request => request.status === 'rejected')
+              .map((request) => (
+                <Card 
+                  key={request._id || request.id} 
+                  className="overflow-hidden hover:shadow-md transition-shadow border-2 border-red-100"
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{request.title}</CardTitle>
+                      <Badge className="bg-red-500 hover:bg-red-600">Rejected</Badge>
+                    </div>
+                    <CardDescription className="line-clamp-2">
+                      {request.description || "No description"}
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="pb-2">
+                    {/* Show preview of files the user uploaded */}
+                    <div className="mt-2">
+                      <p className="text-sm font-medium mb-2">Your Uploaded Files:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(request.files || []).slice(0, 4).map((file, index) => (
+                          <div 
+                            key={index}
+                            className="border rounded p-2 flex items-center"
+                          >
+                            {isImageFile(file.url) ? (
+                              <FileImage className="h-4 w-4 mr-2 text-blue-500" />
+                            ) : (
+                              <FileText className="h-4 w-4 mr-2 text-orange-500" />
+                            )}
+                            <span className="text-xs truncate">
+                              {file.originalName || getFileNameFromUrl(file.url)}
+                            </span>
+                          </div>
+                        ))}
+                        
+                        {(request.files || []).length > 4 && (
+                          <div className="border rounded p-2 flex items-center justify-center">
+                            <span className="text-xs text-gray-500">
+                              +{(request.files || []).length - 4} more
+                            </span>
+                          </div>
+                        )}
+                        
+                        {(request.files || []).length === 0 && (
                           <div className="col-span-2 border rounded p-2 text-center">
                             <span className="text-xs text-gray-500">No files available</span>
                           </div>
@@ -800,8 +1205,8 @@ const MyCarouselsPage: React.FC = () => {
                     
                     {/* Admin notes if available */}
                     {request.adminNotes && (
-                      <div className="mt-4 text-sm bg-blue-50 p-2 rounded">
-                        <p className="font-medium text-blue-700">Admin Note:</p>
+                      <div className="mt-4 text-sm bg-red-50 p-2 rounded">
+                        <p className="font-medium text-red-700">Reason for rejection:</p>
                         <p className="text-gray-700">{request.adminNotes}</p>
                       </div>
                     )}
@@ -810,26 +1215,49 @@ const MyCarouselsPage: React.FC = () => {
                   <CardFooter className="pt-0 flex justify-between">
                     <div className="text-xs text-gray-500 flex items-center">
                       <Calendar className="h-3 w-3 mr-1" />
-                      {formatDate(request.createdAt)}
+                      {formatDate(request.updatedAt)}
                     </div>
                     
                     <div className="flex gap-2">
                       <Button 
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedRequest(request)}
+                        onClick={() => openEditMode(request)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
                       
                       <Button 
-                        size="sm"
-                        onClick={() => downloadCompletedFiles(request)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => deleteCarouselRequest(request.id || request._id)}
                       >
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
+                        <Trash2 className="h-4 w-4" />
                       </Button>
+
+                      {request.status === 'rejected' && (
+                      <Button 
+                        size="sm"
+                          variant="outline"
+                          className={`${request.resendCount && request.resendCount >= 1 ? 
+                            'text-gray-500 border-gray-300 cursor-not-allowed' : 
+                            'text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700'}`}
+                          onClick={() => {
+                            if (request.resendCount && request.resendCount >= 1) {
+                              toast.error('This request has already been resent once and cannot be edited or resent again');
+                              return;
+                            }
+                            setSelectedRequest(request);
+                            setIsEditing(true);
+                          }}
+                          disabled={request.resendCount && request.resendCount >= 1}
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          Edit
+                      </Button>
+                      )}
                     </div>
                   </CardFooter>
                 </Card>
@@ -845,7 +1273,7 @@ const MyCarouselsPage: React.FC = () => {
             <DialogTitle className="flex items-center justify-between text-base" id="carousel-dialog-title">
               <span>{selectedCarousel?.title}</span>
               <div>
-                <StatusBadge status={selectedCarousel?.status || 'draft'} />
+                <StatusBadge status={selectedCarousel?.status || 'pending'} />
               </div>
             </DialogTitle>
             <DialogDescription className="text-sm" id="carousel-dialog-description">
@@ -962,94 +1390,411 @@ const MyCarouselsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Completed Request Preview Dialog */}
-      <Dialog 
-        open={!!selectedRequest} 
-        onOpenChange={(open) => !open && setSelectedRequest(null)}
-      >
-        <DialogContent className="max-w-3xl" aria-labelledby="request-dialog-title" aria-describedby="request-dialog-description">
+      {/* Request Details Dialog */}
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedRequest(null);
+          setIsEditing(false);
+          setEditedRequest({});
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           {selectedRequest && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-xl" id="request-dialog-title">{selectedRequest.title}</DialogTitle>
-                <DialogDescription id="request-dialog-description">
-                  Completed carousel request - Submitted on {formatDate(selectedRequest.createdAt)}
+                <DialogTitle className="flex justify-between items-center">
+                  {isEditing ? (
+                    <Input 
+                      value={editedRequest.title || selectedRequest.title} 
+                      onChange={(e) => setEditedRequest({...editedRequest, title: e.target.value})}
+                      className="font-bold text-lg"
+                    />
+                  ) : (
+                    <span>{selectedRequest.title}</span>
+                  )}
+                  <StatusBadge status={selectedRequest.status} />
+                </DialogTitle>
+                <DialogDescription>
+                  Requested on {formatDate(selectedRequest.createdAt)}
+                  {selectedRequest.updatedAt && selectedRequest.updatedAt !== selectedRequest.createdAt && 
+                    ` • Last updated on ${formatDate(selectedRequest.updatedAt)}`}
+                  {selectedRequest.resendCount && selectedRequest.resendCount > 0 && 
+                    ` • Resent ${selectedRequest.resendCount} time${selectedRequest.resendCount > 1 ? 's' : ''}`}
                 </DialogDescription>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
-                {selectedRequest.adminNotes && (
-                  <div className="bg-blue-50 p-3 rounded">
-                    <h3 className="font-medium text-blue-700 mb-1">Note from the creator:</h3>
-                    <p>{selectedRequest.adminNotes}</p>
+                {/* Request Description */}
+                <div>
+                  <h3 className="font-semibold mb-2">Description</h3>
+                  {isEditing ? (
+                    <Textarea 
+                      value={editedRequest.description || selectedRequest.description || ''}
+                      onChange={(e) => setEditedRequest({...editedRequest, description: e.target.value})}
+                      className="min-h-[120px]"
+                    />
+                  ) : (
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+                      {selectedRequest.description || "No description provided"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Video Content (if available) */}
+                {(selectedRequest.videoId || isEditing) && (
+                  <div>
+                    <h3 className="font-semibold mb-2">YouTube Video {isEditing && <span className="text-xs text-gray-500">(Optional)</span>}</h3>
+                    {isEditing ? (
+                      <div className="space-y-3 bg-gray-50 p-3 rounded-md">
+                        <div>
+                          <label className="block text-sm font-medium mb-1" htmlFor="videoTitle">Video Title</label>
+                          <Input 
+                            id="videoTitle"
+                            value={editedRequest.videoTitle || selectedRequest.videoTitle || ''}
+                            onChange={(e) => setEditedRequest({...editedRequest, videoTitle: e.target.value})}
+                            placeholder="Enter video title"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1" htmlFor="videoId">YouTube Video ID</label>
+                          <Input 
+                            id="videoId"
+                            value={editedRequest.videoId || selectedRequest.videoId || ''}
+                            onChange={(e) => setEditedRequest({...editedRequest, videoId: e.target.value})}
+                            placeholder="e.g. dQw4w9WgXcQ"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1" htmlFor="youtubeUrl">YouTube URL</label>
+                          <Input 
+                            id="youtubeUrl"
+                            value={editedRequest.youtubeUrl || selectedRequest.youtubeUrl || ''}
+                            onChange={(e) => setEditedRequest({...editedRequest, youtubeUrl: e.target.value})}
+                            placeholder="https://www.youtube.com/watch?v=..."
+                          />
+                        </div>
+                        {(editedRequest.videoId || selectedRequest.videoId) && (
+                          <div className="mt-2">
+                            <p className="text-xs text-blue-600 mb-2">Preview:</p>
+                            <div className="aspect-video w-full max-w-md mx-auto overflow-hidden rounded-md">
+                              <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src={`https://www.youtube.com/embed/${editedRequest.videoId || selectedRequest.videoId}`}
+                                title={editedRequest.videoTitle || selectedRequest.videoTitle || "YouTube Video"}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                              ></iframe>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-3 rounded-md">
+                        <p className="font-medium">{selectedRequest.videoTitle || "Untitled Video"}</p>
+                        {selectedRequest.youtubeUrl && (
+                          <div className="mt-2 flex flex-col">
+                            <div className="aspect-video w-full max-w-md mx-auto overflow-hidden rounded-md">
+                              <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src={`https://www.youtube.com/embed/${selectedRequest.videoId}`}
+                                title={selectedRequest.videoTitle || "YouTube Video"}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                              ></iframe>
+                            </div>
+                            <a 
+                              href={selectedRequest.youtubeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 mt-2 text-sm flex items-center self-start"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                              </svg>
+                              Open in YouTube
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 
+                {/* Carousel Content (if available) */}
+                {(selectedRequest.content || isEditing) && (
                 <div>
-                  <h3 className="font-medium mb-2">Completed Files:</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-1">
-                    {(selectedRequest.completedFiles || []).map((file, index) => {
-                      const fileUrl = getProperFileUrl(file.url);
-                      const fileName = file.originalName || getFileNameFromUrl(file.url);
-                      
-                      return (
-                        <div key={index} className="border rounded overflow-hidden">
+                    <h3 className="font-semibold mb-2">Generated Content {isEditing && <span className="text-xs text-gray-500">(Optional)</span>}</h3>
+                    {isEditing ? (
+                      <Textarea 
+                        value={editedRequest.content || selectedRequest.content || ''}
+                        onChange={(e) => setEditedRequest({...editedRequest, content: e.target.value})}
+                        placeholder="Enter carousel content here..."
+                        className="min-h-[200px] font-mono text-sm"
+                      />
+                    ) : (
+                      <div className="bg-gray-50 p-3 rounded-md whitespace-pre-wrap text-sm max-h-[200px] overflow-y-auto border border-gray-200">
+                        {selectedRequest.content}
+                      </div>
+                    )}
+                    {!isEditing && selectedRequest.content && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2 text-xs"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedRequest.content || '');
+                          toast.success("Content copied to clipboard");
+                        }}
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Content
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Request Type */}
+                <div>
+                  <h3 className="font-semibold mb-2">Carousel Type</h3>
+                  {isEditing ? (
+                    <Select 
+                      value={editedRequest.carouselType || selectedRequest.carouselType} 
+                      onValueChange={(value) => setEditedRequest({...editedRequest, carouselType: value})}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select carousel type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="creative">Creative</SelectItem>
+                        <SelectItem value="minimalist">Minimalist</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-gray-700">
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                        {selectedRequest.carouselType}
+                      </Badge>
+                    </p>
+                  )}
+                </div>
+                
+                {/* Files Section */}
+                {(selectedRequest.status === 'pending' || selectedRequest.status === 'in_progress' || selectedRequest.status === 'rejected') && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Files You Submitted</h3>
+                    {selectedRequest.files && selectedRequest.files.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedRequest.files.map((file, index) => (
+                          <div key={index} className="border rounded p-3 flex flex-col">
+                            <div className="flex items-center mb-2">
                           {isImageFile(file.url) ? (
-                            <div className="relative aspect-video bg-gray-100">
-                              <img 
-                                src={fileUrl} 
-                                alt={`Slide ${index + 1}`}
-                                className="absolute inset-0 w-full h-full object-contain"
-                              />
+                                <FileImage className="h-4 w-4 mr-2 text-blue-500" />
+                              ) : (
+                                <FileText className="h-4 w-4 mr-2 text-orange-500" />
+                              )}
+                              <span className="text-sm truncate font-medium">
+                                {file.originalName || getFileNameFromUrl(file.url)}
+                              </span>
+                            </div>
+                            
+                            {/* Show image preview for image files */}
+                            {isImageFile(file.url) && (
+                              <div className="mb-2 bg-gray-100 rounded p-1">
+                                <img 
+                                  src={getProperFileUrl(file.url)} 
+                                  alt={file.originalName || "Preview"} 
+                                  className="max-h-32 mx-auto object-contain"
+                                />
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-end mt-auto">
+                              <a 
+                                href={getProperFileUrl(file.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                              >
+                                <Eye className="h-3 w-3 mr-1" /> 
+                                View
+                              </a>
+                            </div>
+                          </div>
+                        ))}
                             </div>
                           ) : (
-                            <div className="p-4 flex items-center justify-center bg-gray-50 aspect-video">
-                              <FileText className="h-12 w-12 text-gray-400" />
+                      <p className="text-gray-500 italic">No files were submitted with this request</p>
+                    )}
                             </div>
                           )}
                           
-                          <div className="p-2 flex justify-between items-center">
-                            <p className="text-sm truncate">
-                              {fileName}
-                            </p>
+                {/* Add new files section in edit mode */}
+                {isEditing && (
+                  <div className="mt-4">
+                    <h3 className="font-semibold mb-2">Add New Files</h3>
+                    <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
+                      <input
+                        type="file"
+                        id="new-files"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            setEditedRequest({
+                              ...editedRequest,
+                              newFiles: Array.from(e.target.files)
+                            });
+                          }
+                        }}
+                      />
+                      
+                      {editedRequest.newFiles && editedRequest.newFiles.length > 0 ? (
+                        <div className="w-full">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">{editedRequest.newFiles.length} files selected</p>
                             <Button 
+                              variant="ghost" 
                               size="sm" 
-                              variant="ghost"
-                              onClick={() => {
-                                console.log("Downloading file:", fileUrl);
-                                const link = document.createElement('a');
-                                link.href = fileUrl;
-                                link.download = fileName;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                toast.success(`Downloading ${fileName}`);
-                              }}
-                              className="text-blue-500 hover:text-blue-700"
+                              onClick={() => document.getElementById('new-files')?.click()}
                             >
-                              <Download className="h-4 w-4" />
+                              Change Files
                             </Button>
                           </div>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {Array.from(editedRequest.newFiles).map((file, index) => (
+                              <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
+                                {file.type.startsWith('image/') ? (
+                                  <FileImage className="h-4 w-4 mr-2 text-blue-500" />
+                                ) : (
+                                  <FileText className="h-4 w-4 mr-2 text-orange-500" />
+                                )}
+                                <div className="flex-1 truncate">
+                                  <p className="text-sm truncate">{file.name}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {file.type || 'Unknown type'} • {(file.size / 1024).toFixed(1)} KB
+                                  </p>
+                                </div>
+                                <Button 
+                              variant="ghost"
+                                  size="sm"
+                              onClick={() => {
+                                    const updatedFiles = editedRequest.newFiles?.filter((_, i) => i !== index);
+                                    setEditedRequest({...editedRequest, newFiles: updatedFiles});
+                                  }}
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                            </Button>
+                          </div>
+                            ))}
                         </div>
-                      );
-                    })}
-                    
-                    {(selectedRequest.completedFiles || []).length === 0 && (
-                      <div className="col-span-2 border rounded p-8 text-center text-gray-500">
-                        No completed files available
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <FileUp className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 mb-1">
+                            Drag and drop files, or
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => document.getElementById('new-files')?.click()}
+                            className="mt-2"
+                          >
+                            Select Files
+                          </Button>
                       </div>
                     )}
                   </div>
                 </div>
+                )}
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="gap-2 flex flex-wrap justify-end">
+                {selectedRequest.status === 'rejected' && !isEditing && (
+                  <>
                 <Button
-                  onClick={() => downloadCompletedFiles(selectedRequest)}
-                  className="w-full sm:w-auto"
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit & Resend
+                    </Button>
+                    <Button
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                      variant="outline"
+                      onClick={() => resendRejectedRequest(selectedRequest._id || selectedRequest.id)}
+                      disabled={selectedRequest.resendCount && selectedRequest.resendCount >= 1 || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="animate-spin mr-1">◔</span>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <FileUp className="h-4 w-4 mr-1" />
+                          Resend
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+                
+                {isEditing && (
+                  <>
+                    <Button
+                      className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+                      variant="outline"
+                      onClick={() => resendRejectedRequest(selectedRequest._id || selectedRequest.id, editedRequest)}
+                    >
+                      <FileUp className="h-4 w-4 mr-1" />
+                      Save & Resend
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditedRequest({});
+                      }}
+                    >
+                      Cancel Edits
+                    </Button>
+                  </>
+                )}
+                
+                {selectedRequest.status === 'completed' && selectedRequest.completedFiles && selectedRequest.completedFiles.length > 0 && (
+                  <Button 
+                    className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+                    variant="outline"
+                    onClick={() => {
+                      downloadCompletedFiles(selectedRequest);
+                      setSelectedRequest(null);
+                    }}
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download All Files
+                  <Download className="h-4 w-4 mr-1" />
+                    Download All
+                  </Button>
+                )}
+                
+                <Button variant="outline" onClick={() => {
+                  setSelectedRequest(null);
+                  setIsEditing(false);
+                  setEditedRequest({});
+                }}>
+                  Close
                 </Button>
               </DialogFooter>
             </>

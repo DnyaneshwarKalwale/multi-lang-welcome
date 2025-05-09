@@ -26,7 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, FileText, Image, FileUp, Eye } from 'lucide-react';
+import { Loader2, FileText, Image, FileUp, Eye, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { API_URL } from '../../services/api';
 
@@ -72,6 +72,19 @@ interface CarouselRequest {
   completedCarouselId?: string;
   createdAt: string;
   updatedAt: string;
+  resendCount?: number;
+  isModified?: boolean;
+  originalContent?: {
+    content?: string;
+    files?: CarouselFile[];
+    title?: string;
+    description?: string;
+    carouselType?: string;
+    videoId?: string;
+    videoTitle?: string;
+    youtubeUrl?: string;
+  };
+  completedFiles?: CarouselFile[];
 }
 
 // Define extended user interface to handle both formats
@@ -106,6 +119,7 @@ const CarouselRequestsPage: React.FC = () => {
   const [completionNote, setCompletionNote] = useState<string>('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [viewOriginalContent, setViewOriginalContent] = useState(false);
 
   useEffect(() => {
     fetchRequests();
@@ -170,19 +184,26 @@ const CarouselRequestsPage: React.FC = () => {
         throw new Error('Authentication token not found');
       }
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const apiUrl = `${baseUrl}/carousels/requests/${requestId}/status`;
+      // Use the correct API endpoint path
+      const apiUrl = `${API_URL}/carousels/admin/requests/${requestId}/status`;
       
       console.log('Updating request status at:', apiUrl);
       
+      // Using POST method to avoid CORS issues
       const response = await fetch(apiUrl, {
-        method: 'PATCH',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status })
       });
+      
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(`Received non-JSON response: ${await response.text()}`);
+      }
       
       const data = await response.json();
       
@@ -198,11 +219,20 @@ const CarouselRequestsPage: React.FC = () => {
         description: `Request status updated to ${status}`,
         variant: 'default'
       });
+
+      // Close the dialog if open
+      setViewDialogOpen(false);
     } catch (error) {
       console.error('Error updating request status:', error);
+      
+      let errorMessage = 'Failed to update request status';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update request status',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -221,15 +251,15 @@ const CarouselRequestsPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200">Pending</Badge>;
+        return <Badge className="bg-white text-yellow-600 border border-yellow-300 hover:bg-yellow-50">Pending</Badge>;
       case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200">In Progress</Badge>;
+        return <Badge className="bg-white text-blue-600 border border-blue-300 hover:bg-blue-50">In Progress</Badge>;
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200">Completed</Badge>;
+        return <Badge className="bg-white text-green-600 border border-green-300 hover:bg-green-50">Completed</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">Rejected</Badge>;
+        return <Badge className="bg-white text-red-600 border border-red-300 hover:bg-red-50">Rejected</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Unknown</Badge>;
+        return <Badge className="bg-white text-gray-600 border border-gray-300">Unknown</Badge>;
     }
   };
 
@@ -268,13 +298,8 @@ const CarouselRequestsPage: React.FC = () => {
   };
 
   // Helper function to get file name from URL if original name is missing
-  const getFileName = (file: CarouselFile) => {
-    if (file.originalName) {
-      return file.originalName;
-    }
-    
+  const getFileNameFromUrl = (url: string = '') => {
     // Try to extract filename from URL
-    const url = file.url || '';
     const urlParts = url.split('/');
     const lastPart = urlParts[urlParts.length - 1];
     
@@ -293,6 +318,27 @@ const CarouselRequestsPage: React.FC = () => {
     return nameWithoutParams || 'Unnamed file';
   };
 
+  // Helper function to get file name, checking originalName first if available
+  const getFileName = (file: CarouselFile) => {
+    if (file.originalName) {
+      return file.originalName;
+    }
+    return getFileNameFromUrl(file.url);
+  };
+
+  // Function to append auth token to URL if needed
+  const getAuthenticatedUrl = (url: string) => {
+    // For Cloudinary URLs that might need authentication
+    if (url.includes('cloudinary.com') && 
+        (url.includes('.pdf') || url.includes('/raw/'))) {
+      const token = localStorage.getItem("admin-token") || '';
+      // Add auth token as query parameter
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}auth_token=${encodeURIComponent(token)}`;
+    }
+    return url;
+  };
+
   // Function to determine if file is viewable directly in browser
   const isViewableFile = (file: CarouselFile) => {
     const url = file.url || '';
@@ -306,7 +352,24 @@ const CarouselRequestsPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy HH:mm');
+    const date = new Date(dateString);
+    return {
+      month: format(date, 'MMM'),
+      day: format(date, 'd'),
+      year: format(date, 'yyyy')
+    };
+  };
+
+  // Tabbed version for display in the main list
+  const formatDateStacked = (dateString: string) => {
+    const { month, day, year } = formatDate(dateString);
+    return (
+      <div className="flex flex-col">
+        <span>{month}</span>
+        <span>{day},</span>
+        <span>{year}</span>
+      </div>
+    );
   };
 
   const filteredRequests = activeTab === 'all' 
@@ -390,7 +453,7 @@ const CarouselRequestsPage: React.FC = () => {
       return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
     }
     
-    return url;
+    return getAuthenticatedUrl(url);
   };
 
   // Enhanced file preview component
@@ -414,6 +477,11 @@ const CarouselRequestsPage: React.FC = () => {
         }
       }
       return url;
+    };
+
+    // Get auth token to handle 401 errors
+    const getAuthToken = () => {
+      return localStorage.getItem("admin-token") || '';
     };
 
     return (
@@ -451,8 +519,10 @@ const CarouselRequestsPage: React.FC = () => {
         
         <div className="flex space-x-2 mt-2">
           {isViewableFile(file) && (
-            <button
-              onClick={() => isImage ? setShowPreview(true) : window.open(fileUrl, '_blank')}
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-500 hover:text-blue-700 text-sm flex-1 flex items-center justify-center p-1 border border-blue-500 rounded"
             >
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -460,11 +530,13 @@ const CarouselRequestsPage: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
               {isImage ? 'Preview' : 'View'}
-            </button>
+            </a>
           )}
           <a
             href={fileUrl}
             download={getFileName(file)}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-green-500 hover:text-green-700 text-sm flex-1 flex items-center justify-center p-1 border border-green-500 rounded"
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -632,10 +704,9 @@ const CarouselRequestsPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-5 mb-6">
+            <TabsList className="grid grid-cols-4 mb-6">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="in_progress">In Progress</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="rejected">Rejected</TabsTrigger>
             </TabsList>
@@ -667,7 +738,7 @@ const CarouselRequestsPage: React.FC = () => {
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{request.title}</TableCell>
                       <TableCell>{getUserInfo(request).name}</TableCell>
-                      <TableCell>{formatDate(request.createdAt)}</TableCell>
+                      <TableCell>{formatDateStacked(request.updatedAt || request.createdAt)}</TableCell>
                       <TableCell className="capitalize">{request.carouselType}</TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
                       <TableCell>{request.files.length} files</TableCell>
@@ -675,7 +746,7 @@ const CarouselRequestsPage: React.FC = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          className="mr-2"
+                          className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                           onClick={() => viewRequest(request)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -693,23 +764,49 @@ const CarouselRequestsPage: React.FC = () => {
 
       {/* Request Detail Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
           {selectedRequest && (
             <>
               <DialogHeader>
                 <DialogTitle>{selectedRequest.title}</DialogTitle>
                 <DialogDescription>
-                  Submitted by {getUserInfo(selectedRequest).name} on {formatDate(selectedRequest.createdAt)}
+                  Submitted by {getUserInfo(selectedRequest).name} on {format(new Date(selectedRequest.createdAt), 'MMM d, yyyy')}
+                  {selectedRequest.updatedAt && selectedRequest.updatedAt !== selectedRequest.createdAt && 
+                    ` • Last updated on ${format(new Date(selectedRequest.updatedAt), 'MMM d, yyyy')}`}
                 </DialogDescription>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">Request Details</h3>
+                  <div className="flex items-center gap-2">
+                    {selectedRequest.resendCount > 0 && (
+                      <Badge className="bg-amber-100 text-amber-800">
+                        Resent {selectedRequest.resendCount} time{selectedRequest.resendCount > 1 ? 's' : ''}
+                      </Badge>
+                    )}
                   {getStatusBadge(selectedRequest.status)}
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                {/* Original Content Toggle */}
+                {selectedRequest.isModified && selectedRequest.originalContent && (
+                  <div className="flex flex-col sm:flex-row sm:items-center p-2 bg-amber-50 rounded border border-amber-200">
+                    <div className="flex-1 mb-2 sm:mb-0">
+                      <p className="text-amber-800 text-sm">This request was modified by the user before resending</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-amber-600 border-amber-300"
+                      onClick={() => setViewOriginalContent(!viewOriginalContent)}
+                    >
+                      {viewOriginalContent ? "View Current Version" : "View Original Version"}
+                    </Button>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold mb-1">User Information</h4>
                     <p><span className="font-medium">Name:</span> {getUserInfo(selectedRequest).name}</p>
@@ -718,36 +815,69 @@ const CarouselRequestsPage: React.FC = () => {
                   <div>
                     <h4 className="font-semibold mb-1">Carousel Type</h4>
                     <p className="capitalize">{selectedRequest.carouselType}</p>
-                    <p className="mt-2"><span className="font-medium">Requested on:</span> {formatDate(selectedRequest.createdAt)}</p>
+                    <p className="mt-2"><span className="font-medium">Requested on:</span> {format(new Date(selectedRequest.createdAt), 'MMM d, yyyy')}</p>
+                    {selectedRequest.updatedAt && selectedRequest.updatedAt !== selectedRequest.createdAt && (
+                      <p className="mt-1"><span className="font-medium">Last updated:</span> {format(new Date(selectedRequest.updatedAt), 'MMM d, yyyy')}</p>
+                    )}
+                    {selectedRequest.resendCount > 0 && (
+                      <p className="mt-1"><span className="font-medium">Resent:</span> {selectedRequest.resendCount} time{selectedRequest.resendCount > 1 ? 's' : ''}</p>
+                    )}
+                    {selectedRequest.isModified && (
+                      <p className="mt-1 text-amber-600"><span className="font-medium">Note:</span> User modified this request before resending</p>
+                    )}
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold mb-1">Description</h4>
-                  <p className="bg-gray-50 p-3 rounded">{selectedRequest.description || "No description provided"}</p>
+                  <p className="bg-gray-50 p-3 rounded">
+                    {viewOriginalContent && selectedRequest.originalContent?.description
+                      ? selectedRequest.originalContent.description 
+                      : (selectedRequest.description || "No description provided")}
+                  </p>
                 </div>
                 
                 {selectedRequest.videoId && (
                   <div>
-                    <h4 className="font-semibold mb-1">Selected YouTube Video</h4>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <p><span className="font-medium">Title:</span> {selectedRequest.videoTitle}</p>
-                      <p><span className="font-medium">YouTube ID:</span> {selectedRequest.videoId}</p>
-                      {selectedRequest.youtubeUrl && (
-                        <div className="mt-2">
+                    <h4 className="font-semibold mb-1">YouTube Video</h4>
+                    <div className="bg-gray-50 p-3 rounded flex flex-col">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        <div>
+                          <p className="font-medium">{viewOriginalContent && selectedRequest.originalContent?.videoTitle ? selectedRequest.originalContent.videoTitle : selectedRequest.videoTitle}</p>
+                          <p className="text-sm text-gray-500">ID: {viewOriginalContent && selectedRequest.originalContent?.videoId ? selectedRequest.originalContent.videoId : selectedRequest.videoId}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="aspect-video w-full max-w-md mx-auto mt-3 overflow-hidden rounded">
+                        <iframe 
+                          width="100%" 
+                          height="100%" 
+                          src={`https://www.youtube.com/embed/${selectedRequest.videoId}`}
+                          title={selectedRequest.videoTitle || "YouTube Video"}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        ></iframe>
+                      </div>
+                      
+                      <div className="mt-2 flex justify-end">
                           <a 
                             href={selectedRequest.youtubeUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-700 flex items-center"
+                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
                           >
-                            <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5z" />
                             </svg>
-                            Open YouTube Video
+                          Open on YouTube
                           </a>
                         </div>
-                      )}
                     </div>
                   </div>
                 )}
@@ -755,15 +885,21 @@ const CarouselRequestsPage: React.FC = () => {
                 {selectedRequest.content && (
                   <div>
                     <h4 className="font-semibold mb-1">AI Generated Content</h4>
-                    <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap border border-gray-200">
-                      {selectedRequest.content}
+                    <div className="bg-gray-50 p-4 rounded-md max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-gray-200 text-sm">
+                      {viewOriginalContent && selectedRequest.originalContent?.content 
+                        ? selectedRequest.originalContent.content 
+                        : selectedRequest.content}
                     </div>
                     <div className="mt-2 flex justify-end">
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => {
-                          navigator.clipboard.writeText(selectedRequest.content || '');
+                          navigator.clipboard.writeText(
+                            viewOriginalContent && selectedRequest.originalContent?.content 
+                              ? selectedRequest.originalContent.content 
+                              : (selectedRequest.content || '')
+                          );
                           toast({
                             title: "Copied",
                             description: "Content copied to clipboard",
@@ -781,34 +917,90 @@ const CarouselRequestsPage: React.FC = () => {
                 )}
                 
                 <div>
-                  <h4 className="font-semibold mb-2">Uploaded Files</h4>
+                  <h4 className="font-semibold mb-2">User Uploaded Files</h4>
                   {selectedRequest.files.length === 0 ? (
                     <p>No files uploaded</p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {selectedRequest.files.map((file, index) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {viewOriginalContent && selectedRequest.originalContent?.files 
+                        ? (selectedRequest.originalContent.files || []).map((file, index) => (
                         <FilePreview key={index} file={file} />
-                      ))}
+                          ))
+                        : selectedRequest.files.map((file, index) => (
+                            <FilePreview key={index} file={file} />
+                          ))
+                      }
                     </div>
                   )}
                 </div>
+
+                {/* Show admin completed files section when request is completed */}
+                {selectedRequest.status === 'completed' && selectedRequest.completedFiles && selectedRequest.completedFiles.length > 0 && (
+                  <div className="mt-6 border-t pt-6">
+                    <h4 className="font-semibold mb-2 flex items-center">
+                      <span className="text-green-600 mr-2">✓</span>
+                      Files Delivered to User
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedRequest.completedFiles.map((file, index) => (
+                        <div key={index} className="border rounded p-3 flex flex-col border-green-200 bg-green-50">
+                          <div className="flex items-center mb-2">
+                            {file.url && isImageFile({...file, url: file.url}) ? (
+                              <Image className="h-4 w-4 mr-2 text-green-500" />
+                            ) : (
+                              <FileText className="h-4 w-4 mr-2 text-green-500" />
+                            )}
+                            <span className="text-sm truncate font-medium">
+                              {file.originalName || getFileName(file)}
+                            </span>
               </div>
               
-              <DialogFooter className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  {selectedRequest.status !== 'in_progress' && (
-                    <Button 
-                      onClick={() => updateRequestStatus(selectedRequest.id, 'in_progress')}
-                      className="bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300"
-                    >
-                      Mark In Progress
-                    </Button>
-                  )}
-                  
+                          {/* Show image preview for image files */}
+                          {file.url && isImageFile({...file, url: file.url}) && (
+                            <div className="mb-2 bg-white rounded p-1">
+                              <img 
+                                src={getFileUrl(file)} 
+                                alt={file.originalName || "Preview"} 
+                                className="max-h-32 mx-auto object-contain"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-end gap-2 mt-auto">
+                            <a 
+                              href={getFileUrl(file)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                            >
+                              <Eye className="h-3 w-3 mr-1" /> 
+                              View
+                            </a>
+                            <a 
+                              href={getFileUrl(file)}
+                              download={file.originalName || getFileName(file)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-green-600 hover:text-green-800 flex items-center"
+                            >
+                              <Download className="h-3 w-3 mr-1" /> 
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-start">
                   {selectedRequest.status !== 'completed' && (
                     <Button 
+                      variant="outline"
                       onClick={() => setUploadModalOpen(true)}
-                      className="bg-green-100 text-green-800 hover:bg-green-200 border border-green-300"
+                      className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
                     >
                       Complete & Send
                     </Button>
@@ -816,8 +1008,9 @@ const CarouselRequestsPage: React.FC = () => {
                   
                   {selectedRequest.status !== 'rejected' && (
                     <Button 
+                      variant="outline"
                       onClick={() => updateRequestStatus(selectedRequest.id, 'rejected')}
-                      className="bg-red-100 text-red-800 hover:bg-red-200 border border-red-300"
+                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
                     >
                       Reject
                     </Button>
@@ -933,8 +1126,9 @@ const CarouselRequestsPage: React.FC = () => {
               Cancel
             </Button>
             <Button 
+              variant="outline"
               onClick={submitCompletedCarousel} 
-              className="bg-green-100 text-green-800 hover:bg-green-200 border border-green-300" 
+              className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
               disabled={completionFiles.length === 0 || uploadingCarousel}
             >
               {uploadingCarousel ? (

@@ -1165,9 +1165,55 @@ const PostLibraryPage: React.FC = () => {
     
     const dropdownItems = () => {
       if (type === 'draft') {
-        // ... existing draft dropdown items ...
+        return [
+          {
+            id: 'edit',
+            label: 'Edit Draft',
+            icon: <PencilLine size={14} />,
+            onClick: () => editDraft(post.id)
+          },
+          {
+            id: 'schedule',
+            label: 'Schedule',
+            icon: <Calendar size={14} />,
+            onClick: () => scheduleDraft(post.id)
+          },
+          {
+            id: 'publish',
+            label: 'Publish Now',
+            icon: <Send size={14} />,
+            onClick: () => publishDraft(post.id)
+          },
+          {
+            id: 'delete',
+            label: 'Delete Draft',
+            icon: <Trash size={14} />,
+            className: 'text-red-500 hover:text-red-700',
+            onClick: () => deleteDraft(post.id)
+          }
+        ];
       } else if (type === 'scheduled') {
-        // ... existing scheduled dropdown items ...
+        return [
+          {
+            id: 'edit',
+            label: 'Edit Scheduled Post',
+            icon: <PencilLine size={14} />,
+            onClick: () => editScheduledPost(post.id)
+          },
+          {
+            id: 'publish',
+            label: 'Publish Now',
+            icon: <Send size={14} />,
+            onClick: () => publishScheduledPost(post.id)
+          },
+          {
+            id: 'delete',
+            label: 'Cancel Scheduled Post',
+            icon: <Trash size={14} />,
+            className: 'text-red-500 hover:text-red-700',
+            onClick: () => deleteScheduledPost(post.id)
+          }
+        ];
       } else if (type === 'published') {
         return [
           {
@@ -1222,7 +1268,7 @@ const PostLibraryPage: React.FC = () => {
             <DropdownMenuContent align="end">
               {dropdownItems().map((item) => (
                 <DropdownMenuItem key={item.id} className={item.className} onClick={item.onClick}>
-                  {item.icon}
+                  {item.icon && <span className="mr-2">{item.icon}</span>}
                   {item.label}
                   </DropdownMenuItem>
               ))}

@@ -238,7 +238,7 @@ const AnalyticsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-black dark:text-white">Analytics</h1>
+          {/* <h1 className="text-3xl font-bold text-black dark:text-white">Analytics</h1> */}
           <p className="text-gray-500 dark:text-gray-400">
             Insights and statistics about your platform's usage
           </p>

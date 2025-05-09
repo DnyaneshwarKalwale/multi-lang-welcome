@@ -97,6 +97,7 @@ interface NavItem {
     count: number;
     variant: 'default' | 'outline' | 'primary' | 'secondary';
   };
+  isSeparator?: boolean;
 }
 
 interface CollapsibleSidebarProps {
@@ -149,13 +150,14 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
     { title: 'Post Library', icon: FileText, path: '/dashboard/posts', badge: { count: totalPostCount, variant: 'primary' } },
     { title: 'Request Carousel', icon: Upload, path: '/dashboard/request-carousel' },
     { title: 'My Carousels', icon: LayoutGrid, path: '/dashboard/my-carousels' },
-    { title: 'Team', icon: Users, path: '/dashboard/team' },
     { title: 'Scraper', icon: Search, path: '/dashboard/scraper' },
-    { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
+    { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },
+    { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
+    { title: 'Coming Soon', icon: null, path: '', isSeparator: true },
+    { title: 'Team', icon: Users, path: '/dashboard/team' },
     { title: 'AI Writer', icon: MessageSquare, path: '/dashboard/ai' },
     { title: 'Analytics', icon: BarChart3, path: '/dashboard/analytics' },
-    { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
-    { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },
+    { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },
   ];
   
   const getUserInitials = () => {
@@ -213,12 +215,14 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
                       onClick={handleClose}
                       className={({ isActive }) => cn(
                         'flex items-center gap-3 rounded-lg px-3 py-3 transition-colors w-full',
-                        isActive 
+                        isActive && !item.isSeparator
                           ? 'bg-primary-50 text-primary' 
-                          : 'text-gray-600 hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-100',
+                        item.isSeparator && 'text-gray-400 font-semibold cursor-default hover:bg-transparent',
+                        index > navItems.findIndex(i => i.isSeparator) && !item.isSeparator && 'text-gray-400 hover:text-gray-500'
                       )}
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {!item.isSeparator && <item.icon className="h-5 w-5 flex-shrink-0" />}
                       <span className="font-medium flex-1 whitespace-nowrap">{item.title}</span>
                       {item.badge && item.badge.count > 0 && (
                         <Badge 
@@ -290,12 +294,14 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
               to={item.path}
               className={({ isActive }) => cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full',
-                isActive 
+                isActive && !item.isSeparator
                   ? 'bg-primary-50 text-primary' 
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-gray-600 hover:bg-gray-100',
+                item.isSeparator && 'text-gray-300 font-medium text-sm cursor-default hover:bg-transparent mt-2 mb-1',
+                index > navItems.findIndex(i => i.isSeparator) && !item.isSeparator && 'text-gray-400 hover:text-gray-500'
               )}
             >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
+              {!item.isSeparator && <item.icon className="h-5 w-5 flex-shrink-0" />}
               <span className="font-medium flex-1 whitespace-nowrap">{item.title}</span>
               {item.badge && item.badge.count > 0 && (
                 <Badge 

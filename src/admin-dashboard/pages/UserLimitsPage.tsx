@@ -97,7 +97,8 @@ const UserLimitsPage: React.FC = () => {
 
   const handleUpdateLimit = async (userId: string, newLimit: number) => {
     try {
-      await axios.put(
+      console.log('Updating limit for user:', userId, 'to:', newLimit);
+      const response = await axios.put(
         `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${userId}`,
         { limit: newLimit },
         {
@@ -107,17 +108,48 @@ const UserLimitsPage: React.FC = () => {
         }
       );
 
-      // Update local state
-      setUserLimits(prev => prev.map(limit => 
-        limit.userId === userId 
-          ? { ...limit, limit: newLimit }
-          : limit
-      ));
+      console.log('Update response:', response.data);
 
-      toast({
-        title: "Success",
-        description: "User limit updated successfully.",
-      });
+      if (response.data.success) {
+        // Update local state with the new data
+        setUserLimits(prev => prev.map(limit => 
+          limit.userId === userId 
+            ? { 
+                ...limit, 
+                limit: response.data.data.limit,
+                dailyLimit: response.data.data.dailyLimit,
+                count: response.data.data.count,
+                remaining: response.data.data.remaining,
+                adminModified: response.data.data.adminModified
+              }
+            : limit
+        ));
+
+        // Update filtered limits as well
+        setFilteredLimits(prev => prev.map(limit => 
+          limit.userId === userId 
+            ? { 
+                ...limit, 
+                limit: response.data.data.limit,
+                dailyLimit: response.data.data.dailyLimit,
+                count: response.data.data.count,
+                remaining: response.data.data.remaining,
+                adminModified: response.data.data.adminModified
+              }
+            : limit
+        ));
+
+        toast({
+          title: "Success",
+          description: "User limit updated successfully.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: response.data.message || "Failed to update user limit.",
+        });
+      }
     } catch (error) {
       console.error("Error updating user limit:", error);
       toast({
@@ -141,7 +173,7 @@ const UserLimitsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-black dark:text-white">User Limits</h1>
+          {/* <h1 className="text-3xl font-bold text-black dark:text-white">User Limits</h1> */}
           <p className="text-gray-500 dark:text-gray-400">
             Manage content generation limits for users
           </p>
