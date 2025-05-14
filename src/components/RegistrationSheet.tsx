@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import { X, Linkedin, AlertCircle } from "lucide-react";
+import { Linkedin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginSheet } from "./LoginSheet";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { BrandOutIcon } from "@/components/BrandOutIcon";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/useLanguage";
@@ -80,7 +79,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     // Open login sheet with a small delay to allow for the transition
     setTimeout(() => {
       setOpenLoginSheet(true);
-    }, 300);
+    }, 100);
   };
   
   // Animation variants
@@ -106,33 +105,100 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="bg-white border-none p-0 w-full sm:max-w-md overflow-hidden">
+      <AnimatePresence>
+        {open && (
           <motion.div 
-            className="p-6 sm:p-8 rounded-xl w-full h-full overflow-y-auto overflow-x-hidden bg-gradient-to-b from-blue-50 to-white"
+            className="fixed inset-0 z-50 flex items-start justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={handleClose} />
+            
+            <motion.div 
+              className="w-full h-full flex flex-col z-50"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 h-full">
+                {/* Left side with content and branding - hidden on mobile */}
+                <div className="hidden md:flex flex-col relative bg-gradient-to-br from-primary/10 to-slate-900 text-white">
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-br from-primary/20 to-slate-900"
+                    style={{
+                      backgroundImage: "radial-gradient(circle at 25% 25%, rgba(74, 76, 252, 0.2) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(74, 76, 252, 0.1) 0%, transparent 50%)"
+                    }}
+                  />
+                  
+                  <div className="relative z-10 p-8">
+                    <a href="/" className="inline-block" onClick={(e) => {
+                      e.preventDefault();
+                      onOpenChange(false);
+                      navigate('/');
+                    }}>
+                      <BrandOutIcon className="w-10 h-10" />
+                    </a>
+                  </div>
+                  
+                  <div className="flex-1 relative z-10 flex flex-col justify-center px-12 pb-12">
+                    <div className="space-y-6 max-w-md">
+                      <h1 className="text-3xl font-bold">Not a Generic AI Content Tool</h1>
+                      <p className="text-lg text-white/80">
+                        It's like working with an experienced marketer who knows your brand inside out.
+                      </p>
+                      
+                      <div className="pt-4">
+                        <div className="flex -space-x-2">
+                          <img className="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/72.jpg" alt="User" />
+                          <img className="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" />
+                          <img className="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/45.jpg" alt="User" />
+                          <img className="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/men/67.jpg" alt="User" />
+                          <img className="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/52.jpg" alt="User" />
+                        </div>
+                        <div className="mt-3">
+                          <div className="flex items-center text-yellow-400">
+                            {[...Array(5)].map((_, i) => (
+                              <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <p className="text-sm mt-1 text-white/90">Loved by founders, freelancers and professionals.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right side with registration form */}
+                <div className="h-full flex flex-col bg-white overflow-y-auto">
+                  <div className="md:hidden p-6">
+                    <a href="/" className="inline-block" onClick={(e) => {
+                      e.preventDefault();
+                      onOpenChange(false);
+                      navigate('/');
+                    }}>
+                      <BrandOutIcon className="w-8 h-8" />
+                    </a>
+                  </div>
+                  
+                  <div className="flex-1 flex items-center justify-center p-6 md:p-8">
+                    <motion.div 
+                      className="w-full max-w-md"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <div className="flex justify-between items-center mb-8">
-              <motion.div 
-                className="flex items-center gap-3"
-                variants={itemVariants}
-              >
-                <BrandOutIcon className="w-12 h-12" />
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {t('createAccount') || 'Create your account'}
+                      <motion.div variants={itemVariants} className="mb-8">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                          {t('create account') || 'Create your account'}
                 </h2>
+                        <p className="text-gray-600">
+                          {t('signup text') || 'Sign up for a new account to get started.'}
+                        </p>
               </motion.div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleClose}
-                className="text-gray-500 hover:text-gray-700 rounded-full"
-              >
-                <X size={20} />
-              </Button>
-            </div>
             
             {error && (
               <motion.div variants={itemVariants}>
@@ -152,7 +218,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                   disabled={loading}
                 >
                   <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" className="w-5 h-5" />
-                  <span>{t('continueWithGoogle') || 'Continue with Google'}</span>
+                            <span>{t('continue with google') || 'Continue with Google'}</span>
                 </Button>
               </motion.div>
               
@@ -174,7 +240,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                   disabled={loading}
                 >
                   <Linkedin size={18} className="text-[#0077B5]" />
-                  <span>{t('continueWithLinkedIn') || 'Continue with LinkedIn'}</span>
+                            <span>{t('continue with linkedin') || 'Continue with LinkedIn'}</span>
                 </Button>
               </motion.div>
             </div>
@@ -184,7 +250,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500 uppercase text-xs tracking-wider">{t('orContinueWithEmail') || 'Or continue with email'}</span>
+                          <span className="px-2 bg-white text-gray-500 uppercase text-xs tracking-wider">OR CONTINUE WITH</span>
               </div>
             </motion.div>
             
@@ -197,11 +263,11 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1.5">{t('firstName') || 'First name'}</label>
+                            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1.5">{t('first name') || 'First Name'}</label>
                   <div className="relative">
                     <Input 
                       id="firstName" 
-                      placeholder={t('enterFirstName') || 'Enter your first name'}
+                                placeholder={t('enter first name') || 'Enter your first name'}
                       className="bg-white border-gray-200 h-12 pl-4 
                                  focus:border-primary focus:ring-primary 
                                  transition-all text-gray-900 shadow-sm"
@@ -213,11 +279,11 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">{t('lastName') || 'Last name'}</label>
+                            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">{t('last name') || 'Last Name'}</label>
                   <div className="relative">
                     <Input 
                       id="lastName" 
-                      placeholder={t('enterLastName') || 'Enter your last name'}
+                                placeholder={t('enter last name') || 'Enter your last name'}
                       className="bg-white border-gray-200 h-12 pl-4 
                                  focus:border-primary focus:ring-primary 
                                  transition-all text-gray-900 shadow-sm"
@@ -230,12 +296,12 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
               </div>
               
               <motion.div variants={itemVariants}>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">{t('email') || 'Email'}</label>
+                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">{t('email') || 'Email Address'}</label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="you@example.com" 
+                              placeholder="Enter your email" 
                     className="bg-white border-gray-200 h-12 pl-4 
                                focus:border-primary focus:ring-primary 
                                transition-all text-gray-900 shadow-sm"
@@ -252,7 +318,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                   <Input 
                     id="password" 
                     type="password" 
-                    placeholder={t('createSecurePassword') || 'Create a secure password (min. 8 characters)'}
+                              placeholder={t('create secure password') || 'Create a secure password (min. 8 characters)'}
                     className="bg-white border-gray-200 h-12 pl-4 
                                focus:border-primary focus:ring-primary 
                                transition-all text-gray-900 shadow-sm"
@@ -276,53 +342,48 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      {t('creatingAccount') || 'Creating account...'}
+                                {t('creating account') || 'Creating account...'}
                     </div>
-                  ) : t('createAccount') || 'Create account'}
+                            ) : t('sign up') || 'Sign up'}
                 </Button>
               </motion.div>
             </motion.form>
             
             <motion.p 
-              className="text-center mt-8 text-sm text-gray-500"
+                        className="text-center mt-6 text-sm text-gray-500"
               variants={itemVariants}
             >
-              {t('alreadyHaveAccount') || 'Already have an account?'}{' '}
+                        {t('already have account') || 'Already have an account?'}{' '}
               <a 
                 href="#" 
                 className="text-primary hover:text-primary-600 transition-colors font-medium" 
                 onClick={handleLogin}
               >
-                {t('logIn') || 'Log in'}
+                          {t('log in') || 'Log in'}
               </a>
             </motion.p>
             
             <motion.p
-              className="text-center mt-6 text-xs text-gray-600"
+                        className="text-center mt-5 text-xs text-gray-600"
               variants={itemVariants}
             >
-              {t('byConnecting') || 'By continuing, you agree to our'}{' '}
+                        {t('by connecting') || 'By continuing, you agree to our'}{' '}
               <a href="#" className="text-primary hover:text-primary-600 underline">
-                {t('termsService') || 'Terms of Service'}
+                          {t('terms of service') || 'Terms of Service'}
               </a>
               {' '}{t('and') || 'and'}{' '}
               <a href="#" className="text-primary hover:text-primary-600 underline">
-                {t('privacyPolicy') || 'Privacy Policy'}
+                          {t('privacy policy') || 'Privacy Policy'}
               </a>.
             </motion.p>
-
-            <motion.div 
-              className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100 mt-8 mb-2"
-              variants={itemVariants}
-            >
-              <Linkedin className="flex-shrink-0 w-5 h-5 mr-3 text-[#0077B5]" />
-              <p className="text-sm text-gray-700">
-                {t('connectLinkedInPrompt') || 'Connect your LinkedIn account to share content directly from BrandOut to your professional network.'}
-              </p>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
-        </SheetContent>
-      </Sheet>
+        )}
+      </AnimatePresence>
       
       {/* Add the login sheet */}
       {openLoginSheet && (

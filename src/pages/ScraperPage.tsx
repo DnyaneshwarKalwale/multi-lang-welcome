@@ -87,6 +87,10 @@ interface YouTubeVideo {
   duration: string;
   view_count: number;
   upload_date: string;
+  transcript?: string;
+  formattedTranscript?: string[];
+  language?: string;
+  is_generated?: boolean;
 }
 
 interface YouTubeChannelResult {
@@ -119,6 +123,7 @@ const ScraperPage: React.FC = () => {
   const [loadingTranscriptIds, setLoadingTranscriptIds] = useState<Set<string>>(new Set());
   const [retryCount, setRetryCount] = useState<Record<string, number>>({});
   const [lastSearchedChannel, setLastSearchedChannel] = useState<string>('');
+  const [videosWithTranscripts, setVideosWithTranscripts] = useState<Set<string>>(new Set());
 
   // Helper functions for toast
   const toastSuccess = (message: string) => {
@@ -599,7 +604,7 @@ const ScraperPage: React.FC = () => {
       
       // Start fallback method (yt-dlp)
       ytdlpPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
-            method: "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId })
       }).then(res => {
@@ -628,6 +633,35 @@ const ScraperPage: React.FC = () => {
       ];
       
       transcriptData = await Promise.race(safePromises);
+      
+      // Successfully got transcript data, now save and process it
+      if (transcriptData && (transcriptData.transcript || transcriptData.success)) {
+        // Find the video in youtubeChannelResult
+        const foundVideo = youtubeChannelResult?.videos.find(v => v.id === videoId);
+        
+        if (!foundVideo) {
+          toastError("Could not find video data to save transcript");
+          return;
+        }
+        
+        // Extract transcript from response data
+        const transcript = transcriptData.transcript || '';
+        const language = transcriptData.language || 'en';
+        const is_generated = transcriptData.is_generated || false;
+        
+        // Call the save function with the transcript data - use transcript as formattedTranscript too
+        await handleSaveVideoWithTranscript(
+          foundVideo, 
+          transcript,
+          language,
+          is_generated,
+          [transcript] // Use raw transcript instead of formatted bullet points
+        );
+        
+        toastSuccess("Transcript saved successfully!");
+      } else {
+        toastError("Received invalid transcript data");
+      }
     } catch (error: any) {
       console.error("Error fetching transcript:", error);
       toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
@@ -643,7 +677,7 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Update: modified to handle formatted transcript from yt-dlp
+  // Update: modified to preserve the raw transcript
   const handleSaveVideoWithTranscript = async (
     video: YouTubeVideo, 
     transcript: string, 
@@ -652,8 +686,8 @@ const ScraperPage: React.FC = () => {
     formattedTranscript: string[] | null = null
   ) => {
     try {
-      // Format the transcript into bullet points if not already provided
-      const bulletPoints = formattedTranscript || formatTranscriptToBulletPoints(transcript);
+      // Get the formatted transcript or use the raw transcript
+      const bulletPoints = formattedTranscript || [transcript];
       
       // Current timestamp for consistent sorting
       const savedTimestamp = new Date().toISOString();
@@ -662,7 +696,7 @@ const ScraperPage: React.FC = () => {
       const enhancedVideo = {
         ...video,
         transcript: transcript, // Store the full transcript
-        formattedTranscript: bulletPoints, // Store the formatted bullet points
+        formattedTranscript: bulletPoints, // Store as array with raw transcript
         language: language,
         is_generated: is_generated,
         savedAt: savedTimestamp,
@@ -717,6 +751,13 @@ const ScraperPage: React.FC = () => {
       // Save back to localStorage
       localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
       
+      // Update videosWithTranscripts state
+      setVideosWithTranscripts(prev => {
+        const newSet = new Set(prev);
+        newSet.add(video.id);
+        return newSet;
+      });
+      
       // Try creating carousel entry if backend save was successful
       if (backendSaveSuccess) {
         try {
@@ -747,52 +788,17 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Add a helper function to format transcript to bullet points
+  // Add a helper function to maintain the raw transcript
   const formatTranscriptToBulletPoints = (text: string): string[] => {
     if (!text || text.length < 10) {
       return ["No transcript content available"];
     }
     
-    // Split by sentences and create bullet points
-    const sentences = text.replace(/([.?!])\s+/g, "$1|").split("|");
-    const bulletPoints = [];
-    
-    // Process sentences to create meaningful bullet points
-    for (let i = 0; i < sentences.length; i++) {
-      const sentence = sentences[i].trim();
-      
-      // Only include meaningful sentences with proper length
-      if (sentence.length > 15 && sentence.length < 200) {
-        // Filter out timestamps, speaker identification, and other non-content
-        if (!sentence.match(/^\d+:\d+/) && !sentence.match(/^speaker\s\d+:/i)) {
-          bulletPoints.push(sentence);
-          
-          // Limit to 8 bullet points for carousel use
-          if (bulletPoints.length >= 8) break;
-        }
-      }
-    }
-    
-    // If we couldn't extract meaningful bullets, create some based on the text length
-    if (bulletPoints.length === 0) {
-      const words = text.split(' ');
-      const chunkSize = Math.floor(words.length / 8);
-      
-      for (let i = 0; i < 8; i++) {
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, words.length);
-        const chunk = words.slice(start, end).join(' ');
-        
-        if (chunk.length > 10) {
-          bulletPoints.push(chunk);
-        }
-      }
-    }
-    
-    return bulletPoints.length > 0 ? bulletPoints : ["No meaningful transcript content available"];
+    // Just return the raw transcript as a single item in the array
+    return [text];
   };
 
-  // Update the button text in the video card to show retry status
+  // Update the button text in the video card to show retry status or transcript availability
   const getTranscriptButtonText = (videoId: string) => {
     if (loadingTranscriptIds.has(videoId)) {
       const retry = retryCount[videoId] || 0;
@@ -802,7 +808,12 @@ const ScraperPage: React.FC = () => {
       return "Loading...";
     }
     
-    // Remove check for youtubeTranscript
+    // Check if this video has a transcript
+    if (videosWithTranscripts.has(videoId)) {
+      return "Transcript Available";
+    }
+    
+    // Default case - no transcript yet
     return "Get Transcript";
   };
 
@@ -900,6 +911,32 @@ const ScraperPage: React.FC = () => {
       return newSet;
     });
   };
+
+  // Check for videos with transcripts when component mounts or localStorage changes
+  useEffect(() => {
+    try {
+      const savedVideosJSON = localStorage.getItem("savedYoutubeVideos");
+      if (savedVideosJSON) {
+        const savedVideos = JSON.parse(savedVideosJSON);
+        
+        // Collect video IDs that have transcripts
+        const videoIdsWithTranscripts = new Set<string>();
+        
+        savedVideos.forEach((video: any) => {
+          if (video.transcript && 
+              typeof video.transcript === 'string' && 
+              video.transcript.trim().length > 0) {
+            videoIdsWithTranscripts.add(video.id);
+          }
+        });
+        
+        // Update state with videos that have transcripts
+        setVideosWithTranscripts(videoIdsWithTranscripts);
+      }
+    } catch (error) {
+      console.error("Error checking for videos with transcripts:", error);
+    }
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -1237,7 +1274,7 @@ const ScraperPage: React.FC = () => {
                     </Button>
                   </div>
                     <Button
-                    variant="default" 
+                    variant={videosWithTranscripts.has(video.id) ? "secondary" : "default"} 
                     size="sm" 
                     className={`w-full ${loadingTranscriptIds.has(video.id) ? "opacity-70" : ""}`}
                     onClick={() => handleGetTranscript(video.id)}

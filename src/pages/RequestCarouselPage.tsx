@@ -303,6 +303,7 @@ const RequestCarouselPage: React.FC = () => {
   // Saved videos state
   const [savedVideos, setSavedVideos] = useState<YouTubeVideo[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [videosWithTranscripts, setVideosWithTranscripts] = useState<Set<string>>(new Set());
   
   // Transcript fetching states
   const [isFetchingTranscript, setIsFetchingTranscript] = useState(false);
@@ -667,9 +668,11 @@ const RequestCarouselPage: React.FC = () => {
     });
   };
 
-  // Format transcript into readable bullet points
+  // Format transcript into readable text (keep raw transcript)
   const formatTranscript = (transcript: string): string[] => {
-    if (!transcript) return [];
+    if (!transcript || transcript.length < 10) {
+      return ["No transcript content available"];
+    }
     
     // Just return the raw transcript as a single item in the array
     return [transcript];
@@ -779,11 +782,14 @@ const RequestCarouselPage: React.FC = () => {
   
   // Helper function to handle successful transcript retrieval
   const handleTranscriptSuccess = async (video: YouTubeVideo, data: any) => {
+    // Get the raw transcript text
+    const rawTranscript = data.transcript || '';
+    
     // Update the video with the transcript
     const updatedVideo: YouTubeVideo = {
       ...video,
-      transcript: data.transcript,
-      formattedTranscript: data.formattedTranscript || formatTranscript(data.transcript),
+      transcript: rawTranscript,
+      formattedTranscript: [rawTranscript], // Just use raw transcript
       language: data.language || "en",
       is_generated: data.is_generated || false
     };
@@ -791,10 +797,17 @@ const RequestCarouselPage: React.FC = () => {
     // Update selected video state
     setSelectedVideo(updatedVideo);
     
-    // Set the formatted transcript for display
-    const formattedData = data.formattedTranscript || formatTranscript(data.transcript);
-    setGeneratedTranscript(formattedData);
-          setCurrentSlide(0);
+    // Set the raw transcript for display
+    setGeneratedTranscript([rawTranscript]);
+    setCurrentSlide(0);
+    
+    // Update the videos with transcripts set
+    setVideosWithTranscripts(prev => {
+      const newSet = new Set(prev);
+      newSet.add(video.id);
+      if (video.videoId) newSet.add(video.videoId);
+      return newSet;
+    });
     
     // Save to local and backend storage
     await saveVideoWithTranscript(updatedVideo);
@@ -2279,13 +2292,15 @@ const RequestCarouselPage: React.FC = () => {
                             <div className="py-8 flex items-center justify-center">
                               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
-                          ) : generatedTranscript.length > 0 ? (
+                          ) : generatedTranscript.length > 0 || (selectedVideo?.transcript && selectedVideo.transcript.length > 0) ? (
                             <>
-                              <ScrollArea className="h-[200px] rounded-md border p-4 mb-4">
-                                <div>
-                                  <p className="text-sm whitespace-pre-line">{generatedTranscript[0]}</p>
-                                </div>
-                              </ScrollArea>
+                              <div className="rounded-md border p-4 mb-4">
+                                <ScrollArea className="h-[300px]">
+                                  <p className="text-sm whitespace-pre-line">
+                                    {selectedVideo?.transcript || (generatedTranscript.length > 0 ? generatedTranscript[0] : "No transcript content available")}
+                                  </p>
+                                </ScrollArea>
+                              </div>
                               
                               {/* LinkedIn Content Generation Section */}
                               <div className="mt-4 border-t pt-4">

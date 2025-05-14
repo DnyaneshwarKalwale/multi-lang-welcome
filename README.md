@@ -1,69 +1,162 @@
-# Welcome to your Lovable project
+# Multi-Language Welcome Application
 
-## Project info
+A modern, feature-rich web application built with React, TypeScript, and Vite, featuring multi-language support, authentication, and a comprehensive dashboard.
 
-**URL**: https://lovable.dev/projects/f917ac87-cde2-461e-844d-3aebbdb4919f
+## 🚀 Features
 
-## How can I edit this code?
+- 🌐 Multi-language support with i18next
+- 🔐 Authentication system with email verification
+- 🎨 Modern UI with Tailwind CSS and shadcn/ui components
+- 📱 Responsive design
+- 🎯 Interactive onboarding flow
+- 📊 Dashboard with analytics
+- 🖼️ Image gallery and editor
+- 🤖 AI-powered writing assistant
+- 📈 Analytics and reporting
+- 💳 Billing and subscription management
+- 👥 Team collaboration features
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
+### Frontend
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui components
+- React Router v6
+- React Query
+- Framer Motion
+- i18next for internationalization
+- Various UI libraries (Radix UI, React Joyride, etc.)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f917ac87-cde2-461e-844d-3aebbdb4919f) and start prompting.
+### Backend
+- Node.js
+- Express.js
+- MongoDB (based on the project structure)
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📦 Installation
 
-**Use your preferred IDE**
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd multi-lang-welcome
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Install dependencies:
+```bash
+npm install
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. Create a `.env` file in the root directory and add necessary environment variables:
+```env
+VITE_API_URL=your_api_url
+VITE_APP_ENV=development
+```
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🏗️ Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+multi-lang-welcome/
+├── src/
+│   ├── admin-dashboard/    # Admin panel components
+│   ├── components/         # Reusable UI components
+│   ├── contexts/          # React context providers
+│   ├── editor/            # Rich text editor implementation
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utility functions and libraries
+│   ├── models/            # TypeScript interfaces and types
+│   ├── pages/             # Page components
+│   ├── services/          # API services
+│   ├── styles/            # Global styles
+│   ├── utils/             # Helper functions
+│   ├── App.tsx            # Main application component
+│   └── main.tsx           # Application entry point
+├── public/                # Static assets
+├── dist/                  # Build output
+└── various config files   # Configuration files
+```
 
-**Use GitHub Codespaces**
+## 🔑 Key Features Implementation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Authentication
+- Email-based authentication
+- OAuth integration
+- Protected routes
+- Session management
 
-## What technologies are used for this project?
+### Multi-language Support
+- i18next integration
+- Language switching
+- RTL support
 
-This project is built with .
+### Dashboard
+- Analytics overview
+- Team management
+- Content creation tools
+- User settings
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Editor
+- Rich text editing
+- Image manipulation
+- Template system
+- Export functionality
 
-## How can I deploy this project?
+## 🚀 Available Scripts
 
-Simply open [Lovable](https://lovable.dev/projects/f917ac87-cde2-461e-844d-3aebbdb4919f) and click on Share -> Publish.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview production build
 
-## I want to use a custom domain - is that possible?
+## 🔧 Configuration
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Tailwind CSS
+The project uses Tailwind CSS with a custom configuration in `tailwind.config.ts`.
+
+### TypeScript
+TypeScript configuration is split between:
+- `tsconfig.json` - Base configuration
+- `tsconfig.app.json` - Application-specific configuration
+- `tsconfig.node.json` - Node.js specific configuration
+
+### Vite
+Vite configuration is in `vite.config.ts` with React and SWC support.
+
+## 📱 Responsive Design
+
+The application is fully responsive and works on:
+- Desktop browsers
+- Tablets
+- Mobile devices
+
+## 🔒 Security
+
+- Protected routes
+- CSRF protection
+- Secure authentication
+- Environment variable management
+
+## 🎨 Theming
+
+- Light theme (default)
+- Custom color schemes
+- Consistent design system
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
