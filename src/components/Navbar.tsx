@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { BrandOutHorizontalLogo, BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutHorizontalLogo, BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
@@ -155,7 +155,7 @@ export function Navbar({ onLoginClick, onRegisterClick }: NavbarProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <BrandOutIcon className="w-16 h-16" />
+                <BrandOutLogotype className="h-16 w-auto" />
               </motion.div>
               
               <div className="flex flex-col items-center space-y-8 w-full">

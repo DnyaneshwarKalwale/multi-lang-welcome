@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ChevronRight, Check, Star, Linkedin, Users, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 
 interface IndexHeroProps {
   onLogin: () => void;

@@ -4,7 +4,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Users, User, UserPlus, UserCircle, Check, Linkedin } from "lucide-react";
 import { motion } from "framer-motion";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import { Button } from "@/components/ui/button";
 
 export default function TeamSelectionPage() {
@@ -40,6 +40,7 @@ export default function TeamSelectionPage() {
         >
           <div className="relative">
             <BrandOutIcon className="w-20 h-20" />
+            <BrandOutLogotype className="h-20 w-auto" />
             <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
         </motion.div>

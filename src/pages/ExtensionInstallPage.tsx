@@ -6,7 +6,7 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useLanguage } from "@/useLanguage";
 import { motion } from "framer-motion";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import { Check, Chrome, Puzzle, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -100,17 +100,7 @@ export default function ExtensionInstallPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <BrandOutIcon className="w-24 h-24" />
-            <motion.div 
-              className="absolute -bottom-2 -right-2 text-[#0077B5]"
-              animate={{ 
-                rotate: [0, 10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <Linkedin size={26} className="drop-shadow-md" />
-            </motion.div>
+            <BrandOutLogotype className="h-24 w-auto" />
           </div>
         </motion.div>
         

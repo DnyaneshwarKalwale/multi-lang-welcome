@@ -596,7 +596,7 @@ const ScraperPage: React.FC = () => {
       ytTranscriptPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, useScraperApi: true })
+        body: JSON.stringify({ videoId, useScraperApi: false })
       }).then(res => {
         if (!res.ok) throw new Error(`Primary method failed: ${res.status}`);
         return res.json();
@@ -620,7 +620,10 @@ const ScraperPage: React.FC = () => {
             toastSuccess("Transcript fetched successfully (primary method)");
             return data;
           },
-          () => new Promise((_, reject) => setTimeout(() => reject(new Error("Primary method failed")), 100000))
+          (err) => {
+            console.error("Primary method failed:", err);
+            return new Promise((_, reject) => setTimeout(() => reject(new Error(`Primary method failed: ${err.message}`)), 100))
+          }
         ),
         ytdlpPromise.then(
           data => {
@@ -628,11 +631,57 @@ const ScraperPage: React.FC = () => {
             toastSuccess("Transcript fetched successfully (fallback method)");
             return data;
           },
-          () => new Promise((_, reject) => setTimeout(() => reject(new Error("Fallback method failed")), 100000))
+          (err) => {
+            console.error("Fallback method failed:", err);
+            return new Promise((_, reject) => setTimeout(() => reject(new Error(`Fallback method failed: ${err.message}`)), 100))
+          }
         )
       ];
       
-      transcriptData = await Promise.race(safePromises);
+      try {
+        transcriptData = await Promise.race(safePromises);
+      } catch (raceError) {
+        console.error("Both transcript methods failed:", raceError);
+        
+        // Try them sequentially as a last resort, with the most reliable first
+        try {
+          console.log("Trying yt-dlp method sequentially");
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId })
+          });
+          
+          if (response.ok) {
+            transcriptData = await response.json();
+            console.log("Sequential yt-dlp method succeeded");
+          } else {
+            throw new Error(`Sequential yt-dlp method failed: ${response.status}`);
+          }
+        } catch (sequential1Error) {
+          console.error("Sequential yt-dlp method failed:", sequential1Error);
+          
+          // Try the primary method as a last resort
+          try {
+            console.log("Trying primary method sequentially");
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ videoId, useScraperApi: false })
+            });
+            
+            if (response.ok) {
+              transcriptData = await response.json();
+              console.log("Sequential primary method succeeded");
+            } else {
+              throw new Error(`Sequential primary method failed: ${response.status}`);
+            }
+          } catch (sequential2Error) {
+            console.error("All transcript methods failed");
+            throw new Error("All transcript methods failed");
+          }
+        }
+      }
       
       // Successfully got transcript data, now save and process it
       if (transcriptData && (transcriptData.transcript || transcriptData.success)) {
@@ -649,22 +698,44 @@ const ScraperPage: React.FC = () => {
         const language = transcriptData.language || 'en';
         const is_generated = transcriptData.is_generated || false;
         
-        // Call the save function with the transcript data - use transcript as formattedTranscript too
-        await handleSaveVideoWithTranscript(
-          foundVideo, 
-          transcript,
-          language,
-          is_generated,
-          [transcript] // Use raw transcript instead of formatted bullet points
-        );
+        if (!transcript || transcript.length < 20) {
+          toastError("Retrieved transcript is too short or empty. Try a different video.");
+          return;
+        }
         
-        toastSuccess("Transcript saved successfully!");
+        try {
+          // Call the save function with the transcript data - use transcript as formattedTranscript too
+          await handleSaveVideoWithTranscript(
+            foundVideo, 
+            transcript,
+            language,
+            is_generated,
+            [transcript] // Use raw transcript instead of formatted bullet points
+          );
+          
+          toastSuccess("Transcript saved successfully!");
+        } catch (saveError) {
+          console.error("Error saving transcript:", saveError);
+          toastError("Transcript fetched but could not be saved. Try again.");
+        }
       } else {
-        toastError("Received invalid transcript data");
+        toastError("Received invalid transcript data or the video has no transcript");
       }
     } catch (error: any) {
       console.error("Error fetching transcript:", error);
-      toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
+      
+      // Provide better error messages based on error type
+      let errorMsg = error instanceof Error ? error.message : "Failed to fetch transcript";
+      
+      if (error.code === 'ERR_NETWORK') {
+        errorMsg = "Network error: Check your connection and make sure the API server is running.";
+      } else if (error.response?.status === 500) {
+        errorMsg = "Server error: The transcript service is experiencing technical issues.";
+      } else if (error.response?.status === 404) {
+        errorMsg = "No transcript found: This video might not have captions available.";
+      }
+      
+      toastError(errorMsg);
     } finally {
       setLoadingTranscriptIds(prev => {
         const newSet = new Set(prev);
@@ -706,9 +777,41 @@ const ScraperPage: React.FC = () => {
         userId: user?.id || 'anonymous'
       };
       
-      let backendSaveSuccess = false;
+      // Save to localStorage first to ensure we don't lose data even if backend fails
+      try {
+        // Get existing videos from localStorage
+        const existingVideosJSON = localStorage.getItem("savedYoutubeVideos");
+        let existingVideos = existingVideosJSON ? JSON.parse(existingVideosJSON) : [];
+        
+        // Check if the video already exists
+        const existingIndex = existingVideos.findIndex((v: any) => v.id === enhancedVideo.id);
+        
+        if (existingIndex >= 0) {
+          // Update the existing video
+          existingVideos[existingIndex] = enhancedVideo;
+        } else {
+          // Add the new video
+          existingVideos.push(enhancedVideo);
+        }
+        
+        // Save back to localStorage
+        localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
+        console.log("Saved transcript to localStorage successfully");
+        
+        // Update videosWithTranscripts state
+        setVideosWithTranscripts(prev => {
+          const newSet = new Set(prev);
+          newSet.add(video.id);
+          return newSet;
+        });
+      } catch (localStorageError) {
+        console.error("Error saving to localStorage:", localStorageError);
+        toastError("Error saving locally: " + (localStorageError.message || "Unknown error"));
+        // Continue with backend save attempt even if localStorage fails
+      }
       
-      // Save to backend first
+      // Now try to save to backend
+      let backendSaveSuccess = false;
       try {
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
@@ -718,73 +821,66 @@ const ScraperPage: React.FC = () => {
         const backendResponse = await axios.post(apiUrl, {
           video: enhancedVideo,
           userId: user?.id || 'anonymous'
-        });
+        }, { timeout: 10000 }); // Add timeout to prevent hanging requests
         
         if (backendResponse.data.success) {
           backendSaveSuccess = true;
           toastSuccess("Video saved to cloud with transcript!");
+          
+          // Try creating carousel entry if backend save was successful
+          try {
+            const carouselApiUrl = baseUrl.endsWith('/api')
+              ? `${baseUrl}/youtube-carousels`
+              : `${baseUrl}/api/youtube-carousels`;
+            
+            axios.post(carouselApiUrl, {
+              videos: [enhancedVideo],
+              userId: user?.id || 'anonymous'
+            }, { timeout: 10000 }) // Non-blocking and with timeout
+              .then(response => {
+                if (response.data.success) {
+                  console.log("Created carousel for the video");
+                }
+              })
+              .catch(error => {
+                console.error("Error creating carousel:", error);
+              });
+          } catch (carouselError) {
+            console.error("Error setting up carousel creation:", carouselError);
+            // Don't show error to user since the video was already saved
+          }
         } else {
           console.warn("Backend save warning:", backendResponse.data.message);
-          toastError("Failed to save video to cloud: " + backendResponse.data.message);
+          // Don't show error toast since localStorage save succeeded
         }
-      } catch (backendError) {
-        console.error("Error saving to backend:", backendError);
-        toastError("Failed to save to cloud. Saving locally as backup.");
-        // Continue with local storage save even if backend save fails
-      }
-      
-      // Save the video and transcript to localStorage as backup
-      const existingVideosJSON = localStorage.getItem("savedYoutubeVideos");
-      let existingVideos = existingVideosJSON ? JSON.parse(existingVideosJSON) : [];
-      
-      // Check if the video already exists
-      const existingIndex = existingVideos.findIndex((v: any) => v.id === enhancedVideo.id);
-      
-      if (existingIndex >= 0) {
-        // Update the existing video
-        existingVideos[existingIndex] = enhancedVideo;
-      } else {
-        // Add the new video
-        existingVideos.push(enhancedVideo);
-      }
-      
-      // Save back to localStorage
-      localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
-      
-      // Update videosWithTranscripts state
-      setVideosWithTranscripts(prev => {
-        const newSet = new Set(prev);
-        newSet.add(video.id);
-        return newSet;
-      });
-      
-      // Try creating carousel entry if backend save was successful
-      if (backendSaveSuccess) {
-        try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const carouselApiUrl = baseUrl.endsWith('/api')
-            ? `${baseUrl}/youtube-carousels`
-            : `${baseUrl}/api/youtube-carousels`;
-          
-          const carouselResponse = await axios.post(carouselApiUrl, {
-            videos: [enhancedVideo],
-            userId: user?.id || 'anonymous'
-          });
-          
-          if (carouselResponse.data.success) {
-            toastSuccess("Created carousel for the video!");
+      } catch (backendError: any) {
+        // More detailed error logging
+        let errorDetail = "Unknown error";
+        if (backendError.code === "ERR_NETWORK") {
+          errorDetail = "Network connection error. API server may be down.";
+        } else if (backendError.response) {
+          errorDetail = `Status ${backendError.response.status}: ${backendError.response.statusText}`;
+          if (backendError.response.data?.message) {
+            errorDetail += ` - ${backendError.response.data.message}`;
           }
-        } catch (carouselError) {
-          console.error("Error creating carousel:", carouselError);
-          // Don't show error to user since we already saved the video
+        } else if (backendError.message) {
+          errorDetail = backendError.message;
         }
+        
+        console.error("Error saving to backend:", errorDetail);
+        // Don't show error toast since localStorage save succeeded
+        // and we don't want to confuse the user if backend is unavailable
       }
       
-      // Navigate to request-carousel page
+      // Navigate to request-carousel page regardless of backend success
+      // as the video is already saved in localStorage
       navigate('/dashboard/request-carousel');
-    } catch (error) {
-      console.error("Error saving video with transcript:", error);
-      toastError("Failed to save the video with transcript");
+      
+      return true;
+    } catch (error: any) {
+      console.error("Fatal error in handleSaveVideoWithTranscript:", error);
+      toastError("Failed to save the video with transcript: " + (error.message || "Unknown error"));
+      return false;
     }
   };
 

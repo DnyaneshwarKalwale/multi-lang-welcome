@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { motion, AnimatePresence } from "framer-motion";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import { useLanguage } from "@/useLanguage";
 import { toast } from "sonner";
 

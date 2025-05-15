@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit } from "lucide-react";
+import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit, AlertCircle, RefreshCw } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -308,6 +308,7 @@ const RequestCarouselPage: React.FC = () => {
   // Transcript fetching states
   const [isFetchingTranscript, setIsFetchingTranscript] = useState(false);
   const [fetchingVideoId, setFetchingVideoId] = useState<string | null>(null);
+  const [transcriptError, setTranscriptError] = useState<string | null>(null);
 
   // Content generation states
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
@@ -709,6 +710,7 @@ const RequestCarouselPage: React.FC = () => {
     const videoId = video.id || video.videoId;
     setFetchingVideoId(videoId);
     setIsFetchingTranscript(true);
+    setTranscriptError(null);
     
     try {
       toast({
@@ -716,80 +718,124 @@ const RequestCarouselPage: React.FC = () => {
         description: "Please wait while we fetch the transcript...",
       });
       
-      // First try the regular transcript API
+      let transcriptData = null;
+      let primaryError = null;
+      let fallbackError = null;
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = baseUrl.endsWith('/api')
-        ? `${baseUrl}/youtube/transcript`
-        : `${baseUrl}/api/youtube/transcript`;
+      
+      // Try the primary method first (yt-dlp), which tends to be more reliable
+      const ytdlpApiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/youtube/transcript-yt-dlp`
+        : `${baseUrl}/api/youtube/transcript-yt-dlp`;
       
       try {
-      const response = await axios.post(apiUrl, {
+        console.log(`Trying yt-dlp method first for video ID: ${videoId}`);
+        const ytdlpResponse = await axios.post(ytdlpApiUrl, {
           videoId: videoId,
-          useScraperApi: true
-        });
+          useScraperApi: false
+        }, { 
+          timeout: 45000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }); // Longer timeout for yt-dlp
         
-        if (response.data?.success && response.data?.transcript) {
-          await handleTranscriptSuccess(video, response.data);
-          return;
+        if (ytdlpResponse.data && ytdlpResponse.data.success) {
+          console.log('yt-dlp method succeeded');
+          transcriptData = ytdlpResponse.data;
+        } else {
+          console.warn('yt-dlp method returned non-success response:', ytdlpResponse.data);
+          fallbackError = new Error(ytdlpResponse.data?.message || 'Unknown error with yt-dlp method');
         }
+      } catch (ytdlpError: any) {
+        console.warn('yt-dlp method failed:', ytdlpError);
+        fallbackError = ytdlpError;
+      }
+      
+      // If yt-dlp method failed, try the primary transcript method
+      if (!transcriptData) {
+        console.log('Trying primary transcript method');
+        const transcriptApiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/transcript`
+          : `${baseUrl}/api/youtube/transcript`;
         
-        // If we get here, the first API didn't succeed, try yt-dlp as fallback
-        throw new Error("Primary transcript method failed, trying fallback");
-      } catch (primaryError) {
-        console.log("Trying fallback yt-dlp method for transcript extraction");
-        
-        // Use the yt-dlp fallback API
-        const fallbackApiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/youtube/transcript-yt-dlp`
-          : `${baseUrl}/api/youtube/transcript-yt-dlp`;
-        
-        const fallbackResponse = await axios.post(fallbackApiUrl, {
-          videoId: videoId
-        });
-        
-        if (fallbackResponse.data?.success && fallbackResponse.data?.transcript) {
-          toast({
-            title: "Fallback method succeeded",
-            description: "Successfully extracted transcript using yt-dlp",
+        try {
+          const response = await axios.post(transcriptApiUrl, {
+            videoId: videoId,
+            useScraperApi: false
+          }, { 
+            timeout: 30000,
+            headers: {
+              'Content-Type': 'application/json'
+            }
           });
           
-          await handleTranscriptSuccess(video, fallbackResponse.data);
-          return;
+          if (response.data && response.data.success) {
+            console.log('Primary method succeeded');
+            transcriptData = response.data;
+          } else {
+            console.warn('Primary method returned non-success response:', response.data);
+            primaryError = new Error(response.data?.message || 'Unknown error with primary method');
+          }
+        } catch (error: any) {
+          console.warn('Primary method failed:', error);
+          primaryError = error;
         }
+      }
+      
+      // If we have transcript data, process it
+      if (transcriptData && (transcriptData.transcript || transcriptData.formattedTranscript)) {
+        // Success - handle transcript data
+        await handleTranscriptSuccess(video, transcriptData);
+        setIsFetchingTranscript(false);
+        setFetchingVideoId(null);
         
-        throw new Error("Both transcript extraction methods failed");
+        toast({
+          title: "Transcript fetched",
+          description: "Transcript has been successfully retrieved.",
+        });
+      } else {
+        // Both methods failed
+        const errorMessage = `Both transcript methods failed. ${primaryError ? `Primary error: ${primaryError.message}` : ''}${fallbackError ? `${primaryError ? '. ' : ''}yt-dlp error: ${fallbackError.message}` : ''}`;
+        console.error('Error fetching transcript:', errorMessage);
+        
+        setIsFetchingTranscript(false);
+        setFetchingVideoId(null);
+        setTranscriptError(errorMessage);
+        
+        toast({
+          title: "Transcript Error",
+          description: "Failed to fetch transcript. The server might be experiencing issues or this video may not have captions.",
+          variant: "destructive"
+        });
+        
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
-      console.error("Error fetching transcript:", error);
-      
-      let errorMessage = "Failed to fetch transcript";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      console.error('Error in handleFetchTranscript:', error);
+      setIsFetchingTranscript(false);
+      setFetchingVideoId(null);
+      setTranscriptError(error.message || "Unknown error fetching transcript");
       
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Failed to fetch transcript: " + (error.message || "Unknown error"),
         variant: "destructive"
       });
-    } finally {
-      setIsFetchingTranscript(false);
-      setFetchingVideoId(null);
     }
   };
   
   // Helper function to handle successful transcript retrieval
   const handleTranscriptSuccess = async (video: YouTubeVideo, data: any) => {
-    // Get the raw transcript text
-    const rawTranscript = data.transcript || '';
-    
+    try {
+      // Get the raw transcript text
+      const rawTranscript = data.transcript || '';
+      
     // Update the video with the transcript
     const updatedVideo: YouTubeVideo = {
       ...video,
-      transcript: rawTranscript,
-      formattedTranscript: [rawTranscript], // Just use raw transcript
+        transcript: rawTranscript,
+        formattedTranscript: [rawTranscript], // Just use raw transcript
       language: data.language || "en",
       is_generated: data.is_generated || false
     };
@@ -797,31 +843,43 @@ const RequestCarouselPage: React.FC = () => {
     // Update selected video state
     setSelectedVideo(updatedVideo);
     
-    // Set the raw transcript for display
-    setGeneratedTranscript([rawTranscript]);
-    setCurrentSlide(0);
+      // Set the raw transcript for display
+      setGeneratedTranscript([rawTranscript]);
+          setCurrentSlide(0);
     
-    // Update the videos with transcripts set
-    setVideosWithTranscripts(prev => {
-      const newSet = new Set(prev);
-      newSet.add(video.id);
-      if (video.videoId) newSet.add(video.videoId);
-      return newSet;
-    });
-    
-    // Save to local and backend storage
-    await saveVideoWithTranscript(updatedVideo);
-    
+      // Update the videos with transcripts set
+      setVideosWithTranscripts(prev => {
+        const newSet = new Set(prev);
+        newSet.add(video.id);
+        if (video.videoId) newSet.add(video.videoId);
+        return newSet;
+      });
+      
+      // Save to local and backend storage (don't block on failure)
+      const saveResult = await saveVideoWithTranscript(updatedVideo);
+      
+      // Show appropriate toast based on save success
+      if (saveResult) {
     toast({
       title: "Transcript fetched",
       description: "Successfully retrieved and saved transcript",
     });
+      }
+      // If save failed, the saveVideoWithTranscript function will show its own error
+    } catch (error) {
+      console.error("Error in handleTranscriptSuccess:", error);
+      toast({
+        title: "Processing Error",
+        description: "Successfully fetched transcript but encountered an error processing it",
+        variant: "destructive" 
+      });
+    }
   };
   
   // Helper function to save video with transcript
   const saveVideoWithTranscript = async (video: YouTubeVideo) => {
     try {
-      // Update in localStorage
+      // First save to localStorage to ensure we don't lose data
       const savedVideosStr = localStorage.getItem('savedYoutubeVideos');
       const savedVideos = savedVideosStr ? JSON.parse(savedVideosStr) : [];
       
@@ -830,84 +888,126 @@ const RequestCarouselPage: React.FC = () => {
         (v.id === video.id) || (v.videoId === video.id) || (v.id === video.videoId) || (v.videoId === video.videoId)
       );
       
-      if (existingIndex !== -1) {
-        savedVideos[existingIndex] = {
-          ...savedVideos[existingIndex],
-          transcript: video.transcript,
-          formattedTranscript: video.formattedTranscript,
-          language: video.language,
-          is_generated: video.is_generated,
-          status: 'ready',
-          updatedAt: new Date().toISOString()
-        };
-      } else {
-        savedVideos.push({
-          ...video,
-          savedAt: new Date().toISOString(),
-          savedTimestamp: new Date().toISOString(),
-          status: 'ready'
-        });
-      }
+      // Handle large transcripts by limiting size if needed
+      let safeTranscript = video.transcript || '';
+      let safeFormattedTranscript = video.formattedTranscript || [safeTranscript];
       
-      localStorage.setItem('savedYoutubeVideos', JSON.stringify(savedVideos));
+      // If transcript is very large (>100KB), trim it to avoid payload size issues
+      const MAX_TRANSCRIPT_LENGTH = 100000; // ~100KB
+      if (safeTranscript && safeTranscript.length > MAX_TRANSCRIPT_LENGTH) {
+        console.log(`Transcript too large (${safeTranscript.length} chars), trimming to ${MAX_TRANSCRIPT_LENGTH}`);
+        safeTranscript = safeTranscript.substring(0, MAX_TRANSCRIPT_LENGTH) + "... [Trimmed due to size limits]";
         
-        // Save to backend
-        try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/youtube/save-video-transcript`
-          : `${baseUrl}/api/youtube/save-video-transcript`;
-        
-        await axios.post(apiUrl, {
-          video: video,
-          userId: user?.id || 'anonymous'
-        });
-        
-        // Create carousel with the updated transcript
-        const carouselApiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/youtube-carousels`
-          : `${baseUrl}/api/youtube-carousels`;
-        
-        await axios.post(carouselApiUrl, {
-          videos: [video],
-          userId: user?.id || 'anonymous'
-        });
-        } catch (backendError) {
-        console.error("Error saving to backend:", backendError);
-        // Continue with local updates even if backend fails
-      }
-      
-      // Update the local state with the saved videos
-      setSavedVideos(prevVideos => {
-        const updatedVideos = [...prevVideos];
-        const existingIdx = updatedVideos.findIndex(v => 
-          (v.id === video.id) || (v.videoId === video.id) || (v.id === video.videoId) || (v.videoId === video.videoId)
-        );
-        
-        if (existingIdx !== -1) {
-          updatedVideos[existingIdx] = {
-            ...updatedVideos[existingIdx],
-            transcript: video.transcript,
-            formattedTranscript: video.formattedTranscript,
-            language: video.language,
-            is_generated: video.is_generated,
-            status: 'ready',
-            updatedAt: new Date().toISOString()
-          };
-      } else {
-          updatedVideos.push({
-            ...video,
-            savedAt: new Date().toISOString(),
-            savedTimestamp: new Date().toISOString(),
-            status: 'ready'
-          });
+        // Also update formatted transcript
+        if (Array.isArray(safeFormattedTranscript) && safeFormattedTranscript.length > 0) {
+          safeFormattedTranscript = safeFormattedTranscript.map(item => 
+            typeof item === 'string' && item.length > MAX_TRANSCRIPT_LENGTH / safeFormattedTranscript.length
+            ? item.substring(0, MAX_TRANSCRIPT_LENGTH / safeFormattedTranscript.length) + "..."
+            : item
+          );
+        } else {
+          safeFormattedTranscript = [safeTranscript];
+          updatedVideos.push(updatedVideo);
         }
         
         return updatedVideos;
       });
-    } catch (error) {
-      console.error("Error saving video with transcript:", error);
-      throw error;
+      
+      // Update videosWithTranscripts state
+      setVideosWithTranscripts(prev => {
+        const newSet = new Set(prev);
+        newSet.add(video.id || video.videoId || '');
+        return newSet;
+      });
+      
+      // Now try to save to backend with retry logic
+      const saveToBackend = async (retryCount = 0, maxRetries = 2) => {
+        try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const apiUrl = baseUrl.endsWith('/api')
+            ? `${baseUrl}/youtube/save-video-transcript`
+            : `${baseUrl}/api/youtube/save-video-transcript`;
+          
+          const backendResponse = await axios.post(apiUrl, {
+            video: updatedVideo,
+            userId: user?.id || 'anonymous'
+          }, { 
+            timeout: 15000, // Longer timeout
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (backendResponse.data?.success) {
+            console.log("Saved transcript to backend successfully");
+            toast({
+              title: "Transcript Saved",
+              description: "Successfully saved transcript to server and locally.",
+              variant: "default"
+            });
+            
+            // Try creating carousel as well, but don't block on it
+            try {
+              const carouselApiUrl = baseUrl.endsWith('/api')
+                ? `${baseUrl}/youtube-carousels`
+                : `${baseUrl}/api/youtube-carousels`;
+              
+              axios.post(carouselApiUrl, {
+                videos: [updatedVideo],
+                userId: user?.id || 'anonymous'
+              }, { timeout: 10000 })
+              .then(() => console.log("Created carousel for video successfully"))
+              .catch(err => console.warn("Could not create carousel, but video was saved:", err));
+            } catch (carouselError) {
+              console.warn("Error creating carousel (handled):", carouselError);
+            }
+          } else {
+            console.warn("Backend save returned non-success response:", backendResponse.data);
+            throw new Error(backendResponse.data?.message || "Server returned error response");
+          }
+        } catch (backendError: any) {
+          // Check if we should retry
+          if (retryCount < maxRetries) {
+            console.log(`Retrying backend save (attempt ${retryCount + 1}/${maxRetries})...`);
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+            return saveToBackend(retryCount + 1, maxRetries);
+          }
+          
+          // More detailed error logging for final failure
+          let errorDetail = "Unknown error";
+          if (backendError.code === "ERR_NETWORK") {
+            errorDetail = "Network connection error. API server may be down.";
+          } else if (backendError.response) {
+            errorDetail = `Status ${backendError.response.status}: ${backendError.response.statusText}`;
+            if (backendError.response.data?.message) {
+              errorDetail += ` - ${backendError.response.data.message}`;
+            }
+          } else if (backendError.message) {
+            errorDetail = backendError.message;
+          }
+          
+          console.error(`Error saving to backend: ${errorDetail}`);
+          toast({
+            title: "Backend Save Error",
+            description: "Could not save to server, but transcript was saved locally.",
+            variant: "default"
+          });
+        }
+      };
+      
+      // Start the save process (non-blocking)
+      saveToBackend();
+      
+      return true;
+    } catch (error: any) {
+      console.error("Fatal error saving video with transcript:", error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save transcript data: " + (error.message || "Unknown error"),
+        variant: "destructive"
+      });
+      return false;
     }
   };
 
@@ -2292,56 +2392,41 @@ const RequestCarouselPage: React.FC = () => {
                             <div className="py-8 flex items-center justify-center">
                               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
+                          ) : transcriptError ? (
+                            <div className="py-4 rounded-md border border-destructive p-4 mb-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <AlertCircle className="h-5 w-5 text-destructive" />
+                                <h3 className="text-destructive font-medium">Transcript Error</h3>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                Unable to fetch transcript for this video. This may be because:
+                              </p>
+                              <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 ml-2 space-y-1">
+                                <li>The video does not have captions</li>
+                                <li>The transcript service is temporarily unavailable</li>
+                                <li>The video creator has disabled captions</li>
+                              </ul>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleFetchTranscript(selectedVideo!)} 
+                                className="mt-4"
+                              >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Retry
+                              </Button>
+                            </div>
                           ) : generatedTranscript.length > 0 || (selectedVideo?.transcript && selectedVideo.transcript.length > 0) ? (
-                            <>
-                              <div className="rounded-md border p-4 mb-4">
-                                <ScrollArea className="h-[300px]">
-                                  <p className="text-sm whitespace-pre-line">
-                                    {selectedVideo?.transcript || (generatedTranscript.length > 0 ? generatedTranscript[0] : "No transcript content available")}
-                                  </p>
-                                </ScrollArea>
-                              </div>
-                              
-                              {/* LinkedIn Content Generation Section */}
-                              <div className="mt-4 border-t pt-4">
-                                <div className="flex justify-between items-center mb-3">
-                                  <h3 className="text-md font-medium flex items-center gap-2">
-                                    <Sparkles className="h-4 w-4 text-amber-500" />
-                                    Generate LinkedIn Content
-                                  </h3>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setShowSavedContents(true)}
-                                    className="flex items-center gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
-                                  >
-                                    <Folder className="h-4 w-4 text-blue-600" />
-                                    Saved ({savedContents.length})
-                                  </Button>
-                                </div>
-                                
-                                <div className="grid grid-cols-3 gap-3 mb-4">
-                                  {contentGenerationOptions.map((option) => (
-                                    <Button 
-                                      key={option.type}
-                                      variant="outline" 
-                                      className="h-auto py-3 px-4 flex flex-col items-center text-center"
-                                      onClick={() => handleGenerateContent(option.type)}
-                                      disabled={isGeneratingContent}
-                                    >
-                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                                        {option.icon}
-                                      </div>
-                                      <span className="font-medium">{option.title}</span>
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                            </>
+                            <div className="rounded-md border p-4 mb-4">
+                              <ScrollArea className="h-[300px]">
+                                <p className="text-sm whitespace-pre-line">
+                                  {selectedVideo?.transcript || (generatedTranscript.length > 0 ? generatedTranscript[0] : '')}
+                                </p>
+                              </ScrollArea>
+                            </div>
                           ) : (
-                            <div className="py-8 text-center text-muted-foreground">
-                              <FileText className="h-12 w-12 mx-auto opacity-20 mb-2" />
-                              <p>No transcript loaded yet</p>
+                            <div className="py-4 text-center">
+                              <p className="text-muted-foreground">No transcript available. Click "Get Transcript" to fetch it.</p>
                             </div>
                           )}
                         </div>

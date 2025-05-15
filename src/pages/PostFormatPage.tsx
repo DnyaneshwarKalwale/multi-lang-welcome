@@ -15,7 +15,7 @@ import {
   ThumbsUp
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 
 export default function PostFormatPage() {
   const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
@@ -160,7 +160,7 @@ export default function PostFormatPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <BrandOutIcon className="w-14 h-14 sm:w-16 sm:h-16" />
+            <BrandOutLogotype className="h-14 sm:h-16 w-auto" />
             <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={22} />
           </div>
         </motion.div>

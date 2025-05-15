@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import { ContinueButton } from "@/components/ContinueButton";
 import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -67,7 +67,7 @@ export default function WelcomePage() {
           transition={{ duration: 0.7, delay: 0.2 }}
         >
           <div className="relative">
-            <BrandOutIcon className="w-20 h-20" />
+            <BrandOutLogotype className="h-20 w-auto" />
             <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={24} />
           </div>
         </motion.div>
