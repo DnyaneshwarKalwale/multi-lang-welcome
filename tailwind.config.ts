@@ -28,50 +28,50 @@ export default {
         
         // Primary Blues - Bright Theme:
         primary: {
-          DEFAULT: "#0088FF", // Bright Blue Main
+          DEFAULT: "#469BFE", // Updated to match logo color
           50: "#F0F9FF",
           100: "#E0F2FF",
           200: "#C0E5FF",
           300: "#99D8FF",
           400: "#66C2FF",
-          500: "#0088FF", // Main
-          600: "#0077E6",
-          700: "#0066CC",
-          800: "#0055AD",
-          900: "#00448A",
-          light: "#33ADFF", // Light Bright Blue
+          500: "#469BFE", // Main - Updated to match logo color
+          600: "#2A8AFA",
+          700: "#0E75F6",
+          800: "#0661D1",
+          900: "#044EAD",
+          light: "#6BB0FE", // Light Bright Blue - Updated to match logo color
         },
         
         // Secondary Blues - Lighter:
         secondary: {
-          DEFAULT: "#66B2FF", // Lighter Blue Main
+          DEFAULT: "#6BB0FE", // Lighter Blue Main - Updated to match primary
           50: "#F5FAFF",
           100: "#EBF5FF",
           200: "#D6EBFF",
           300: "#B8DFFF",
           400: "#8CCEFF", 
-          500: "#66B2FF", // Main
-          600: "#4D99E6",
-          700: "#3B80CC",
-          800: "#3366AD",
-          900: "#2A4D8A",
-          light: "#99CCFF", // Very Light Blue
+          500: "#6BB0FE", // Main - Updated to match primary
+          600: "#479EFD",
+          700: "#2A8AFA",
+          800: "#1477F3",
+          900: "#0D66D9",
+          light: "#8FC1FE", // Very Light Blue - Updated
         },
         
         // Accent Blues (replacing greens):
         accent: {
-          DEFAULT: "#33ADFF", // Bright Blue accent
+          DEFAULT: "#469BFE", // Bright Blue accent - Updated to match primary
           50: "#F0F9FF",
           100: "#E0F2FF",
           200: "#C0E5FF",
           300: "#99D8FF",
-          400: "#66C2FF",
-          500: "#33ADFF", // Main
-          600: "#0088FF",
-          700: "#0077E6",
-          800: "#0066CC",
-          900: "#0055AD",
-          light: "#66C2FF", // Light
+          400: "#78B6FE",
+          500: "#469BFE", // Main - Updated to match primary
+          600: "#2A8AFA",
+          700: "#0E75F6",
+          800: "#0661D1",
+          900: "#044EAD",
+          light: "#6BB0FE", // Light - Updated
         },
         
         // Neutral Tones - Keep whites/grays:
@@ -85,15 +85,15 @@ export default {
           black: "#0A2540", // Black
         },
         
-        // System states - All blue now
-        success: "#0088FF", // Blue (was green)
-        warning: "#66B2FF", // Light blue (was orange)
-        error: "#0066CC", // Dark blue (was red)
-        info: "#0088FF", // Blue
+        // System states - Updated to match primary
+        success: "#469BFE", // Updated to match primary
+        warning: "#6BB0FE", // Updated to match primary light
+        error: "#0E75F6", // Updated to match primary dark
+        info: "#469BFE", // Updated to match primary
         
         // Traditional shadcn-ui colors
         destructive: {
-          DEFAULT: "#0066CC", // Dark blue (was red)
+          DEFAULT: "#0E75F6", // Dark blue (was red) - Updated to match primary
           foreground: "#FFFFFF",
         },
         muted: {

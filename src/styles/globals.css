@@ -54,19 +54,19 @@
     --card-foreground: 210 50% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 210 50% 10%;
-    --primary: 210 100% 50%; /* Bright blue */
+    --primary: 217 99% 64%; /* Updated to match #469BFE */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 100% 60%; /* Lighter blue */
+    --secondary: 215 98% 71%; /* Updated to match #6BB0FE */
     --secondary-foreground: 0 0% 100%;
     --muted: 210 20% 96%;
     --muted-foreground: 210 30% 45%;
-    --accent: 210 100% 65%; /* Light blue accent */
+    --accent: 217 99% 64%; /* Updated to match primary */
     --accent-foreground: 0 0% 100%;
-    --destructive: 210 100% 40%; /* Changed to blue from red */
+    --destructive: 215 94% 51%; /* Updated to match #0E75F6 */
     --destructive-foreground: 0 0% 100%;
     --border: 210 20% 90%;
     --input: 210 20% 90%;
-    --ring: 210 100% 50%; /* Bright blue ring */
+    --ring: 217 99% 64%; /* Updated to match primary */
     --radius: 0.5rem;
   }
 }
@@ -97,11 +97,11 @@
 @layer components {
   /* Gradient text */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary;
   }
   
   .text-gradient-blue {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-blue-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-primary;
   }
   
   /* Apply Agrandir font to specific components */
@@ -112,11 +112,11 @@
   
   /* Glow effects */
   .shadow-glow {
-    box-shadow: 0 0 15px rgba(0, 136, 255, 0.5);
+    box-shadow: 0 0 15px rgba(70, 155, 254, 0.5);
   }
   
   .hover-glow:hover {
-    box-shadow: 0 0 20px 5px rgba(0, 136, 255, 0.3);
+    box-shadow: 0 0 20px 5px rgba(70, 155, 254, 0.3);
   }
   
   /* Pulse animation for CTA buttons */
@@ -126,13 +126,13 @@
   
   @keyframes pulse-subtle {
     0% {
-      box-shadow: 0 0 0 0 rgba(0, 136, 255, 0.3);
+      box-shadow: 0 0 0 0 rgba(70, 155, 254, 0.3);
     }
     70% {
-      box-shadow: 0 0 0 15px rgba(0, 136, 255, 0);
+      box-shadow: 0 0 0 15px rgba(70, 155, 254, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(0, 136, 255, 0);
+      box-shadow: 0 0 0 0 rgba(70, 155, 254, 0);
     }
   }
   
@@ -143,7 +143,7 @@
   
   .hover-lift:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px -5px rgba(0, 136, 255, 0.15);
+    box-shadow: 0 10px 25px -5px rgba(70, 155, 254, 0.15);
   }
   
   /* Glass effect */
@@ -166,12 +166,12 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 136, 255, 0.3);
+    background: rgba(70, 155, 254, 0.3);
     border-radius: 10px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 136, 255, 0.5);
+    background: rgba(70, 155, 254, 0.5);
   }
   
   /* Button loading state */
@@ -226,7 +226,7 @@
   
   /* Animated gradient background */
   .animated-gradient-bg {
-    background: linear-gradient(-45deg, #0066CC, #0088FF, #33ADFF, #005CE6);
+    background: linear-gradient(-45deg, #0E75F6, #469BFE, #6BB0FE, #2A8AFA);
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
   }

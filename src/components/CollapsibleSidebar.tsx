@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { BrandOutIcon } from './BrandOutIcon';
+import { BrandOutIcon, BrandOutLogo } from './BrandOutIcon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { linkedInApi } from '@/utils/linkedinApi';
@@ -197,8 +197,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
               {/* Sidebar Header */}
               <div className="flex h-16 items-center px-4 py-3 w-full justify-between">
                 <div className="flex items-center gap-2">
-                  <BrandOutIcon className="w-8 h-8" />
-                  <span className="font-semibold text-gray-900">BrandOut</span>
+                  <BrandOutLogo iconClassName="w-8 h-8" textClassName="text-lg ml-2 font-bold" />
                 </div>
                 <button onClick={handleClose} className="text-gray-500 p-2 hover:bg-gray-100 rounded-full">
                   <X size={20} />
@@ -280,8 +279,7 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
       {/* Sidebar Header */}
       <div className="flex h-16 items-center px-4 py-3 w-full">
         <div className="flex items-center gap-2 overflow-hidden">
-          <BrandOutIcon className="w-8 h-8" />
-          <span className="font-semibold text-gray-900">BrandOut</span>
+          <BrandOutLogo iconClassName="w-8 h-8" textClassName="text-lg ml-2 font-bold" />
         </div>
       </div>
 
