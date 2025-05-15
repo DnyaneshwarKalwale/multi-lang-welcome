@@ -756,20 +756,20 @@ const RequestCarouselPage: React.FC = () => {
       if (!transcriptData) {
         console.log('Trying primary transcript method');
         const transcriptApiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/youtube/transcript`
-          : `${baseUrl}/api/youtube/transcript`;
-        
-        try {
+        ? `${baseUrl}/youtube/transcript`
+        : `${baseUrl}/api/youtube/transcript`;
+      
+      try {
           const response = await axios.post(transcriptApiUrl, {
-            videoId: videoId,
+          videoId: videoId,
             useScraperApi: false
           }, { 
             timeout: 30000,
             headers: {
               'Content-Type': 'application/json'
             }
-          });
-          
+        });
+        
           if (response.data && response.data.success) {
             console.log('Primary method succeeded');
             transcriptData = response.data;
@@ -803,7 +803,7 @@ const RequestCarouselPage: React.FC = () => {
         setFetchingVideoId(null);
         setTranscriptError(errorMessage);
         
-        toast({
+          toast({
           title: "Transcript Error",
           description: "Failed to fetch transcript. The server might be experiencing issues or this video may not have captions.",
           variant: "destructive"
@@ -857,7 +857,7 @@ const RequestCarouselPage: React.FC = () => {
       
       // Save to local and backend storage (don't block on failure)
       const saveResult = await saveVideoWithTranscript(updatedVideo);
-      
+    
       // Show appropriate toast based on save success
       if (saveResult) {
     toast({
@@ -913,20 +913,20 @@ const RequestCarouselPage: React.FC = () => {
       // Create the updated video object
       const updatedVideo = existingIndex !== -1 
         ? {
-            ...savedVideos[existingIndex],
+          ...savedVideos[existingIndex],
             transcript: safeTranscript,
             formattedTranscript: safeFormattedTranscript || [safeTranscript || ''],
             language: video.language || 'en',
             is_generated: video.is_generated !== undefined ? video.is_generated : false,
-            updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString()
           }
         : {
-            ...video,
+          ...video,
             transcript: safeTranscript,
             formattedTranscript: safeFormattedTranscript || [safeTranscript || ''],
             language: video.language || 'en',
             is_generated: video.is_generated !== undefined ? video.is_generated : false,
-            savedAt: new Date().toISOString(),
+          savedAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
       
@@ -938,7 +938,7 @@ const RequestCarouselPage: React.FC = () => {
       }
       
       localStorage.setItem('savedYoutubeVideos', JSON.stringify(savedVideos));
-      
+        
       // Update the saved videos in the state
       setSavedVideos(prevVideos => {
         const updatedVideos = [...prevVideos];
@@ -965,11 +965,11 @@ const RequestCarouselPage: React.FC = () => {
       // Now try to save to backend with retry logic
       const saveToBackend = async (retryCount = 0, maxRetries = 2) => {
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const apiUrl = baseUrl.endsWith('/api')
-            ? `${baseUrl}/youtube/save-video-transcript`
-            : `${baseUrl}/api/youtube/save-video-transcript`;
-          
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube/save-video-transcript`
+          : `${baseUrl}/api/youtube/save-video-transcript`;
+        
           // Clone and prepare a smaller payload for backend save
           const backendPayload = {
             video: {
@@ -978,7 +978,7 @@ const RequestCarouselPage: React.FC = () => {
               transcript: safeTranscript,
               formattedTranscript: safeFormattedTranscript
             },
-            userId: user?.id || 'anonymous'
+          userId: user?.id || 'anonymous'
           };
           
           const backendResponse = await axios.post(apiUrl, backendPayload, { 
@@ -998,13 +998,13 @@ const RequestCarouselPage: React.FC = () => {
             
             // Try creating carousel as well, but don't block on it
             try {
-              const carouselApiUrl = baseUrl.endsWith('/api')
-                ? `${baseUrl}/youtube-carousels`
-                : `${baseUrl}/api/youtube-carousels`;
-              
+        const carouselApiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/youtube-carousels`
+          : `${baseUrl}/api/youtube-carousels`;
+        
               axios.post(carouselApiUrl, {
                 videos: [updatedVideo],
-                userId: user?.id || 'anonymous'
+          userId: user?.id || 'anonymous'
               }, { timeout: 10000 })
               .then(() => console.log("Created carousel for video successfully"))
               .catch(err => console.warn("Could not create carousel, but video was saved:", err));
@@ -2447,7 +2447,7 @@ const RequestCarouselPage: React.FC = () => {
                               <div className="flex items-center gap-2 mb-2">
                                 <AlertCircle className="h-5 w-5 text-destructive" />
                                 <h3 className="text-destructive font-medium">Transcript Error</h3>
-                              </div>
+                                </div>
                               <p className="text-sm text-muted-foreground">
                                 Unable to fetch transcript for this video. This may be because:
                               </p>
@@ -2456,16 +2456,16 @@ const RequestCarouselPage: React.FC = () => {
                                 <li>The transcript service is temporarily unavailable</li>
                                 <li>The video creator has disabled captions</li>
                               </ul>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
                                 onClick={() => handleFetchTranscript(selectedVideo!)} 
                                 className="mt-4"
-                              >
+                                  >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Retry
-                              </Button>
-                            </div>
+                                  </Button>
+                                </div>
                           ) : generatedTranscript.length > 0 || (selectedVideo?.transcript && selectedVideo.transcript.length > 0) ? (
                             <div className="rounded-md border p-4 mb-4">
                               <ScrollArea className="h-[300px]">
@@ -2473,7 +2473,7 @@ const RequestCarouselPage: React.FC = () => {
                                   {selectedVideo?.transcript || (generatedTranscript.length > 0 ? generatedTranscript[0] : '')}
                                 </p>
                               </ScrollArea>
-                            </div>
+                                      </div>
                           ) : (
                             <div className="py-4 text-center">
                               <p className="text-muted-foreground">No transcript available. Click "Get Transcript" to fetch it.</p>
