@@ -604,7 +604,7 @@ const ScraperPage: React.FC = () => {
       
       // Start fallback method (yt-dlp)
       ytdlpPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
-        method: "POST",
+            method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId })
       }).then(res => {
@@ -639,7 +639,7 @@ const ScraperPage: React.FC = () => {
       ];
       
       try {
-        transcriptData = await Promise.race(safePromises);
+      transcriptData = await Promise.race(safePromises);
       } catch (raceError) {
         console.error("Both transcript methods failed:", raceError);
         
@@ -780,22 +780,22 @@ const ScraperPage: React.FC = () => {
       // Save to localStorage first to ensure we don't lose data even if backend fails
       try {
         // Get existing videos from localStorage
-        const existingVideosJSON = localStorage.getItem("savedYoutubeVideos");
-        let existingVideos = existingVideosJSON ? JSON.parse(existingVideosJSON) : [];
-        
-        // Check if the video already exists
-        const existingIndex = existingVideos.findIndex((v: any) => v.id === enhancedVideo.id);
-        
-        if (existingIndex >= 0) {
-          // Update the existing video
-          existingVideos[existingIndex] = enhancedVideo;
-        } else {
-          // Add the new video
-          existingVideos.push(enhancedVideo);
-        }
-        
-        // Save back to localStorage
-        localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
+      const existingVideosJSON = localStorage.getItem("savedYoutubeVideos");
+      let existingVideos = existingVideosJSON ? JSON.parse(existingVideosJSON) : [];
+      
+      // Check if the video already exists
+      const existingIndex = existingVideos.findIndex((v: any) => v.id === enhancedVideo.id);
+      
+      if (existingIndex >= 0) {
+        // Update the existing video
+        existingVideos[existingIndex] = enhancedVideo;
+      } else {
+        // Add the new video
+        existingVideos.push(enhancedVideo);
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem("savedYoutubeVideos", JSON.stringify(existingVideos));
         console.log("Saved transcript to localStorage successfully");
         
         // Update videosWithTranscripts state
@@ -812,8 +812,8 @@ const ScraperPage: React.FC = () => {
       
       // Now try to save to backend
       let backendSaveSuccess = false;
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
           : `${baseUrl}/api/youtube/save-video-transcript`;
@@ -829,23 +829,23 @@ const ScraperPage: React.FC = () => {
           
           // Try creating carousel entry if backend save was successful
           try {
-            const carouselApiUrl = baseUrl.endsWith('/api')
-              ? `${baseUrl}/youtube-carousels`
-              : `${baseUrl}/api/youtube-carousels`;
-            
+          const carouselApiUrl = baseUrl.endsWith('/api')
+            ? `${baseUrl}/youtube-carousels`
+            : `${baseUrl}/api/youtube-carousels`;
+          
             axios.post(carouselApiUrl, {
-              videos: [enhancedVideo],
-              userId: user?.id || 'anonymous'
+            videos: [enhancedVideo],
+            userId: user?.id || 'anonymous'
             }, { timeout: 10000 }) // Non-blocking and with timeout
               .then(response => {
                 if (response.data.success) {
                   console.log("Created carousel for the video");
-                }
+          }
               })
               .catch(error => {
                 console.error("Error creating carousel:", error);
               });
-          } catch (carouselError) {
+        } catch (carouselError) {
             console.error("Error setting up carousel creation:", carouselError);
             // Don't show error to user since the video was already saved
           }
