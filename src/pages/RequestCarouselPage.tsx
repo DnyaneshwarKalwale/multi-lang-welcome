@@ -768,8 +768,8 @@ const RequestCarouselPage: React.FC = () => {
             headers: {
               'Content-Type': 'application/json'
             }
-        });
-        
+          });
+          
           if (response.data && response.data.success) {
             console.log('Primary method succeeded');
             transcriptData = response.data;
@@ -857,7 +857,7 @@ const RequestCarouselPage: React.FC = () => {
       
       // Save to local and backend storage (don't block on failure)
       const saveResult = await saveVideoWithTranscript(updatedVideo);
-    
+      
       // Show appropriate toast based on save success
       if (saveResult) {
     toast({
