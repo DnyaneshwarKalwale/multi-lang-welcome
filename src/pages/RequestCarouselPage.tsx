@@ -907,6 +907,48 @@ const RequestCarouselPage: React.FC = () => {
           );
         } else {
           safeFormattedTranscript = [safeTranscript];
+        }
+      }
+      
+      // Create the updated video object
+      const updatedVideo = existingIndex !== -1 
+        ? {
+            ...savedVideos[existingIndex],
+            transcript: safeTranscript,
+            formattedTranscript: safeFormattedTranscript || [safeTranscript || ''],
+            language: video.language || 'en',
+            is_generated: video.is_generated !== undefined ? video.is_generated : false,
+            updatedAt: new Date().toISOString()
+          }
+        : {
+            ...video,
+            transcript: safeTranscript,
+            formattedTranscript: safeFormattedTranscript || [safeTranscript || ''],
+            language: video.language || 'en',
+            is_generated: video.is_generated !== undefined ? video.is_generated : false,
+            savedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+      
+      // Update localStorage with the updated video
+      if (existingIndex !== -1) {
+        savedVideos[existingIndex] = updatedVideo;
+      } else {
+        savedVideos.push(updatedVideo);
+      }
+      
+      localStorage.setItem('savedYoutubeVideos', JSON.stringify(savedVideos));
+      
+      // Update the saved videos in the state
+      setSavedVideos(prevVideos => {
+        const updatedVideos = [...prevVideos];
+        const existingIdx = updatedVideos.findIndex(v => 
+          (v.id === video.id) || (v.videoId === video.id) || (v.id === video.videoId) || (v.videoId === video.videoId)
+        );
+        
+        if (existingIdx !== -1) {
+          updatedVideos[existingIdx] = updatedVideo;
+        } else {
           updatedVideos.push(updatedVideo);
         }
         
@@ -928,10 +970,18 @@ const RequestCarouselPage: React.FC = () => {
             ? `${baseUrl}/youtube/save-video-transcript`
             : `${baseUrl}/api/youtube/save-video-transcript`;
           
-          const backendResponse = await axios.post(apiUrl, {
-            video: updatedVideo,
+          // Clone and prepare a smaller payload for backend save
+          const backendPayload = {
+            video: {
+              ...updatedVideo,
+              // Send ID info but trim large fields to reduce payload size
+              transcript: safeTranscript,
+              formattedTranscript: safeFormattedTranscript
+            },
             userId: user?.id || 'anonymous'
-          }, { 
+          };
+          
+          const backendResponse = await axios.post(apiUrl, backendPayload, { 
             timeout: 15000, // Longer timeout
             headers: {
               'Content-Type': 'application/json'
