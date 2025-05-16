@@ -91,11 +91,13 @@ interface YouTubeVideo {
   formattedTranscript?: string[];
   language?: string;
   is_generated?: boolean;
+  channelName?: string;
 }
 
 interface YouTubeChannelResult {
   videos: YouTubeVideo[];
   channelName: string;
+  channelImageUrl?: string; // Optional channel image URL
 }
 
 const ScraperPage: React.FC = () => {
@@ -199,10 +201,10 @@ const ScraperPage: React.FC = () => {
     }
 
     // Extract channel name for comparison
-    const channelName = inputUrl.includes('@') ? inputUrl.split('@')[1] : inputUrl;
+    const inputChannelName = inputUrl.includes('@') ? inputUrl.split('@')[1] : inputUrl;
     
     // If searching for a different channel, clear previous results
-    if (lastSearchedChannel && lastSearchedChannel !== channelName) {
+    if (lastSearchedChannel && lastSearchedChannel !== inputChannelName) {
       clearYoutubeResults();
     }
 
@@ -214,18 +216,24 @@ const ScraperPage: React.FC = () => {
       });
       
       if (response.data && response.data.success) {
+        // Get channel name from the first video if available
+        let detectedChannelName = inputChannelName;
+        if (response.data.data && response.data.data.length > 0 && response.data.data[0].channelName) {
+          detectedChannelName = response.data.data[0].channelName;
+        }
+        
         const channelResult = {
           videos: response.data.data,
-          channelName: channelName
+          channelName: detectedChannelName
         };
         
         setYoutubeChannelResult(channelResult);
-        setLastSearchedChannel(channelResult.channelName);
+        setLastSearchedChannel(inputChannelName); // Keep using input for search comparison
         
         // Save to localStorage for persistence
         saveYoutubeChannelToStorage(channelResult);
         
-        toastSuccess(`Found ${response.data.data.length} videos`);
+        toastSuccess(`Found ${response.data.data.length} videos from ${detectedChannelName}`);
       } else {
         throw new Error(response.data?.message || 'Failed to fetch channel videos');
       }
@@ -1334,7 +1342,7 @@ const ScraperPage: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 rounded">
-                    {video.duration}
+                    {video.duration !== "N/A" ? video.duration : "N/A"}
                   </div>
                 </div>
                 
@@ -1347,19 +1355,22 @@ const ScraperPage: React.FC = () => {
                     <span>{video.view_count.toLocaleString()} views</span>
                     <span>{new Date(video.upload_date).toLocaleDateString()}</span>
                   </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                    {video.channelName || "Unknown Channel"}
+                  </div>
                 </CardContent>
                 
                 <CardFooter className="p-3 pt-0 flex flex-col gap-2">
                   <div className="grid grid-cols-2 gap-2 w-full">
-                  <Button
+                    <Button
                       variant="outline" 
-                    size="sm" 
-                    onClick={() => window.open(video.url, '_blank')}
+                      size="sm" 
+                      onClick={() => window.open(video.url, '_blank')}
                       className="w-full"
-                  >
-                    <Youtube className="h-4 w-4 mr-1" />
-                    Watch
-                  </Button>
+                    >
+                      <Youtube className="h-4 w-4 mr-1" />
+                      Watch
+                    </Button>
                     <Button
                       variant={selectedVideos.has(video.id) ? "secondary" : "outline"}
                       size="sm" 
@@ -1369,7 +1380,7 @@ const ScraperPage: React.FC = () => {
                       {selectedVideos.has(video.id) ? "Selected" : "Select"}
                     </Button>
                   </div>
-                    <Button
+                  <Button
                     variant={videosWithTranscripts.has(video.id) ? "secondary" : "default"} 
                     size="sm" 
                     className={`w-full ${loadingTranscriptIds.has(video.id) ? "opacity-70" : ""}`}
@@ -1377,11 +1388,11 @@ const ScraperPage: React.FC = () => {
                     disabled={loadingTranscriptIds.has(video.id)}
                   >
                     {getTranscriptButtonText(video.id)}
-                    </Button>
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
-                        </div>
+          </div>
         </div>
       )}
       

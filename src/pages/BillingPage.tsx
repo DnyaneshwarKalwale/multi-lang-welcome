@@ -66,6 +66,14 @@ interface Invoice {
   downloadUrl: string;
 }
 
+// Add a new interface for credit packs
+interface CreditPack {
+  id: string;
+  credits: number;
+  price: number;
+  isPopular?: boolean;
+}
+
 const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -127,62 +135,75 @@ const BillingPage: React.FC = () => {
   // Subscription plans (mock)
   const plans: SubscriptionPlan[] = [
     {
-      id: 'free',
-      name: 'Free',
-      price: 0,
+      id: 'trial',
+      name: 'Trial',
+      price: 20,
       billingPeriod: 'monthly',
       features: [
-        '1 Personal Workspace',
-        '10 AI-Generated Posts/Month',
-        'Basic Analytics',
+        '3 Total Credits for AI-Generated Content',
+        'Valid for 7 days',
+        'Content Scraper',
         'Standard Support'
       ],
       limitations: {
         workspaces: 1,
-        posts: 10,
-        carousels: 0
+        posts: 3,
+        carousels: 3
       }
     },
     {
-      id: 'pro',
-      name: 'Pro',
-      price: isAnnualBilling ? 39 : 49,
+      id: 'basic',
+      name: 'Basic',
+      price: 100,
       billingPeriod: isAnnualBilling ? 'annual' : 'monthly',
       features: [
-        '3 Workspaces',
-        'Unlimited AI-Generated Posts',
-        '3 Carousel Requests/Month',
-        'Advanced Analytics',
+        '10 Total Credits for AI-Generated Content',
+        'Content Scraper',
         'Priority Support',
-        'Content Scraper'
+        'Full Access to Templates'
       ],
       limitations: {
-        workspaces: 3,
-        posts: Infinity,
-        carousels: 3
+        workspaces: 1,
+        posts: 10,
+        carousels: 10
       },
       isPopular: true
     },
     {
-      id: 'business',
-      name: 'Business',
-      price: isAnnualBilling ? 79 : 99,
+      id: 'premium',
+      name: 'Premium',
+      price: 200,
       billingPeriod: isAnnualBilling ? 'annual' : 'monthly',
       features: [
-        '10 Workspaces',
-        'Unlimited AI-Generated Posts',
-        '10 Carousel Requests/Month',
-        'Team Collaboration',
-        'API Access',
-        'Advanced Analytics',
-        'Priority Support',
+        '25 Total Credits for AI-Generated Content',
         'Content Scraper',
+        'Priority Support',
+        'Full Access to Templates',
         'White Label Options'
       ],
       limitations: {
-        workspaces: 10,
+        workspaces: 1,
+        posts: 25,
+        carousels: 25
+      }
+    },
+    {
+      id: 'custom',
+      name: 'Custom',
+      price: 200,
+      billingPeriod: isAnnualBilling ? 'annual' : 'monthly',
+      features: [
+        'Custom Number of AI Credits',
+        'Content Scraper',
+        'Priority Support',
+        'Full Access to Templates',
+        'White Label Options',
+        'Dedicated Account Manager'
+      ],
+      limitations: {
+        workspaces: 1,
         posts: Infinity,
-        carousels: 10
+        carousels: Infinity
       }
     }
   ];
@@ -232,6 +253,41 @@ const BillingPage: React.FC = () => {
     toast.success('Your subscription has been cancelled. You will have access until the end of your billing period.');
   };
 
+  // Define the credit packs
+  const creditPacks: CreditPack[] = [
+    {
+      id: 'pack-5',
+      credits: 5,
+      price: 45
+    },
+    {
+      id: 'pack-10',
+      credits: 10,
+      price: 85,
+      isPopular: true
+    },
+    {
+      id: 'pack-20',
+      credits: 20,
+      price: 160
+    }
+  ];
+
+  // Add new function to handle credit pack purchase
+  const handleBuyCreditPack = (packId: string) => {
+    setIsChangingPlan(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      // In a real app, this would add credits to the user's account
+      const pack = creditPacks.find(p => p.id === packId);
+      if (pack) {
+        toast.success(`Successfully purchased ${pack.credits} additional credits!`);
+      }
+      setIsChangingPlan(false);
+    }, 1500);
+  };
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
@@ -273,15 +329,26 @@ const BillingPage: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-lg">{currentPlan?.name || 'No Plan'}</h3>
-                      {currentPlan?.price ? (
-                        <div className="text-xl font-bold mt-1">
+                      {currentPlan?.id === 'custom' ? (
+                        <div className="text-xl font-bold mt-1 text-black dark:text-white">
+                          Custom Plan
+                        </div>
+                      ) : currentPlan?.id === 'trial' ? (
+                        <div className="text-xl font-bold mt-1 text-black dark:text-white">
+                          ${currentPlan.price}
+                          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
+                            /7 days
+                          </span>
+                        </div>
+                      ) : currentPlan?.price ? (
+                        <div className="text-xl font-bold mt-1 text-black dark:text-white">
                           ${currentPlan.price}
                           <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
                             /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
                           </span>
                         </div>
                       ) : (
-                        <div className="text-xl font-bold mt-1">Free</div>
+                        <div className="text-xl font-bold mt-1 text-black dark:text-white">Free</div>
                       )}
                     </div>
                     
@@ -305,7 +372,7 @@ const BillingPage: React.FC = () => {
                     </div>
                   )}
                   
-                  {!currentSubscription.isCancelled && currentPlan?.id !== 'free' && (
+                  {!currentSubscription.isCancelled && currentPlan?.id !== 'trial' && (
                     <Button 
                       variant="outline" 
                       className="text-destructive hover:text-destructive"
@@ -317,42 +384,34 @@ const BillingPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-4 md:col-span-2">
-                  <h4 className="font-medium mb-2">Plan Features</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
-                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Workspaces
+                  <h4 className="font-medium mb-2">Your Credit Usage</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
+                      <div className="text-sm font-medium text-primary/80 mb-1">
+                        Monthly Credits
                       </div>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {currentPlan?.limitations.workspaces === Infinity 
+                      <div className="text-2xl font-bold text-black dark:text-white">
+                        {currentPlan?.limitations.carousels === Infinity 
                           ? 'Unlimited' 
-                          : currentPlan?.limitations.workspaces || 0}
+                          : currentPlan?.limitations.carousels || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Resets on {format(currentSubscription.renewDate, 'MMMM d, yyyy')}
                       </div>
                     </div>
                     
-                    <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
-                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        AI Posts
+                    <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
+                      <div className="text-sm font-medium text-primary/80 mb-1">
+                        Additional Credits
                       </div>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {currentPlan?.limitations.posts === Infinity 
-                          ? 'Unlimited' 
-                          : currentPlan?.limitations.posts || 0}
+                      <div className="text-2xl font-bold text-black dark:text-white">
+                        0
                         <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
-                          /month
+                          available
                         </span>
                       </div>
-                    </div>
-                    
-                    <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4">
-                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                        Carousel Requests
-                      </div>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {currentPlan?.limitations.carousels || 0}
-                        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
-                          /month
-                        </span>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Never expire
                       </div>
                     </div>
                   </div>
@@ -384,49 +443,89 @@ const BillingPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {plans.map(plan => (
-                <Card key={plan.id} className={`relative ${plan.isPopular ? 'border-primary' : ''}`}>
+                <Card 
+                  key={plan.id} 
+                  className={`relative border-2 hover:shadow-lg transition-all duration-300 ${
+                    plan.isPopular 
+                      ? 'border-primary shadow-md shadow-primary/10' 
+                      : 'border-gray-200 dark:border-gray-800 hover:border-primary/30'
+                  }`}
+                >
                   {plan.isPopular && (
                     <div className="absolute top-0 right-0 translate-x-2 -translate-y-2">
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
+                      <span className="bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full shadow-sm">
                         Most Popular
                       </span>
                     </div>
                   )}
                   
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>
-                      {plan.id === 'free' 
-                        ? 'For personal use' 
-                        : plan.id === 'pro'
+                  <CardHeader className="pb-2 text-center border-b border-gray-100 dark:border-gray-800">
+                    <CardTitle className="text-2xl font-bold text-black dark:text-white">{plan.name}</CardTitle>
+                    <CardDescription className="text-primary/80">
+                      {plan.id === 'trial' 
+                        ? 'Get started with carousels' 
+                        : plan.id === 'basic'
                           ? 'For professionals and creators'
-                          : 'For teams and businesses'}
+                          : plan.id === 'premium'
+                            ? 'For teams and agencies'
+                            : 'For enterprise needs'}
                     </CardDescription>
                   </CardHeader>
                   
-                  <CardContent className="space-y-4">
-                    <div className="text-3xl font-bold">
+                  <CardContent className="pt-6 space-y-6">
+                    {plan.id === 'custom' ? (
+                      <div className="text-3xl font-bold text-center text-black dark:text-white">
+                        Custom
+                        <span className="text-sm font-normal text-primary/80 ml-1">
+                          (Contact us)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-3xl font-bold text-center text-black dark:text-white mb-4">
                       ${plan.price}
-                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
-                        /{plan.billingPeriod === 'annual' ? 'year' : 'month'}
+                        <span className="text-sm font-normal text-primary/80 ml-1">
+                          {plan.id === 'trial' ? '/7 days' : `/${plan.billingPeriod === 'annual' ? 'year' : 'month'}`}
                       </span>
                     </div>
+                    )}
+                    
+                    {plan.id === 'trial' && (
+                      <div className="flex justify-center">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                          One-time only
+                        </Badge>
+                      </div>
+                    )}
                     
                     <div className="space-y-3">
                       {plan.features.map((feature, index) => (
                         <div key={index} className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
+                          <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{feature}</span>
                         </div>
                       ))}
                     </div>
                   </CardContent>
                   
-                  <CardFooter>
+                  <CardFooter className="pt-2 pb-6">
+                    {plan.id === 'custom' ? (
+                      <Button 
+                        className="w-full bg-white hover:bg-primary/5 text-primary border-primary"
+                        variant="outline"
+                        onClick={() => window.open('mailto:sales@yourcompany.com', '_blank')}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contact Sales
+                      </Button>
+                    ) : (
                     <Button 
-                      className="w-full"
+                        className={`w-full ${
+                          plan.id === currentSubscription.planId 
+                            ? 'bg-white hover:bg-primary/5 text-primary border-primary' 
+                            : 'bg-primary hover:bg-primary/90 text-white'
+                        }`}
                       variant={plan.id === currentSubscription.planId ? 'outline' : 'default'}
                       disabled={plan.id === currentSubscription.planId || isChangingPlan}
                       onClick={() => handleChangePlan(plan.id)}
@@ -443,7 +542,86 @@ const BillingPage: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          {plan.id === 'free' ? 'Downgrade' : 'Upgrade'}
+                            {plan.id === 'trial' ? 'Start Trial' : 'Subscribe'}
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+          
+          {/* Additional Credit Packs Section */}
+          <div className="mt-12 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold mb-1">Need More Credits?</h2>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Purchase additional credits to use at any time
+                </p>
+              </div>
+              
+              <Badge variant="outline" className="bg-primary/5 border-primary/10 text-primary mt-2 sm:mt-0">
+                Credits never expire
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {creditPacks.map(pack => (
+                <Card 
+                  key={pack.id} 
+                  className={`relative border-2 hover:shadow-lg transition-all duration-300 ${
+                    pack.isPopular 
+                      ? 'border-primary shadow-md shadow-primary/10' 
+                      : 'border-gray-200 dark:border-gray-800 hover:border-primary/30'
+                  }`}
+                >
+                  {pack.isPopular && (
+                    <div className="absolute top-0 right-0 translate-x-2 -translate-y-2">
+                      <span className="bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full shadow-sm">
+                        Best Value
+                      </span>
+                    </div>
+                  )}
+                  
+                  <CardHeader className="pb-2 text-center">
+                    <CardTitle className="text-xl font-bold text-black dark:text-white">
+                      {pack.credits} Additional Credits
+                    </CardTitle>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-4 text-center">
+                    <div className="text-3xl font-bold text-black dark:text-white mb-4">
+                      ${pack.price}
+                    </div>
+                    
+                    <p className="text-primary/80 text-sm mb-4">
+                      Use for any combination of AI posts or carousels
+                    </p>
+                    
+                    <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>Instant delivery</span>
+                    </div>
+                  </CardContent>
+                  
+                  <CardFooter className="pt-2 pb-6">
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90 text-white"
+                      onClick={() => handleBuyCreditPack(pack.id)}
+                      disabled={isChangingPlan}
+                    >
+                      {isChangingPlan ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Buy Now
                           <ArrowRight className="h-4 w-4 ml-2" />
                         </>
                       )}
@@ -451,6 +629,19 @@ const BillingPage: React.FC = () => {
                   </CardFooter>
                 </Card>
               ))}
+            </div>
+            
+            <div className="mt-6 bg-primary/5 border border-primary/10 rounded-lg p-4">
+              <div className="flex items-start">
+                <PlusCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-black dark:text-white">How Credits Work</h3>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                    Each credit can be used for either an AI-generated post or carousel. You can mix and match however you prefer.
+                    Credits purchased separately from your subscription never expire and are used after your monthly allocation.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </TabsContent>
