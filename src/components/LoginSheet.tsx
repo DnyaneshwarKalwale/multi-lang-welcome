@@ -35,7 +35,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
     onOpenChange(false);
     toast.info("Redirecting to Google authentication...");
     
-    window.location.href = `${baseUrl}/auth/google`;
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
   
   const handleLinkedInAuth = () => {

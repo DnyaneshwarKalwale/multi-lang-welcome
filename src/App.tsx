@@ -39,6 +39,9 @@ import CarouselTemplatesPage from "./pages/CarouselTemplatesPage";
 import ScraperPage from "./pages/ScraperPage";
 import AIWriterPage from "./pages/AIWriterPage";
 import BillingPage from "./pages/BillingPage";
+import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
+import CheckoutCancelPage from "./pages/CheckoutCancelPage";
+import CreditsSuccessPage from "./pages/CreditsSuccessPage";
 import ImageGalleryPage from "./pages/ImageGalleryPage";
 import EditorPage from "./editor/pages/Index";
 import { PostCountProvider } from "./components/CollapsibleSidebar";
@@ -280,6 +283,10 @@ const AppRoutes = () => {
           <Route path="/dashboard/team" element={<TeamsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/billing" element={<BillingPage />} />
+          <Route path="/settings/billing" element={<BillingPage />} />
+          <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+          <Route path="/billing/cancel" element={<CheckoutCancelPage />} />
+          <Route path="/billing/credits-success" element={<CreditsSuccessPage />} />
           <Route path="/dashboard/images" element={<ImageGalleryPage />} />
         </Route>
       </Route>

@@ -12,6 +12,7 @@ import SettingsPage from "./pages/SettingsPage";
 import NotFound from "../pages/NotFound";
 import CarouselRequestsPage from './pages/CarouselRequestsPage';
 import UserLimitsPage from './pages/UserLimitsPage';
+import UserPlansPage from './pages/UserPlansPage';
 
 /**
  * Admin router component that handles all admin routes
@@ -34,6 +35,7 @@ const AdminRouter: React.FC = () => {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/carousel-requests" element={<CarouselRequestsPage />} />
           <Route path="/user-limits" element={<UserLimitsPage />} />
+          <Route path="/user-plans" element={<UserPlansPage />} />
         </Route>
       </Route>
       

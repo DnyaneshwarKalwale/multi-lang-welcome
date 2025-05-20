@@ -104,7 +104,7 @@ const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('linkedin');
+  const [activeTab, setActiveTab] = useState('youtube');
   const [inputUrl, setInputUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ScraperResult | null>(null);
@@ -904,12 +904,18 @@ const ScraperPage: React.FC = () => {
 
   // Update the button text in the video card to show retry status or transcript availability
   const getTranscriptButtonText = (videoId: string) => {
+    // If this specific video is being processed
     if (loadingTranscriptIds.has(videoId)) {
       const retry = retryCount[videoId] || 0;
       if (retry > 0) {
         return `Retry ${retry}...`;
       }
       return "Loading...";
+    }
+    
+    // If another video is being processed
+    if (loadingTranscriptIds.size > 0) {
+      return "Please wait...";
     }
     
     // Check if this video has a transcript
@@ -1047,7 +1053,7 @@ const ScraperPage: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Content Scraper</h1>
         <p className="text-gray-500 dark:text-gray-400">
-          Extract content from various platforms to repurpose for LinkedIn
+          Extract content from YouTube channels to repurpose for LinkedIn
         </p>
       </div>
       
@@ -1055,12 +1061,12 @@ const ScraperPage: React.FC = () => {
         <CardHeader>
           <CardTitle>Input Source</CardTitle>
           <CardDescription>
-            Enter a URL from your chosen platform
+            Enter a YouTube channel URL or handle
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs
-            defaultValue="linkedin"
+            defaultValue="youtube"
             value={activeTab}
             onValueChange={value => {
               setActiveTab(value);
@@ -1075,21 +1081,24 @@ const ScraperPage: React.FC = () => {
             className="w-full"
           >
             <TabsList className="grid grid-cols-4 w-full mb-6">
-              <TabsTrigger value="linkedin" className="flex items-center gap-2">
-                <Linkedin className="h-4 w-4" />
-                <span className="hidden sm:inline">LinkedIn</span>
-              </TabsTrigger>
-              <TabsTrigger value="twitter" className="flex items-center gap-2">
-                <Twitter className="h-4 w-4" />
-                <span className="hidden sm:inline">Twitter</span>
-              </TabsTrigger>
               <TabsTrigger value="youtube" className="flex items-center gap-2">
                 <Youtube className="h-4 w-4" />
                 <span className="hidden sm:inline">YouTube</span>
               </TabsTrigger>
-              <TabsTrigger value="web" className="flex items-center gap-2">
+              <TabsTrigger value="linkedin" className="flex items-center gap-2 relative opacity-70" disabled>
+                <Linkedin className="h-4 w-4" />
+                <span className="hidden sm:inline">LinkedIn</span>
+                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1 rounded-full">Soon</span>
+              </TabsTrigger>
+              <TabsTrigger value="twitter" className="flex items-center gap-2 relative opacity-70" disabled>
+                <Twitter className="h-4 w-4" />
+                <span className="hidden sm:inline">Twitter</span>
+                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1 rounded-full">Soon</span>
+              </TabsTrigger>
+              <TabsTrigger value="web" className="flex items-center gap-2 relative opacity-70" disabled>
                 <Globe className="h-4 w-4" />
                 <span className="hidden sm:inline">Web</span>
+                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1 rounded-full">Soon</span>
               </TabsTrigger>
             </TabsList>
             
@@ -1097,12 +1106,7 @@ const ScraperPage: React.FC = () => {
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder={
-                    activeTab === 'linkedin' ? 'Enter LinkedIn post or article URL' :
-                    activeTab === 'twitter' ? 'Enter Twitter username or URL' :
-                    activeTab === 'youtube' ? 'Enter YouTube video URL or @channel' :
-                    'Enter website URL'
-                  }
+                  placeholder="Enter YouTube channel URL or @handle (e.g., @channelname)"
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
                   className="w-full"
@@ -1121,8 +1125,7 @@ const ScraperPage: React.FC = () => {
                 ) : (
                   <>
                     <Search className="mr-2 h-4 w-4" />
-                    {activeTab === 'twitter' ? 'Fetch Tweets' : 
-                     activeTab === 'youtube' ? 'Get Content' : 'Scrape Content'}
+                    Get Videos
                   </>
                 )}
               </Button>
@@ -1280,6 +1283,16 @@ const ScraperPage: React.FC = () => {
       {/* YouTube Channel Results */}
       {activeTab === 'youtube' && youtubeChannelResult && (
         <div className="space-y-6">
+          {loadingTranscriptIds.size > 0 && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-center mb-4">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <div>
+                <p className="font-medium">Fetching transcript...</p>
+                <p className="text-sm">Please wait while we retrieve the transcript. This may take a few moments.</p>
+              </div>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Youtube className="h-8 w-8" />
@@ -1362,15 +1375,15 @@ const ScraperPage: React.FC = () => {
                 
                 <CardFooter className="p-3 pt-0 flex flex-col gap-2">
                   <div className="grid grid-cols-2 gap-2 w-full">
-                    <Button
+                  <Button
                       variant="outline" 
-                      size="sm" 
-                      onClick={() => window.open(video.url, '_blank')}
+                    size="sm" 
+                    onClick={() => window.open(video.url, '_blank')}
                       className="w-full"
-                    >
-                      <Youtube className="h-4 w-4 mr-1" />
-                      Watch
-                    </Button>
+                  >
+                    <Youtube className="h-4 w-4 mr-1" />
+                    Watch
+                  </Button>
                     <Button
                       variant={selectedVideos.has(video.id) ? "secondary" : "outline"}
                       size="sm" 
@@ -1380,19 +1393,19 @@ const ScraperPage: React.FC = () => {
                       {selectedVideos.has(video.id) ? "Selected" : "Select"}
                     </Button>
                   </div>
-                  <Button
+                    <Button
                     variant={videosWithTranscripts.has(video.id) ? "secondary" : "default"} 
                     size="sm" 
-                    className={`w-full ${loadingTranscriptIds.has(video.id) ? "opacity-70" : ""}`}
+                    className={`w-full ${loadingTranscriptIds.size > 0 ? "opacity-70" : ""}`}
                     onClick={() => handleGetTranscript(video.id)}
-                    disabled={loadingTranscriptIds.has(video.id)}
+                    disabled={loadingTranscriptIds.size > 0}
                   >
                     {getTranscriptButtonText(video.id)}
-                  </Button>
+                    </Button>
                 </CardFooter>
               </Card>
             ))}
-          </div>
+                        </div>
         </div>
       )}
       
@@ -1552,37 +1565,15 @@ const ScraperPage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center max-w-xl mx-auto">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 mb-4">
-                {activeTab === 'linkedin' ? (
-                  <Linkedin className="h-8 w-8 text-primary" />
-                ) : activeTab === 'website' ? (
-                  <Globe className="h-8 w-8 text-primary" />
-                ) : activeTab === 'twitter' ? (
-                  <Twitter className="h-8 w-8 text-primary" />
-                ) : (
-                  <Youtube className="h-8 w-8 text-primary" />
-                )}
+                <Youtube className="h-8 w-8 text-primary" />
               </div>
               
               <h3 className="text-lg font-medium mb-2">
-                {activeTab === 'linkedin' 
-                  ? 'Extract Content from LinkedIn' 
-                  : activeTab === 'website'
-                    ? 'Extract Content from Websites'
-                    : activeTab === 'twitter'
-                      ? 'Extract Content from Twitter'
-                    : 'Extract Content from YouTube Videos'
-                }
+                Extract Content from YouTube Channels
               </h3>
               
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {activeTab === 'linkedin' 
-                  ? 'Paste a LinkedIn profile URL or post link to extract professional insights, experience, and content for your posts.' 
-                  : activeTab === 'website'
-                    ? 'Paste any article or blog URL to extract key points, analyze tone, and suggest hooks for your LinkedIn content.'
-                    : activeTab === 'twitter'
-                      ? 'Paste a Twitter username or profile URL to extract tweets and insights for your LinkedIn content.'
-                    : 'Paste a YouTube video URL or channel name to extract content for your LinkedIn posts.'
-                }
+                Paste a YouTube channel handle (starting with @) or URL to extract videos and transcripts for your LinkedIn content.
               </p>
               
               <div className="flex flex-col space-y-2">
@@ -1590,21 +1581,21 @@ const ScraperPage: React.FC = () => {
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
                     1
                   </div>
-                  <span>Enter the URL in the input field above</span>
+                  <span>Enter a YouTube channel handle (e.g., @channelname) in the input field above</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
                     2
                   </div>
-                  <span>Click "Scrape" to extract content</span>
+                  <span>Click "Get Videos" to fetch content from the channel</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
                     3
                   </div>
-                  <span>Review and use the extracted content for your LinkedIn posts</span>
+                  <span>Select videos and fetch transcripts to create LinkedIn content</span>
                 </div>
               </div>
             </div>

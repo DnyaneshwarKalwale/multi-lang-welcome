@@ -154,7 +154,6 @@ export function CollapsibleSidebar({ isOpen = false, onClose }: CollapsibleSideb
     { title: 'Billing', icon: CreditCard, path: '/dashboard/billing' },
     { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
     { title: 'Coming Soon', icon: null, path: '', isSeparator: true },
-    { title: 'Team', icon: Users, path: '/dashboard/team' },
     { title: 'AI Writer', icon: MessageSquare, path: '/dashboard/ai' },
     { title: 'Analytics', icon: BarChart3, path: '/dashboard/analytics' },
     { title: 'Inspiration Vault', icon: Lightbulb, path: '/dashboard/inspiration' },

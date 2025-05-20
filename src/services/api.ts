@@ -152,4 +152,35 @@ export const onboardingApi = {
   }
 };
 
+// Stripe services
+export const stripeApi = {
+  // Create a checkout session for subscription plans
+  createCheckoutSession: async (planId: string, successUrl: string, cancelUrl: string) => {
+    const response = await api.post('/stripe/create-checkout-session', {
+      planId,
+      successUrl,
+      cancelUrl
+    });
+    return response.data;
+  },
+
+  // Create a checkout session for credit packs
+  createCreditCheckout: async (packId: string, packPrice: number, packCredits: number, successUrl: string, cancelUrl: string) => {
+    const response = await api.post('/stripe/create-credit-checkout', {
+      packId,
+      packPrice,
+      packCredits,
+      successUrl,
+      cancelUrl
+    });
+    return response.data;
+  },
+
+  // Get user subscription details
+  getUserSubscription: async () => {
+    const response = await api.get('/users/subscription');
+    return response.data;
+  }
+};
+
 export default api; 

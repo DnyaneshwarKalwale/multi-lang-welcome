@@ -44,6 +44,7 @@ import { Slide, FontFamily, FontWeight, TextAlign } from "@/editor/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from "@/components/ui/textarea";
 import api, { tokenManager } from '@/services/api';
+// import { tokenManager as tokenManagerUtils } from '../utils/tokenManager';
 
 // Model options with fallbacks
 const AI_MODELS = {
@@ -277,11 +278,15 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   return konvaSlides as unknown as Slide[];
 }
 
+// Update the userLimit interface to better reflect subscription plans
 interface UserLimit {
-  limit: number;
-  count: number;
-  remaining: number;
-  dailyLimit: number;
+  limit: number;         // Total credits from the subscription plan
+  count: number;         // Used credits
+  remaining: number;     // Remaining credits
+  planId: string;        // The subscription plan ID
+  planName: string;      // The name of the subscription plan
+  expiresAt?: Date;      // When the plan expires (especially for trial)
+  status?: string;      // Status of the plan (active or inactive)
 }
 
 const RequestCarouselPage: React.FC = () => {
@@ -341,7 +346,51 @@ const RequestCarouselPage: React.FC = () => {
   // Add a missing state variable for saving content:
   const [isSavingContent, setIsSavingContent] = useState(false);
 
-  const [userLimit, setUserLimit] = useState<UserLimit>({ limit: 10, count: 0, remaining: 10, dailyLimit: 10 });
+  // Update userLimit state to remove 'free' terminology and use correct trial limits
+  const [userLimit, setUserLimit] = useState<UserLimit>({ 
+    limit: 0, 
+    count: 0, 
+    remaining: 0, 
+    planId: 'expired',
+    planName: 'No Plan' 
+  });
+
+  // Add state for subscription modal
+  const [needsPlanUpgrade, setNeedsPlanUpgrade] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  // Add currentSubscription state
+  const [currentSubscription, setCurrentSubscription] = useState<{
+    planId: string;
+    usedCredits: number;
+    totalCredits: number;
+  } | null>(null);
+
+  // Add fetchCurrentSubscription function
+  const fetchCurrentSubscription = async () => {
+    try {
+      const token = tokenManager.getToken();
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/stripe/subscription`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setCurrentSubscription(data);
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+    }
+  };
+
+  // Add useEffect to fetch subscription on component mount
+  useEffect(() => {
+    fetchCurrentSubscription();
+  }, []);
 
   // Add a periodic check for limit updates
   useEffect(() => {
@@ -533,7 +582,8 @@ const RequestCarouselPage: React.FC = () => {
 
     try {
       console.log('Fetching user limit for user:', user.id);
-      const limitResponse = await axios.get(`${import.meta.env.VITE_API_URL}/user-limits/${user.id}`, {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const limitResponse = await axios.get(`${baseUrl}/user-limits/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -542,21 +592,44 @@ const RequestCarouselPage: React.FC = () => {
       console.log('User limit response:', limitResponse.data);
       
       if (limitResponse.data.success) {
-        const { limit, count, remaining, dailyLimit } = limitResponse.data.data;
-        console.log('Setting user limit:', { limit, count, remaining, dailyLimit });
+        const userData = limitResponse.data.data;
+        
+        // Directly use the data from API without excessive conditions
         setUserLimit({ 
-          limit: limit || 10, 
-          count: count || 0, 
-          remaining: remaining || (limit - count) || 10, 
-          dailyLimit: dailyLimit || limit || 10 
+          limit: userData.limit || 0, 
+          count: userData.count || 0, 
+          remaining: Math.max(0, (userData.limit || 0) - (userData.count || 0)), 
+          planId: userData.planId || 'expired',
+          planName: userData.planName || 'No Plan',
+          status: userData.status || 'inactive',
+          expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
         });
+        
+        // Set upgrade flag based on plan status
+        setNeedsPlanUpgrade(userData.planId === 'expired' || userData.status === 'inactive');
       } else {
         console.error('Failed to fetch user limit:', limitResponse.data.message);
-        setUserLimit({ limit: 10, count: 0, remaining: 10, dailyLimit: 10 });
+        setUserLimit({ 
+          limit: 0, 
+          count: 0, 
+          remaining: 0, 
+          planId: 'expired',
+          planName: 'No Plan',
+          status: 'inactive'
+        });
+        setNeedsPlanUpgrade(true);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching user limit:', error.response?.data || error);
-      setUserLimit({ limit: 10, count: 0, remaining: 10, dailyLimit: 10 });
+      setUserLimit({ 
+        limit: 0, 
+        count: 0, 
+        remaining: 0, 
+        planId: 'expired',
+        planName: 'No Plan',
+        status: 'inactive'
+      });
+      setNeedsPlanUpgrade(true);
     }
   };
 
@@ -1104,16 +1177,6 @@ const RequestCarouselPage: React.FC = () => {
 
   // Update the part in handleGenerateContent where content is set to save to localStorage
   const handleGenerateContent = async (type: string) => {
-    if (!selectedVideo) {
-      toast({
-        title: "No video selected",
-        description: "Please select a video before generating content",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Check user limit for all content types
     if (!userLimit) {
       toast({
         variant: "destructive",
@@ -1131,6 +1194,27 @@ const RequestCarouselPage: React.FC = () => {
       });
       return;
     }
+    
+    // Remove the carousel-only restriction to allow all content types
+    // The old code had a check here that only allowed 'carousel' type
+
+    if (!selectedVideo) {
+      toast({
+        title: "Video required",
+        description: "Please select a video before generating content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedVideo.transcript) {
+        toast({
+        title: "Transcript required",
+        description: "Please ensure the video has a transcript before generating content",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsGeneratingContent(true);
     
@@ -1142,7 +1226,7 @@ const RequestCarouselPage: React.FC = () => {
         : `${baseUrl}/api/generate-content`;
 
       const response = await axios.post(apiUrl, {
-        type: type,
+        type: type, // Now using the actual selected type instead of hardcoding 'carousel'
         transcript: selectedVideo.transcript,
         videoId: selectedVideo.id,
         videoTitle: selectedVideo.title
@@ -1159,14 +1243,14 @@ const RequestCarouselPage: React.FC = () => {
       setShowContentGenerator(true);
       setSelectedContentType(type);
         setPreviewContent(generatedContent);
-        setPreviewType(type);
+      setPreviewType(type); // Set the correct preview type based on selection
         
         toast({
         title: "Content generated",
-        description: `${type} content has been generated for your selected video`,
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been generated for your selected video`,
       });
       
-      // Increment user count for all content types
+      // Increment user count after successful generation
       const token = tokenManager.getToken();
       await axios.post(
         `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
@@ -1294,6 +1378,34 @@ const RequestCarouselPage: React.FC = () => {
       return;
     }
     
+    // Check user limit before submitting
+    if (!userLimit) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to verify your usage limits. Please try again later.",
+      });
+      return;
+    }
+    
+    // Check if user needs to upgrade (no active subscription or reached limit)
+    if (!userLimit.planId || userLimit.planId === 'expired') {
+      setShowSubscriptionModal(true);
+      return;
+    }
+    
+    if (userLimit.count >= userLimit.limit) {
+      toast({
+        variant: "destructive",
+        title: "Credit Limit Reached",
+        description: `You have used all ${userLimit.limit} credits from your ${userLimit.planName} plan. Please upgrade your plan or buy additional credits.`,
+      });
+      
+      // Show subscription modal for upgrade
+      setShowSubscriptionModal(true);
+      return;
+    }
+    
     setIsSubmittingRequest(true);
     
     try {
@@ -1375,6 +1487,7 @@ const RequestCarouselPage: React.FC = () => {
         youtubeUrl: selectedVideo?.url || form.getValues('youtubeUrl') || '',
         carouselType: 'professional',
         content: generatedContent || previewContent || '',
+        transcript: selectedVideo?.transcript || '', // Include the transcript
         fileUrls: fileUrls.length > 0 ? fileUrls : [], // Keep fileUrls for backward compatibility
         files: fileUrls.length > 0 ? fileUrls.map(url => ({ url })) : [], // Also include properly formatted files array
         videoId: selectedVideo?.id || undefined,
@@ -1382,18 +1495,6 @@ const RequestCarouselPage: React.FC = () => {
         userName: user?.firstName || (user as any)?.name || 'Unknown User',
         userEmail: user?.email || ''
       };
-      
-      // Format files properly for backend expectations - remove this block that's causing issues
-      // if (fileUrls.length > 0) {
-      //   // Log the files for debugging
-      //   console.log("Formatting file URLs for backend:", fileUrls);
-      //   
-      //   // Make sure we're not sending empty files array when there are no files
-      //   // This prevents the backend from trying to validate an empty array
-      //   if (fileUrls.length === 0) {
-      //     delete requestData.fileUrls;
-      //   }
-      // }
       
       // VITE_API_URL already includes /api
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -1440,6 +1541,31 @@ const RequestCarouselPage: React.FC = () => {
           // For any other error, throw normally
           throw new Error(responseData.message || responseData.error || 'Failed to submit carousel request');
         }
+      }
+      
+      // Increment user count for carousel request - THIS IS THE KEY CHANGE - counting carousel requests against the limit
+      try {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        // Update local state
+        setUserLimit(prev => prev ? {
+          ...prev,
+          count: prev.count + 1,
+          remaining: prev.remaining - 1
+        } : null);
+        
+        console.log("Incremented user limit count for carousel request");
+      } catch (limitError) {
+        console.error("Error incrementing user limit:", limitError);
+        // Don't stop the flow if this fails
       }
       
       // Move to success step
@@ -2176,25 +2302,50 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
+  // Add a function to handle subscription navigation
+  const handleSubscribe = () => {
+    navigate("/settings/billing");
+  };
+
     return (
     <div className="container max-w-6xl py-8">
       {userLimit && (
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-900">Usage Limit</h3>
+              <h3 className="text-sm font-medium text-gray-900">Credits {userLimit.planId !== 'expired' ? `(${userLimit.planName} Plan)` : ''}</h3>
               <p className="text-sm text-gray-500">
-                {userLimit.count} / {userLimit.limit} requests used
+                {userLimit.count || 0} / {userLimit.limit || 0} credits used
+                {userLimit.expiresAt && userLimit.planId !== 'expired' && (
+                  <span className="ml-2">• Expires {format(userLimit.expiresAt, 'MMM dd, yyyy')}</span>
+                )}
               </p>
           </div>
             <div className="w-48 bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-primary h-2 rounded-full" 
                 style={{ 
-                  width: `${Math.min((userLimit.count / userLimit.limit) * 100, 100)}%` 
+                  width: `${Math.min(((userLimit.count || 0) / (userLimit.limit || 1)) * 100, 100)}%` 
                 }}
               />
       </div>
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-gray-500">
+              {userLimit.planId !== 'expired' 
+                ? "Each credit can be used for generating either AI content or a carousel request"
+                : "Purchase a plan to get credits for AI content and carousel requests"}
+            </p>
+            {(!userLimit.planId || userLimit.planId === 'expired') && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowSubscriptionModal(true)}
+                className="text-xs h-7"
+              >
+                Choose a Plan
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -2468,11 +2619,47 @@ const RequestCarouselPage: React.FC = () => {
                                 </div>
                           ) : generatedTranscript.length > 0 || (selectedVideo?.transcript && selectedVideo.transcript.length > 0) ? (
                             <div className="rounded-md border p-4 mb-4">
-                              <ScrollArea className="h-[300px]">
+                              <ScrollArea className="h-[200px]">
                                 <p className="text-sm whitespace-pre-line">
                                   {selectedVideo?.transcript || (generatedTranscript.length > 0 ? generatedTranscript[0] : '')}
                                 </p>
                               </ScrollArea>
+                              
+                              {/* LinkedIn Content Generation Section */}
+                              <div className="mt-4 border-t pt-4">
+                                <div className="flex justify-between items-center mb-3">
+                                  <h3 className="text-md font-medium flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-amber-500" />
+                                    Generate LinkedIn Content
+                                  </h3>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setShowSavedContents(true)}
+                                    className="flex items-center gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                                  >
+                                    <Folder className="h-4 w-4 text-blue-600" />
+                                    Saved ({savedContents.length})
+                                  </Button>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                  {contentGenerationOptions.map((option) => (
+                                    <Button 
+                                      key={option.type}
+                                      variant="outline" 
+                                      className="h-auto py-3 px-4 flex flex-col items-center text-center"
+                                      onClick={() => handleGenerateContent(option.type)}
+                                      disabled={isGeneratingContent}
+                                    >
+                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                                        {option.icon}
+                                      </div>
+                                      <span className="font-medium">{option.title}</span>
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
                                       </div>
                           ) : (
                             <div className="py-4 text-center">
@@ -2500,9 +2687,9 @@ const RequestCarouselPage: React.FC = () => {
                           <h3 className="font-medium text-lg">
                             {selectedFile ? selectedFile.name : "Drag & drop or click to upload"}
                           </h3>
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <div className="text-sm text-muted-foreground mt-1">
                             PDF, PowerPoint, or image files
-                          </p>
+                          </div>
                           {!selectedFile && (
                             <Button
                               variant="outline"
@@ -3225,6 +3412,122 @@ const RequestCarouselPage: React.FC = () => {
                   </div>
                 </>
               )}
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+      
+      {/* Subscription Modal */}
+      {showSubscriptionModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg">
+            <CardHeader>
+              <CardTitle>Subscription Required</CardTitle>
+              <CardDescription>
+                {userLimit.count >= userLimit.limit 
+                  ? "You've reached your credit limit." 
+                  : "A subscription is required to access this feature."}
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm flex items-start gap-2.5">
+                  <div className="mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                  </div>
+                  <div>
+                    {userLimit.count >= userLimit.limit ? (
+                      <p>You have used all {userLimit.limit} credits from your {userLimit.planName} plan.</p>
+                    ) : !userLimit.planId || userLimit.planId === 'expired' ? (
+                      <p>You don't have an active subscription. Please select a plan to continue using this feature.</p>  
+                    ) : (
+                      <p>Your plan doesn't include access to this feature. Please upgrade to continue.</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card className="border-2 border-primary">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Basic Plan</CardTitle>
+                      <CardDescription>$100/month</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="text-2xl font-bold">10 Credits</div>
+                      <div className="text-sm text-muted-foreground mt-1">per month</div>
+                      <div className="border-t my-3"></div>
+                      <ul className="text-sm space-y-1.5">
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> AI Content Generation
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> Carousel Requests
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> Priority Support
+                        </li>
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full" 
+                        onClick={handleSubscribe}
+                      >
+                        Choose Basic
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Premium Plan</CardTitle>
+                      <CardDescription>$200/month</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="text-2xl font-bold">25 Credits</div>
+                      <div className="text-sm text-muted-foreground mt-1">per month</div>
+                      <div className="border-t my-3"></div>
+                      <ul className="text-sm space-y-1.5">
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> AI Content Generation
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> Carousel Requests
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> Priority Support
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4 text-primary" /> White Label Options
+                        </li>
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full" 
+                        variant="outline"
+                        onClick={handleSubscribe}
+                      >
+                        Choose Premium
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </div>
+                
+                <div className="text-center text-sm text-muted-foreground pt-2">
+                  <p>Need a custom plan? <Button variant="link" className="h-auto p-0" onClick={handleSubscribe}>Contact us</Button></p>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex justify-between border-t pt-4">
+              <Button variant="ghost" onClick={() => setShowSubscriptionModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubscribe}>
+                View All Plans
+              </Button>
             </CardFooter>
           </Card>
         </div>

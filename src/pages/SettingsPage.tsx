@@ -31,7 +31,9 @@ import {
   LogOut,
   CheckCircle,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Download,
+  FileText
 } from 'lucide-react';
 import {
   Select,
@@ -55,9 +57,41 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
 
 // API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+
+// Add interface for subscription info
+interface SubscriptionInfo {
+  planId: string;
+  planName: string;
+  status: string;
+  expiresAt: string | null;
+  price: number;
+  credits: number;
+  usedCredits: number;
+}
+
+// Add interface for payment method
+interface PaymentMethod {
+  id: string;
+  type: 'card' | 'paypal';
+  lastFour?: string;
+  expiryDate?: string;
+  brand?: string;
+  email?: string;
+  isDefault: boolean;
+}
+
+// Add interface for invoice
+interface Invoice {
+  id: string;
+  amount: number;
+  date: Date;
+  status: 'paid' | 'pending' | 'failed';
+  downloadUrl: string;
+}
 
 const SettingsPage: React.FC = () => {
   const { user, logout, updateUserProfile, fetchUser } = useAuth();
@@ -82,6 +116,20 @@ const SettingsPage: React.FC = () => {
     profilePicture: user?.profilePicture || ''
   });
   
+  // Billing related states
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
+    planId: 'expired',
+    planName: 'No Plan',
+    status: 'inactive',
+    expiresAt: null,
+    price: 0,
+    credits: 0,
+    usedCredits: 0
+  });
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  
   // Update profile from user data when it changes
   useEffect(() => {
     if (user) {
@@ -99,6 +147,227 @@ const SettingsPage: React.FC = () => {
       });
     }
   }, [user]);
+  
+  // Fetch subscription and billing data when tab changes to billing
+  useEffect(() => {
+    if (activeTab === 'billing') {
+      fetchSubscriptionData();
+      fetchPaymentMethods();
+      fetchInvoices();
+    }
+  }, [activeTab]);
+  
+  // Fetch current subscription data
+  const fetchSubscriptionData = async () => {
+    try {
+      setIsLoadingSubscription(true);
+      
+      const token = tokenManager.getToken();
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+      
+      const response = await axios.get(
+        `${API_URL}/user-limits/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        const userData = response.data.data;
+        
+        // Get plan price from plan ID
+        const planPrice = getPlanPrice(userData.planId);
+        
+        setSubscriptionInfo({
+          planId: userData.planId || 'expired',
+          planName: userData.planName || 'No Plan',
+          status: userData.status || 'inactive',
+          expiresAt: userData.expiresAt || null,
+          price: planPrice,
+          credits: userData.limit || 0,
+          usedCredits: userData.count || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching subscription data:', error);
+      toast.error('Failed to load subscription data');
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  };
+  
+  // Helper function to get plan price based on plan ID
+  const getPlanPrice = (planId: string): number => {
+    const planPrices: {[key: string]: number} = {
+      'trial': 0,
+      'basic': 100,
+      'premium': 200,
+      'custom': 500
+    };
+    
+    return planPrices[planId] || 0;
+  };
+  
+  // Fetch payment methods
+  const fetchPaymentMethods = async () => {
+    try {
+      const token = tokenManager.getToken();
+      if (!token) return;
+      
+      // Placeholder for API call - replace with actual implementation
+      // const response = await axios.get(`${API_URL}/payment-methods`, {
+      //   headers: { Authorization: `Bearer ${token}` }
+      // });
+      
+      // For now, using mock data
+      setPaymentMethods([
+        {
+          id: 'pm-1',
+          type: 'card',
+          lastFour: '4242',
+          expiryDate: '04/25',
+          brand: 'Visa',
+          isDefault: true
+        },
+        {
+          id: 'pm-2',
+          type: 'paypal',
+          email: user?.email || 'user@example.com',
+          isDefault: false
+        }
+      ]);
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+    }
+  };
+  
+  // Fetch invoices
+  const fetchInvoices = async () => {
+    try {
+      const token = tokenManager.getToken();
+      if (!token) return;
+      
+      // Placeholder for API call - replace with actual implementation
+      // const response = await axios.get(`${API_URL}/invoices`, {
+      //   headers: { Authorization: `Bearer ${token}` }
+      // });
+      
+      // For now, using mock data
+      setInvoices([
+        {
+          id: 'inv-001',
+          amount: 100,
+          date: new Date('2023-10-15'),
+          status: 'paid',
+          downloadUrl: '/invoices/inv-001.pdf'
+        },
+        {
+          id: 'inv-002',
+          amount: 100,
+          date: new Date('2023-09-15'),
+          status: 'paid',
+          downloadUrl: '/invoices/inv-002.pdf'
+        }
+      ]);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+    }
+  };
+  
+  // Handle setting default payment method
+  const handleSetDefaultPayment = async (paymentId: string) => {
+    try {
+      const token = tokenManager.getToken();
+      if (!token) return;
+      
+      // Placeholder for API call - replace with actual implementation
+      // await axios.put(
+      //   `${API_URL}/payment-methods/${paymentId}/default`,
+      //   {},
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
+      
+      // Update local state
+      setPaymentMethods(methods => 
+        methods.map(method => ({
+          ...method,
+          isDefault: method.id === paymentId
+        }))
+      );
+      
+      toast.success('Default payment method updated');
+    } catch (error) {
+      console.error('Error setting default payment method:', error);
+      toast.error('Failed to update payment method');
+    }
+  };
+  
+  // Handle downloading invoice
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    try {
+      const token = tokenManager.getToken();
+      if (!token) return;
+      
+      // Placeholder for actual download logic
+      // const response = await axios.get(
+      //   `${API_URL}/invoices/${invoice.id}/download`,
+      //   { 
+      //     headers: { Authorization: `Bearer ${token}` },
+      //     responseType: 'blob'
+      //   }
+      // );
+      
+      // Create download link
+      // const url = window.URL.createObjectURL(new Blob([response.data]));
+      // const link = document.createElement('a');
+      // link.href = url;
+      // link.setAttribute('download', `invoice-${invoice.id}.pdf`);
+      // document.body.appendChild(link);
+      // link.click();
+      // link.remove();
+      
+      toast.success('Invoice download started');
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice');
+    }
+  };
+  
+  // Handle downloading billing history
+  const handleDownloadBillingHistory = async () => {
+    try {
+      const token = tokenManager.getToken();
+      if (!token) return;
+      
+      // Placeholder for actual download logic
+      // const response = await axios.get(
+      //   `${API_URL}/billing/history/download`,
+      //   { 
+      //     headers: { Authorization: `Bearer ${token}` },
+      //     responseType: 'blob'
+      //   }
+      // );
+      
+      // Create download link
+      // const url = window.URL.createObjectURL(new Blob([response.data]));
+      // const link = document.createElement('a');
+      // link.href = url;
+      // link.setAttribute('download', 'billing-history.pdf');
+      // document.body.appendChild(link);
+      // link.click();
+      // link.remove();
+      
+      toast.success('Billing history download started');
+    } catch (error) {
+      console.error('Error downloading billing history:', error);
+      toast.error('Failed to download billing history');
+    }
+  };
   
   const handleProfileChange = (key: keyof typeof profile, value: string) => {
     setProfile({
@@ -340,6 +609,8 @@ const SettingsPage: React.FC = () => {
     }
   };
   
+  const navigate = useNavigate();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -612,33 +883,151 @@ const SettingsPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="p-6 border rounded-lg bg-neutral-lightest mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Current Plan</h3>
-                    <Badge className="bg-accent text-white">Free</Badge>
-                  </div>
-                  
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-3xl font-bold">$0</span>
-                    <span className="text-neutral-medium">/month</span>
-                  </div>
-                  
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="text-accent h-4 w-4" />
-                      <span className="text-sm">Basic LinkedIn post management</span>
+                  {isLoadingSubscription ? (
+                    <div className="flex justify-center items-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium">Current Plan</h3>
+                        <Badge className={subscriptionInfo.planId === 'expired' ? 'bg-gray-500' : 'bg-primary'}>
+                          {subscriptionInfo.planName || 'Free'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-baseline gap-2 mb-4">
+                        <span className="text-3xl font-bold">${subscriptionInfo.price || 0}</span>
+                        <span className="text-neutral-medium">/month</span>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="text-primary h-4 w-4" />
+                          <span className="text-sm">{subscriptionInfo.credits || 0} Credits Available</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="text-primary h-4 w-4" />
+                          <span className="text-sm">
+                            {subscriptionInfo.status === 'active' 
+                              ? 'Active subscription' 
+                              : 'No active subscription'}
+                          </span>
+                        </div>
+                        {subscriptionInfo.expiresAt && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="text-primary h-4 w-4" />
+                            <span className="text-sm">Expires on {new Date(subscriptionInfo.expiresAt).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        className="w-full" 
+                        onClick={() => navigate('/dashboard/billing')}
+                      >
+                        Manage Subscription
+                      </Button>
+                    </>
+                  )}
                 </div>
                 
+                {/* Payment Methods */}
+                <div className="space-y-4 mb-6">
+                  <h3 className="font-medium mb-4">Payment Methods</h3>
+                  {paymentMethods.length > 0 ? (
+                    <div className="space-y-3">
+                      {paymentMethods.map((method) => (
+                        <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {method.type === 'card' ? (
+                              <div className="h-10 w-14 bg-gray-100 rounded flex items-center justify-center">
+                                <CreditCard className="h-5 w-5" />
+                              </div>
+                            ) : (
+                              <div className="h-10 w-14 bg-blue-100 rounded flex items-center justify-center">
+                                <svg className="h-5 w-5 text-blue-700" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M7.076 21.337H2.47a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008A1.044 1.044 0 0 1 2.47 2.663h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036zm7.949 0h-4.606a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008a1.044 1.044 0 0 1 1.057-.766h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036zm7.948 0h-4.606a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008a1.044 1.044 0 0 1 1.057-.766h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036z" />
+                                </svg>
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium">
+                                {method.type === 'card'
+                                  ? `${method.brand} ****${method.lastFour}`
+                                  : `PayPal (${method.email})`}
+                              </p>
+                              {method.type === 'card' && method.expiryDate && (
+                                <p className="text-xs text-gray-500">Expires {method.expiryDate}</p>
+                              )}
+                            </div>
+                          </div>
+                          {method.isDefault ? (
+                            <Badge variant="outline" className="bg-primary/5 text-primary">Default</Badge>
+                          ) : (
+                            <Button variant="ghost" size="sm" onClick={() => handleSetDefaultPayment(method.id)}>
+                              Set Default
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center p-6 border rounded-lg">
+                      <CreditCard className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                      <p className="mb-4">No payment methods found</p>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/billing')}>
+                        Add Payment Method
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Billing History */}
                 <div className="space-y-4">
                   <h3 className="font-medium mb-4">Billing Information</h3>
+                  {invoices.length > 0 ? (
+                    <div className="space-y-3 mb-4">
+                      {invoices.slice(0, 3).map((invoice) => (
+                        <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">${invoice.amount.toFixed(2)}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(invoice.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="flex items-center gap-1"
+                            onClick={() => handleDownloadInvoice(invoice)}
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center p-6 border rounded-lg mb-4">
+                      <FileText className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                      <p>No invoices available</p>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between">
-                <div>
+                    <div>
                       <p className="text-sm">Download billing details</p>
                       <p className="text-neutral-medium text-xs mt-1">Get a copy of your billing history and receipts</p>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Download Billing Details
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      disabled={invoices.length === 0}
+                      onClick={handleDownloadBillingHistory}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
                     </Button>
                   </div>
                 </div>

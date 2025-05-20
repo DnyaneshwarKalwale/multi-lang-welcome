@@ -17,7 +17,6 @@ import {
   Home,
   Sparkles,
   MessageSquare,
-  Linkedin,
   MoonStar,
   Sun
 } from 'lucide-react';
@@ -35,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BrandOutIcon, BrandOutLogotype } from '@/components/BrandOutIcon';
 
 const sidebarItems = [
   {
@@ -131,13 +131,7 @@ const AdminLayout: React.FC = () => {
         <div className={`flex flex-col flex-grow pt-5 overflow-y-auto border-r shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center flex-shrink-0 px-6">
             <Link to="/admin" className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                <Linkedin className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>Admin Panel</h2>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>LinkkedIn Clone</p>
-              </div>
+              <BrandOutLogotype className="h-8" />
             </Link>
           </div>
           <div className="mt-8 flex-grow flex flex-col">
@@ -148,16 +142,16 @@ const AdminLayout: React.FC = () => {
                   to={item.href}
                   className={cn(
                     item.href === location.pathname
-                      ? `${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'} border-l-4 border-blue-600 font-medium`
-                      : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`,
+                      ? `${isDarkMode ? 'bg-primary/30 text-primary' : 'bg-primary/10 text-primary'} border-l-4 border-primary font-medium`
+                      : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-primary' : 'text-gray-700 hover:bg-primary/5 hover:text-primary'}`,
                     "group rounded-md py-3 px-4 flex items-center text-sm transition-all duration-200"
                   )}
                 >
                   <div
                     className={cn(
                       item.href === location.pathname
-                        ? `${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`
-                        : `${isDarkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-500 group-hover:text-blue-600'}`,
+                        ? `${isDarkMode ? 'text-primary' : 'text-primary'}`
+                        : `${isDarkMode ? 'text-gray-400 group-hover:text-primary' : 'text-gray-500 group-hover:text-primary'}`,
                       "mr-3 flex-shrink-0"
                     )}
                   >
@@ -174,7 +168,7 @@ const AdminLayout: React.FC = () => {
                 <div>
                   <Avatar>
                     <AvatarImage src="/admin-avatar.png" alt="Admin" />
-                    <AvatarFallback className="bg-blue-600 text-white">AD</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-white">AD</AvatarFallback>
                   </Avatar>
                 </div>
                 <div className="ml-3 flex-1">
@@ -188,7 +182,7 @@ const AdminLayout: React.FC = () => {
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  className={`${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-500 hover:text-blue-600'}`}
+                  className={`${isDarkMode ? 'text-gray-400 hover:text-primary' : 'text-gray-500 hover:text-primary'}`}
                   onClick={handleLogout}
                 >
                   <LogOut className="h-5 w-5" />
@@ -219,13 +213,7 @@ const AdminLayout: React.FC = () => {
             >
               <div className={`flex items-center justify-between p-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} border-b`}>
                 <div className="flex items-center space-x-2">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                    <Linkedin className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="flex flex-col">
-                    <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>Admin Panel</h2>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>LinkkedIn Clone</p>
-                  </div>
+                  <BrandOutLogotype className="h-7" />
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className={isDarkMode ? 'text-gray-300' : ''}>
                   <X className="h-6 w-6" />
@@ -239,16 +227,16 @@ const AdminLayout: React.FC = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       item.href === location.pathname
-                        ? `${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'} border-l-4 border-blue-600 font-medium`
-                        : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`,
+                        ? `${isDarkMode ? 'bg-primary/30 text-primary' : 'bg-primary/10 text-primary'} border-l-4 border-primary font-medium`
+                        : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-primary' : 'text-gray-700 hover:bg-primary/5 hover:text-primary'}`,
                       "group rounded-md py-3 px-4 flex items-center text-sm transition-all duration-200"
                     )}
                   >
                     <div
                       className={cn(
                         item.href === location.pathname
-                          ? `${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`
-                          : `${isDarkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-500 group-hover:text-blue-600'}`,
+                          ? `${isDarkMode ? 'text-primary' : 'text-primary'}`
+                          : `${isDarkMode ? 'text-gray-400 group-hover:text-primary' : 'text-gray-500 group-hover:text-primary'}`,
                         "mr-3 flex-shrink-0"
                       )}
                     >
@@ -262,7 +250,7 @@ const AdminLayout: React.FC = () => {
                 <div className="flex items-center">
                   <Avatar>
                     <AvatarImage src="/admin-avatar.png" alt="Admin" />
-                    <AvatarFallback className="bg-blue-600 text-white">AD</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-white">AD</AvatarFallback>
                   </Avatar>
                   <div className="ml-3 flex-1">
                     <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -275,7 +263,7 @@ const AdminLayout: React.FC = () => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className={`${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-500 hover:text-blue-600'}`}
+                    className={`${isDarkMode ? 'text-gray-400 hover:text-primary' : 'text-gray-500 hover:text-primary'}`}
                     onClick={handleLogout}
                   >
                     <LogOut className="h-5 w-5" />
@@ -297,7 +285,7 @@ const AdminLayout: React.FC = () => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className={`md:hidden ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} 
+                className={`md:hidden ${isDarkMode ? 'text-primary' : 'text-primary'}`} 
                 onClick={() => setMobileMenuOpen(true)}
               >
                 <Menu className="h-6 w-6" />
@@ -313,7 +301,7 @@ const AdminLayout: React.FC = () => {
                 <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <Input 
                   placeholder="Search..." 
-                  className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' : 'bg-gray-50 border-gray-200 focus:border-blue-500'}`}
+                  className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-primary' : 'bg-gray-50 border-gray-200 focus:border-primary'}`}
                 />
               </div>
               
@@ -322,7 +310,7 @@ const AdminLayout: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 onClick={toggleDarkMode}
-                className={isDarkMode ? 'text-yellow-300' : 'text-blue-600'}
+                className={isDarkMode ? 'text-yellow-300' : 'text-primary'}
               >
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <MoonStar className="h-5 w-5" />}
               </Button>
@@ -330,7 +318,7 @@ const AdminLayout: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className={`relative ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+                className={`relative ${isDarkMode ? 'text-primary' : 'text-primary'}`}
               >
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
@@ -341,9 +329,9 @@ const AdminLayout: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`rounded-full h-8 w-8 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-100'}`}
+                    className={`rounded-full h-8 w-8 ${isDarkMode ? 'bg-primary/20' : 'bg-primary/10'}`}
                   >
-                    <User className={`h-4 w-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <User className={`h-4 w-4 ${isDarkMode ? 'text-primary' : 'text-primary'}`} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent

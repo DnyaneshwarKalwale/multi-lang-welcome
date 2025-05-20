@@ -12,16 +12,17 @@ import {
   Bell,
   User,
   ChevronDown,
-  Linkedin,
   MoonStar,
   Sun,
   Search,
-  Layers
+  Layers,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -115,6 +116,11 @@ const AdminLayout: React.FC = () => {
       path: "/admin/user-limits" 
     },
     { 
+      label: "User Plans", 
+      icon: <CreditCard className="h-5 w-5" />,
+      path: "/admin/user-plans" 
+    },
+    { 
       label: "Content", 
       icon: <FileText className="h-5 w-5" />,
       path: "/admin/content" 
@@ -135,14 +141,8 @@ const AdminLayout: React.FC = () => {
   const DesktopSidebar = () => (
     <aside className={`w-64 h-screen fixed left-0 top-0 border-r hidden md:block ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="p-6">
-        <Link to="/admin/dashboard" className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-            <Linkedin className="h-5 w-5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>Admin Panel</h1>
-            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>LinkkedIn Clone</p>
-          </div>
+        <Link to="/admin/dashboard" className="flex items-center">
+          <BrandOutLogotype className="h-8" />
         </Link>
       </div>
       <div className="px-4 pb-6">
@@ -150,7 +150,7 @@ const AdminLayout: React.FC = () => {
           <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
           <Input 
             placeholder="Search..." 
-            className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' : 'bg-gray-50 border-gray-200 focus:border-blue-500'}`}
+            className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-primary' : 'bg-gray-50 border-gray-200 focus:border-primary'}`}
           />
         </div>
         <nav className="space-y-1">
@@ -161,18 +161,18 @@ const AdminLayout: React.FC = () => {
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 item.path === location.pathname 
-                  ? `${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600'} font-medium` 
-                  : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`
+                  ? `${isDarkMode ? 'bg-primary/30 text-primary' : 'bg-primary/10 text-primary'} font-medium` 
+                  : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-primary' : 'text-gray-700 hover:bg-primary/5 hover:text-primary'}`
               )}
             >
               <span className={item.path === location.pathname 
-                ? `${isDarkMode ? 'text-blue-400' : 'text-blue-600'}` 
+                ? `${isDarkMode ? 'text-primary' : 'text-primary'}` 
                 : `${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {item.icon}
               </span>
               {item.label}
               {item.path === location.pathname && (
-                <div className={`ml-auto w-1.5 h-6 rounded-sm ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`} />
+                <div className={`ml-auto w-1.5 h-6 rounded-sm ${isDarkMode ? 'bg-primary' : 'bg-primary'}`} />
               )}
             </Link>
           ))}
@@ -182,7 +182,7 @@ const AdminLayout: React.FC = () => {
         <div className="flex items-center gap-3 mb-4">
           <Avatar>
             <AvatarImage src="/admin-avatar.png" alt="Admin" />
-            <AvatarFallback className="bg-blue-600 text-white">
+            <AvatarFallback className="bg-primary text-white">
               {adminUser?.firstName?.charAt(0) || 'A'}{adminUser?.lastName?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
@@ -218,14 +218,8 @@ const AdminLayout: React.FC = () => {
           </SheetTrigger>
           <SheetContent side="left" className={`w-64 p-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
             <SheetHeader className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                  <Linkedin className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <SheetTitle className={`text-left ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>Admin Panel</SheetTitle>
-                  <p className={`text-xs text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>LinkkedIn Clone</p>
-                </div>
+              <div className="flex items-center">
+                <BrandOutLogotype className="h-7" />
               </div>
             </SheetHeader>
             <div className="p-4">
@@ -233,7 +227,7 @@ const AdminLayout: React.FC = () => {
                 <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <Input 
                   placeholder="Search..." 
-                  className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' : 'bg-gray-50 border-gray-200 focus:border-blue-500'}`}
+                  className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-primary' : 'bg-gray-50 border-gray-200 focus:border-primary'}`}
                 />
               </div>
               <nav className="space-y-1">
@@ -244,18 +238,18 @@ const AdminLayout: React.FC = () => {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       item.path === location.pathname 
-                        ? `${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600'} font-medium` 
-                        : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`
+                        ? `${isDarkMode ? 'bg-primary/30 text-primary' : 'bg-primary/10 text-primary'} font-medium` 
+                        : `${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-primary' : 'text-gray-700 hover:bg-primary/5 hover:text-primary'}`
                     )}
                   >
                     <span className={item.path === location.pathname 
-                      ? `${isDarkMode ? 'text-blue-400' : 'text-blue-600'}` 
+                      ? `${isDarkMode ? 'text-primary' : 'text-primary'}` 
                       : `${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {item.icon}
                     </span>
                     {item.label}
                     {item.path === location.pathname && (
-                      <div className={`ml-auto w-1.5 h-6 rounded-sm ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`} />
+                      <div className={`ml-auto w-1.5 h-6 rounded-sm ${isDarkMode ? 'bg-primary' : 'bg-primary'}`} />
                     )}
                   </Link>
                 ))}
@@ -265,7 +259,7 @@ const AdminLayout: React.FC = () => {
               <div className="flex items-center gap-3 mb-4">
                 <Avatar>
                   <AvatarImage src="/admin-avatar.png" alt="Admin" />
-                  <AvatarFallback className="bg-blue-600 text-white">
+                  <AvatarFallback className="bg-primary text-white">
                     {adminUser?.firstName?.charAt(0) || 'A'}{adminUser?.lastName?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -289,10 +283,7 @@ const AdminLayout: React.FC = () => {
           </SheetContent>
         </Sheet>
         <div className="flex items-center ml-2">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-            <Linkedin className="h-4 w-4 text-white" />
-          </div>
-          <h1 className={`text-lg font-bold ml-2 ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>Admin</h1>
+          <BrandOutLogotype className="h-7" />
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -300,7 +291,7 @@ const AdminLayout: React.FC = () => {
           variant="ghost" 
           size="icon"
           onClick={toggleDarkMode}
-          className={isDarkMode ? 'text-yellow-300' : 'text-blue-600'}
+          className={isDarkMode ? 'text-yellow-300' : 'text-primary'}
         >
           {isDarkMode ? <Sun className="h-5 w-5" /> : <MoonStar className="h-5 w-5" />}
         </Button>
@@ -311,7 +302,7 @@ const AdminLayout: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2">
               <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-xs bg-blue-600 text-white">
+                <AvatarFallback className="text-xs bg-primary text-white">
                   {adminUser?.firstName?.charAt(0) || 'A'}{adminUser?.lastName?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -346,14 +337,14 @@ const AdminLayout: React.FC = () => {
           <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
           <Input 
             placeholder="Search..." 
-            className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' : 'bg-gray-50 border-gray-200 focus:border-blue-500'}`}
+            className={`pl-10 h-9 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-primary' : 'bg-gray-50 border-gray-200 focus:border-primary'}`}
           />
         </div>
         <Button 
           variant="ghost" 
           size="icon"
           onClick={toggleDarkMode}
-          className={isDarkMode ? 'text-yellow-300' : 'text-blue-600'}
+          className={isDarkMode ? 'text-yellow-300' : 'text-primary'}
         >
           {isDarkMode ? <Sun className="h-5 w-5" /> : <MoonStar className="h-5 w-5" />}
         </Button>
@@ -369,7 +360,7 @@ const AdminLayout: React.FC = () => {
               </span>
               <Avatar className="h-8 w-8 ml-1">
                 <AvatarImage src="/admin-avatar.png" alt="Admin" />
-                <AvatarFallback className="bg-blue-600 text-white text-xs">
+                <AvatarFallback className="bg-primary text-white text-xs">
                   {adminUser?.firstName?.charAt(0) || 'A'}{adminUser?.lastName?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>

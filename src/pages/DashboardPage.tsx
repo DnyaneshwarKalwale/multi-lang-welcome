@@ -60,16 +60,6 @@ interface Post {
   created_at: string;
 }
 
-// Interface for a workspace
-interface Workspace {
-  id: string;
-  name: string;
-  type: 'personal' | 'team';
-  owner: string;
-  memberCount?: number;
-  createdAt: string;
-}
-
 interface DashboardData {
   totalPosts: number;
   draftPosts: number;
@@ -111,27 +101,6 @@ const DashboardPage: React.FC = () => {
   
   // Generate a LinkedIn username based on user's name
   const [linkedInUsername, setLinkedInUsername] = useState<string>('');
-  
-  // State for workspaces
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([
-    {
-      id: '1',
-      name: 'Personal Workspace',
-      type: 'personal',
-      owner: user?.email || '',
-      createdAt: '2023-10-15'
-    },
-    {
-      id: '2',
-      name: 'Marketing Team',
-      type: 'team',
-      owner: 'marketing@example.com',
-      memberCount: 5,
-      createdAt: '2023-11-22'
-    }
-  ]);
-  
-  const [currentWorkspace, setCurrentWorkspace] = useState(workspaces[0]);
 
   // For displaying scheduled posts (empty since scheduled post functionality is removed)
   const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
@@ -423,51 +392,13 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="w-full h-full bg-white">
-      {/* Welcome message and workspace switch */}
+      {/* Welcome message */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold mb-1 text-black">Welcome back, {user?.firstName || 'there'}!</h1>
           <p className="text-black">
-            You're in <span className="font-medium">{currentWorkspace.name}</span> • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
-        </div>
-
-        <div className="mt-4 md:mt-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Building className="h-4 w-4" />
-                Workspaces
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {workspaces.map(workspace => (
-                <DropdownMenuItem 
-                  key={workspace.id}
-                  className={`flex items-center gap-2 ${workspace.id === currentWorkspace.id ? 'bg-primary/10' : ''}`}
-                  onClick={() => setCurrentWorkspace(workspace)}
-                >
-                  {workspace.type === 'personal' ? (
-                    <User className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Users className="h-4 w-4 text-primary" />
-                  )}
-                  <span>{workspace.name}</span>
-                  {workspace.type === 'team' && (
-                    <Badge variant="outline" className="ml-auto text-xs">
-                      {workspace.memberCount} members
-                    </Badge>
-                  )}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 text-primary">
-                <PlusCircle className="h-4 w-4" />
-                <span>Create New Workspace</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
       

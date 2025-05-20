@@ -354,6 +354,7 @@ const MyCarouselsPage: React.FC = () => {
   
   // Status Badge component
   const StatusBadge = ({ status }: { status: CarouselStatus }) => {
+    // Return the Badge component directly without nesting inside a paragraph
     switch (status) {
       case 'completed':
         return <Badge className="bg-white text-green-600 border border-green-300 hover:bg-green-50">Completed</Badge>;
