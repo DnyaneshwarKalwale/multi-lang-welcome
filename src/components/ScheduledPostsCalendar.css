@@ -1,0 +1,69 @@
+/* Custom styles for the calendar component */
+.rbc-calendar {
+  font-family: inherit;
+  color: #111;
+}
+
+.rbc-header {
+  background-color: #f8f8f8;
+  padding: 8px 0;
+  font-weight: 500;
+}
+
+.rbc-today {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.rbc-event {
+  border: none !important;
+  background-color: transparent !important;
+  padding: 0 1px !important;
+}
+
+.calendar-event {
+  margin: 1px;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.rbc-month-view {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #eaeaea;
+}
+
+.rbc-off-range-bg {
+  background: #fafafa;
+}
+
+.rbc-toolbar button {
+  color: #111;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: rgba(var(--primary-rgb), 1);
+  color: white;
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid #eaeaea;
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top: 1px solid #eaeaea;
+}
+
+.rbc-date-cell {
+  padding: 4px 5px 0;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid #f0f0f0;
+}
+
+.rbc-time-view-resources .rbc-time-gutter,
+.rbc-time-view-resources .rbc-time-header-gutter {
+  background-color: #f8f8f8;
+} 

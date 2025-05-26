@@ -1,176 +1,162 @@
-import { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  X, LayoutDashboard, PlusCircle, BookOpen, BarChart3, Settings, Bell, LogOut, 
+  Home, FileText, Upload, LayoutGrid, Search, CreditCard, MessageSquare, Lightbulb
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Settings, Users, FileText, LogOut, Sparkles, Stars, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import ThemeToggle from '@/components/ThemeToggle';
-import { motion } from 'framer-motion';
+import { BrandOutIcon, BrandOutLogotype } from '@/components/BrandOutIcon';
+import { Badge } from '@/components/ui/badge';
+import { usePostCount } from '@/components/CollapsibleSidebar';
 
-const MobileMenu = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface MobileMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
-  const { logout, isAuthenticated } = useAuth();
-
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const closeMenu = () => setIsOpen(false);
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const menuItems = [
-    { path: '/dashboard', icon: <Home className="h-5 w-5" />, label: 'Dashboard' },
-    { path: '/team-workspace', icon: <Users className="h-5 w-5" />, label: 'Workspace' },
-    { path: '/language-selection', icon: <FileText className="h-5 w-5" />, label: 'Content' },
-    { path: '/settings', icon: <Settings className="h-5 w-5" />, label: 'Settings' }
+  const { user, logout } = useAuth();
+  const { totalPostCount } = usePostCount();
+  
+  const navItems = [
+    { title: 'Home', icon: <Home size={20} />, path: '/dashboard/home' },
+    { title: 'Create Post', icon: <PlusCircle size={20} />, path: '/dashboard/post' },
+    { title: 'Post Library', icon: <FileText size={20} />, path: '/dashboard/posts', badge: totalPostCount },
+    { title: 'Request Carousel', icon: <Upload size={20} />, path: '/dashboard/request-carousel' },
+    { title: 'My Carousels', icon: <LayoutGrid size={20} />, path: '/dashboard/my-carousels' },
+    { title: 'Scraper', icon: <Search size={20} />, path: '/dashboard/scraper' },
+    { title: 'Billing', icon: <CreditCard size={20} />, path: '/dashboard/billing' },
+    { title: 'Settings', icon: <Settings size={20} />, path: '/dashboard/settings' },
+    { isSeparator: true, title: 'Coming Soon' },
+    { title: 'AI Writer', icon: <MessageSquare size={20} />, path: '/dashboard/ai', disabled: true },
+    { title: 'Analytics', icon: <BarChart3 size={20} />, path: '/dashboard/analytics', disabled: true },
+    { title: 'Inspiration Vault', icon: <Lightbulb size={20} />, path: '/dashboard/inspiration', disabled: true },
   ];
-
+  
+  const isActive = (path: string) => location.pathname === path;
+  
+  const handleLogout = () => {
+    logout();
+    onClose();
+  };
+  
   return (
-    <>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="lg:hidden rounded-full w-10 h-10"
-        onClick={toggleMenu}
-        aria-label="Menu"
-      >
-        <Menu className="h-6 w-6" />
-      </Button>
-
+    <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-white/80 backdrop-blur-sm lg:hidden" onClick={closeMenu}>
-          <motion.div 
-            className="fixed top-0 right-0 h-full w-3/4 max-w-sm bg-white dark:bg-gray-900 shadow-xl p-6 overflow-hidden"
-            initial={{ x: "100%" }}
+        <>
+          {/* Backdrop overlay */}
+          <motion.div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          
+          {/* Menu panel */}
+          <motion.div
+            className="fixed top-0 right-0 h-full w-[280px] bg-white shadow-lg z-50 overflow-y-auto"
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
-            {/* Floating decorative icons */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <motion.div 
-                className="absolute top-[15%] left-[10%] text-primary-400/10 dark:text-primary-400/5"
-                animate={{ 
-                  y: [0, -15, 0],
-                  rotate: [0, 10, 0]
-                }}
-                transition={{ 
-                  duration: 8, 
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Sparkles size={30} />
-              </motion.div>
-              
-              <motion.div 
-                className="absolute bottom-[20%] left-[20%] text-violet-400/10 dark:text-violet-400/5"
-                animate={{ 
-                  y: [0, 15, 0],
-                  rotate: [0, -5, 0]
-                }}
-                transition={{ 
-                  duration: 10, 
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1
-                }}
-              >
-                <Stars size={40} />
-              </motion.div>
-              
-              <motion.div 
-                className="absolute top-[40%] right-[10%] text-amber-400/10 dark:text-amber-400/5"
-                animate={{ 
-                  x: [0, 10, 0],
-                  y: [0, -5, 0]
-                }}
-                transition={{ 
-                  duration: 12, 
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2
-                }}
-              >
-                <Zap size={25} />
-              </motion.div>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <BrandOutLogotype className="h-8" />
+              <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-500">
+                <X size={24} />
+              </Button>
             </div>
-
-            <div className="flex items-center justify-between mb-8 relative z-10">
-              <h2 className="text-xl font-bold text-gradient">Dekcion</h2>
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full"
-                  onClick={closeMenu}
+            
+            {/* User info section */}
+            <div className="p-4 border-b">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white font-semibold text-lg">
+                  {user?.firstName ? user.firstName.charAt(0) : 'U'}
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'User'}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {user?.email || ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Navigation links */}
+            <nav className="p-4 space-y-1">
+              {navItems.map((item, index) => (
+                item.isSeparator ? (
+                  <div key={index} className="text-gray-400 font-semibold text-sm pt-4 pb-2 px-3">
+                    {item.title}
+                  </div>
+                ) : (
+                  <Link
+                    key={index}
+                    to={item.disabled ? '#' : item.path}
+                    onClick={(e) => {
+                      if (item.disabled) {
+                        e.preventDefault();
+                      } else {
+                        onClose();
+                      }
+                    }}
+                    className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors ${
+                      isActive(item.path)
+                        ? 'bg-primary-50 text-primary-600'
+                        : item.disabled 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                    {item.badge && item.badge > 0 && (
+                      <Badge 
+                        variant="outline" 
+                        className="ml-auto bg-primary/10 text-primary border-primary/20 px-2 py-0.5 text-xs"
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Link>
+                )
+              ))}
+            </nav>
+            
+            {/* Actions */}
+            <div className="p-4 border-t mt-auto">
+              <div className="flex flex-col space-y-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start text-gray-700 hover:text-gray-900"
                 >
-                  <X className="h-6 w-6" />
+                  <Bell size={18} className="mr-2" />
+                  Notifications
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="justify-start text-gray-700 hover:text-gray-900"
+                >
+                  <LogOut size={18} className="mr-2" />
+                  Sign out
                 </Button>
               </div>
             </div>
-
-            {isAuthenticated && (
-              <nav className="space-y-2 mb-8 relative z-10">
-                {menuItems.map((item, index) => (
-                  <motion.div
-                    key={item.path}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
-                  >
-                    <Link
-                      to={item.path}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        isActive(item.path) 
-                          ? 'bg-primary-100/80 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800/70'
-                      }`}
-                      onClick={closeMenu}
-                    >
-                      {item.icon}
-                      <span className="font-medium">{item.label}</span>
-                      {isActive(item.path) && (
-                        <motion.div 
-                          layoutId="activeIndicator"
-                          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500 dark:bg-primary-400"
-                        />
-                      )}
-                    </Link>
-                  </motion.div>
-                ))}
-              </nav>
-            )}
-
-            <div className="absolute bottom-8 left-0 right-0 px-6 z-10">
-              {isAuthenticated ? (
-                <Button 
-                  variant="outline"
-                  className="w-full flex items-center gap-2"
-                  onClick={() => {
-                    logout();
-                    closeMenu();
-                  }}
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </Button>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <Link to="/registration" onClick={closeMenu}>
-                    <Button variant="outline" className="w-full">Sign Up</Button>
-                  </Link>
-                  <Link to="/" onClick={closeMenu}>
-                    <Button className="w-full">Login</Button>
-                  </Link>
-                </div>
-              )}
-            </div>
           </motion.div>
-        </div>
+        </>
       )}
-    </>
+    </AnimatePresence>
   );
 };
 
-export default MobileMenu;
+export default MobileMenu; 

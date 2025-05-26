@@ -485,12 +485,12 @@ const CarouselRequestsPage: React.FC = () => {
     };
 
     return (
-      <div className="flex flex-col p-3 border rounded bg-gray-50">
+      <div className="flex flex-col p-3 border rounded bg-gray-50 overflow-hidden">
         <div className="flex items-center mb-2">
           {getFileIcon(file)}
-          <div className="ml-2 flex-1 overflow-hidden">
+          <div className="ml-2 flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{getFileName(file)}</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 truncate">
               {file.mimetype || getFileTypeFromUrl(file.url)} • {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Size unknown'}
             </p>
           </div>
@@ -499,10 +499,10 @@ const CarouselRequestsPage: React.FC = () => {
         {/* Preview modal */}
         {showPreview && isImage && (
           <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
-            <div className="bg-white p-2 rounded-lg max-w-3xl max-h-[90vh] overflow-auto shadow-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white p-2 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-auto shadow-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-medium text-lg">{getFileName(file)}</h3>
-                <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-gray-200 rounded-full">
+                <h3 className="font-medium text-lg truncate">{getFileName(file)}</h3>
+                <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -523,13 +523,13 @@ const CarouselRequestsPage: React.FC = () => {
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-700 text-sm flex-1 flex items-center justify-center p-1 border border-blue-500 rounded"
+              className="text-blue-500 hover:text-blue-700 text-sm flex-1 flex items-center justify-center p-1 border border-blue-500 rounded truncate"
             >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
-              {isImage ? 'Preview' : 'View'}
+              <span className="truncate">{isImage ? 'Preview' : 'View'}</span>
             </a>
           )}
           <a
@@ -537,12 +537,12 @@ const CarouselRequestsPage: React.FC = () => {
             download={getFileName(file)}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-green-500 hover:text-green-700 text-sm flex-1 flex items-center justify-center p-1 border border-green-500 rounded"
+            className="text-green-500 hover:text-green-700 text-sm flex-1 flex items-center justify-center p-1 border border-green-500 rounded truncate"
           >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Download
+            <span className="truncate">Download</span>
           </a>
         </div>
       </div>
@@ -696,13 +696,13 @@ const CarouselRequestsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-4 px-3 sm:px-4 md:py-8">
       <Card>
-        <CardHeader>
-          <CardTitle>Carousel Requests</CardTitle>
+        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+          <CardTitle className="text-lg sm:text-xl">Carousel Requests</CardTitle>
           <CardDescription>Manage carousel requests from users</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-4 mb-6">
               <TabsTrigger value="all">All</TabsTrigger>
@@ -721,28 +721,29 @@ const CarouselRequestsPage: React.FC = () => {
                 <p className="text-gray-500">No carousel requests found</p>
               </div>
             ) : (
-              <Table>
+              <div className="overflow-x-auto -mx-3 sm:mx-0">
+                <Table className="w-full min-w-[650px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Files</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="whitespace-nowrap">Title</TableHead>
+                      <TableHead className="whitespace-nowrap">User</TableHead>
+                      <TableHead className="whitespace-nowrap">Date</TableHead>
+                      <TableHead className="whitespace-nowrap">Type</TableHead>
+                      <TableHead className="whitespace-nowrap">Status</TableHead>
+                      <TableHead className="whitespace-nowrap">Files</TableHead>
+                      <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredRequests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell className="font-medium">{request.title}</TableCell>
-                      <TableCell>{getUserInfo(request).name}</TableCell>
-                      <TableCell>{formatDateStacked(request.updatedAt || request.createdAt)}</TableCell>
-                      <TableCell className="capitalize">{request.carouselType}</TableCell>
-                      <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell>{request.files.length} files</TableCell>
-                      <TableCell className="text-right">
+                        <TableCell className="font-medium max-w-[200px] truncate">{request.title}</TableCell>
+                        <TableCell className="whitespace-nowrap">{getUserInfo(request).name}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatDateStacked(request.updatedAt || request.createdAt)}</TableCell>
+                        <TableCell className="capitalize whitespace-nowrap">{request.carouselType}</TableCell>
+                        <TableCell className="whitespace-nowrap">{getStatusBadge(request.status)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{request.files.length} files</TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
                         <Button 
                           variant="outline"
                           size="sm"
@@ -757,6 +758,7 @@ const CarouselRequestsPage: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </Tabs>
         </CardContent>
@@ -764,12 +766,12 @@ const CarouselRequestsPage: React.FC = () => {
 
       {/* Request Detail Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
           {selectedRequest && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedRequest.title}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl break-words">{selectedRequest.title}</DialogTitle>
+                <DialogDescription className="text-xs sm:text-sm">
                   Submitted by {getUserInfo(selectedRequest).name} on {format(new Date(selectedRequest.createdAt), 'MMM d, yyyy')}
                   {selectedRequest.updatedAt && selectedRequest.updatedAt !== selectedRequest.createdAt && 
                     ` • Last updated on ${format(new Date(selectedRequest.updatedAt), 'MMM d, yyyy')}`}
@@ -777,9 +779,9 @@ const CarouselRequestsPage: React.FC = () => {
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <h3 className="text-lg font-medium">Request Details</h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {selectedRequest.resendCount > 0 && (
                       <Badge className="bg-amber-100 text-amber-800">
                         Resent {selectedRequest.resendCount} time{selectedRequest.resendCount > 1 ? 's' : ''}
@@ -793,12 +795,12 @@ const CarouselRequestsPage: React.FC = () => {
                 {selectedRequest.isModified && selectedRequest.originalContent && (
                   <div className="flex flex-col sm:flex-row sm:items-center p-2 bg-amber-50 rounded border border-amber-200">
                     <div className="flex-1 mb-2 sm:mb-0">
-                      <p className="text-amber-800 text-sm">This request was modified by the user before resending</p>
+                      <p className="text-amber-800 text-sm break-words">This request was modified by the user before resending</p>
                     </div>
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="text-amber-600 border-amber-300"
+                      className="text-amber-600 border-amber-300 w-full sm:w-auto mt-1 sm:mt-0"
                       onClick={() => setViewOriginalContent(!viewOriginalContent)}
                     >
                       {viewOriginalContent ? "View Current Version" : "View Original Version"}
@@ -809,28 +811,28 @@ const CarouselRequestsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold mb-1">User Information</h4>
-                    <p><span className="font-medium">Name:</span> {getUserInfo(selectedRequest).name}</p>
-                    <p><span className="font-medium">Email:</span> {getUserInfo(selectedRequest).email}</p>
+                    <p className="text-sm"><span className="font-medium">Name:</span> {getUserInfo(selectedRequest).name}</p>
+                    <p className="text-sm break-all"><span className="font-medium">Email:</span> {getUserInfo(selectedRequest).email}</p>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Carousel Type</h4>
-                    <p className="capitalize">{selectedRequest.carouselType}</p>
-                    <p className="mt-2"><span className="font-medium">Requested on:</span> {format(new Date(selectedRequest.createdAt), 'MMM d, yyyy')}</p>
+                    <p className="capitalize text-sm">{selectedRequest.carouselType}</p>
+                    <p className="mt-2 text-sm"><span className="font-medium">Requested on:</span> {format(new Date(selectedRequest.createdAt), 'MMM d, yyyy')}</p>
                     {selectedRequest.updatedAt && selectedRequest.updatedAt !== selectedRequest.createdAt && (
-                      <p className="mt-1"><span className="font-medium">Last updated:</span> {format(new Date(selectedRequest.updatedAt), 'MMM d, yyyy')}</p>
+                      <p className="mt-1 text-sm"><span className="font-medium">Last updated:</span> {format(new Date(selectedRequest.updatedAt), 'MMM d, yyyy')}</p>
                     )}
                     {selectedRequest.resendCount > 0 && (
-                      <p className="mt-1"><span className="font-medium">Resent:</span> {selectedRequest.resendCount} time{selectedRequest.resendCount > 1 ? 's' : ''}</p>
+                      <p className="mt-1 text-sm"><span className="font-medium">Resent:</span> {selectedRequest.resendCount} time{selectedRequest.resendCount > 1 ? 's' : ''}</p>
                     )}
                     {selectedRequest.isModified && (
-                      <p className="mt-1 text-amber-600"><span className="font-medium">Note:</span> User modified this request before resending</p>
+                      <p className="mt-1 text-amber-600 text-sm"><span className="font-medium">Note:</span> User modified this request before resending</p>
                     )}
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold mb-1">Description</h4>
-                  <p className="bg-gray-50 p-3 rounded">
+                  <p className="bg-gray-50 p-3 rounded text-sm break-words">
                     {viewOriginalContent && selectedRequest.originalContent?.description
                       ? selectedRequest.originalContent.description 
                       : (selectedRequest.description || "No description provided")}
@@ -838,16 +840,16 @@ const CarouselRequestsPage: React.FC = () => {
                 </div>
                 
                 {selectedRequest.videoId && (
-                  <div>
+                  <div className="overflow-hidden">
                     <h4 className="font-semibold mb-1">YouTube Video</h4>
                     <div className="bg-gray-50 p-3 rounded flex flex-col">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <div className="flex items-start sm:items-center">
+                        <svg className="w-5 h-5 mr-2 text-red-600 flex-shrink-0 mt-1 sm:mt-0" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
                         </svg>
-                        <div>
-                          <p className="font-medium">{viewOriginalContent && selectedRequest.originalContent?.videoTitle ? selectedRequest.originalContent.videoTitle : selectedRequest.videoTitle}</p>
-                          <p className="text-sm text-gray-500">ID: {viewOriginalContent && selectedRequest.originalContent?.videoId ? selectedRequest.originalContent.videoId : selectedRequest.videoId}</p>
+                        <div className="text-sm flex-1 min-w-0">
+                          <p className="font-medium break-words">{viewOriginalContent && selectedRequest.originalContent?.videoTitle ? selectedRequest.originalContent.videoTitle : selectedRequest.videoTitle}</p>
+                          <p className="text-xs text-gray-500 break-all">ID: {viewOriginalContent && selectedRequest.originalContent?.videoId ? selectedRequest.originalContent.videoId : selectedRequest.videoId}</p>
                         </div>
                       </div>
                       
@@ -861,6 +863,7 @@ const CarouselRequestsPage: React.FC = () => {
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                           className="w-full h-full"
+                          loading="lazy"
                         ></iframe>
                       </div>
                       
@@ -871,7 +874,7 @@ const CarouselRequestsPage: React.FC = () => {
                             rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
                           >
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                          <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                             <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                             <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5z" />
                             </svg>
@@ -885,7 +888,7 @@ const CarouselRequestsPage: React.FC = () => {
                 {selectedRequest.content && (
                   <div>
                     <h4 className="font-semibold mb-1">AI Generated Content</h4>
-                    <div className="bg-gray-50 p-4 rounded-md max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-gray-200 text-sm">
+                    <div className="bg-gray-50 p-3 sm:p-4 rounded-md max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-gray-200 text-xs sm:text-sm break-words">
                       {viewOriginalContent && selectedRequest.originalContent?.content 
                         ? selectedRequest.originalContent.content 
                         : selectedRequest.content}
@@ -907,7 +910,7 @@ const CarouselRequestsPage: React.FC = () => {
                           });
                         }}
                       >
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
                         Copy Content
@@ -919,7 +922,7 @@ const CarouselRequestsPage: React.FC = () => {
                 <div>
                   <h4 className="font-semibold mb-2">User Uploaded Files</h4>
                   {selectedRequest.files.length === 0 ? (
-                    <p>No files uploaded</p>
+                    <p className="text-sm">No files uploaded</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {viewOriginalContent && selectedRequest.originalContent?.files 
@@ -1000,9 +1003,9 @@ const CarouselRequestsPage: React.FC = () => {
                     <Button 
                       variant="outline"
                       onClick={() => setUploadModalOpen(true)}
-                      className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+                      className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 truncate"
                     >
-                      Complete & Send
+                      <span className="truncate">Complete & Send</span>
                     </Button>
                   )}
                   
@@ -1010,9 +1013,9 @@ const CarouselRequestsPage: React.FC = () => {
                     <Button 
                       variant="outline"
                       onClick={() => updateRequestStatus(selectedRequest.id, 'rejected')}
-                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 truncate"
                     >
-                      Reject
+                      <span className="truncate">Reject</span>
                     </Button>
                   )}
                 </div>
@@ -1028,7 +1031,7 @@ const CarouselRequestsPage: React.FC = () => {
       
       {/* Upload Completed Carousel Modal */}
       <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
-        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Upload Completed Carousel</DialogTitle>
             <DialogDescription>
@@ -1038,7 +1041,7 @@ const CarouselRequestsPage: React.FC = () => {
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-md p-4 sm:p-6 flex flex-col items-center justify-center">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1078,19 +1081,20 @@ const CarouselRequestsPage: React.FC = () => {
                     {completionFiles.map((file, index) => (
                       <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
                         {file.type.startsWith('image/') ? (
-                          <Image className="h-4 w-4 mr-2" />
+                          <Image className="h-4 w-4 mr-2 flex-shrink-0" />
                         ) : (
-                          <FileText className="h-4 w-4 mr-2" />
+                          <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
                         )}
-                        <div className="flex-1 truncate">
+                        <div className="flex-1 min-w-0">
                           <p className="text-sm truncate">{file.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 truncate">
                             {file.type || 'Unknown type'} • {(file.size / 1024).toFixed(1)} KB
                           </p>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          className="flex-shrink-0"
                           onClick={() => {
                             setCompletionFiles(prev => prev.filter((_, i) => i !== index));
                           }}
@@ -1121,7 +1125,7 @@ const CarouselRequestsPage: React.FC = () => {
             </div>
           </div>
           
-          <DialogFooter className="flex justify-between">
+          <DialogFooter className="flex flex-col sm:flex-row justify-between gap-2">
             <Button variant="outline" onClick={() => setUploadModalOpen(false)} disabled={uploadingCarousel}>
               Cancel
             </Button>

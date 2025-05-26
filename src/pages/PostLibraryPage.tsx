@@ -1259,21 +1259,34 @@ const PostLibraryPage: React.FC = () => {
               }
             </p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 ml-1">
-                <MoreHorizontal size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {dropdownItems().map((item) => (
-                <DropdownMenuItem key={item.id} className={item.className} onClick={item.onClick}>
-                  {item.icon && <span className="mr-2">{item.icon}</span>}
-                  {item.label}
-                  </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {type === 'draft' ? (
+            // For draft posts, show only delete icon
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 flex-shrink-0 ml-1 text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+              onClick={() => deleteDraft(post.id)}
+            >
+              <Trash size={16} />
+            </Button>
+          ) : (
+            // For scheduled and published posts, keep the dropdown menu
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 ml-1">
+                  <MoreHorizontal size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {dropdownItems().map((item) => (
+                  <DropdownMenuItem key={item.id} className={item.className} onClick={item.onClick}>
+                    {item.icon && <span className="mr-2">{item.icon}</span>}
+                    {item.label}
+                    </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         
         <CardContent className="p-3 sm:p-4 flex-grow overflow-auto space-y-4">

@@ -130,6 +130,11 @@ const AdminLayout: React.FC = () => {
       icon: <Layers className="h-5 w-5" />,
       path: "/admin/carousel-requests" 
     },
+    {
+      label: "Notifications",
+      icon: <Bell className="h-5 w-5" />,
+      path: "/admin/admin-notifications"
+    },
     { 
       label: "Settings", 
       icon: <Settings className="h-5 w-5" />,

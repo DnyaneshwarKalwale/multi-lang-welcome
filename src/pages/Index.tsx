@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-// import { LovableLogo } from "@/components/LovableLogo";
+import React, { useState, useEffect, useRef } from "react";
+import { LovableLogo } from "@/components/LovableLogo";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Star, Linkedin, BarChart3, PlusCircle, Lightbulb, FileText } from "lucide-react";
+import { ChevronRight, Star, Linkedin, BarChart3, PlusCircle, Lightbulb, FileText, X, Sparkles, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
@@ -12,15 +12,14 @@ import { motion } from "framer-motion";
 import { BrandOutHorizontalLogo } from "@/components/BrandOutIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { tokenManager } from "@/services/api";
+import gsap from "gsap";
 
-const Index = () => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const { isAuthenticated, user, loading } = useAuth();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const Index = () => {  const navigate = useNavigate();  const isMobile = useIsMobile();  const { isAuthenticated, user, loading } = useAuth();  const [isLoginOpen, setIsLoginOpen] = useState(false);  const [isRegisterOpen, setIsRegisterOpen] = useState(false);  const [scrolled, setScrolled] = useState(false);  
+  
+  // References for animated elements  
+  const featuresRef = useRef<HTMLDivElement>(null);  
+  const testimonialsRef = useRef<HTMLDivElement>(null);  
+  const ctaRef = useRef<HTMLDivElement>(null);    
   
   // Check authentication status and redirect if needed
   useEffect(() => {
@@ -50,14 +49,7 @@ const Index = () => {
   }, [isAuthenticated, loading, navigate, user]);
   
   // Handle scroll events to change navbar appearance
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    useEffect(() => {    const handleScroll = () => {      setScrolled(window.scrollY > 50);    };        window.addEventListener('scroll', handleScroll);    return () => window.removeEventListener('scroll', handleScroll);  }, []);    // Initialize animations  useEffect(() => {    // Add animation to features section    if (featuresRef.current) {      const featureItems = featuresRef.current.querySelectorAll('.feature-item');      featureItems.forEach((item, index) => {        gsap.set(item, { y: 50, opacity: 0 });        const observer = new IntersectionObserver(          (entries) => {            entries.forEach((entry) => {              if (entry.isIntersecting) {                gsap.to(item, {                   y: 0,                   opacity: 1,                   duration: 0.8,                   delay: index * 0.2,                  ease: 'power2.out'                 });                observer.unobserve(entry.target);              }            });          },          { threshold: 0.2 }        );        observer.observe(item);      });    }        // Add animation to testimonials    if (testimonialsRef.current) {      const testimonialItems = testimonialsRef.current.querySelectorAll('.testimonial-item');      testimonialItems.forEach((item, index) => {        gsap.set(item, { scale: 0.9, opacity: 0 });        const observer = new IntersectionObserver(          (entries) => {            entries.forEach((entry) => {              if (entry.isIntersecting) {                gsap.to(item, {                   scale: 1,                   opacity: 1,                   duration: 0.8,                   delay: index * 0.2,                  ease: 'power2.out'                 });                observer.unobserve(entry.target);              }            });          },          { threshold: 0.2 }        );        observer.observe(item);      });    }        // Add animation to CTA section    if (ctaRef.current) {      gsap.set(ctaRef.current, { y: 50, opacity: 0 });      const observer = new IntersectionObserver(        (entries) => {          entries.forEach((entry) => {            if (entry.isIntersecting) {              gsap.to(ctaRef.current, {                 y: 0,                 opacity: 1,                 duration: 1,                ease: 'power2.out'               });              observer.unobserve(entry.target);            }          });        },        { threshold: 0.2 }      );      if (ctaRef.current) observer.observe(ctaRef.current);    }  }, []);
 
   const handleLoginSuccess = () => {
     setIsLoginOpen(false);
@@ -90,10 +82,10 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white text-gray-800 overflow-x-hidden">
       {/* Navbar */}
       <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : ''}`}>
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <BrandOutHorizontalLogo className="h-9" />
+              <BrandOutHorizontalLogo className="h-8" />
             </div>
             
             {/* Desktop Navigation */}
@@ -128,84 +120,7 @@ const Index = () => {
                 Try for free
               </Button>
             </div>
-            
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
-              <button 
-                className="flex items-center p-2 rounded-full hover:bg-gray-100 focus:outline-none ml-2"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <span className="sr-only">Open menu</span>
-                <div className="relative w-6 h-5">
-                  <span className={`absolute block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
-                  <span className={`absolute top-2 block h-0.5 w-6 bg-gray-800 transition duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                  <span className={`absolute top-4 block h-0.5 w-6 bg-gray-800 transform transition duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></span>
-                </div>
-              </button>
-            </div>
           </div>
-        </div>
-        
-        {/* Mobile Menu */}
-        <div className={`md:hidden fixed inset-0 z-40 bg-white/90 backdrop-blur-md transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className="container mx-auto px-6 pt-24 pb-16 h-full flex flex-col justify-between">
-            <nav className="space-y-8">
-              <a href="#features" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Features
-              </a>
-              <Link to="/how-it-works" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                How It Works
-              </Link>
-              <a href="#testimonials" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Testimonials
-              </a>
-              <Link to="/pricing" 
-                className="block text-2xl font-medium text-gray-800 hover:text-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Pricing
-              </Link>
-            </nav>
-            
-            <div className="space-y-4">
-              <Button 
-                variant="outline" 
-                className="w-full justify-center text-gray-700 border-gray-300"
-                onClick={() => {
-                  setIsLoginOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Log in
-              </Button>
-              <Button 
-                className="w-full justify-center bg-primary hover:bg-primary-600 text-white"
-                onClick={() => {
-                  setIsRegisterOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Try for free
-              </Button>
-            </div>
-          </div>
-          <button 
-            className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 text-gray-600"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
       </header>
       
@@ -216,15 +131,15 @@ const Index = () => {
       />
       
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-blue-50/20 to-white relative overflow-hidden">
+      <section id="features" className="py-20 md:py-28 bg-gradient-to-b from-white via-blue-50/20 to-white relative overflow-hidden px-4" >
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 opacity-40 bg-grid-pattern"></div>
         </div>
         
-        <div className="container mx-auto px-6 relative">
+        <div className="container mx-auto relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <motion.h2 
-              className="text-3xl md:text-4xl font-bold mb-4 text-gray-900"
+              className="text-2xl md:text-4xl font-bold mb-4 text-gray-900"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -233,7 +148,7 @@ const Index = () => {
               Why professionals choose <span className="text-primary">BrandOut</span>
             </motion.h2>
             <motion.p 
-              className="text-lg text-gray-600"
+              className="text-base md:text-lg text-gray-600"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
@@ -244,12 +159,7 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <motion.div 
-              className="p-8 rounded-2xl transform transition-all duration-300 hover:translate-y-[-5px] glass-card"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
+            <motion.div               className="p-8 rounded-2xl transform transition-all duration-300 hover:translate-y-[-5px] glass-card feature-item"              initial={{ opacity: 0, y: 20 }}              whileInView={{ opacity: 1, y: 0 }}              transition={{ duration: 0.5 }}              viewport={{ once: true }}
             >
               <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-6">
                 <PlusCircle className="h-7 w-7 text-primary" />
@@ -348,11 +258,11 @@ const Index = () => {
       </section>
       
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 md:py-28 bg-white">
-        <div className="container mx-auto px-6">
+      <section id="testimonials" className="py-20 md:py-28 bg-white px-4">
+        <div className="container mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <motion.span 
-              className="text-primary font-semibold"
+              className="text-primary font-semibold testimonial-item"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
@@ -361,7 +271,7 @@ const Index = () => {
               TESTIMONIALS
             </motion.span>
             <motion.h2 
-              className="text-3xl md:text-4xl font-bold mt-2 mb-4 text-gray-900"
+              className="text-2xl md:text-4xl font-bold mt-2 mb-4 text-gray-900"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -370,7 +280,7 @@ const Index = () => {
               Trusted by LinkedIn professionals worldwide
             </motion.h2>
             <motion.p 
-              className="text-lg text-gray-600"
+              className="text-base md:text-lg text-gray-600"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -431,23 +341,24 @@ const Index = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/10 via-blue-50 to-primary/5">
-        <div className="container mx-auto px-6">
+      <section className="py-20 bg-gradient-to-br from-primary/10 via-blue-50 to-primary/5 px-4">
+        <div className="container mx-auto">
             <motion.div
+            
             className="max-w-4xl mx-auto text-center"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
               viewport={{ once: true }}
             >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
+            <h2 className="text-2xl md:text-4xl font-bold mb-6 text-gray-900">
               Ready to transform your <span className="text-primary">brand presence</span>?
             </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               Join thousands of professionals already using BrandOut to create better content and grow their professional network.
             </p>
               <Button 
-              className="bg-primary hover:bg-primary-600 text-white px-8 py-7 rounded-xl text-lg shadow-lg hover:shadow-primary/30"
+              className="bg-primary hover:bg-primary-600 text-white px-6 py-5 md:px-8 md:py-7 rounded-xl text-lg shadow-lg hover:shadow-primary/30"
                 onClick={() => setIsRegisterOpen(true)}
               >
               Get started today

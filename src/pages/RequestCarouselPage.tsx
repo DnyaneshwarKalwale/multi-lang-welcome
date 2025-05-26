@@ -2308,29 +2308,29 @@ const RequestCarouselPage: React.FC = () => {
   };
 
     return (
-    <div className="container max-w-6xl py-8">
+    <div className="container max-w-6xl py-4 sm:py-8 px-1 sm:px-2 md:px-4 w-full overflow-hidden">
       {userLimit && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-medium text-gray-900">Credits {userLimit.planId !== 'expired' ? `(${userLimit.planName} Plan)` : ''}</h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500">
                 {userLimit.count || 0} / {userLimit.limit || 0} credits used
                 {userLimit.expiresAt && userLimit.planId !== 'expired' && (
                   <span className="ml-2">• Expires {format(userLimit.expiresAt, 'MMM dd, yyyy')}</span>
                 )}
               </p>
-          </div>
-            <div className="w-48 bg-gray-200 rounded-full h-2">
+            </div>
+            <div className="w-full sm:w-48 bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-primary h-2 rounded-full" 
                 style={{ 
                   width: `${Math.min(((userLimit.count || 0) / (userLimit.limit || 1)) * 100, 100)}%` 
                 }}
               />
-      </div>
+            </div>
           </div>
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-2">
             <p className="text-xs text-gray-500">
               {userLimit.planId !== 'expired' 
                 ? "Each credit can be used for generating either AI content or a carousel request"
@@ -2341,7 +2341,7 @@ const RequestCarouselPage: React.FC = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowSubscriptionModal(true)}
-                className="text-xs h-7"
+                className="text-xs h-7 w-full sm:w-auto mt-2 sm:mt-0"
               >
                 Choose a Plan
               </Button>
@@ -2350,40 +2350,44 @@ const RequestCarouselPage: React.FC = () => {
         </div>
       )}
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Request a Carousel</h1>
-        <p className="text-muted-foreground mt-1">
+      <div className="mb-4 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Request a Carousel</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Provide content from a YouTube video and we'll create a professional carousel for you
         </p>
       </div>
       
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-8 w-full overflow-hidden">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Carousel Details</CardTitle>
-                <CardDescription>
-                  Provide information about the carousel you'd like us to create
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carousel Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter a title for your carousel" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This will be the title of your published carousel
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 w-full">
+            <Card className="w-full">
+                              <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                  <CardTitle className="text-base sm:text-lg">Carousel Details</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Provide information about the carousel you'd like us to create
+                  </CardDescription>
+                </CardHeader>
+                              <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs sm:text-sm">Carousel Title</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter a title for your carousel" 
+                            className="text-sm h-8 sm:h-10" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          This will be the title of your published carousel
+                        </FormDescription>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
                 
                 <div className="space-y-4">
                   <div>
@@ -2403,17 +2407,17 @@ const RequestCarouselPage: React.FC = () => {
                           name="youtubeUrl"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Select a Saved Video</FormLabel>
-                              <div className="relative">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <FormLabel className="text-xs sm:text-sm">Select a Saved Video</FormLabel>
+                              <div className="relative w-full">
+                                <Search className="absolute left-2 top-2 sm:top-2.5 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                 <Input
                                   placeholder="Search by title"
-                                  className="pl-8"
+                                  className="pl-7 sm:pl-8 h-8 sm:h-10 text-xs sm:text-sm w-full"
                                   value={searchQuery}
                                   onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                               </div>
-                              <FormDescription>
+                              <FormDescription className="text-xs">
                                 Select one of your saved videos to create a carousel
                               </FormDescription>
                               <FormMessage />
@@ -2430,22 +2434,24 @@ const RequestCarouselPage: React.FC = () => {
                           </div>
                         </div>
                       ) : currentVideos.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-4 w-full overflow-hidden">
                           {currentVideos.map((video) => (
-                            <div 
+                                                          <div 
                               key={video.id}
-                              className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md relative group ${
+                              className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md relative group w-full max-w-full ${
                                 selectedVideo?.id === video.id ? "ring-2 ring-blue-500" : ""
                               }`}
                               onClick={() => handleVideoSelect(video)}
+                              style={{ maxWidth: '100%', minWidth: 0 }}
                             >
-                              <div className="relative">
+                              <div className="relative w-full max-w-full overflow-hidden">
                                 <img
                                   src={video.thumbnailUrl}
                                   alt={video.title}
                                   className="w-full aspect-video object-cover"
+                                  loading="lazy"
                                 />
-                                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                                <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/80 text-white text-[8px] sm:text-xs px-1 py-0.5 rounded">
                                   {video.duration}
                                 </div>
                                 {selectedVideo?.id === video.id && (
@@ -2458,8 +2464,8 @@ const RequestCarouselPage: React.FC = () => {
                                 {/* Transcript indicator badge */}
                                 {(video.transcript || (video.formattedTranscript && video.formattedTranscript.length > 0)) && (
                                   <div className="absolute top-2 left-2 bg-green-500/90 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                                    <FileText className="h-3 w-3" />
-                                    <span>Transcript</span>
+                                    <FileText className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate max-w-[60px] sm:max-w-none">Transcript</span>
                                   </div>
                                 )}
                                 
@@ -2482,21 +2488,21 @@ const RequestCarouselPage: React.FC = () => {
                                   </Button>
                                 </div>
                               </div>
-                              <div className="p-3">
-                                <h4 className="font-medium text-sm line-clamp-2">{video.title}</h4>
-                                <p className="text-xs text-muted-foreground mt-1">{video.channelName}</p>
-                                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                                  <span>{video.date}</span>
+                              <div className="p-2 sm:p-3">
+                                <h4 className="font-medium text-xs sm:text-sm line-clamp-2">{video.title}</h4>
+                                <p className="text-xs text-muted-foreground mt-1 truncate">{video.channelName}</p>
+                                <div className="flex items-center gap-2 mt-1 sm:mt-2 text-xs text-muted-foreground">
+                                  <span className="truncate">{video.date}</span>
                                 </div>
                                 
                                 {/* Transcript fetch button */}
                                 <div 
-                                  className="mt-2 pt-2 border-t flex justify-end" 
+                                  className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t flex justify-end flex-wrap" 
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {isFetchingTranscript && fetchingVideoId === video.id ? (
                                     <div className="w-full flex justify-center">
-                                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary" />
                                     </div>
                                   ) : !(video.transcript || (video.formattedTranscript && video.formattedTranscript.length > 0)) ? (
                                     <Button
@@ -2506,13 +2512,13 @@ const RequestCarouselPage: React.FC = () => {
                                         e.stopPropagation();
                                         handleFetchTranscript(video);
                                       }}
-                                      className="text-xs h-7 px-2"
+                                      className="text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 py-0 w-full sm:w-auto"
                                     >
-                                      <FileText className="h-3 w-3 mr-1" />
-                                      Get Transcript
+                                      <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 flex-shrink-0" />
+                                      <span className="truncate">Get Transcript</span>
                                     </Button>
                                   ) : (
-                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] sm:text-xs w-full text-center sm:w-auto py-0.5">
                                       Transcript Available
                                     </Badge>
                                   )}
@@ -2522,16 +2528,17 @@ const RequestCarouselPage: React.FC = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex justify-center items-center py-8 border border-dashed rounded-lg">
-                          <div className="text-center">
-                            <p className="mb-2 text-muted-foreground">No saved videos found</p>
+                        <div className="flex justify-center items-center py-6 sm:py-8 border border-dashed rounded-lg">
+                          <div className="text-center px-2">
+                            <p className="mb-2 text-xs sm:text-sm text-muted-foreground">No saved videos found</p>
                             <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => navigate("/dashboard/scraper")}
+                              className="h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3"
                             >
-                              <Youtube className="h-4 w-4 mr-2" />
-                              Scrape new videos
+                              <Youtube className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                              <span className="whitespace-nowrap">Scrape new videos</span>
                             </Button>
                           </div>
                         </div>
@@ -2539,30 +2546,50 @@ const RequestCarouselPage: React.FC = () => {
                       
                       {/* Pagination Controls */}
                       {filteredVideos.length > videosPerPage && (
-                        <Pagination className="mt-4">
-                          <PaginationContent>
+                        <Pagination className="mt-3 sm:mt-4">
+                          <PaginationContent className="h-8 sm:h-10">
                             <PaginationItem>
                               <PaginationPrevious 
                                 onClick={prevPage} 
-                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                                className={`${currentPage === 1 ? "pointer-events-none opacity-50" : ""} h-7 sm:h-9 text-xs sm:text-sm`}
                               />
                             </PaginationItem>
                             
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <PaginationItem key={page}>
-                                <PaginationLink 
-                                  isActive={page === currentPage}
-                                  onClick={() => goToPage(page)}
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ))}
+                            {/* Show limited page numbers on mobile */}
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                              .filter(page => {
+                                // On mobile, show only current page and immediate neighbors
+                                const isMobile = window.innerWidth < 640;
+                                if (isMobile) {
+                                  return page === 1 || page === totalPages || 
+                                    Math.abs(page - currentPage) <= 1;
+                                }
+                                return true;
+                              })
+                              .map((page, idx, arr) => (
+                                <React.Fragment key={page}>
+                                  {/* Add ellipsis if pages are skipped */}
+                                  {idx > 0 && arr[idx-1] !== page-1 && (
+                                    <PaginationItem className="h-7 sm:h-9">
+                                      <span className="px-1.5 sm:px-2.5">...</span>
+                                    </PaginationItem>
+                                  )}
+                                  <PaginationItem>
+                                    <PaginationLink 
+                                      isActive={page === currentPage}
+                                      onClick={() => goToPage(page)}
+                                      className="h-7 sm:h-9 w-7 sm:w-9 text-xs sm:text-sm"
+                                    >
+                                      {page}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                </React.Fragment>
+                              ))}
                             
                             <PaginationItem>
                               <PaginationNext 
                                 onClick={nextPage}
-                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                                className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : ""} h-7 sm:h-9 text-xs sm:text-sm`}
                               />
                             </PaginationItem>
                           </PaginationContent>
@@ -2619,8 +2646,8 @@ const RequestCarouselPage: React.FC = () => {
                                 </div>
                           ) : generatedTranscript.length > 0 || (selectedVideo?.transcript && selectedVideo.transcript.length > 0) ? (
                             <div className="rounded-md border p-4 mb-4">
-                              <ScrollArea className="h-[200px]">
-                                <p className="text-sm whitespace-pre-line">
+                              <ScrollArea className="h-[160px] sm:h-[200px]">
+                                <p className="text-xs sm:text-sm whitespace-pre-line px-1">
                                   {selectedVideo?.transcript || (generatedTranscript.length > 0 ? generatedTranscript[0] : '')}
                                 </p>
                               </ScrollArea>
@@ -2643,19 +2670,19 @@ const RequestCarouselPage: React.FC = () => {
                                   </Button>
                                 </div>
                                 
-                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
                                   {contentGenerationOptions.map((option) => (
                                     <Button 
                                       key={option.type}
                                       variant="outline" 
-                                      className="h-auto py-3 px-4 flex flex-col items-center text-center"
+                                      className="h-auto py-2 sm:py-3 px-2 sm:px-4 flex flex-col items-center text-center"
                                       onClick={() => handleGenerateContent(option.type)}
                                       disabled={isGeneratingContent}
                                     >
-                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                                        {option.icon}
+                                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1 sm:mb-2">
+                                        <span className="flex-shrink-0 scale-75 sm:scale-100">{option.icon}</span>
                                       </div>
-                                      <span className="font-medium">{option.title}</span>
+                                      <span className="text-xs sm:text-sm font-medium line-clamp-1">{option.title}</span>
                                     </Button>
                                   ))}
                                 </div>
@@ -2727,47 +2754,52 @@ const RequestCarouselPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button 
                 type="button" 
                 onClick={form.handleSubmit(onSubmit)} 
                 disabled={isSubmitting} 
-                className="flex-1"
+                className="flex-1 order-1"
               >
-                {isSubmitting ? "Submitting..." : "Submit Carousel Request"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin flex-shrink-0" />
+                    Submitting...
+                  </>
+                ) : "Submit Carousel Request"}
               </Button>
               <Button 
                 type="button" 
                 variant="outline" 
-                className="flex gap-1 items-center" 
+                className="flex gap-1 items-center order-2" 
                 onClick={() => navigate("/dashboard/templates")}
               >
-                <LayoutGrid className="h-4 w-4" />
-                Browse Templates
+                <LayoutGrid className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Browse Templates</span>
               </Button>
             </div>
           </form>
         </Form>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Preview & Information</CardTitle>
-            <CardDescription>
+        <Card className="w-full">
+          <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+            <CardTitle className="text-base sm:text-lg">Preview & Information</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               See how your carousel might look
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
             {selectedVideo ? (
               <div className="bg-white border rounded-lg overflow-hidden shadow-md">
                 {/* LinkedIn-style header */}
-                <div className="p-3 border-b">
+                <div className="p-2 sm:p-3 border-b">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                      <span className="font-semibold text-blue-600">YT</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                      <span className="font-semibold text-blue-600 text-xs sm:text-sm">YT</span>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Your LinkedIn Profile</h4>
-                      <p className="text-xs text-gray-500">Content Creator • Just now</p>
+                    <div className="min-w-0">
+                      <h4 className="font-medium text-xs sm:text-sm truncate">Your LinkedIn Profile</h4>
+                      <p className="text-[10px] sm:text-xs text-gray-500 truncate">Content Creator • Just now</p>
                     </div>
                   </div>
                 </div>
@@ -2779,44 +2811,44 @@ const RequestCarouselPage: React.FC = () => {
                       {previewType?.includes('post') ? (
                         <p className="text-sm whitespace-pre-line">{previewContent}</p>
                       ) : previewType === 'carousel' && (
-                        <div className="aspect-square w-full relative">
+                        <div className="aspect-square w-full relative overflow-hidden">
                           <div className="absolute inset-0 flex flex-col">
                             {/* Slide content with LinkedIn styling */}
-                            <div className="flex-1 flex flex-col justify-center p-6 bg-gradient-to-br from-blue-50 to-white">
+                            <div className="flex-1 flex flex-col justify-center p-2 sm:p-6 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
                               {/* Remove the slide number indicator that shows in LinkedIn post */}
                               
                               <div className="mx-auto max-w-[90%] text-center">
-                                <p className="text-lg font-semibold leading-tight">
+                                <p className="text-xs sm:text-sm md:text-base lg:text-lg font-semibold leading-tight line-clamp-6 sm:line-clamp-none">
                                   {getCarouselSlideContent(previewContent, currentSlide)}
                                 </p>
                               </div>
                               
                               {/* LinkedIn logo overlay */}
-                              <div className="absolute bottom-3 left-3">
-                                <div className="bg-blue-600 text-white text-xs px-2.5 py-1 rounded flex items-center">
+                              <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3">
+                                <div className="bg-blue-600 text-white text-[10px] sm:text-xs px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded flex items-center">
                                   <span className="font-bold">in</span>
                                 </div>
                               </div>
                             </div>
                             
                             {/* Navigation buttons */}
-                            <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
+                            <div className="absolute top-1/2 -translate-y-1/2 left-1 right-1 sm:left-2 sm:right-2 flex justify-between">
                               <Button 
                                 onClick={prevSlide} 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
+                                className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700 flex-shrink-0"
                               >
-                                <ChevronLeft className="h-5 w-5" />
+                                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                                 <span className="sr-only">Previous slide</span>
                               </Button>
                               <Button 
                                 onClick={nextSlide} 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700"
+                                className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full bg-white/90 hover:bg-white border shadow-sm text-gray-700 flex-shrink-0"
                               >
-                                <ChevronRight className="h-5 w-5" />
+                                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                                 <span className="sr-only">Next slide</span>
                               </Button>
                             </div>
@@ -2832,13 +2864,13 @@ const RequestCarouselPage: React.FC = () => {
                 {previewType === 'carousel' && (
                   <div className="border-t">
                     {/* Slide indicators */}
-                    <div className="flex justify-center p-3 gap-1">
+                    <div className="flex justify-center p-1 sm:p-2 md:p-3 gap-0.5 sm:gap-1 overflow-x-auto">
                       {previewContent 
                         ? getCarouselSlides(previewContent).map((_, index) => (
                             <div 
                               key={index}
-                              className={`h-1.5 rounded-full cursor-pointer transition-all ${
-                                index === currentSlide ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
+                              className={`h-1 sm:h-1.5 rounded-full cursor-pointer transition-all flex-shrink-0 ${
+                                index === currentSlide ? 'w-4 sm:w-6 bg-blue-600' : 'w-1 sm:w-1.5 bg-gray-300 hover:bg-gray-400'
                               }`}
                               onClick={() => setCurrentSlide(index)}
                             />
@@ -2846,8 +2878,8 @@ const RequestCarouselPage: React.FC = () => {
                         : Array(7).fill(0).map((_, index) => (
                             <div 
                               key={index}
-                              className={`h-1.5 rounded-full cursor-pointer transition-all ${
-                                index === currentSlide % 7 ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
+                              className={`h-1 sm:h-1.5 rounded-full cursor-pointer transition-all flex-shrink-0 ${
+                                index === currentSlide % 7 ? 'w-4 sm:w-6 bg-blue-600' : 'w-1 sm:w-1.5 bg-gray-300 hover:bg-gray-400'
                               }`}
                               onClick={() => setCurrentSlide(index)}
                             />
@@ -2860,32 +2892,32 @@ const RequestCarouselPage: React.FC = () => {
                 {/* LinkedIn-style engagement actions */}
                 <div className="border-t">
                   <div className="flex items-center justify-around p-1">
-                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
-                      Like
+                    <Button variant="ghost" className="flex-1 h-7 sm:h-8 md:h-10 rounded-md gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-gray-600 px-0.5 sm:px-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                      <span className="hidden sm:inline">Like</span>
                     </Button>
-                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                      Comment
+                    <Button variant="ghost" className="flex-1 h-7 sm:h-8 md:h-10 rounded-md gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-gray-600 px-0.5 sm:px-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      <span className="hidden sm:inline">Comment</span>
                     </Button>
-                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                      Repost
+                    <Button variant="ghost" className="flex-1 h-7 sm:h-8 md:h-10 rounded-md gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-gray-600 px-0.5 sm:px-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                      <span className="hidden sm:inline">Repost</span>
                     </Button>
-                    <Button variant="ghost" className="flex-1 h-10 rounded-md gap-1 text-xs text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
-                      Send
+                    <Button variant="ghost" className="flex-1 h-7 sm:h-8 md:h-10 rounded-md gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-gray-600 px-0.5 sm:px-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+                      <span className="hidden sm:inline">Send</span>
                     </Button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gray-50 rounded-xl p-6 text-center">
-                <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Info className="h-6 w-6 text-gray-500" />
+              <div className="bg-gray-50 rounded-xl p-4 sm:p-6 text-center">
+                <div className="bg-gray-100 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Info className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">Select a YouTube video</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-base sm:text-lg font-medium mb-2">Select a YouTube video</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   A preview of your content will appear here after selecting a video and generating content.
                 </p>
               </div>
@@ -2905,10 +2937,10 @@ const RequestCarouselPage: React.FC = () => {
               </div>
             )}
             
-            <div className="space-y-4">
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium mb-2">Best Practices for Effective Carousels</h3>
-                <ul className="text-sm space-y-2 pl-5 list-disc text-muted-foreground">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="border rounded-lg p-2 sm:p-3 md:p-4">
+                <h3 className="font-medium mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Best Practices for Effective Carousels</h3>
+                <ul className="text-[10px] sm:text-xs md:text-sm space-y-1 sm:space-y-2 pl-4 sm:pl-5 list-disc text-muted-foreground">
                   <li>Keep each slide focused on a single key point</li>
                   <li>Use 5-8 slides for optimal engagement</li>
                   <li>Include a clear call to action on the final slide</li>
@@ -2916,9 +2948,9 @@ const RequestCarouselPage: React.FC = () => {
                 </ul>
               </div>
               
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium mb-2">Delivery Timeline</h3>
-                <p className="text-sm text-muted-foreground">
+              <div className="border rounded-lg p-2 sm:p-3 md:p-4">
+                <h3 className="font-medium mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Delivery Timeline</h3>
+                <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
                   Your carousel will be ready within 24 hours. You'll receive an email notification when it's complete and ready for review.
                 </p>
               </div>
@@ -3104,12 +3136,12 @@ const RequestCarouselPage: React.FC = () => {
 
       {/* Carousel Request Modal */}
       {showRequestModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
           <Card className="w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
             <CardHeader className="border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
+                <CardTitle className="text-base sm:text-lg">
                   {requestStep === 3 ? "Request Submitted" : "Carousel Request Details"}
                 </CardTitle>
                 {requestStep !== 3 && (
@@ -3118,7 +3150,7 @@ const RequestCarouselPage: React.FC = () => {
                   </Button>
                 )}
               </div>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
                 {requestStep === 1 && "Provide additional details for your carousel request"}
                 {requestStep === 2 && "Review your request before submitting"}
                 {requestStep === 3 && "We'll create your carousel within 24 hours"}
@@ -3227,7 +3259,7 @@ const RequestCarouselPage: React.FC = () => {
                     <Label>Additional Notes <span className="text-xs text-muted-foreground">(Optional)</span></Label>
                     <Textarea 
                       placeholder="Any specific requests or instructions for your carousel? (e.g., branding preferences, design elements, content emphasis)"
-                      className="min-h-[100px]"
+                      className="min-h-[80px] sm:min-h-[100px] text-sm"
                       value={additionalNotes}
                       onChange={(e) => setAdditionalNotes(e.target.value)}
                     />
@@ -3245,7 +3277,7 @@ const RequestCarouselPage: React.FC = () => {
                         <h3 className="font-medium">Selected Video</h3>
                       </div>
                       <div className="p-3 flex items-center gap-3">
-                        <div className="w-32 h-20 bg-black/5 rounded overflow-hidden flex-shrink-0">
+                        <div className="w-24 sm:w-32 h-16 sm:h-20 bg-black/5 rounded overflow-hidden flex-shrink-0">
                           <img 
                             src={selectedVideo?.thumbnailUrl || selectedVideo?.thumbnail} 
                             alt={selectedVideo?.title} 
@@ -3265,8 +3297,8 @@ const RequestCarouselPage: React.FC = () => {
                         <h3 className="font-medium">Generated Content</h3>
                       </div>
                       <div className="p-3">
-                        <div className="max-h-32 overflow-y-auto">
-                          <p className="text-sm whitespace-pre-line">{previewContent || generatedContent}</p>
+                        <div className="max-h-28 sm:max-h-32 overflow-y-auto">
+                          <p className="text-xs sm:text-sm whitespace-pre-line p-1">{previewContent || generatedContent}</p>
                         </div>
                       </div>
                     </div>
@@ -3333,21 +3365,21 @@ const RequestCarouselPage: React.FC = () => {
               
               {/* Step 3: Success */}
               {requestStep === 3 && (
-                <CardContent className="p-8 text-center">
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Check className="h-10 w-10 text-green-600" />
+                <CardContent className="p-4 sm:p-8 text-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <Check className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
                   </div>
-                  <h2 className="text-2xl font-bold mb-3">Request Submitted!</h2>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">Request Submitted!</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto">
                     We've received your carousel request and will start working on it right away. 
                     You'll receive an email notification when it's ready, typically within 24 hours.
                   </p>
-                  <div className="border rounded-lg p-4 bg-muted/20 mb-6 max-w-md mx-auto">
+                  <div className="border rounded-lg p-3 sm:p-4 bg-muted/20 mb-4 sm:mb-6 max-w-md mx-auto">
                     <div className="flex items-center mb-2">
-                      <Clock4 className="h-4 w-4 text-muted-foreground mr-2" />
-                      <h3 className="font-medium">What happens next?</h3>
+                      <Clock4 className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
+                      <h3 className="font-medium text-sm sm:text-base">What happens next?</h3>
                     </div>
-                    <ol className="text-sm text-left space-y-2 pl-6 list-decimal">
+                    <ol className="text-xs sm:text-sm text-left space-y-2 pl-5 sm:pl-6 list-decimal">
                       <li>Our design team will review your request</li>
                       <li>We'll create a professional carousel based on your content</li>
                       <li>You'll receive an email when it's ready to review</li>
@@ -3357,6 +3389,72 @@ const RequestCarouselPage: React.FC = () => {
                 </CardContent>
               )}
             </div>
+            
+            {/* Footer with responsive buttons */}
+            <CardFooter className="border-t p-3 sm:p-4 gap-2 flex flex-col sm:flex-row">
+              {requestStep === 1 && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="w-full sm:w-auto order-2 sm:order-1"
+                    onClick={() => setShowRequestModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="w-full sm:w-auto order-1 sm:order-2"
+                    onClick={() => setRequestStep(2)}
+                  >
+                    Continue to Review
+                  </Button>
+                </>
+              )}
+              
+              {requestStep === 2 && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="w-full sm:w-auto order-3 sm:order-1"
+                    onClick={() => setRequestStep(1)}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full sm:w-auto order-2 sm:order-2"
+                    onClick={() => setShowRequestModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="w-full sm:w-auto order-1 sm:order-3" 
+                    onClick={submitCarouselRequest}
+                    disabled={isSubmittingRequest}
+                  >
+                    {isSubmittingRequest ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Request"
+                    )}
+                  </Button>
+                </>
+              )}
+              
+              {requestStep === 3 && (
+                <Button 
+                  className="w-full sm:w-auto" 
+                  onClick={() => {
+                    setShowRequestModal(false);
+                    navigate("/dashboard/carousels");
+                  }}
+                >
+                  View My Carousels
+                </Button>
+              )}
+            </CardFooter>
             
             {/* Footer */}
             <CardFooter className="border-t p-4 flex justify-between">

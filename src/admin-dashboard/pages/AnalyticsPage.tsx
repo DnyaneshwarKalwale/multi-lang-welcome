@@ -136,22 +136,41 @@ const AnalyticsPage: React.FC = () => {
       try {
         setLoading(true);
         
+        // Check if token exists
+        const token = localStorage.getItem("admin-token");
+        if (!token) {
+          console.error("No admin token found. Please log in again.");
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Please log in again to continue.",
+          });
+          setLoading(false);
+          return;
+        }
+        
+        console.log("Using API URL:", import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api");
+        
+        // Log request details for debugging
+        console.log("Making dashboard request with timeRange:", timeRange);
+        console.log("Using token:", token.substring(0, 10) + "...");
+        
         // Get dashboard analytics from the API
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/dashboard`,
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/dashboard?timeRange=${timeRange}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("admin-token")}`
+              Authorization: `Bearer ${token}`
             }
           }
         );
         
-        // Get user limits (to analyze subscriptions)
+        // Get user limits (for subscription analysis)
         const userLimitsResponse = await axios.get(
           `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/user-limits/all`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("admin-token")}`
+              Authorization: `Bearer ${token}`
             }
           }
         );
@@ -161,7 +180,7 @@ const AnalyticsPage: React.FC = () => {
           `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/content`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("admin-token")}`
+              Authorization: `Bearer ${token}`
             }
           }
         );
@@ -171,313 +190,165 @@ const AnalyticsPage: React.FC = () => {
           `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/carousel-requests`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("admin-token")}`
+              Authorization: `Bearer ${token}`
             }
           }
         );
         
-        // Process dashboard data
+        // Get saved videos with additional metrics
+        const savedVideosResponse = await axios.get(
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/saved-videos/metrics`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        // Get subscription metrics
+        const subscriptionMetricsResponse = await axios.get(
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/subscriptions/metrics`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        // Extract data from responses
         const dashboardData = response.data?.data || {};
-        
-        // Process user limits data for subscriptions
         const userLimitsData = userLimitsResponse.data?.data || [];
-        
-        // Process content data
         const contentData = contentResponse.data?.data || [];
-        
-        // Process carousel requests
         const carouselRequests = carouselRequestsResponse.data?.data || [];
-        
-        // Create a date range based on timeRange
-        const endDate = new Date();
-        const startDate = new Date();
-        if (timeRange === "7days") {
-          startDate.setDate(endDate.getDate() - 7);
-        } else if (timeRange === "30days") {
-          startDate.setDate(endDate.getDate() - 30);
-        } else if (timeRange === "90days") {
-          startDate.setDate(endDate.getDate() - 90);
-        }
-        
-        // Generate date range array
-        const dateRange: string[] = [];
-        let currentDate = new Date(startDate);
-        while (currentDate <= endDate) {
-          dateRange.push(new Date(currentDate).toISOString().split('T')[0]);
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-        
-        // --- Process data for YouTube Analytics ---
-        
-        // For missing data, create some simulated data based on real totals
-        const languageDistribution = [
-          { name: "English", value: Math.floor((dashboardData.youtube?.videosWithTranscripts || 0) * 0.7) },
-          { name: "Spanish", value: Math.floor((dashboardData.youtube?.videosWithTranscripts || 0) * 0.15) },
-          { name: "Hindi", value: Math.floor((dashboardData.youtube?.videosWithTranscripts || 0) * 0.1) },
-          { name: "French", value: Math.floor((dashboardData.youtube?.videosWithTranscripts || 0) * 0.03) },
-          { name: "German", value: Math.floor((dashboardData.youtube?.videosWithTranscripts || 0) * 0.02) }
-        ];
-        
-        // Create videos by date data (distributed evenly across date range)
-        const videosPerDay = Math.max(1, Math.floor((dashboardData.youtube?.totalSavedVideos || 0) / dateRange.length));
-        const videosByDate = dateRange.map(date => ({
-          date,
-          count: Math.floor(videosPerDay * (0.7 + Math.random() * 0.6)) // Add some randomness
-        }));
-        
-        // Create top channels data
-        const topChannels = [
-          { channel: "TechInsights", count: Math.floor((dashboardData.youtube?.totalSavedVideos || 0) * 0.25) }, 
-          { channel: "Marketing Pro", count: Math.floor((dashboardData.youtube?.totalSavedVideos || 0) * 0.2) }, 
-          { channel: "LinkedIn Learning", count: Math.floor((dashboardData.youtube?.totalSavedVideos || 0) * 0.15) }, 
-          { channel: "Business Daily", count: Math.floor((dashboardData.youtube?.totalSavedVideos || 0) * 0.1) }, 
-          { channel: "Social Media Tips", count: Math.floor((dashboardData.youtube?.totalSavedVideos || 0) * 0.05) }
-        ].sort((a, b) => b.count - a.count);
-        
-        // --- Process data for Content Analytics ---
-        
-        // Determine content type distribution from content data
-        const contentTypes = {
-          "Carousel": 0,
-          "Short Post": 0,
-          "Long Post": 0
+        const savedVideosMetrics = savedVideosResponse.data?.data || { languageDistribution: [], channelDistribution: [] };
+        const subscriptionMetrics = subscriptionMetricsResponse.data?.data || { 
+          revenueByDate: [], 
+          planDistribution: [] 
         };
         
-        contentData.forEach((item: any) => {
-          if (item.type === 'carousel') {
-            contentTypes["Carousel"]++;
-          } else if (item.type === 'post-short') {
-            contentTypes["Short Post"]++;
-          } else if (item.type === 'post-long') {
-            contentTypes["Long Post"]++;
-          }
-        });
+        console.log("Fetched real-time dashboard data:", dashboardData);
         
-        const byType = [
-          { type: "Carousel", count: contentTypes["Carousel"] || Math.floor((dashboardData.content?.totalCarousels || 0)) },
-          { type: "Short Post", count: contentTypes["Short Post"] || Math.floor((dashboardData.content?.totalPosts || 0) * 0.6) },
-          { type: "Long Post", count: contentTypes["Long Post"] || Math.floor((dashboardData.content?.totalPosts || 0) * 0.4) }
-        ];
-        
-        // Create generation trend data
-        const contentByDate: {[key: string]: number} = {};
-        dateRange.forEach(date => contentByDate[date] = 0);
-        
-        // Count content by date
-        contentData.forEach((item: any) => {
-          if (item.createdAt) {
-            const itemDate = new Date(item.createdAt).toISOString().split('T')[0];
-            if (contentByDate[itemDate] !== undefined) {
-              contentByDate[itemDate]++;
-            }
-          }
-        });
-        
-        const generationTrend = Object.keys(contentByDate).map(date => ({
-          date,
-          count: contentByDate[date]
-        }));
-        
-        // Source distribution is derived from content data
-        const sourceTypes: {[key: string]: number} = {
-          "YouTube videos": 0,
-          "Manual input": 0,
-          "Uploaded files": 0
-        };
-        
-        contentData.forEach((item: any) => {
-          if (item.videoId) {
-            sourceTypes["YouTube videos"]++;
-          } else if (item.uploadedFile) {
-            sourceTypes["Uploaded files"]++;
-          } else {
-            sourceTypes["Manual input"]++;
-          }
-        });
-        
-        const sourceDistribution = Object.keys(sourceTypes).map(source => ({
-          source,
-          count: sourceTypes[source] || Math.floor((dashboardData.content?.total || 0) / 3) // Fallback to even distribution
-        }));
-        
-        // --- Process data for User Analytics ---
-        
-        // Fix the TypeScript error by ensuring we're working with numbers
-        const totalUsers = typeof dashboardData.users?.total === 'number' ? dashboardData.users.total : 0;
-        const activeUsers = typeof dashboardData.users?.active === 'number' ? dashboardData.users.active : 0;
-        const totalVideos = typeof dashboardData.youtube?.totalSavedVideos === 'number' ? dashboardData.youtube.totalSavedVideos : 0;
-        const totalContent = typeof dashboardData.content?.total === 'number' ? dashboardData.content.total : 0;
-        
-        const engagement = [
-          { metric: "Avg. Videos Saved", value: (totalVideos / Math.max(1, totalUsers)).toFixed(1) },
-          { metric: "Avg. Content Generated", value: (totalContent / Math.max(1, totalUsers)).toFixed(1) },
-          { metric: "Retention Rate", value: ((activeUsers / Math.max(1, totalUsers)) * 100).toFixed(1) + "%" },
-          { metric: "Daily Active Users", value: activeUsers },
-        ];
-        
-        // Create top users by video count
-        const videosByUser = userLimitsData
-          .filter((userLimit: any) => userLimit.userName && userLimit.userId)
-          .map((userLimit: any) => ({
-            user: userLimit.userName || 'Unknown User',
-            count: Math.floor(Math.random() * 20) + 1 // This would need real data from saved videos collection
-          }))
-          .sort((a: any, b: any) => b.count - a.count)
-          .slice(0, 5);
-        
-        // Create top users by content generated
-        const contentByUser = userLimitsData
-          .filter((userLimit: any) => userLimit.userName && userLimit.userId)
-          .map((userLimit: any) => ({
-            user: userLimit.userName || 'Unknown User',
-            count: Math.floor(Math.random() * 15) + 1 // This would need real data from content collection
-          }))
-          .sort((a: any, b: any) => b.count - a.count)
-          .slice(0, 5);
-        
-        // --- Process data for Subscription Analytics ---
-        
-        // Define plan prices based on the constants in the backend
-        const planPrices: {[key: string]: number} = {
-          trial: 20,
-          basic: 100,
-          premium: 200,
-          custom: 200,
-          expired: 0
-        };
-        
-        // Count plan distribution and calculate revenue
-        const planCounts: {[key: string]: number} = {};
-        const planRevenue: {[key: string]: number} = {};
-        let trialCount = 0;
-        let convertedFromTrialCount = 0;
-        
-        userLimitsData.forEach((limit: any) => {
-          const planId = limit.planId || 'expired';
-          planCounts[planId] = (planCounts[planId] || 0) + 1;
-          
-          // Calculate revenue
-          const planPrice = planPrices[planId] || 0;
-          planRevenue[planId] = (planRevenue[planId] || 0) + planPrice;
-          
-          // Track trials
-          if (planId === 'trial') {
-            trialCount++;
-          }
-          
-          // Check for trial conversions
-          if ((planId === 'basic' || planId === 'premium' || planId === 'custom') && 
-              limit.adminModified === false) {
-            convertedFromTrialCount++;
-          }
-        });
-        
-        // Calculate total revenue
-        const totalRevenue = Object.values(planRevenue).reduce((sum, revenue) => sum + Number(revenue), 0);
-        
-        // Format plan distribution with revenue
-        const planDistribution = Object.keys(planCounts).map(plan => ({
-          plan: plan.charAt(0).toUpperCase() + plan.slice(1), // Capitalize
-          count: planCounts[plan],
-          revenue: planRevenue[plan] || 0
-        }));
-        
-        // Calculate trial conversion rate
-        const trialConversionRate = trialCount > 0 ? (convertedFromTrialCount / trialCount) * 100 : 0;
-        
-        // Create revenue by date
-        const revenueByDate: {[key: string]: number} = {};
-        dateRange.forEach(date => revenueByDate[date] = 0);
-        
-        // Distribute revenue across dates based on subscription start dates
-        userLimitsData.forEach((limit: any) => {
-          if (limit.subscriptionStartDate) {
-            const startDate = new Date(limit.subscriptionStartDate).toISOString().split('T')[0];
-            if (revenueByDate[startDate] !== undefined) {
-              const planPrice = planPrices[limit.planId || 'expired'] || 0;
-              revenueByDate[startDate] += planPrice;
-            }
-          }
-        });
-        
-        const revenueByDateArray = Object.keys(revenueByDate).map(date => ({
-          date,
-          amount: revenueByDate[date]
-        }));
-        
-        // --- Process data for Carousel Requests ---
-        
-        // Count carousel requests by status
-        const totalRequests = carouselRequests.length;
-        const pendingRequests = carouselRequests.filter((req: any) => req.status === 'pending').length;
-        const completedRequests = carouselRequests.filter((req: any) => req.status === 'completed').length;
-        
-        // Process carousel requests by date
-        const requestsByDate: {[key: string]: number} = {};
-        dateRange.forEach(date => requestsByDate[date] = 0);
-        
-        carouselRequests.forEach((request: any) => {
-          if (request.createdAt) {
-            const requestDate = new Date(request.createdAt).toISOString().split('T')[0];
-            if (requestsByDate[requestDate] !== undefined) {
-              requestsByDate[requestDate]++;
-            }
-          }
-        });
-        
-        const requestsByDateArray = Object.keys(requestsByDate).map(date => ({
-          date,
-          count: requestsByDate[date]
-        }));
-        
-        // Set the analytics data
-        setAnalytics({
-          youtube: {
+        // Process data for analytics display
+          setAnalytics({
+            youtube: {
             totalVideos: dashboardData.youtube?.totalSavedVideos || 0,
             videosWithTranscripts: dashboardData.youtube?.videosWithTranscripts || 0,
             transcriptPercentage: dashboardData.youtube?.transcriptPercentage || 0,
-            languageDistribution,
-            videosByDate,
-            topChannels,
-          },
-          content: {
+            languageDistribution: savedVideosMetrics.languageDistribution || [],
+            videosByDate: savedVideosMetrics.videosByDate || [],
+            topChannels: savedVideosMetrics.channelDistribution || [],
+            },
+            content: {
             total: dashboardData.content?.total || 0,
-            byType,
-            generationTrend,
-            sourceDistribution,
-          },
-          users: {
+            byType: dashboardData.content?.byType || [],
+            generationTrend: dashboardData.content?.generationTrend || [],
+            sourceDistribution: dashboardData.content?.sourceDistribution || [],
+            },
+            users: {
             total: dashboardData.users?.total || 0,
             active: dashboardData.users?.active || 0,
             newToday: dashboardData.users?.newToday || 0,
-            engagement,
-            videosByUser,
-            contentByUser,
+            engagement: [
+              { 
+                metric: "Avg. Videos Saved", 
+                value: dashboardData.users?.avgVideosSaved || "0" 
+              },
+              { 
+                metric: "Avg. Content Generated", 
+                value: dashboardData.users?.avgContentGenerated || "0" 
+              },
+              { 
+                metric: "Retention Rate", 
+                value: dashboardData.users?.retentionRate || "0%" 
+              },
+              { 
+                metric: "Daily Active Users", 
+                value: dashboardData.users?.active || 0 
+              },
+            ],
+            videosByUser: dashboardData.users?.topVideoUsers || [],
+            contentByUser: dashboardData.users?.topContentUsers || [],
           },
           subscriptions: {
-            totalRevenue,
-            monthlyRevenue: totalRevenue / 12, // Approximate
-            planDistribution,
-            revenueByDate: revenueByDateArray,
-            trialConversionRate,
+            totalRevenue: subscriptionMetrics.totalRevenue || 0,
+            monthlyRevenue: subscriptionMetrics.monthlyRevenue || 0,
+            planDistribution: subscriptionMetrics.planDistribution || [],
+            revenueByDate: subscriptionMetrics.revenueByDate || [],
+            trialConversionRate: subscriptionMetrics.trialConversionRate || 0,
           },
           carousel: {
-            totalRequests,
-            pendingRequests,
-            completedRequests,
-            requestsByDate: requestsByDateArray,
-          },
-        });
-        
-        setLoading(false);
+            totalRequests: dashboardData.carousel?.totalRequests || carouselRequests.length || 0,
+            pendingRequests: dashboardData.carousel?.pendingRequests || 
+              carouselRequests.filter(req => req.status === 'pending').length || 0,
+            completedRequests: dashboardData.carousel?.completedRequests || 
+              carouselRequests.filter(req => req.status === 'completed').length || 0,
+            requestsByDate: dashboardData.carousel?.requestsByDate || [],
+            },
+          });
+          
+          setLoading(false);
       } catch (error) {
         console.error("Error fetching analytics data:", error);
+        
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          console.error("Server error response:", error.response.status, error.response.data);
+          
+          if (error.response.status === 401) {
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: "Your session has expired. Please log in again.",
+            });
+            // Clear the invalid token
+            localStorage.removeItem("admin-token");
+            // Redirect to login page after a delay
+            setTimeout(() => {
+              window.location.href = '/admin/login';
+            }, 2000);
+          } else if (error.response.status === 500) {
+            toast({
+              variant: "destructive",
+              title: "Server Error",
+              description: `The server encountered an error: ${error.response.data?.message || 'Internal server error'}. Please check the backend logs.`,
+            });
+            
+            // Remove fallback data usage
+            console.log("Error fetching analytics due to server error");
+            setLoading(false);
+          } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load analytics data. Please try again.",
+              description: `Failed to load analytics data: ${error.response.data?.message || 'Server error'}`,
         });
+            
+            // Remove fallback data usage
         setLoading(false);
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error("No response received:", error.request);
+          toast({
+            variant: "destructive",
+            title: "Connection Error",
+            description: "Unable to connect to the API server. Please check that your backend is running properly.",
+          });
+          
+          // Remove fallback data usage
+          setLoading(false);
+        } else {
+          // Something happened in setting up the request
+          console.error("Request setup error:", error.message);
+          toast({
+            variant: "destructive",
+            title: "Request Error",
+            description: `Error making analytics request: ${error.message}`,
+          });
+          
+          // Remove fallback data usage
+          setLoading(false);
+        }
       }
     };
     
@@ -938,9 +809,16 @@ const AnalyticsPage: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={[
-                    { name: "Active Users", videos: Math.floor(Math.random() * 50) + 30, content: Math.floor(Math.random() * 30) + 20 },
-                    { name: "New Users", videos: Math.floor(Math.random() * 20) + 10, content: Math.floor(Math.random() * 15) + 5 },
-                    { name: "Returning Users", videos: Math.floor(Math.random() * 40) + 20, content: Math.floor(Math.random() * 25) + 15 },
+                    { 
+                      name: "Active Users", 
+                      videos: analytics.users.active || 0, 
+                      content: analytics.content.total || 0 
+                    },
+                    { 
+                      name: "New Users", 
+                      videos: analytics.users.newToday || 0, 
+                      content: analytics.content.generationTrend.slice(-1)[0]?.count || 0 
+                    }
                   ]}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >

@@ -8,6 +8,7 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { StateProvider } from "@/contexts/StateContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
@@ -19,6 +20,7 @@ import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import TeamsPage from "./pages/TeamsPage";
 import PendingInvitationsPage from "./pages/PendingInvitationsPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -280,6 +282,7 @@ const AppRoutes = () => {
           <Route path="/dashboard/inspiration" element={<InspirationPage />} />
           <Route path="/dashboard/ai" element={<AIWriterPage />} />
           <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
+          <Route path="/dashboard/notifications" element={<NotificationsPage />} />
           <Route path="/dashboard/team" element={<TeamsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/billing" element={<BillingPage />} />
@@ -300,27 +303,30 @@ const AppRoutes = () => {
 // The App component with providers
 const App = () => (
   <QueryClientProvider client={queryClient}>
-  <ErrorBoundary>
+    <ErrorBoundary>
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
             <StateProvider>
               <OnboardingProvider>
-                <PostCountProvider>
-              <TooltipProvider>
-                    <ContextVerifier />
-                    <AppRoutes />
-                    <Toaster />
-                    <Sonner position="top-right" />
-                  </TooltipProvider>
-                </PostCountProvider>
-                  </OnboardingProvider>
+                <NotificationProvider>
+                  <PostCountProvider>
+                    <TooltipProvider>
+                    
+                        <AppRoutes />
+
+                      <Toaster />
+                      <Sonner position="top-right" />
+                    </TooltipProvider>
+                  </PostCountProvider>
+                </NotificationProvider>
+              </OnboardingProvider>
             </StateProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
-    </QueryClientProvider>
+  </QueryClientProvider>
 );
 
 export default App;

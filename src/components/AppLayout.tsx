@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import NotificationBell from '@/components/NotificationBell';
+import { Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import MobileMenu from './MobileMenu';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -20,6 +22,7 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
 
@@ -45,21 +48,25 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (isMobile && sidebarOpen) {
       setSidebarOpen(false);
     }
+    
+    // Close mobile menu on navigation
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
   }, [location]);  // Use location from react-router to detect navigation changes
 
   const getUserInitials = () => {
     if (!user) return 'U';
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
   };
-  
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   return (
     <div className="flex min-h-screen bg-background overflow-hidden">
       {/* Sidebar - CollapsibleSidebar handles responsive behavior internally */}
       <CollapsibleSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Mobile Menu */}
+      <MobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
       {/* Main content container with proper margin */}
       <div className={cn(
@@ -75,12 +82,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-blue-100">
-              <Bell size={20} className="text-blue-600" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <NotificationBell />
             
             <div className="flex items-center">
               <motion.div 
@@ -96,22 +98,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </motion.div>
             </div>
             
-            {/* Hamburger menu button - Always show on tablet and mobile */}
-            <Button 
-              variant="secondary" 
-              size="sm"
-              className="ml-2 flex items-center gap-1 md:flex lg:hidden relative z-50 shadow-sm"
-              onClick={toggleSidebar}
-              aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
-            >
-              <motion.div
-                animate={{ rotate: sidebarOpen ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
+            {/* Hamburger Menu Button - Only visible on mobile/tablet */}
+            <div className="lg:hidden">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setMobileMenuOpen(true)}
+                className="h-9 w-9 rounded-full hover:bg-blue-100"
               >
-                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-              </motion.div>
-              <span className="sr-only md:not-sr-only">Menu</span>
-            </Button>
+                <Menu className="h-5 w-5 text-gray-700" />
+              </Button>
+            </div>
           </div>
         </header>
         

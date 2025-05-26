@@ -13,6 +13,7 @@ import NotFound from "../pages/NotFound";
 import CarouselRequestsPage from './pages/CarouselRequestsPage';
 import UserLimitsPage from './pages/UserLimitsPage';
 import UserPlansPage from './pages/UserPlansPage';
+import AdminNotificationsPage from './pages/AdminNotificationsPage';
 
 /**
  * Admin router component that handles all admin routes
@@ -36,6 +37,7 @@ const AdminRouter: React.FC = () => {
           <Route path="/carousel-requests" element={<CarouselRequestsPage />} />
           <Route path="/user-limits" element={<UserLimitsPage />} />
           <Route path="/user-plans" element={<UserPlansPage />} />
+          <Route path="/admin-notifications" element={<AdminNotificationsPage />} />
         </Route>
       </Route>
       

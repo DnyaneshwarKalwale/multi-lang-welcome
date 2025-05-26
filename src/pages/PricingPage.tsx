@@ -77,8 +77,8 @@ const PricingPage = () => {
   // FAQs
   const faqs = [
     {
-      question: "Can I switch plans later?",
-      answer: "Yes, you can upgrade or downgrade your plan at any time. When upgrading, you'll have immediate access to the new features. When downgrading, the change will take effect at the end of your current billing period."
+      question: "Can I upgrade or downgrade my plan later?",
+      answer: "Yes, you can upgrade your plan at any time and get immediate access to the new features. However, downgrades are only permitted at the end of your current billing period. You can request a downgrade at any time, but it will only take effect once your current subscription expires."
     },
     {
       question: "What payment methods do you accept?",

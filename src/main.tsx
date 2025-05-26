@@ -113,8 +113,11 @@ import App from './App.tsx'
 import './index.css'
 
 // Create a root element and render the application inside BrowserRouter
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(document.getElementById("root")!);
+root.render(
   <BrowserRouter>
     <App />
   </BrowserRouter>
 );
+
+

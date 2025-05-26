@@ -1421,7 +1421,7 @@ const CreatePostPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-black">Create LinkedIn Content</h1>
           {saveStatus !== 'idle' && (
             <span className={`text-xs px-2 py-1 rounded-full transition-colors ${
               saveStatus === 'saving' 
@@ -1433,11 +1433,11 @@ const CreatePostPage: React.FC = () => {
           )}
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+            className="gap-1 text-red-500 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm"
             onClick={() => {
               if (window.confirm("Are you sure you want to clear your draft? This cannot be undone.")) {
                 // Clear all createPost related state
@@ -1451,25 +1451,25 @@ const CreatePostPage: React.FC = () => {
             }}
           >
             <X size={16} />
-            Clear Draft
+            <span className="hidden xs:inline">Clear Draft</span>
           </Button>
           
           <Button 
             variant="outline" 
             size="sm" 
-            className="gap-1"
+            className="gap-1 text-xs sm:text-sm"
             onClick={saveAsDraft}
             disabled={isSavingDraft}
           >
             {isSavingDraft ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Saving...
+                <span className="hidden xs:inline">Saving...</span>
               </>
             ) : (
               <>
                 <FileText size={16} />
-                Save as Draft
+                <span className="hidden xs:inline">Save Draft</span>
               </>
             )}
           </Button>
@@ -1477,7 +1477,7 @@ const CreatePostPage: React.FC = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200" 
+            className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200 text-xs sm:text-sm" 
             onClick={() => {
               // Only open the dialog if it's currently closed
               if (!showScheduleDialog) {
@@ -1487,7 +1487,7 @@ const CreatePostPage: React.FC = () => {
             }}
           >
             <Clock size={16} className="mr-1" />
-            Schedule Post
+            <span className="hidden xs:inline">Schedule</span>
           </Button>
           
           {/* Schedule Dialog */}
@@ -1501,7 +1501,7 @@ const CreatePostPage: React.FC = () => {
               }
             }}
           >
-            <DialogContent className="sm:max-w-md overflow-hidden" onPointerDownOutside={handleDialogClose}>
+            <DialogContent className="sm:max-w-md w-[95vw] max-w-[95vw] overflow-y-auto" onPointerDownOutside={handleDialogClose}>
               <DialogHeader>
                 <DialogTitle>Schedule LinkedIn Post</DialogTitle>
                 <DialogDescription>
@@ -1509,7 +1509,7 @@ const CreatePostPage: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium mb-1 block">Date</label>
                     <Input
@@ -1605,7 +1605,7 @@ const CreatePostPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button variant="outline" onClick={handleDialogClose}>Cancel</Button>
                 <Button 
                   onClick={schedulePost} 
@@ -1629,16 +1629,16 @@ const CreatePostPage: React.FC = () => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-          <Button size="sm" className="bg-primary text-white gap-1">
+          <Button size="sm" className="bg-primary text-white gap-1 text-xs sm:text-sm">
                 {isPublishing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Publishing...
+                    <span className="hidden xs:inline">Publishing...</span>
                   </>
                 ) : (
                   <>
             <ArrowRightFromLine size={16} />
-            Publish Now
+            <span className="hidden xs:inline">Publish</span>
                   </>
                 )}
           </Button>
@@ -1673,7 +1673,7 @@ const CreatePostPage: React.FC = () => {
       </div>
       
       {/* Main layout with editor on left and preview on right */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Side - Post Editor */}
         <div>
           <Tabs defaultValue="text" className="w-full" onValueChange={setActiveTab}>
@@ -1685,13 +1685,13 @@ const CreatePostPage: React.FC = () => {
             
             <TabsContent value="text" className="mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>Create LinkedIn Post</CardTitle>
+                <CardHeader className="px-4 py-3 sm:px-6 sm:py-4">
+                  <CardTitle className="text-lg sm:text-xl">Create LinkedIn Post</CardTitle>
                   <CardDescription>
                     Write your post content to share with your network
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 sm:px-6">
                   <div className="space-y-4">
                     <Textarea
                       placeholder="Share your insights, knowledge, or ask a question..."
@@ -1863,10 +1863,20 @@ const CreatePostPage: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => navigate('/dashboard/templates')}
-                      className="gap-1 text-xs"
+                      className="gap-1 text-xs truncate w-[48%]"
                     >
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                      Browse Templates
+                      <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">Browse Templates</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/dashboard/carousels/request')}
+                      className="gap-1 text-xs truncate w-[48%]"
+                    >
+                      <PlusCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">Request Carousel</span>
                     </Button>
                     </div>
                     
@@ -1882,8 +1892,9 @@ const CreatePostPage: React.FC = () => {
                           onClick={addSlide} 
                           className="gap-1"
                         >
-                          <PlusCircle size={16} />
-                          Add Slide
+                          <PlusCircle size={16} className="flex-shrink-0" />
+                          <span className="hidden sm:inline">Add Slide</span>
+                          <span className="sm:hidden">Add</span>
                         </Button>
                       </div>
                       
@@ -2154,7 +2165,7 @@ const CreatePostPage: React.FC = () => {
             <CardHeader className="pb-2 bg-primary/5">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-black">Live Preview</CardTitle>
+                  <CardTitle className="text-black text-lg">Live Preview</CardTitle>
                   <CardDescription className="text-gray-800">Your post updates in real-time as you type</CardDescription>
                 </div>
                 <Badge variant="outline" className="bg-primary/10 text-primary">
@@ -2162,8 +2173,8 @@ const CreatePostPage: React.FC = () => {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-gray-200 p-4 max-w-xl mx-auto preview-section bg-white shadow-md">
+            <CardContent className="px-2 py-3 sm:px-4 sm:py-4 overflow-hidden">
+              <div className="rounded-lg border border-gray-200 p-3 sm:p-4 max-w-xl mx-auto preview-section bg-white shadow-md overflow-hidden">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center text-white font-bold ring-2 ring-white overflow-hidden">
                     {user?.profilePicture ? (
@@ -2195,7 +2206,7 @@ const CreatePostPage: React.FC = () => {
                 
                 {activeTab === 'text' && (
                   <div className="mb-4 transition-all duration-200">
-                    <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200">
+                    <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200 break-words">
                       {content || "Your post content will appear here"}
                     </p>
                     
@@ -2207,7 +2218,7 @@ const CreatePostPage: React.FC = () => {
                           alt="Post image"
                           className="w-full object-contain transition-all duration-200"
                           style={{ 
-                            maxHeight: '350px',
+                            maxHeight: '300px',
                             display: 'block',
                             margin: '0 auto'
                           }}
@@ -2232,7 +2243,7 @@ const CreatePostPage: React.FC = () => {
                     
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {hashtags.map(tag => (
-                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer">#{tag}</span>
+                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer break-all">{`#${tag}`}</span>
                       ))}
                     </div>
                   </div>
@@ -2251,7 +2262,7 @@ const CreatePostPage: React.FC = () => {
                     
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {hashtags.map(tag => (
-                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer">#{tag}</span>
+                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer break-all">{`#${tag}`}</span>
                       ))}
                     </div>
                   </div>
@@ -2289,7 +2300,7 @@ const CreatePostPage: React.FC = () => {
                     
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {hashtags.map(tag => (
-                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer">#{tag}</span>
+                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer break-all">{`#${tag}`}</span>
                       ))}
                     </div>
                   </div>
@@ -2307,21 +2318,21 @@ const CreatePostPage: React.FC = () => {
                 
                 <div className="border-t border-gray-200 pt-1 mt-1">
                   <div className="flex items-center justify-between">
-                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-3 rounded-md hover:bg-blue-50 flex-1">
-                      <ThumbsUp size={18} />
-                      <span className="text-xs font-medium">Like</span>
+                    <button className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors py-1 px-1 sm:px-3 rounded-md hover:bg-blue-50 flex-1">
+                      <ThumbsUp size={16} className="sm:h-[18px] sm:w-[18px]" />
+                      <span className="text-[10px] sm:text-xs font-medium">Like</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-green-600 transition-colors py-1 px-3 rounded-md hover:bg-green-50 flex-1">
-                      <MessageCircle size={18} />
-                      <span className="text-xs font-medium">Comment</span>
+                    <button className="flex flex-col items-center gap-1 hover:text-green-600 transition-colors py-1 px-1 sm:px-3 rounded-md hover:bg-green-50 flex-1">
+                      <MessageCircle size={16} className="sm:h-[18px] sm:w-[18px]" />
+                      <span className="text-[10px] sm:text-xs font-medium">Comment</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-amber-600 transition-colors py-1 px-3 rounded-md hover:bg-amber-50 flex-1">
-                      <Share2 size={18} />
-                      <span className="text-xs font-medium">Share</span>
+                    <button className="flex flex-col items-center gap-1 hover:text-amber-600 transition-colors py-1 px-1 sm:px-3 rounded-md hover:bg-amber-50 flex-1">
+                      <Share2 size={16} className="sm:h-[18px] sm:w-[18px]" />
+                      <span className="text-[10px] sm:text-xs font-medium">Share</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-3 rounded-md hover:bg-purple-50 flex-1">
-                      <Forward size={18} />
-                      <span className="text-xs font-medium">Send</span>
+                    <button className="flex flex-col items-center gap-1 hover:text-purple-600 transition-colors py-1 px-1 sm:px-3 rounded-md hover:bg-purple-50 flex-1">
+                      <Forward size={16} className="sm:h-[18px] sm:w-[18px]" />
+                      <span className="text-[10px] sm:text-xs font-medium">Send</span>
                   </button>
                   </div>
                 </div>
@@ -2352,23 +2363,23 @@ const CreatePostPage: React.FC = () => {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                    className="w-full justify-start text-sm bg-white text-black"
+                    className="w-full justify-start text-sm bg-white text-black truncate"
                           onClick={() => navigate('/dashboard/ai-writer')}
                         >
-                          <Wand2 className="h-3.5 w-3.5 mr-2" />
-                          Go to AI Writer
+                          <Wand2 className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
+                          <span className="truncate">Go to AI Writer</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                          Generate a professional post
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
+                          <span className="truncate">Generate a professional post</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                          Improve writing style
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
+                          <span className="truncate">Improve writing style</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                          Create catchy hook
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
+                          <span className="truncate">Create catchy hook</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black">
-                          Suggest hashtags
+                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
+                          <span className="truncate">Suggest hashtags</span>
                         </Button>
                       </div>
                     </div>
@@ -2421,12 +2432,12 @@ const CreatePostPage: React.FC = () => {
                               onClick={() => applyTemplate(template.id)}
                             >
                               <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-medium text-black">{template.name}</h4>
+                                <h4 className="font-medium text-black truncate">{template.name}</h4>
                                 <Badge variant="outline" className="text-xs">
                                   {template.slideCount} slides
                                 </Badge>
                               </div>
-                          <p className="text-xs text-black">{template.description}</p>
+                              <p className="text-xs text-black truncate">{template.description}</p>
                             </div>
                           ))}
                         </div>

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
-  FileText, ArrowRight, PlusCircle, Twitter, ImageIcon, Folder
+  FileText, ArrowRight, PlusCircle, Twitter, ImageIcon, Folder,
+  X, Download, ZoomIn, ZoomOut, RotateCw
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -35,6 +37,238 @@ import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import api from '@/services/api';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from "@/hooks/use-toast";
+
+// PDF Viewer Modal Component
+const PDFViewerModal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  documentUrl: string; 
+  documentTitle: string;
+}> = ({ isOpen, onClose, documentUrl, documentTitle }) => {
+  const [zoom, setZoom] = useState(100);
+  const [rotation, setRotation] = useState(0);
+
+  if (!isOpen) return null;
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
+  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = documentTitle;
+    link.click();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 text-blue-600" />
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{documentTitle}</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZoomOut}
+              disabled={zoom <= 50}
+              className="p-2"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-gray-600 min-w-[60px] text-center">{zoom}%</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZoomIn}
+              disabled={zoom >= 200}
+              className="p-2"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRotate}
+              className="p-2"
+            >
+              <RotateCw className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              className="p-2"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="p-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* PDF Viewer */}
+        <div className="flex-1 overflow-auto bg-gray-100 p-4">
+          <div className="flex justify-center">
+            <div 
+              style={{ 
+                transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+                transformOrigin: 'center top'
+              }}
+              className="transition-transform duration-200"
+            >
+              {/* Try iframe first, with fallback */}
+              <iframe
+                src={`${documentUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
+                className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white"
+                title={documentTitle}
+                onLoad={() => console.log('PDF loaded successfully')}
+                onError={() => {
+                  console.warn('PDF iframe failed to load');
+                  // Show fallback message
+                  const iframe = document.querySelector('iframe[title="' + documentTitle + '"]') as HTMLIFrameElement;
+                  if (iframe) {
+                    iframe.style.display = 'none';
+                    const fallback = iframe.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'block';
+                  }
+                }}
+              />
+              
+              {/* Fallback content */}
+              <div 
+                className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white flex flex-col items-center justify-center"
+                style={{ display: 'none' }}
+              >
+                <FileText className="h-16 w-16 text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Document Preview Unavailable</h3>
+                <p className="text-gray-500 text-center mb-4 max-w-md">
+                  This document cannot be displayed in the browser. You can download it or open it in a new tab.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleDownload}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Document
+                  </Button>
+                  <Button
+                    onClick={() => window.open(documentUrl, '_blank')}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Open in New Tab
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Use the controls above to zoom, rotate, or download the document
+            </p>
+            <Button
+              onClick={() => window.open(documentUrl, '_blank')}
+              variant="outline"
+              size="sm"
+            >
+              Open in New Tab
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add custom styles for LinkedIn-like UI
+const linkedinStyles = `
+  .linkedin-post-card {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .linkedin-post-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .break-words {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .text-overflow-ellipsis {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  
+  .snap-x {
+    scroll-snap-type: x mandatory;
+  }
+  
+  .snap-start {
+    scroll-snap-align: start;
+  }
+  
+  .carousel-dots {
+    transition: all 0.2s ease;
+  }
+  
+  .carousel-dots:hover {
+    transform: scale(1.2);
+  }
+  
+  .linkedin-post-content {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  .linkedin-post-content p {
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .document-carousel {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .document-carousel:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+`;
 
 interface ScraperResult {
   content: string;
@@ -100,6 +334,407 @@ interface YouTubeChannelResult {
   channelImageUrl?: string; // Optional channel image URL
 }
 
+interface LinkedInPost {
+  id: string;
+  content: string;
+  date: string;
+  dateRelative: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  reactions: number;
+  url: string;
+  author: string;
+  authorHeadline: string;
+  authorAvatar: string;
+  authorProfile: string;
+  media: {
+    type: string;
+    url: string;
+    width?: number;
+    height?: number;
+  }[];
+  videos: {
+    type: string;
+    url: string;
+    thumbnail?: string;
+    duration?: string;
+  }[];
+  documents: {
+    type: string;
+    title: string;
+    url: string;
+    coverPages: any[];
+    totalPageCount: number;
+    fileType: string;
+  }[];
+  type: string;
+  isRepost: boolean;
+  originalPost?: {
+    content: string;
+    author: string;
+    authorInfo: string;
+    authorAvatar: string;
+    date: string;
+  };
+}
+
+interface LinkedInProfileData {
+  name: string;
+  headline: string;
+  profileUrl: string;
+  avatar: string;
+  publicIdentifier: string;
+  username: string;
+}
+
+interface LinkedInResult {
+  profileData: LinkedInProfileData;
+  posts: LinkedInPost[];
+  totalPosts: number;
+  message: string;
+}
+
+// LinkedIn Document Carousel Component
+const LinkedInDocumentCarousel: React.FC<{ 
+  document: any, 
+  postId: string,
+  onOpenPdf: (url: string, title: string) => void 
+}> = ({ document: docData, postId, onOpenPdf }) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const coverPages = docData.coverPages || [];
+  
+  // Helper function to extract preview images from cover pages
+  const getPreviewImages = React.useCallback(() => {
+    const previewImages: string[] = [];
+    coverPages.forEach((page: any) => {
+      if (page.imageUrls && Array.isArray(page.imageUrls)) {
+        // Handle the structure from the reference code: page.imageUrls array
+        previewImages.push(...page.imageUrls);
+      } else if (page.url || page.image || typeof page === 'string') {
+        // Handle direct URL structure or string URLs
+        previewImages.push(page.url || page.image || page);
+      }
+    });
+    return previewImages;
+  }, [coverPages]);
+  
+  React.useEffect(() => {
+    const carousel = document.getElementById(`doc-carousel-${postId}-${docData.title}`);
+    if (!carousel) return;
+    
+    const handleScroll = () => {
+      const scrollLeft = carousel.scrollLeft;
+      const itemWidth = carousel.offsetWidth;
+      const newIndex = Math.round(scrollLeft / itemWidth);
+      setCurrentIndex(newIndex);
+    };
+    
+    carousel.addEventListener('scroll', handleScroll);
+    return () => carousel.removeEventListener('scroll', handleScroll);
+  }, [postId, docData.title]);
+  
+  const scrollToIndex = (index: number) => {
+    const carousel = document.getElementById(`doc-carousel-${postId}-${docData.title}`);
+    if (carousel) {
+      carousel.scrollTo({ 
+        left: index * carousel.offsetWidth, 
+        behavior: 'smooth' 
+      });
+    }
+  };
+  
+    if (!coverPages || coverPages.length === 0) {
+    // Fallback to simple document display
+    return (
+      <div 
+        className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+        onClick={() => docData.url && onOpenPdf(docData.url, docData.title)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <FileText className="h-8 w-8 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 break-words line-clamp-2">{docData.title}</p>
+            <div className="flex items-center gap-2 mt-1">
+              {docData.totalPageCount && (
+                <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                  {docData.totalPageCount} pages
+                </span>
+              )}
+              <span className="text-xs text-gray-500 bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                {docData.fileType?.toUpperCase() || 'PDF'}
+              </span>
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
+              View
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white document-carousel">
+      {/* Document Header */}
+      <div className="p-3 border-b border-gray-100 bg-gray-50">
+                          <div className="flex items-center gap-2">
+           <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
+           <div className="flex-1 min-w-0">
+             <p className="text-sm font-medium text-gray-900 break-words line-clamp-2">{docData.title}</p>
+             <div className="flex items-center gap-2 mt-1">
+               {docData.totalPageCount && (
+                 <span className="text-xs text-gray-500">
+                   {docData.totalPageCount} pages
+                 </span>
+               )}
+               <span className="text-xs text-gray-400">•</span>
+               <span className="text-xs text-gray-500">
+                 {docData.fileType?.toUpperCase() || 'PDF'}
+               </span>
+             </div>
+           </div>
+         </div>
+      </div>
+      
+      {/* Cover Pages Carousel */}
+      <div className="relative">
+        <div 
+          id={`doc-carousel-${postId}-${docData.title}`}
+          className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+        >
+                    {(() => {
+            const previewImages = getPreviewImages();
+            
+            return previewImages.map((imageUrl: string, pageIndex: number) => (
+              <div 
+                key={`${postId}-doc-page-${pageIndex}`}
+                className="flex-none w-full snap-start"
+              >
+                <div className="relative bg-gray-100">
+                  <img 
+                    src={imageUrl} 
+                    alt={`Page ${pageIndex + 1} of ${docData.title}`} 
+                    className="w-full h-64 object-contain cursor-pointer hover:opacity-95 transition-opacity"
+                    onClick={() => docData.url && onOpenPdf(docData.url, docData.title)}
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  {/* Fallback content if image fails */}
+                  <div 
+                    className="absolute inset-0 bg-gray-100 flex items-center justify-center"
+                    style={{ display: 'none' }}
+                  >
+                    <div className="text-center">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">Page {pageIndex + 1}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ));
+          })()}
+        </div>
+        
+        {/* Navigation arrows */}
+        {(() => {
+          const previewImages = getPreviewImages();
+          
+          return previewImages.length > 1 && (
+            <>
+              <button
+                onClick={() => scrollToIndex(Math.max(0, currentIndex - 1))}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                disabled={currentIndex === 0}
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => scrollToIndex(Math.min(previewImages.length - 1, currentIndex + 1))}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                disabled={currentIndex === previewImages.length - 1}
+              >
+                ›
+              </button>
+            </>
+          );
+        })()}
+        
+        {/* Page counter */}
+        {(() => {
+          const previewImages = getPreviewImages();
+          
+          return previewImages.length > 1 && (
+            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+              {currentIndex + 1} / {previewImages.length}
+            </div>
+          );
+        })()}
+      </div>
+      
+            {/* Footer with action */}
+      <div className="p-3 bg-gray-50 border-t border-gray-100">
+        {/* Show message if there are more pages than previews */}
+        {(() => {
+          const previewImages = getPreviewImages();
+          
+          return docData.totalPageCount && previewImages.length < docData.totalPageCount && (
+            <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 flex items-center gap-2">
+              <FileText className="h-3 w-3" />
+              <span>
+                Showing {previewImages.length} of {docData.totalPageCount} pages. 
+                                 <button 
+                   onClick={() => docData.url && onOpenPdf(docData.url, docData.title)}
+                   className="ml-1 text-blue-600 hover:underline font-medium"
+                 >
+                   View full document
+                 </button>
+              </span>
+            </div>
+          );
+        })()}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => docData.url && onOpenPdf(docData.url, docData.title)}
+          className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+        >
+          <FileText className="h-3 w-3 mr-1" />
+          View Full Document
+        </Button>
+      </div>
+      
+      {/* Dot indicators */}
+      {(() => {
+        const previewImages = getPreviewImages();
+        
+        return previewImages.length > 1 && (
+          <div className="flex justify-center py-2 gap-1 bg-gray-50">
+            {previewImages.map((_: string, dotIndex: number) => (
+              <button 
+                key={`doc-dot-${dotIndex}`}
+                className={`w-1.5 h-1.5 rounded-full transition-all carousel-dots ${
+                  dotIndex === currentIndex 
+                    ? 'bg-blue-600 scale-110' 
+                    : 'bg-gray-300 hover:bg-gray-500'
+                }`}
+                onClick={() => scrollToIndex(dotIndex)}
+              />
+            ))}
+          </div>
+        );
+      })()}
+    </div>
+  );
+};
+
+// LinkedIn Carousel Component
+const LinkedInCarousel: React.FC<{ post: LinkedInPost }> = ({ post }) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  
+  React.useEffect(() => {
+    const carousel = document.getElementById(`carousel-${post.id}`);
+    if (!carousel) return;
+    
+    const handleScroll = () => {
+      const scrollLeft = carousel.scrollLeft;
+      const itemWidth = carousel.offsetWidth;
+      const newIndex = Math.round(scrollLeft / itemWidth);
+      setCurrentIndex(newIndex);
+    };
+    
+    carousel.addEventListener('scroll', handleScroll);
+    return () => carousel.removeEventListener('scroll', handleScroll);
+  }, [post.id]);
+  
+  const scrollToIndex = (index: number) => {
+    const carousel = document.getElementById(`carousel-${post.id}`);
+    if (carousel) {
+      carousel.scrollTo({ 
+        left: index * carousel.offsetWidth, 
+        behavior: 'smooth' 
+      });
+    }
+  };
+  
+  return (
+    <div className="relative">
+      <div 
+        id={`carousel-${post.id}`}
+        className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory rounded-lg"
+      >
+        {post.media.map((media, mediaIndex) => (
+          <div 
+            key={`${post.id}-media-${mediaIndex}`}
+            className="flex-none w-full snap-start"
+          >
+            <img 
+              src={media.url} 
+              alt={`Post media ${mediaIndex + 1}`} 
+              className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+              onClick={() => window.open(media.url, '_blank')}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Navigation arrows */}
+      {post.media.length > 1 && (
+        <>
+          <button
+            onClick={() => scrollToIndex(Math.max(0, currentIndex - 1))}
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all"
+            disabled={currentIndex === 0}
+          >
+            ‹
+          </button>
+          <button
+            onClick={() => scrollToIndex(Math.min(post.media.length - 1, currentIndex + 1))}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all"
+            disabled={currentIndex === post.media.length - 1}
+          >
+            ›
+          </button>
+        </>
+      )}
+      
+      {/* Counter */}
+      {post.media.length > 1 && (
+        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+          {currentIndex + 1} / {post.media.length}
+        </div>
+      )}
+      
+      {/* Dot indicators */}
+      {post.media.length > 1 && (
+        <div className="flex justify-center mt-2 gap-1">
+          {post.media.map((_, dotIndex) => (
+            <button 
+              key={`dot-${dotIndex}`}
+              className={`w-2 h-2 rounded-full transition-all carousel-dots ${
+                dotIndex === currentIndex 
+                  ? 'bg-blue-600 scale-110' 
+                  : 'bg-gray-300 hover:bg-gray-500'
+              }`}
+              onClick={() => scrollToIndex(dotIndex)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ScraperPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -125,7 +760,20 @@ const ScraperPage: React.FC = () => {
   const [loadingTranscriptIds, setLoadingTranscriptIds] = useState<Set<string>>(new Set());
   const [retryCount, setRetryCount] = useState<Record<string, number>>({});
   const [lastSearchedChannel, setLastSearchedChannel] = useState<string>('');
+  const [lastSearchedLinkedInProfile, setLastSearchedLinkedInProfile] = useState<string>('');
   const [videosWithTranscripts, setVideosWithTranscripts] = useState<Set<string>>(new Set());
+  const [linkedinResult, setLinkedinResult] = useState<LinkedInResult | null>(null);
+  const [selectedLinkedInPosts, setSelectedLinkedInPosts] = useState<Set<string>>(new Set());
+  const [isScrapingLinkedIn, setIsScrapingLinkedIn] = useState(false);
+  const [pdfViewerState, setPdfViewerState] = useState<{
+    isOpen: boolean;
+    documentUrl: string;
+    documentTitle: string;
+  }>({
+    isOpen: false,
+    documentUrl: '',
+    documentTitle: ''
+  });
 
   // Helper functions for toast
   const toastSuccess = (message: string) => {
@@ -142,6 +790,23 @@ const ScraperPage: React.FC = () => {
     });
   };
 
+  // PDF Viewer functions
+  const openPdfViewer = (documentUrl: string, documentTitle: string) => {
+    setPdfViewerState({
+      isOpen: true,
+      documentUrl,
+      documentTitle
+    });
+  };
+
+  const closePdfViewer = () => {
+    setPdfViewerState({
+      isOpen: false,
+      documentUrl: '',
+      documentTitle: ''
+    });
+  };
+
   // Save YouTube channel results to localStorage
   const saveYoutubeChannelToStorage = (channelResult: YouTubeChannelResult) => {
     try {
@@ -149,6 +814,16 @@ const ScraperPage: React.FC = () => {
       localStorage.setItem('lastSearchedChannel', channelResult.channelName);
     } catch (error) {
       console.error('Error saving YouTube channel to localStorage:', error);
+    }
+  };
+
+  // Save LinkedIn results to localStorage
+  const saveLinkedInResultToStorage = (linkedinResult: LinkedInResult) => {
+    try {
+      localStorage.setItem('linkedinResult', JSON.stringify(linkedinResult));
+      localStorage.setItem('lastSearchedLinkedInProfile', linkedinResult.profileData.username);
+    } catch (error) {
+      console.error('Error saving LinkedIn result to localStorage:', error);
     }
   };
 
@@ -170,6 +845,24 @@ const ScraperPage: React.FC = () => {
     }
   };
 
+  // Load LinkedIn results from localStorage
+  const loadLinkedInResultFromStorage = () => {
+    try {
+      const savedLinkedInResult = localStorage.getItem('linkedinResult');
+      const lastLinkedInProfile = localStorage.getItem('lastSearchedLinkedInProfile');
+      
+      if (savedLinkedInResult) {
+        setLinkedinResult(JSON.parse(savedLinkedInResult));
+      }
+      
+      if (lastLinkedInProfile && !inputUrl) {
+        setInputUrl(lastLinkedInProfile);
+      }
+    } catch (error) {
+      console.error('Error loading LinkedIn result from localStorage:', error);
+    }
+  };
+
   // Clear previous channel results when searching for a new channel
   useEffect(() => {
     if (activeTab === 'youtube' && inputUrl && lastSearchedChannel && !inputUrl.includes(lastSearchedChannel)) {
@@ -178,6 +871,14 @@ const ScraperPage: React.FC = () => {
     }
   }, [activeTab, inputUrl, lastSearchedChannel]);
 
+  // Clear previous LinkedIn results when searching for a new profile
+  useEffect(() => {
+    if (activeTab === 'linkedin' && inputUrl && lastSearchedLinkedInProfile && !inputUrl.includes(lastSearchedLinkedInProfile)) {
+      // User is searching for a different profile, clear the previous results
+      setLinkedinResult(null);
+    }
+  }, [activeTab, inputUrl, lastSearchedLinkedInProfile]);
+
   // Update input URL on mount if we have a last searched channel
   useEffect(() => {
     if (activeTab === 'youtube' && lastSearchedChannel && !inputUrl) {
@@ -185,12 +886,89 @@ const ScraperPage: React.FC = () => {
     }
   }, [activeTab, lastSearchedChannel, inputUrl]);
 
+  // Update input URL on mount if we have a last searched LinkedIn profile
+  useEffect(() => {
+    if (activeTab === 'linkedin' && lastSearchedLinkedInProfile && !inputUrl) {
+      setInputUrl(lastSearchedLinkedInProfile);
+    }
+  }, [activeTab, lastSearchedLinkedInProfile, inputUrl]);
+
   // Handle clearing YouTube results when needed
   const clearYoutubeResults = () => {
     setYoutubeChannelResult(null);
     setLastSearchedChannel('');
     localStorage.removeItem('youtubeChannelResult');
     localStorage.removeItem('lastSearchedChannel');
+  };
+
+  // Handle clearing LinkedIn results when needed
+  const clearLinkedInResults = () => {
+    setLinkedinResult(null);
+    setLastSearchedLinkedInProfile('');
+    localStorage.removeItem('linkedinResult');
+    localStorage.removeItem('lastSearchedLinkedInProfile');
+  };
+
+  // Handle LinkedIn profile scraping
+  const handleLinkedInScrape = async () => {
+    if (!inputUrl) {
+      toastError('Please enter a LinkedIn username');
+      return;
+    }
+
+    // Extract username from URL or use as is
+    let username = inputUrl.trim();
+    if (username.includes('linkedin.com/in/')) {
+      const match = username.match(/linkedin\.com\/in\/([^\/\?]+)/);
+      username = match ? match[1] : username;
+    }
+    
+    // Remove @ if present
+    username = username.replace('@', '').replace('/', '');
+
+    // If searching for a different profile, clear previous results
+    if (lastSearchedLinkedInProfile && lastSearchedLinkedInProfile !== username) {
+      clearLinkedInResults();
+    }
+
+    setIsScrapingLinkedIn(true);
+    setLinkedinResult(null);
+    setSelectedLinkedInPosts(new Set());
+
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const token = localStorage.getItem('token');
+      
+      // Prepare headers - include auth if available, but don't require it
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await axios.post(`${apiBaseUrl}/linkedin/scrape-profile`, {
+        username: username
+      }, { headers });
+
+      if (response.data.success) {
+        setLinkedinResult(response.data);
+        setLastSearchedLinkedInProfile(username);
+        
+        // Save to localStorage for persistence
+        saveLinkedInResultToStorage(response.data);
+        
+        toastSuccess(`Successfully scraped ${response.data.totalPosts} posts from @${username}`);
+      } else {
+        toastError(response.data.message || 'Failed to scrape LinkedIn profile');
+      }
+    } catch (error: any) {
+      console.error('LinkedIn scraping error:', error);
+      toastError(error.response?.data?.message || 'Failed to scrape LinkedIn profile');
+    } finally {
+      setIsScrapingLinkedIn(false);
+    }
   };
 
   // Modified YouTube channel scrape handler to clear previous results
@@ -262,6 +1040,8 @@ const ScraperPage: React.FC = () => {
         } else {
           toastError('Please enter a YouTube channel URL or @handle');
         }
+      } else if (activeTab === 'linkedin') {
+        await handleLinkedInScrape();
       } else {
         await new Promise(resolve => setTimeout(resolve, 2000));
         setResult({
@@ -346,6 +1126,18 @@ const ScraperPage: React.FC = () => {
     setSelectedTweets(newSelection);
   };
 
+  const handleToggleLinkedInPostSelection = (postId: string) => {
+    const newSelection = new Set(selectedLinkedInPosts);
+    
+    if (newSelection.has(postId)) {
+      newSelection.delete(postId);
+    } else {
+      newSelection.add(postId);
+    }
+    
+    setSelectedLinkedInPosts(newSelection);
+  };
+
   const handleSaveSelectedTweets = async () => {
     if (selectedTweets.size === 0) {
       toastError('Please select at least one tweet to save');
@@ -386,6 +1178,78 @@ const ScraperPage: React.FC = () => {
     } catch (error) {
       console.error('Error saving tweets:', error);
       toastError('Failed to save tweets. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveSelectedLinkedInPosts = async () => {
+    if (selectedLinkedInPosts.size === 0) {
+      toastError('Please select at least one LinkedIn post to save');
+      return;
+    }
+    
+    if (!linkedinResult || !linkedinResult.posts) {
+      toastError('No LinkedIn posts available to save');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const postsToSave = linkedinResult.posts.filter(post => 
+        selectedLinkedInPosts.has(post.id)
+      );
+      
+      // Save to backend first
+      let backendSaveSuccess = false;
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+        const response = await axios.post(`${apiBaseUrl}/linkedin/save-scraped-posts`, {
+          posts: postsToSave,
+          profileData: linkedinResult.profileData,
+          userId: user?.id || 'anonymous'
+        });
+
+        if (response.data.success) {
+          backendSaveSuccess = true;
+          toastSuccess(`Saved ${response.data.count} LinkedIn posts to cloud!`);
+        } else {
+          console.warn("Backend save warning:", response.data.message);
+          toastError("Failed to save posts to cloud: " + response.data.message);
+        }
+      } catch (backendError) {
+        console.error("Error saving LinkedIn posts to backend:", backendError);
+        toastError("Failed to save posts to cloud. Saving locally as backup.");
+      }
+      
+      // Save to localStorage as backup (even if backend save succeeds)
+      try {
+        const existingSavedPosts = JSON.parse(localStorage.getItem('savedLinkedInPosts') || '[]');
+        const newSavedPosts = [...existingSavedPosts, ...postsToSave.map(post => ({
+          ...post,
+          savedAt: new Date().toISOString(),
+          profileData: linkedinResult.profileData
+        }))];
+        
+        localStorage.setItem('savedLinkedInPosts', JSON.stringify(newSavedPosts));
+        
+        if (!backendSaveSuccess) {
+          toastSuccess(`Saved ${postsToSave.length} LinkedIn posts to local storage as backup`);
+        } else {
+          toastSuccess(`Posts saved successfully to cloud and local storage!`);
+        }
+      } catch (localStorageError) {
+        console.error("Error saving to localStorage:", localStorageError);
+        if (!backendSaveSuccess) {
+          toastError("Failed to save posts both to cloud and locally.");
+        }
+      }
+      
+      setSelectedLinkedInPosts(new Set());
+    } catch (error) {
+      console.error('Error saving LinkedIn posts:', error);
+      toastError('Failed to save LinkedIn posts. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -932,8 +1796,25 @@ const ScraperPage: React.FC = () => {
     setResult(null);
     setTwitterResult(null);
     setSelectedTweets(new Set());
-    setYoutubeChannelResult(null);
-    setSelectedVideos(new Set());
+    
+    // Don't clear YouTube and LinkedIn results when switching tabs - they should persist
+    if (activeTab !== 'youtube') {
+      // Only clear if switching away from YouTube and we don't have saved data
+      const savedChannel = localStorage.getItem('youtubeChannelResult');
+      if (!savedChannel) {
+        setYoutubeChannelResult(null);
+        setSelectedVideos(new Set());
+      }
+    }
+    
+    if (activeTab !== 'linkedin') {
+      // Only clear if switching away from LinkedIn and we don't have saved data
+      const savedLinkedIn = localStorage.getItem('linkedinResult');
+      if (!savedLinkedIn) {
+        setLinkedinResult(null);
+        setSelectedLinkedInPosts(new Set());
+      }
+    }
   }, [activeTab]);
 
   // Load YouTube channel results on component mount
@@ -943,21 +1824,32 @@ const ScraperPage: React.FC = () => {
     }
   }, [activeTab]);
 
-  // Clear YouTube channel results when switching tabs
+  // Load LinkedIn results on component mount
   useEffect(() => {
-    if (activeTab !== 'youtube' && lastSearchedChannel) {
-      // Don't reset the youtubeChannelResult to keep it in state
-      // Just update the UI state for other tabs
+    if (activeTab === 'linkedin') {
+      loadLinkedInResultFromStorage();
+    }
+  }, [activeTab]);
+
+  // Clear other results when switching tabs but preserve YouTube and LinkedIn data
+  useEffect(() => {
+    if (activeTab !== 'youtube' && activeTab !== 'linkedin') {
+      // Clear other tab results but preserve YouTube and LinkedIn
       setResult(null);
       setTwitterResult(null);
       setLinkedinContent('');
-      
-      // Keep input URL if returning to YouTube tab with same channel
-      if (lastSearchedChannel && inputUrl === '') {
-        setInputUrl(lastSearchedChannel);
-      }
     }
-  }, [activeTab, lastSearchedChannel]);
+    
+    // Restore input URL for YouTube
+    if (activeTab === 'youtube' && lastSearchedChannel && inputUrl === '') {
+      setInputUrl(lastSearchedChannel.startsWith('@') ? lastSearchedChannel : `@${lastSearchedChannel}`);
+    }
+    
+    // Restore input URL for LinkedIn
+    if (activeTab === 'linkedin' && lastSearchedLinkedInProfile && inputUrl === '') {
+      setInputUrl(lastSearchedLinkedInProfile);
+    }
+  }, [activeTab, lastSearchedChannel, lastSearchedLinkedInProfile, inputUrl]);
 
   // Clean up selected videos when the channel result changes
   useEffect(() => {
@@ -976,18 +1868,30 @@ const ScraperPage: React.FC = () => {
     }
   }, [youtubeChannelResult]);
 
-  // Restore transcript state from localStorage if available
+  // Restore transcript state and other data from localStorage if available
   useEffect(() => {
     try {
       // Load saved YouTube channel results from localStorage
       const savedChannel = localStorage.getItem('youtubeChannelResult');
+      const lastChannel = localStorage.getItem('lastSearchedChannel');
       if (savedChannel) {
         setYoutubeChannelResult(JSON.parse(savedChannel));
       }
+      if (lastChannel) {
+        setLastSearchedChannel(lastChannel);
+      }
       
-      // Remove the code that attempted to load and use youtubeTranscript
-      // This section was trying to use async/await in a non-async function
-      // and was referencing properties on a string incorrectly
+      // Load saved LinkedIn results from localStorage
+      const savedLinkedIn = localStorage.getItem('linkedinResult');
+      const lastLinkedInProfile = localStorage.getItem('lastSearchedLinkedInProfile');
+      if (savedLinkedIn) {
+        const linkedInData = JSON.parse(savedLinkedIn);
+        setLinkedinResult(linkedInData);
+        console.log(`Loaded ${linkedInData.totalPosts} LinkedIn posts from cache for ${linkedInData.profileData.name}`);
+      }
+      if (lastLinkedInProfile) {
+        setLastSearchedLinkedInProfile(lastLinkedInProfile);
+      }
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
     }
@@ -1000,6 +1904,9 @@ const ScraperPage: React.FC = () => {
       if (youtubeChannelResult) {
         saveYoutubeChannelToStorage(youtubeChannelResult);
       }
+      if (linkedinResult) {
+        saveLinkedInResultToStorage(linkedinResult);
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -1007,7 +1914,7 @@ const ScraperPage: React.FC = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [youtubeChannelResult]);
+  }, [youtubeChannelResult, linkedinResult]);
 
   // Fix missing handleToggleVideoSelection function (referenced in UI components)
   const handleToggleVideoSelection = (videoId: string) => {
@@ -1048,6 +1955,17 @@ const ScraperPage: React.FC = () => {
     }
   }, []);
 
+  // Add styles to head
+  React.useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = linkedinStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -1085,10 +2003,9 @@ const ScraperPage: React.FC = () => {
                 <Youtube className="h-4 w-4" />
                 <span className="hidden sm:inline">YouTube</span>
               </TabsTrigger>
-              <TabsTrigger value="linkedin" className="flex items-center gap-2 relative opacity-70" disabled>
+              <TabsTrigger value="linkedin" className="flex items-center gap-2">
                 <Linkedin className="h-4 w-4" />
                 <span className="hidden sm:inline">LinkedIn</span>
-                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1 rounded-full">Soon</span>
               </TabsTrigger>
               <TabsTrigger value="twitter" className="flex items-center gap-2 relative opacity-70" disabled>
                 <Twitter className="h-4 w-4" />
@@ -1106,7 +2023,15 @@ const ScraperPage: React.FC = () => {
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder="Enter YouTube channel URL or @handle (e.g., @channelname)"
+                  placeholder={
+                    activeTab === 'youtube' 
+                      ? "Enter YouTube channel URL or @handle (e.g., @channelname)"
+                      : activeTab === 'linkedin'
+                      ? "Enter LinkedIn username (e.g., johndoe or linkedin.com/in/johndoe)"
+                      : activeTab === 'twitter'
+                      ? "Enter Twitter username (e.g., @username or twitter.com/username)"
+                      : "Enter URL to scrape content"
+                  }
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
                   className="w-full"
@@ -1114,18 +2039,25 @@ const ScraperPage: React.FC = () => {
               </div>
               <Button
                 onClick={handleScrape}
-                disabled={isLoading || !inputUrl}
+                disabled={isLoading || !inputUrl || (activeTab === 'linkedin' && isScrapingLinkedIn)}
                 className="min-w-[120px]"
               >
-                {isLoading ? (
+                {(isLoading || (activeTab === 'linkedin' && isScrapingLinkedIn)) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading
+                    {activeTab === 'linkedin' ? 'Scraping...' : 'Loading'}
                   </>
                 ) : (
                   <>
                     <Search className="mr-2 h-4 w-4" />
-                    Get Videos
+                    {activeTab === 'youtube' 
+                      ? 'Get Videos' 
+                      : activeTab === 'linkedin'
+                      ? 'Scrape Profile'
+                      : activeTab === 'twitter'
+                      ? 'Get Tweets'
+                      : 'Scrape Content'
+                    }
                   </>
                 )}
               </Button>
@@ -1303,12 +2235,13 @@ const ScraperPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedVideos(new Set(youtubeChannelResult.videos.map(v => v.id)))}
                 disabled={isLoading}
+                className="text-xs whitespace-nowrap"
               >
                 Select All
               </Button>
@@ -1317,6 +2250,7 @@ const ScraperPage: React.FC = () => {
                 size="sm"
                 onClick={() => setSelectedVideos(new Set())}
                 disabled={isLoading || selectedVideos.size === 0}
+                className="text-xs whitespace-nowrap"
               >
                 Clear Selection
               </Button>
@@ -1325,7 +2259,7 @@ const ScraperPage: React.FC = () => {
                 size="sm"
                 onClick={handleSaveSelectedVideos}
                 disabled={isLoading || selectedVideos.size === 0}
-                className="gap-2"
+                className="text-xs gap-1 whitespace-nowrap"
               >
                 {isLoading ? (
                   <>
@@ -1406,6 +2340,273 @@ const ScraperPage: React.FC = () => {
               </Card>
             ))}
                         </div>
+        </div>
+      )}
+      
+      {/* LinkedIn Profile Results */}
+      {activeTab === 'linkedin' && linkedinResult && (
+        <div className="space-y-6">
+          {/* Profile Header */}
+          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {linkedinResult.profileData.avatar && (
+                    <img 
+                      src={linkedinResult.profileData.avatar} 
+                      alt={linkedinResult.profileData.name}
+                      className="w-16 h-16 rounded-full border-4 border-white shadow-lg" 
+                    />
+                  )}
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">{linkedinResult.profileData.name}</h2>
+                    <p className="text-sm text-gray-600 mb-1">{linkedinResult.profileData.headline}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Linkedin className="h-3 w-3" />
+                        {linkedinResult.totalPosts} posts scraped
+                      </span>
+                      <span>•</span>
+                      <span>{linkedinResult.profileData.username}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedLinkedInPosts(new Set(linkedinResult.posts.map(p => p.id)))}
+                    disabled={isLoading}
+                    className="bg-white"
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedLinkedInPosts(new Set())}
+                    disabled={isLoading || selectedLinkedInPosts.size === 0}
+                    className="bg-white"
+                  >
+                    Clear Selection
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveSelectedLinkedInPosts}
+                    disabled={isLoading || selectedLinkedInPosts.size === 0}
+                    className="gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3 w-3" />
+                        Save Selected ({selectedLinkedInPosts.size})
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Posts Grid - 3 columns like LinkedIn */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {linkedinResult.posts.map((post, postIndex) => (
+              <Card 
+                key={`${post.id}-${postIndex}`} 
+                className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 ${
+                  selectedLinkedInPosts.has(post.id) ? 'ring-2 ring-blue-500 border-blue-500' : ''
+                }`}
+              >
+                {/* Post Header */}
+                <CardHeader className="p-4 pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <img 
+                        src={post.authorAvatar || 'https://via.placeholder.com/40'} 
+                        alt={post.author}
+                        className="w-10 h-10 rounded-full object-cover" 
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-sm text-gray-900 truncate">{post.author}</h4>
+                          {post.isRepost && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                              Repost
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 line-clamp-2 break-words">{post.authorHeadline}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {post.dateRelative} • 🌐
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleLinkedInPostSelection(post.id)}
+                        className="h-6 w-6 p-0 hover:bg-blue-50"
+                      >
+                        {selectedLinkedInPosts.has(post.id) ? (
+                          <div className="h-4 w-4 rounded bg-blue-600 text-white flex items-center justify-center text-xs">
+                            ✓
+                          </div>
+                        ) : (
+                          <div className="h-4 w-4 rounded border-2 border-gray-300 hover:border-blue-500"></div>
+                        )}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600">
+                        •••
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                {/* Post Content */}
+                <CardContent className="p-4 pt-0">
+                  <div className="space-y-3 linkedin-post-content">
+                    {/* Text Content */}
+                    <div className="text-sm text-gray-800 leading-relaxed">
+                      {post.content.length > 150 ? (
+                        <div>
+                          <p className="whitespace-pre-line break-words overflow-hidden">
+                            {post.content.substring(0, 150)}...
+                          </p>
+                          <Button 
+                            variant="link" 
+                            size="sm" 
+                            className="p-0 h-auto text-xs text-gray-500 hover:text-blue-600 mt-1"
+                            onClick={() => {
+                              // Toggle full content view
+                              const element = document.getElementById(`full-content-${post.id}`);
+                              const button = document.getElementById(`see-more-btn-${post.id}`);
+                              if (element && button) {
+                                if (element.style.display === 'none' || !element.style.display) {
+                                  element.style.display = 'block';
+                                  button.textContent = 'see less';
+                                } else {
+                                  element.style.display = 'none';
+                                  button.textContent = 'see more';
+                                }
+                              }
+                            }}
+                          >
+                            <span id={`see-more-btn-${post.id}`}>see more</span>
+                          </Button>
+                          <div id={`full-content-${post.id}`} style={{ display: 'none' }}>
+                            <p className="whitespace-pre-line break-words overflow-hidden mt-2">
+                              {post.content}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-line break-words overflow-hidden">{post.content}</p>
+                      )}
+                    </div>
+                    
+                    {/* Media Carousel */}
+                    {post.media && post.media.length > 0 && (
+                      <div className="relative">
+                        {post.media.length === 1 ? (
+                          <div className="rounded-lg overflow-hidden bg-gray-100">
+                            <img 
+                              src={post.media[0].url} 
+                              alt="Post media" 
+                              className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                              onClick={() => window.open(post.media[0].url, '_blank')}
+                            />
+                          </div>
+                        ) : (
+                          <LinkedInCarousel post={post} />
+                        )}
+                      </div>
+                    )}
+                    
+                                         {/* Documents */}
+                     {post.documents && post.documents.length > 0 && (
+                       <div className="space-y-3">
+                         {post.documents.map((doc, docIndex) => (
+                           <LinkedInDocumentCarousel 
+                             key={`${post.id}-doc-${docIndex}`}
+                             document={doc}
+                             postId={post.id}
+                             onOpenPdf={openPdfViewer}
+                           />
+                         ))}
+                       </div>
+                     )}
+                  </div>
+                </CardContent>
+                
+                {/* Post Footer - LinkedIn Style */}
+                <CardFooter className="p-4 pt-0">
+                  {/* Engagement Stats */}
+                  <div className="w-full space-y-3">
+                    <div className="flex items-center justify-between text-xs text-gray-500 border-b border-gray-100 pb-2">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <span className="text-blue-600">👍</span>
+                          <span className="text-red-500">❤️</span>
+                          <span className="text-green-600">💡</span>
+                          {post.likes || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span>{post.comments || 0} comments</span>
+                        <span>•</span>
+                        <span>{post.shares || 0} reposts</span>
+                      </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 px-3 py-1 h-8">
+                          <span className="mr-1">👍</span>
+                          <span className="text-xs">Like</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 px-3 py-1 h-8">
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          <span className="text-xs">Comment</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 px-3 py-1 h-8">
+                          <ArrowRight className="h-3 w-3 mr-1" />
+                          <span className="text-xs">Repost</span>
+                        </Button>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleCopy(post.content)}
+                          className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 h-8"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        {post.url && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => window.open(post.url, '_blank')}
+                            className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 h-8"
+                          >
+                            <Linkedin className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
       
@@ -1560,43 +2761,88 @@ const ScraperPage: React.FC = () => {
       )}
       
       {/* Instructions when no result */}
-      {!result && !isLoading && !youtubeChannelResult && (
+      {!result && !isLoading && !youtubeChannelResult && !linkedinResult && (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center max-w-xl mx-auto">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 mb-4">
-                <Youtube className="h-8 w-8 text-primary" />
+                {activeTab === 'youtube' ? (
+                  <Youtube className="h-8 w-8 text-primary" />
+                ) : activeTab === 'linkedin' ? (
+                  <Linkedin className="h-8 w-8 text-primary" />
+                ) : (
+                  <Search className="h-8 w-8 text-primary" />
+                )}
               </div>
               
               <h3 className="text-lg font-medium mb-2">
-                Extract Content from YouTube Channels
+                {activeTab === 'youtube' 
+                  ? 'Extract Content from YouTube Channels'
+                  : activeTab === 'linkedin'
+                  ? 'Scrape LinkedIn Profiles'
+                  : 'Extract Content from Social Media'
+                }
               </h3>
               
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Paste a YouTube channel handle (starting with @) or URL to extract videos and transcripts for your LinkedIn content.
+                {activeTab === 'youtube' 
+                  ? 'Paste a YouTube channel handle (starting with @) or URL to extract videos and transcripts for your LinkedIn content.'
+                  : activeTab === 'linkedin'
+                  ? 'Enter a LinkedIn username to scrape their profile and recent posts for content inspiration.'
+                  : 'Select a platform above and enter the appropriate URL or username to start scraping content.'
+                }
               </p>
               
               <div className="flex flex-col space-y-2">
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
-                    1
-                  </div>
-                  <span>Enter a YouTube channel handle (e.g., @channelname) in the input field above</span>
-                </div>
+                {activeTab === 'youtube' && (
+                  <>
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        1
+                      </div>
+                      <span>Enter a YouTube channel handle (e.g., @channelname) in the input field above</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        2
+                      </div>
+                      <span>Click "Get Videos" to fetch content from the channel</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        3
+                      </div>
+                      <span>Select videos and fetch transcripts to create LinkedIn content</span>
+                    </div>
+                  </>
+                )}
                 
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
-                    2
-                  </div>
-                  <span>Click "Get Videos" to fetch content from the channel</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
-                    3
-                  </div>
-                  <span>Select videos and fetch transcripts to create LinkedIn content</span>
-                </div>
+                {activeTab === 'linkedin' && (
+                  <>
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        1
+                      </div>
+                      <span>Enter a LinkedIn username (e.g., johndoe) in the input field above</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        2
+                      </div>
+                      <span>Click "Scrape Profile" to fetch their posts and profile data</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        3
+                      </div>
+                      <span>Select posts to save for content inspiration and analysis</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>
@@ -1663,6 +2909,14 @@ const ScraperPage: React.FC = () => {
           )}
         </div>
       )}
+      
+      {/* PDF Viewer Modal */}
+      <PDFViewerModal
+        isOpen={pdfViewerState.isOpen}
+        onClose={closePdfViewer}
+        documentUrl={pdfViewerState.documentUrl}
+        documentTitle={pdfViewerState.documentTitle}
+      />
     </div>
   );
 };

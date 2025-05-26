@@ -48,6 +48,9 @@ import {
 import {
   Checkbox,
 } from '@/components/ui/checkbox';
+import {
+  Switch,
+} from '@/components/ui/switch';
 
 // Subscription plan interface
 interface SubscriptionPlan {
@@ -153,6 +156,7 @@ const BillingPage: React.FC = () => {
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false); // Track if user is admin
   const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [autoPayEnabled, setAutoPayEnabled] = useState(false);
   
   // Current subscription info
   const [currentSubscription, setCurrentSubscription] = useState<Subscription>({
@@ -247,7 +251,7 @@ const BillingPage: React.FC = () => {
   // Fetch current subscription from API
   const fetchCurrentSubscription = async () => {
     try {
-    setIsLoadingSubscription(true);
+      setIsLoadingSubscription(true);
       
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/user-limits/me`, 
@@ -264,7 +268,7 @@ const BillingPage: React.FC = () => {
         
         // Direct use the data from API response
         // This ensures we display what's actually in the database
-      setCurrentSubscription({
+        setCurrentSubscription({
           planId: userData.planId || 'expired',
           planName: userData.planName || 'No Plan',
           status: userData.status || 'inactive',
@@ -272,9 +276,12 @@ const BillingPage: React.FC = () => {
           usedCredits: userData.count || 0,
           totalCredits: userData.limit || 0
         });
+        
+        // Set the auto-pay status
+        setAutoPayEnabled(userData.autoPay || false);
       } else {
         console.error('Failed to fetch subscription:', response.data?.message);
-        setCurrentSubscription({
+      setCurrentSubscription({
           planId: 'expired',
           planName: 'No Plan',
           status: 'inactive',
@@ -440,6 +447,29 @@ const BillingPage: React.FC = () => {
   const handleChangePlan = async (planId: string) => {
     try {
       setIsChangingPlan(true);
+      
+      // Define plan rankings to determine if it's an upgrade or downgrade
+      const planRanking = {
+        'expired': 0,
+        'trial': 1,
+        'basic': 2,
+        'premium': 3,
+        'custom': 4
+      };
+      
+      // Check if it's a downgrade (moving to a lower-ranked plan)
+      const currentPlanRank = planRanking[currentSubscription.planId] || 0;
+      const newPlanRank = planRanking[planId] || 0;
+      
+      // If it's a downgrade and current subscription hasn't expired, show error
+      const isDowngrade = newPlanRank < currentPlanRank;
+      const hasActiveSubscription = currentSubscription.expiresAt && new Date(currentSubscription.expiresAt) > new Date();
+      
+      if (isDowngrade && hasActiveSubscription) {
+        toast.error("Plan downgrade is not allowed during an active subscription period. You can downgrade once your current subscription expires.");
+        setIsChangingPlan(false);
+        return;
+      }
       
       // For direct upgrade without payment (like trial plans)
       if (planId === 'trial') {
@@ -796,6 +826,36 @@ const BillingPage: React.FC = () => {
     }
   };
 
+  // Add this function to handle toggling auto-pay
+  const handleAutoPayToggle = async (enabled: boolean) => {
+    try {
+      setAutoPayEnabled(enabled);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/users/subscription/auto-pay`, 
+        { 
+          autoPay: enabled 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        toast.success(`Auto-renewal ${enabled ? 'enabled' : 'disabled'} successfully`);
+      } else {
+        toast.error('Failed to update auto-renewal setting');
+        setAutoPayEnabled(!enabled); // Revert state on failure
+      }
+    } catch (error) {
+      console.error('Error toggling auto-pay:', error);
+      toast.error('Failed to update auto-renewal setting');
+      setAutoPayEnabled(!enabled); // Revert state on failure
+    }
+  };
+
   return (
     <div className="w-full pb-12">
       {/* Innovative Top Dashboard Bar */}
@@ -855,15 +915,26 @@ const BillingPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="h-12 w-[1px] bg-primary/10 hidden sm:block"></div>
-                
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-black/70">Credits Used</span>
-                  <div className="flex items-end gap-1">
-                    <span className="text-xl font-bold text-black">{currentSubscription.usedCredits}</span>
-                    <span className="text-sm text-black/70 mb-0.5">/ {currentSubscription.totalCredits}</span>
+                {/* Add auto-renewal toggle */}
+                {currentSubscription.status !== 'cancelled' && (
+                  <div className="mt-3 border-t border-gray-200 pt-3">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm">
+                        <span className="font-medium text-black">Auto-renewal</span>
+                        <p className="text-xs text-black/70">
+                          {autoPayEnabled 
+                            ? 'Your subscription will automatically renew' 
+                            : 'Your subscription will expire at the end of period'}
+                        </p>
                   </div>
-                </div>
+                      <Switch
+                        checked={autoPayEnabled}
+                        onCheckedChange={handleAutoPayToggle}
+                        disabled={isLoadingSubscription}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="w-full sm:w-auto py-2 px-4 rounded-lg bg-white border border-primary/10 shadow-sm">
@@ -1040,25 +1111,40 @@ const BillingPage: React.FC = () => {
               <div className="border-b border-primary/10 px-5 py-4 flex justify-between items-center flex-wrap gap-2">
                 <h2 className="text-lg font-semibold text-black">Your Subscription</h2>
               
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-primary/5 rounded-full p-1 text-xs">
+                {/* Subscription Plan Selector */}
+                <div className="flex items-center justify-center space-x-4 mb-8">
+                  <span className={!isAnnualBilling ? "font-semibold" : "text-gray-500"}>Monthly</span>
                     <button
-                  onClick={() => setIsAnnualBilling(false)}
-                      className={`px-3 py-1.5 rounded-full transition-colors ${!isAnnualBilling ? 'bg-white text-primary shadow-sm' : 'text-black'}`}
-                >
-                  Monthly
+                    type="button"
+                    role="switch"
+                    aria-checked={isAnnualBilling}
+                    className={`${
+                      isAnnualBilling ? 'bg-blue-600' : 'bg-gray-200'
+                    } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                    onClick={() => setIsAnnualBilling(!isAnnualBilling)}
+                  >
+                    <span
+                      className={`${
+                        isAnnualBilling ? 'translate-x-6' : 'translate-x-1'
+                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                    />
                     </button>
-                    <button
-                      onClick={() => setIsAnnualBilling(true)}
-                      className={`px-3 py-1.5 rounded-full transition-colors ${isAnnualBilling ? 'bg-white text-primary shadow-sm' : 'text-black'}`}
-                    >
-                      Annual
-                    </button>
+                  <span className={isAnnualBilling ? "font-semibold" : "text-gray-500"}>
+                    Annual <span className="text-green-600 text-xs font-medium">(Save 20%)</span>
+                  </span>
                   </div>
                   
-                  <Badge variant="outline" className="bg-primary/5 border-primary/10 text-black">
-                    Save 20%
-                  </Badge>
+                {/* Plan upgrade/downgrade policy information */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-800 dark:text-blue-300 mb-6">
+                  <div className="flex">
+                    <svg className="h-5 w-5 text-blue-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p><strong>Plan Change Policy:</strong> You can upgrade your plan at any time to get immediate access to additional features and credits.</p>
+                      <p className="mt-1">However, downgrades are only possible at the end of your current billing period. If you request a downgrade, it will automatically take effect once your current subscription expires.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1101,6 +1187,27 @@ const BillingPage: React.FC = () => {
                             </div>
                           )}
                         </div>
+                        
+                        {/* Add auto-renewal toggle */}
+                        {currentSubscription.status !== 'cancelled' && (
+                          <div className="mt-3 border-t border-gray-200 pt-3">
+                            <div className="flex justify-between items-center">
+                              <div className="text-sm">
+                                <span className="font-medium text-black">Auto-renewal</span>
+                                <p className="text-xs text-black/70">
+                                  {autoPayEnabled 
+                                    ? 'Your subscription will automatically renew' 
+                                    : 'Your subscription will expire at the end of period'}
+                                </p>
+                              </div>
+                              <Switch
+                                checked={autoPayEnabled}
+                                onCheckedChange={handleAutoPayToggle}
+                                disabled={isLoadingSubscription}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="sm:text-right">
