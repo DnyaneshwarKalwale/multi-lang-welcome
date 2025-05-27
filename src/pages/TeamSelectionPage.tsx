@@ -39,7 +39,6 @@ export default function TeamSelectionPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <BrandOutIcon className="w-20 h-20" />
             <BrandOutLogotype className="h-20 w-auto" />
             <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
           </div>
@@ -67,25 +66,21 @@ export default function TeamSelectionPage() {
           transition={{ delay: 0.4 }}
         >
           <motion.div 
-            className={`bg-white border ${workspaceType === "team" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
-            onClick={() => setWorkspaceType("team")}
-            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            className={`bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center relative opacity-50 cursor-not-allowed shadow-sm`}
+            whileHover={{ y: 0 }}
           >
-            <div className={`p-5 rounded-full mb-6 ${workspaceType === "team" ? "bg-blue-100" : "bg-gray-100"}`}>
-              <Users className={`w-14 h-14 ${workspaceType === "team" ? "text-blue-500" : "text-gray-500"}`} />
+            <div className="absolute top-4 right-4">
+              <span className="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full font-medium">
+                Coming Soon
+              </span>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">For my team</h3>
-            <p className="text-gray-600 text-base mb-6">
+            <div className={`p-5 rounded-full mb-6 bg-gray-100`}>
+              <Users className={`w-14 h-14 text-gray-400`} />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-gray-500">For my team</h3>
+            <p className="text-gray-400 text-base mb-6">
               One place to create, review and track content for your team.
             </p>
-            {workspaceType === "team" && (
-              <div className="mt-2 flex items-center justify-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                  <Check className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-medium text-blue-500">Selected</span>
-              </div>
-            )}
           </motion.div>
           
           <motion.div 

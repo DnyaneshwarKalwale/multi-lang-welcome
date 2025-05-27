@@ -477,7 +477,7 @@ const DashboardPage: React.FC = () => {
                     </span>
                     <span className="text-xs text-gray-600">vs last month</span>
                   </div>
-                </div>
+              </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
                   <FileText className="h-6 w-6 text-white" />
               </div>
@@ -519,7 +519,7 @@ const DashboardPage: React.FC = () => {
                     <span className="text-sm text-green-600 font-medium">
                       {dashboardData.completedCarousels} completed
                     </span>
-                  </div>
+              </div>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                   <LayoutGrid className="h-6 w-6 text-white" />

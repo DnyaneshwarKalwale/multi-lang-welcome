@@ -160,8 +160,8 @@ export default function PostFormatPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           <div className="relative">
-            <BrandOutLogotype className="h-14 sm:h-16 w-auto" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={22} />
+            <BrandOutLogotype className="h-20 w-auto" />
+            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={26} />
           </div>
         </motion.div>
         

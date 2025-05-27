@@ -4,7 +4,7 @@ import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
   FileText, ArrowRight, PlusCircle, Twitter, ImageIcon, Folder,
-  X, Download, ZoomIn, ZoomOut, RotateCw
+  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,16 @@ const PDFViewerModal: React.FC<{
 }> = ({ isOpen, onClose, documentUrl, documentTitle }) => {
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
+  const [showFallback, setShowFallback] = useState(false);
+
+  // Reset fallback state when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setShowFallback(false);
+      setZoom(100);
+      setRotation(0);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -58,6 +68,19 @@ const PDFViewerModal: React.FC<{
     link.href = documentUrl;
     link.download = documentTitle;
     link.click();
+  };
+
+  // Check if this is a Cloudinary URL with auth token
+  const isCloudinaryWithAuth = documentUrl.includes('cloudinary.com') && documentUrl.includes('auth_token');
+  
+  // For Cloudinary URLs with auth tokens, we need to handle them differently
+  const getPdfViewerUrl = () => {
+    if (isCloudinaryWithAuth) {
+      // For Cloudinary PDFs with auth tokens, try direct URL first
+      // The auth token should allow direct access
+      return `${documentUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`;
+    }
+    return `${documentUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`;
   };
 
   return (
@@ -126,52 +149,91 @@ const PDFViewerModal: React.FC<{
               }}
               className="transition-transform duration-200"
             >
-              {/* Try iframe first, with fallback */}
-              <iframe
-                src={`${documentUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
-                className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white"
-                title={documentTitle}
-                onLoad={() => console.log('PDF loaded successfully')}
-                onError={() => {
-                  console.warn('PDF iframe failed to load');
-                  // Show fallback message
-                  const iframe = document.querySelector('iframe[title="' + documentTitle + '"]') as HTMLIFrameElement;
-                  if (iframe) {
-                    iframe.style.display = 'none';
-                    const fallback = iframe.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'block';
-                  }
-                }}
-              />
-              
-              {/* Fallback content */}
-              <div 
-                className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white flex flex-col items-center justify-center"
-                style={{ display: 'none' }}
-              >
-                <FileText className="h-16 w-16 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Document Preview Unavailable</h3>
-                <p className="text-gray-500 text-center mb-4 max-w-md">
-                  This document cannot be displayed in the browser. You can download it or open it in a new tab.
-                </p>
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleDownload}
-                    className="gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download Document
-                  </Button>
-                  <Button
-                    onClick={() => window.open(documentUrl, '_blank')}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Open in New Tab
-                  </Button>
+              {!showFallback ? (
+                <>
+                  {/* Try iframe first, with fallback */}
+                  <iframe
+                    src={getPdfViewerUrl()}
+                    className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white"
+                    title={documentTitle}
+                    onLoad={(e) => {
+                      console.log('PDF loaded successfully');
+                      // Check if iframe content loaded properly
+                      const iframe = e.target as HTMLIFrameElement;
+                      try {
+                        // For Cloudinary URLs, if we can't access the content, show fallback
+                        if (isCloudinaryWithAuth) {
+                          setTimeout(() => {
+                            try {
+                              // Try to access iframe content to see if it loaded
+                              const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                              if (!iframeDoc || iframeDoc.body.innerHTML.includes('error') || iframeDoc.body.innerHTML.trim() === '') {
+                                setShowFallback(true);
+                              }
+                            } catch (error) {
+                              // Cross-origin error means it might be working, so don't show fallback
+                              console.log('Cross-origin access blocked, PDF might be loading correctly');
+                            }
+                          }, 2000);
+                        }
+                      } catch (error) {
+                        console.log('Error checking iframe content:', error);
+                      }
+                    }}
+                    onError={() => {
+                      console.warn('PDF iframe failed to load');
+                      setShowFallback(true);
+                    }}
+                  />
+                  
+                  {/* Loading indicator for Cloudinary PDFs */}
+                  {isCloudinaryWithAuth && (
+                    <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                        <p className="text-sm text-gray-600">Loading document...</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Fallback content */
+                <div className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white flex flex-col items-center justify-center">
+                  <FileText className="h-16 w-16 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Document Preview Unavailable</h3>
+                  <p className="text-gray-500 text-center mb-4 max-w-md">
+                    {isCloudinaryWithAuth 
+                      ? "This document has authentication requirements. Try opening it in a new tab or downloading it directly."
+                      : "This document cannot be displayed in the browser. You can download it or open it in a new tab."
+                    }
+                  </p>
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <Button
+                      onClick={() => window.open(documentUrl, '_blank')}
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Open in New Tab
+                    </Button>
+                    <Button
+                      onClick={handleDownload}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Document
+                    </Button>
+                    <Button
+                      onClick={() => setShowFallback(false)}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Try Preview Again
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -1802,8 +1864,8 @@ const ScraperPage: React.FC = () => {
       // Only clear if switching away from YouTube and we don't have saved data
       const savedChannel = localStorage.getItem('youtubeChannelResult');
       if (!savedChannel) {
-        setYoutubeChannelResult(null);
-        setSelectedVideos(new Set());
+    setYoutubeChannelResult(null);
+    setSelectedVideos(new Set());
       }
     }
     
@@ -2606,7 +2668,7 @@ const ScraperPage: React.FC = () => {
                 </CardFooter>
               </Card>
             ))}
-          </div>
+                        </div>
         </div>
       )}
       
@@ -2796,26 +2858,26 @@ const ScraperPage: React.FC = () => {
               <div className="flex flex-col space-y-2">
                 {activeTab === 'youtube' && (
                   <>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
-                        1
-                      </div>
-                      <span>Enter a YouTube channel handle (e.g., @channelname) in the input field above</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
-                        2
-                      </div>
-                      <span>Click "Get Videos" to fetch content from the channel</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
-                        3
-                      </div>
-                      <span>Select videos and fetch transcripts to create LinkedIn content</span>
-                    </div>
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                    1
+                  </div>
+                  <span>Enter a YouTube channel handle (e.g., @channelname) in the input field above</span>
+                </div>
+                
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                    2
+                  </div>
+                  <span>Click "Get Videos" to fetch content from the channel</span>
+                </div>
+                
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                    3
+                  </div>
+                  <span>Select videos and fetch transcripts to create LinkedIn content</span>
+                </div>
                   </>
                 )}
                 

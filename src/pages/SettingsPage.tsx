@@ -381,8 +381,8 @@ const SettingsPage: React.FC = () => {
     try {
       setIsSaving(true);
       
-      // Validate inputs
-      if (!profile.firstName || !profile.lastName || !profile.email) {
+      // Validate inputs - lastName is now optional
+      if (!profile.firstName || !profile.email) {
         toast.error('Please fill in all required fields');
         return;
       }
@@ -684,11 +684,12 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName">Last Name <span className="text-gray-400 text-sm">(optional)</span></Label>
                     <Input 
                       id="lastName" 
                       value={profile.lastName} 
                       onChange={e => handleProfileChange('lastName', e.target.value)}
+                      placeholder="Enter your last name (optional)"
                     />
                   </div>
                 </div>

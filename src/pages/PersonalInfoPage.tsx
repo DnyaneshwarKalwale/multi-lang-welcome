@@ -49,11 +49,7 @@ export default function PersonalInfoPage() {
       isValid = false;
     }
     
-    // Validate lastName
-    if (!lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-      isValid = false;
-    }
+    // lastName is now optional - no validation needed
     
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -193,13 +189,13 @@ export default function PersonalInfoPage() {
             
             <motion.div variants={item}>
               <Label htmlFor="lastName" className="text-gray-700 mb-2 block">
-                Last Name <span className="text-red-500">*</span>
+                Last Name <span className="text-gray-400 text-sm">(optional)</span>
               </Label>
               <div className="relative">
                 <Input
                   id="lastName"
                   type="text"
-                  placeholder="Enter your last name"
+                  placeholder="Enter your last name (optional)"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.lastName ? 'border-red-500' : ''}`}

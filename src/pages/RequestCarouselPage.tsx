@@ -3390,71 +3390,7 @@ const RequestCarouselPage: React.FC = () => {
               )}
             </div>
             
-            {/* Footer with responsive buttons */}
-            <CardFooter className="border-t p-3 sm:p-4 gap-2 flex flex-col sm:flex-row">
-              {requestStep === 1 && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className="w-full sm:w-auto order-2 sm:order-1"
-                    onClick={() => setShowRequestModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    className="w-full sm:w-auto order-1 sm:order-2"
-                    onClick={() => setRequestStep(2)}
-                  >
-                    Continue to Review
-                  </Button>
-                </>
-              )}
-              
-              {requestStep === 2 && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className="w-full sm:w-auto order-3 sm:order-1"
-                    onClick={() => setRequestStep(1)}
-                  >
-                    Back
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full sm:w-auto order-2 sm:order-2"
-                    onClick={() => setShowRequestModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    className="w-full sm:w-auto order-1 sm:order-3" 
-                    onClick={submitCarouselRequest}
-                    disabled={isSubmittingRequest}
-                  >
-                    {isSubmittingRequest ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Request"
-                    )}
-                  </Button>
-                </>
-              )}
-              
-              {requestStep === 3 && (
-                <Button 
-                  className="w-full sm:w-auto" 
-                  onClick={() => {
-                    setShowRequestModal(false);
-                    navigate("/dashboard/carousels");
-                  }}
-                >
-                  View My Carousels
-                </Button>
-              )}
-            </CardFooter>
+
             
             {/* Footer */}
             <CardFooter className="border-t p-4 flex justify-between">

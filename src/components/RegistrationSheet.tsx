@@ -50,10 +50,10 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
     e.preventDefault();
     clearError();
     
-    if (firstName && lastName && email && password) {
+    if (firstName && email && password) {
       try {
-        // Register the user
-        await register(firstName, lastName, email, password);
+        // Register the user - lastName is optional
+        await register(firstName, lastName || '', email, password);
         
         // Close the registration sheet
         onOpenChange(false);
@@ -279,17 +279,16 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">{t('last name') || 'Last Name'}</label>
+                            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">{t('last name') || 'Last Name'} <span className="text-gray-400 text-xs">(Optional)</span></label>
                   <div className="relative">
                     <Input 
                       id="lastName" 
-                                placeholder={t('enter last name') || 'Enter your last name'}
+                                placeholder={t('enter last name') || 'Enter your last name (optional)'}
                       className="bg-white border-gray-200 h-12 pl-4 
                                  focus:border-primary focus:ring-primary 
                                  transition-all text-gray-900 shadow-sm"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      required
                     />
                   </div>
                 </motion.div>
