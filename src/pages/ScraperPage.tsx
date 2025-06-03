@@ -38,6 +38,13 @@ import api from '@/services/api';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from "@/hooks/use-toast";
 
+// Twitter imports
+import { fetchUserTweets, groupThreads, saveSelectedTweets, TwitterConfig } from '@/utils/twitterApi';
+import { Tweet, Thread, TweetCategory, TwitterResult } from '@/utils/twitterTypes';
+import TweetCard from '@/components/twitter/TweetCard';
+import TweetThread from '@/components/twitter/TweetThread';
+import TweetCategories from '@/components/twitter/TweetCategories';
+
 // PDF Viewer Modal Component
 const PDFViewerModal: React.FC<{ 
   isOpen: boolean; 
@@ -200,57 +207,17 @@ const PDFViewerModal: React.FC<{
                 /* Fallback content */
                 <div className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white flex flex-col items-center justify-center">
                   <FileText className="h-16 w-16 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Document Preview Unavailable</h3>
-                  <p className="text-gray-500 text-center mb-4 max-w-md">
-                    {isCloudinaryWithAuth 
-                      ? "This document has authentication requirements. Try opening it in a new tab or downloading it directly."
-                      : "This document cannot be displayed in the browser. You can download it or open it in a new tab."
-                    }
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Document Preview Unavailable</h3>
+                  <p className="text-sm text-gray-500 text-center mb-4 px-4">
+                    This document cannot be previewed in the browser. You can download it to view the content.
                   </p>
-                  <div className="flex flex-wrap gap-3 justify-center">
-                    <Button
-                      onClick={() => window.open(documentUrl, '_blank')}
-                      className="gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Open in New Tab
-                    </Button>
-                    <Button
-                      onClick={handleDownload}
-                      variant="outline"
-                      className="gap-2"
-                    >
+                  <Button onClick={handleDownload} className="flex items-center gap-2">
                       <Download className="h-4 w-4" />
                       Download Document
                     </Button>
-                    <Button
-                      onClick={() => setShowFallback(false)}
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Try Preview Again
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-        
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Use the controls above to zoom, rotate, or download the document
-            </p>
-            <Button
-              onClick={() => window.open(documentUrl, '_blank')}
-              variant="outline"
-              size="sm"
-            >
-              Open in New Tab
-            </Button>
           </div>
         </div>
       </div>
@@ -258,80 +225,7 @@ const PDFViewerModal: React.FC<{
   );
 };
 
-// Add custom styles for LinkedIn-like UI
-const linkedinStyles = `
-  .linkedin-post-card {
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .linkedin-post-card:hover {
-    transform: translateY(-2px);
-  }
-  
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .break-words {
-    word-wrap: break-word;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-  }
-  
-  .text-overflow-ellipsis {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-  
-  .snap-x {
-    scroll-snap-type: x mandatory;
-  }
-  
-  .snap-start {
-    scroll-snap-align: start;
-  }
-  
-  .carousel-dots {
-    transition: all 0.2s ease;
-  }
-  
-  .carousel-dots:hover {
-    transform: scale(1.2);
-  }
-  
-  .linkedin-post-content {
-    max-width: 100%;
-    overflow: hidden;
-  }
-  
-  .linkedin-post-content p {
-    margin: 0;
-    line-height: 1.5;
-  }
-  
-  .document-carousel {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  .document-carousel:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-`;
-
+// Interfaces for existing functionality
 interface ScraperResult {
   content: string;
   keyPoints: string[];
@@ -341,7 +235,7 @@ interface ScraperResult {
   wordCount: number;
 }
 
-interface Tweet {
+interface OldTweet {
   id: string;
   text: string;
   full_text?: string;
@@ -369,8 +263,8 @@ interface Tweet {
   }[];
 }
 
-interface TwitterResult {
-  tweets: Tweet[];
+interface OldTwitterResult {
+  tweets: OldTweet[];
   username: string;
   profileImageUrl?: string;
 }
@@ -456,6 +350,80 @@ interface LinkedInResult {
   totalPosts: number;
   message: string;
 }
+
+// Add custom styles for LinkedIn-like UI
+const linkedinStyles = `
+  .linkedin-post-card {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .linkedin-post-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .break-words {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .text-overflow-ellipsis {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  
+  .snap-x {
+    scroll-snap-type: x mandatory;
+  }
+  
+  .snap-start {
+    scroll-snap-align: start;
+  }
+  
+  .carousel-dots {
+    transition: all 0.2s ease;
+  }
+  
+  .carousel-dots:hover {
+    transform: scale(1.2);
+  }
+  
+  .linkedin-post-content {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  .linkedin-post-content p {
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .document-carousel {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .document-carousel:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+`;
 
 // LinkedIn Document Carousel Component
 const LinkedInDocumentCarousel: React.FC<{ 
@@ -807,6 +775,9 @@ const ScraperPage: React.FC = () => {
   const [result, setResult] = useState<ScraperResult | null>(null);
   const [twitterResult, setTwitterResult] = useState<TwitterResult | null>(null);
   const [selectedTweets, setSelectedTweets] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<TweetCategory>('all');
+  const [twitterThreads, setTwitterThreads] = useState<Thread[]>([]);
+  const [selectedThreads, setSelectedThreads] = useState<Set<string>>(new Set());
   const [contentPreferences, setContentPreferences] = useState({
     format: 'short',
     tone: 'professional'
@@ -836,6 +807,30 @@ const ScraperPage: React.FC = () => {
     documentUrl: '',
     documentTitle: ''
   });
+  // Add Twitter-specific state
+  const [lastSearchedTwitterUser, setLastSearchedTwitterUser] = useState<string>('');
+  const [showSavedPosts, setShowSavedPosts] = useState(false);
+  const [savedTwitterPosts, setSavedTwitterPosts] = useState<Tweet[]>([]);
+  const [savedLinkedInPosts, setSavedLinkedInPosts] = useState<any[]>([]);
+  const [savedPostsModalOpen, setSavedPostsModalOpen] = useState(false);
+
+  // Load saved posts from localStorage
+  const loadSavedPosts = () => {
+    try {
+      const savedTweets = JSON.parse(localStorage.getItem('savedTwitterPosts') || '[]');
+      const savedLinkedIn = JSON.parse(localStorage.getItem('savedLinkedInPosts') || '[]');
+      
+      setSavedTwitterPosts(savedTweets);
+      setSavedLinkedInPosts(savedLinkedIn);
+    } catch (error) {
+      console.error('Error loading saved posts:', error);
+    }
+  };
+
+  // Load saved posts when component mounts
+  useEffect(() => {
+    loadSavedPosts();
+  }, []);
 
   // Helper functions for toast
   const toastSuccess = (message: string) => {
@@ -925,6 +920,77 @@ const ScraperPage: React.FC = () => {
     }
   };
 
+  // Save Twitter results to localStorage
+  const saveTwitterResultToStorage = (twitterResult: TwitterResult) => {
+    try {
+      // Validate the data structure before saving
+      const validatedResult = {
+        tweets: Array.isArray(twitterResult.tweets) ? twitterResult.tweets : [],
+        threads: Array.isArray(twitterResult.threads) ? twitterResult.threads : [],
+        username: twitterResult.username || '',
+        profileImageUrl: twitterResult.profileImageUrl || '',
+        totalCount: typeof twitterResult.totalCount === 'number' ? twitterResult.totalCount : 0,
+        categories: twitterResult.categories || {
+          all: 0,
+          normal: 0,
+          thread: 0,
+          long: 0
+        }
+      };
+
+      localStorage.setItem('twitterResult', JSON.stringify(validatedResult));
+      localStorage.setItem('lastSearchedTwitterUser', validatedResult.username);
+    } catch (error) {
+      console.error('Error saving Twitter result to localStorage:', error);
+    }
+  };
+
+  // Load Twitter results from localStorage
+  const loadTwitterResultFromStorage = () => {
+    try {
+      const savedTwitterResult = localStorage.getItem('twitterResult');
+      const lastTwitterUser = localStorage.getItem('lastSearchedTwitterUser');
+      
+      if (savedTwitterResult) {
+        const twitterData = JSON.parse(savedTwitterResult);
+        
+        // Validate and fix the data structure
+        if (twitterData && typeof twitterData === 'object') {
+          // Ensure required properties exist with proper defaults
+          const validTwitterResult: TwitterResult = {
+            tweets: Array.isArray(twitterData.tweets) ? twitterData.tweets : [],
+            threads: Array.isArray(twitterData.threads) ? twitterData.threads : [],
+            username: twitterData.username || '',
+            profileImageUrl: twitterData.profileImageUrl || '',
+            totalCount: typeof twitterData.totalCount === 'number' ? twitterData.totalCount : (twitterData.tweets?.length || 0),
+            categories: twitterData.categories || {
+              all: twitterData.totalCount || twitterData.tweets?.length || 0,
+              normal: 0,
+              thread: 0,
+              long: 0
+            }
+          };
+          
+          setTwitterResult(validTwitterResult);
+          setTwitterThreads(validTwitterResult.threads);
+          console.log(`Loaded ${validTwitterResult.totalCount} tweets from cache for @${validTwitterResult.username}`);
+        } else {
+          console.warn('Invalid Twitter data structure, clearing cache');
+          localStorage.removeItem('twitterResult');
+        }
+      }
+      
+      if (lastTwitterUser) {
+        setLastSearchedTwitterUser(lastTwitterUser);
+      }
+    } catch (error) {
+      console.error('Error loading Twitter result from localStorage:', error);
+      // Clear corrupted data
+      localStorage.removeItem('twitterResult');
+      localStorage.removeItem('lastSearchedTwitterUser');
+    }
+  };
+
   // Clear previous channel results when searching for a new channel
   useEffect(() => {
     if (activeTab === 'youtube' && inputUrl && lastSearchedChannel && !inputUrl.includes(lastSearchedChannel)) {
@@ -941,6 +1007,14 @@ const ScraperPage: React.FC = () => {
     }
   }, [activeTab, inputUrl, lastSearchedLinkedInProfile]);
 
+  // Clear previous Twitter results when searching for a new user
+  useEffect(() => {
+    if (activeTab === 'twitter' && inputUrl && lastSearchedTwitterUser && !inputUrl.includes(lastSearchedTwitterUser)) {
+      // User is searching for a different Twitter user, clear the previous results
+      setTwitterResult(null);
+    }
+  }, [activeTab, inputUrl, lastSearchedTwitterUser]);
+
   // Update input URL on mount if we have a last searched channel
   useEffect(() => {
     if (activeTab === 'youtube' && lastSearchedChannel && !inputUrl) {
@@ -954,6 +1028,13 @@ const ScraperPage: React.FC = () => {
       setInputUrl(lastSearchedLinkedInProfile);
     }
   }, [activeTab, lastSearchedLinkedInProfile, inputUrl]);
+
+  // Update input URL on mount if we have a last searched Twitter user
+  useEffect(() => {
+    if (activeTab === 'twitter' && lastSearchedTwitterUser && !inputUrl) {
+      setInputUrl(lastSearchedTwitterUser.startsWith('@') ? lastSearchedTwitterUser : `@${lastSearchedTwitterUser}`);
+    }
+  }, [activeTab, lastSearchedTwitterUser, inputUrl]);
 
   // Handle clearing YouTube results when needed
   const clearYoutubeResults = () => {
@@ -969,6 +1050,16 @@ const ScraperPage: React.FC = () => {
     setLastSearchedLinkedInProfile('');
     localStorage.removeItem('linkedinResult');
     localStorage.removeItem('lastSearchedLinkedInProfile');
+  };
+
+  // Handle clearing Twitter results when needed
+  const clearTwitterResults = () => {
+    setTwitterResult(null);
+    setLastSearchedTwitterUser('');
+    setSelectedTweets(new Set());
+    setSelectedThreads(new Set());
+    localStorage.removeItem('twitterResult');
+    localStorage.removeItem('lastSearchedTwitterUser');
   };
 
   // Handle LinkedIn profile scraping
@@ -1146,20 +1237,67 @@ const ScraperPage: React.FC = () => {
       return;
     }
     
-    const response = await api.get(`/twitter/user/${username}`);
+    // If searching for a different user, clear previous results
+    if (lastSearchedTwitterUser && lastSearchedTwitterUser !== username) {
+      clearTwitterResults();
+    }
+    
+    try {
+      // Use the backend API instead of frontend API calls
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/twitter/user/${username}`
+        : `${baseUrl}/api/twitter/user/${username}`;
+      
+      const response = await axios.get(apiUrl);
     
     if (response.data && response.data.success) {
-      const tweets = response.data.data;
-      
-      setTwitterResult({
-        tweets,
-        username,
-        profileImageUrl: tweets[0]?.author?.profile_image_url
-      });
+        const tweets: Tweet[] = response.data.data;
+        
+        // Group tweets into threads
+        const groupedData = groupThreads(tweets);
+        const threads: Thread[] = [];
+        const standaloneTweets: Tweet[] = [];
+        
+        groupedData.forEach(item => {
+          if ('tweets' in item) {
+            threads.push(item);
+          } else {
+            standaloneTweets.push(item);
+          }
+        });
+        
+        // Calculate category counts
+        const categories: Record<TweetCategory, number> = {
+          all: tweets.length,
+          normal: standaloneTweets.length,
+          thread: threads.reduce((count, thread) => count + thread.tweets.length, 0),
+          long: tweets.filter(tweet => tweet.is_long || (tweet.full_text && tweet.full_text.length > 280)).length
+        };
+        
+        const twitterResult: TwitterResult = {
+          tweets: standaloneTweets,
+          threads,
+          username,
+          profileImageUrl: tweets[0]?.author?.profile_image_url,
+          totalCount: tweets.length,
+          categories
+        };
+        
+        setTwitterResult(twitterResult);
+        setTwitterThreads(threads);
+        setLastSearchedTwitterUser(username);
+        
+        // Save to localStorage for persistence
+        saveTwitterResultToStorage(twitterResult);
       
       toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
     } else {
       throw new Error(response.data?.message || 'Failed to fetch tweets');
+      }
+    } catch (error) {
+      console.error('Error fetching tweets:', error);
+      toastError('Failed to fetch tweets. Please try again.');
     }
   };
 
@@ -1176,16 +1314,32 @@ const ScraperPage: React.FC = () => {
     navigate('/dashboard/post');
   };
 
-  const handleToggleTweetSelection = (tweetId: string) => {
+  const handleToggleTweetSelection = (tweet: Tweet) => {
     const newSelection = new Set(selectedTweets);
     
-    if (newSelection.has(tweetId)) {
-      newSelection.delete(tweetId);
+    if (newSelection.has(tweet.id)) {
+      newSelection.delete(tweet.id);
     } else {
-      newSelection.add(tweetId);
+      newSelection.add(tweet.id);
     }
     
     setSelectedTweets(newSelection);
+  };
+
+  const handleToggleThreadSelection = (thread: Thread, select: boolean) => {
+    const newSelectedThreads = new Set(selectedThreads);
+    const newSelectedTweets = new Set(selectedTweets);
+    
+    if (select) {
+      newSelectedThreads.add(thread.id);
+      thread.tweets.forEach(tweet => newSelectedTweets.add(tweet.id));
+    } else {
+      newSelectedThreads.delete(thread.id);
+      thread.tweets.forEach(tweet => newSelectedTweets.delete(tweet.id));
+    }
+    
+    setSelectedThreads(newSelectedThreads);
+    setSelectedTweets(newSelectedTweets);
   };
 
   const handleToggleLinkedInPostSelection = (postId: string) => {
@@ -1214,28 +1368,32 @@ const ScraperPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const tweetsToSave = twitterResult.tweets.filter(tweet => 
-        selectedTweets.has(tweet.id)
+      // Collect all selected tweets from both standalone tweets and threads
+      const allTweets = [
+        ...(Array.isArray(twitterResult.tweets) ? twitterResult.tweets : []),
+        ...(Array.isArray(twitterResult.threads) ? twitterResult.threads.flatMap(thread => thread.tweets || []) : [])
+      ];
+      
+      const tweetsToSave = allTweets.filter(tweet => 
+        tweet && tweet.id && selectedTweets.has(tweet.id)
       );
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const apiUrl = baseUrl.endsWith('/api') 
-        ? `${baseUrl}/twitter/save`
-        : `${baseUrl}/api/twitter/save`;
+      if (tweetsToSave.length === 0) {
+        toastError('No valid tweets found to save');
+        return;
+      }
       
-      const response = await axios.post(apiUrl, {
-        tweets: tweetsToSave,
-        username: user?.email || 'anonymous',
-        options: {
-          preserveThreadOrder: true
-        }
-      });
+      // Use the saveSelectedTweets function from twitterApi
+      const success = await saveSelectedTweets(tweetsToSave, user?.email || 'anonymous');
       
-      if (response.data && response.data.success) {
-        toastSuccess(`Saved ${response.data.count} tweets successfully!`);
+      if (success) {
+        toastSuccess(`Saved ${tweetsToSave.length} tweets successfully!`);
         setSelectedTweets(new Set());
+        setSelectedThreads(new Set());
+        // Refresh saved posts list
+        loadSavedPosts();
       } else {
-        throw new Error(response.data?.message || 'Failed to save tweets');
+        throw new Error('Failed to save tweets');
       }
     } catch (error) {
       console.error('Error saving tweets:', error);
@@ -1309,6 +1467,8 @@ const ScraperPage: React.FC = () => {
       }
       
       setSelectedLinkedInPosts(new Set());
+      // Refresh saved posts list
+      loadSavedPosts();
     } catch (error) {
       console.error('Error saving LinkedIn posts:', error);
       toastError('Failed to save LinkedIn posts. Please try again.');
@@ -1893,12 +2053,18 @@ const ScraperPage: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Load Twitter results on component mount
+  useEffect(() => {
+    if (activeTab === 'twitter') {
+      loadTwitterResultFromStorage();
+    }
+  }, [activeTab]);
+
   // Clear other results when switching tabs but preserve YouTube and LinkedIn data
   useEffect(() => {
-    if (activeTab !== 'youtube' && activeTab !== 'linkedin') {
-      // Clear other tab results but preserve YouTube and LinkedIn
+    if (activeTab !== 'youtube' && activeTab !== 'linkedin' && activeTab !== 'twitter') {
+      // Clear other tab results but preserve YouTube, LinkedIn, and Twitter
       setResult(null);
-      setTwitterResult(null);
       setLinkedinContent('');
     }
     
@@ -1911,7 +2077,12 @@ const ScraperPage: React.FC = () => {
     if (activeTab === 'linkedin' && lastSearchedLinkedInProfile && inputUrl === '') {
       setInputUrl(lastSearchedLinkedInProfile);
     }
-  }, [activeTab, lastSearchedChannel, lastSearchedLinkedInProfile, inputUrl]);
+
+    // Restore input URL for Twitter
+    if (activeTab === 'twitter' && lastSearchedTwitterUser && inputUrl === '') {
+      setInputUrl(lastSearchedTwitterUser.startsWith('@') ? lastSearchedTwitterUser : `@${lastSearchedTwitterUser}`);
+    }
+  }, [activeTab, lastSearchedChannel, lastSearchedLinkedInProfile, lastSearchedTwitterUser, inputUrl]);
 
   // Clean up selected videos when the channel result changes
   useEffect(() => {
@@ -1954,6 +2125,41 @@ const ScraperPage: React.FC = () => {
       if (lastLinkedInProfile) {
         setLastSearchedLinkedInProfile(lastLinkedInProfile);
       }
+
+      // Load saved Twitter results from localStorage
+      const savedTwitterResult = localStorage.getItem('twitterResult');
+      const lastTwitterUser = localStorage.getItem('lastSearchedTwitterUser');
+      if (savedTwitterResult) {
+        const twitterData = JSON.parse(savedTwitterResult);
+        
+        // Validate and fix the data structure
+        if (twitterData && typeof twitterData === 'object') {
+          // Ensure required properties exist with proper defaults
+          const validTwitterResult: TwitterResult = {
+            tweets: Array.isArray(twitterData.tweets) ? twitterData.tweets : [],
+            threads: Array.isArray(twitterData.threads) ? twitterData.threads : [],
+            username: twitterData.username || '',
+            profileImageUrl: twitterData.profileImageUrl || '',
+            totalCount: typeof twitterData.totalCount === 'number' ? twitterData.totalCount : (twitterData.tweets?.length || 0),
+            categories: twitterData.categories || {
+              all: twitterData.totalCount || twitterData.tweets?.length || 0,
+              normal: 0,
+              thread: 0,
+              long: 0
+            }
+          };
+          
+          setTwitterResult(validTwitterResult);
+          setTwitterThreads(validTwitterResult.threads);
+          console.log(`Loaded ${validTwitterResult.totalCount} tweets from cache for @${validTwitterResult.username}`);
+        } else {
+          console.warn('Invalid Twitter data structure, clearing cache');
+          localStorage.removeItem('twitterResult');
+        }
+      }
+      if (lastTwitterUser) {
+        setLastSearchedTwitterUser(lastTwitterUser);
+      }
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
     }
@@ -1969,6 +2175,9 @@ const ScraperPage: React.FC = () => {
       if (linkedinResult) {
         saveLinkedInResultToStorage(linkedinResult);
       }
+      if (twitterResult) {
+        saveTwitterResultToStorage(twitterResult);
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -1976,7 +2185,7 @@ const ScraperPage: React.FC = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [youtubeChannelResult, linkedinResult]);
+  }, [youtubeChannelResult, linkedinResult, twitterResult]);
 
   // Fix missing handleToggleVideoSelection function (referenced in UI components)
   const handleToggleVideoSelection = (videoId: string) => {
@@ -2028,14 +2237,344 @@ const ScraperPage: React.FC = () => {
     };
   }, []);
 
+  // Add Twitter-like styles
+  const twitterStyles = `
+    @layer components {
+      .glass-card {
+        @apply bg-white/70 backdrop-blur-sm border border-white/20 shadow-sm;
+      }
+      
+      .tweet-card {
+        @apply relative p-4 sm:p-6 rounded-2xl glass-card transition-all duration-300 hover:shadow-md overflow-hidden mb-4;
+      }
+      
+      .tweet-thread {
+        @apply relative p-4 sm:p-6 rounded-2xl glass-card transition-all duration-300 hover:shadow-md overflow-hidden mb-4 border-l-4 border-blue-500;
+      }
+      
+      .thread-item {
+        @apply border-l-2 border-blue-500/30 pl-6 py-3 ml-3 relative;
+      }
+      
+      .thread-item:first-child {
+        @apply pt-1;
+      }
+      
+      .thread-item:last-child {
+        @apply pb-1;
+      }
+      
+      .thread-container {
+        @apply pl-3 relative;
+      }
+      
+      .thread-container::before {
+        content: '';
+        @apply absolute top-0 bottom-0 left-3 w-0.5 bg-blue-500/30 rounded;
+      }
+      
+      .thread-item::before {
+        content: '';
+        @apply absolute left-[-4px] top-4 w-2 h-2 rounded-full bg-blue-500/50;
+      }
+      
+      .thread-item + .thread-item {
+        @apply mt-2;
+      }
+      
+      .thread-container:empty::before {
+        @apply hidden;
+      }
+      
+      .show-more-button {
+        @apply text-blue-500 text-sm font-medium transition-colors duration-200 hover:text-blue-700 flex items-center gap-1;
+      }
+      
+      .checkbox-container {
+        @apply absolute top-6 right-6 flex items-center gap-2;
+      }
+      
+      .custom-checkbox {
+        @apply h-5 w-5 rounded-md border border-input bg-white transition-colors hover:cursor-pointer;
+      }
+      
+      .custom-checkbox-checked {
+        @apply bg-blue-500 border-blue-500;
+      }
+    }
+
+    /* Animations */
+    .animate-enter {
+      animation: fade-in 0.3s ease-out, scale-in 0.2s ease-out;
+    }
+
+    .animate-content-expand {
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .media-container {
+      @apply rounded-lg overflow-hidden relative;
+      aspect-ratio: auto;
+      max-height: 400px;
+    }
+
+    .media-container img, .media-container video {
+      @apply w-full h-auto object-contain;
+      max-height: 400px;
+    }
+
+    .profile-media-container {
+      @apply rounded-lg overflow-hidden relative;
+      aspect-ratio: 1 / 1;
+      max-height: 150px;
+    }
+
+    .profile-media-container img {
+      @apply w-full h-full object-contain;
+    }
+
+    /* Image lazy loading blur effect */
+    .lazy-image {
+      @apply transition-opacity duration-500 opacity-0;
+    }
+
+    .lazy-image.loaded {
+      @apply opacity-100;
+    }
+
+    .lazy-image.loading {
+      @apply bg-gray-200 animate-pulse;
+    }
+  `;
+
+  // Add custom styles to head
+  React.useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = twitterStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+
+  // Saved Posts Modal Component
+  const SavedPostsModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    savedTwitterPosts: Tweet[];
+    savedLinkedInPosts: any[];
+  }> = ({ isOpen, onClose, savedTwitterPosts, savedLinkedInPosts }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <Folder className="h-6 w-6 text-blue-600" />
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
+                <p className="text-sm text-gray-500">
+                  {savedTwitterPosts.length + savedLinkedInPosts.length} total saved posts
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="p-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 overflow-auto p-6">
+            {savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 ? (
+              <div className="text-center py-16 text-gray-500">
+                <Folder className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
+                <p>Start by scraping and saving some content!</p>
+              </div>
+            ) : (
+              <Tabs defaultValue="twitter" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="twitter" className="flex items-center gap-2">
+                    <Twitter className="h-4 w-4" />
+                    Twitter ({savedTwitterPosts.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="linkedin" className="flex items-center gap-2">
+                    <Linkedin className="h-4 w-4" />
+                    LinkedIn ({savedLinkedInPosts.length})
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="twitter">
+                  {savedTwitterPosts.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No saved Twitter posts</p>
+                  ) : (
+                    <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+                      {savedTwitterPosts.map((tweet) => (
+                        <div key={tweet.id} className="break-inside-avoid mb-6 w-full">
+                          <TweetCard
+                            tweet={tweet}
+                            isSelected={false}
+                            onSelectToggle={() => {}}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="linkedin">
+                  {savedLinkedInPosts.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No saved LinkedIn posts</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {savedLinkedInPosts.map((post, index) => (
+                        <Card key={`saved-${post.id}-${index}`} className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200">
+                          <CardHeader className="p-4 pb-3">
+                            <div className="flex items-start gap-3">
+                              <img 
+                                src={post.authorAvatar || 'https://via.placeholder.com/40'} 
+                                alt={post.author}
+                                className="w-10 h-10 rounded-full object-cover" 
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm text-gray-900">{post.author}</h4>
+                                <p className="text-xs text-gray-600 line-clamp-2">{post.authorHeadline}</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  Saved • {new Date(post.savedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <div className="text-sm text-gray-800 leading-relaxed mb-3">
+                              {post.content.length > 200 ? (
+                                <>
+                                  <p className="whitespace-pre-line break-words">
+                                    {post.content.substring(0, 200)}...
+                                  </p>
+                                  <button className="text-blue-500 hover:text-blue-600 text-xs mt-1">
+                                    Show more
+                                  </button>
+                                </>
+                              ) : (
+                                <p className="whitespace-pre-line break-words">{post.content}</p>
+                              )}
+                            </div>
+                            
+                            {/* Media Display */}
+                            {post.media && post.media.length > 0 && (
+                              <div className="mb-3">
+                                {post.media.length === 1 ? (
+                                  <img 
+                                    src={post.media[0].url} 
+                                    alt="Post media" 
+                                    className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
+                                    onClick={() => window.open(post.media[0].url, '_blank')}
+                                  />
+                                ) : (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {post.media.slice(0, 4).map((media: any, idx: number) => (
+                                      <img 
+                                        key={idx}
+                                        src={media.url} 
+                                        alt={`Media ${idx + 1}`} 
+                                        className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-95 transition-opacity"
+                                        onClick={() => window.open(media.url, '_blank')}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Documents Display */}
+                            {post.documents && post.documents.length > 0 && (
+                              <div className="space-y-2">
+                                {post.documents.map((doc: any, idx: number) => (
+                                  <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4 text-blue-600" />
+                                      <span className="text-sm font-medium text-gray-900 truncate">{doc.title}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {doc.fileType?.toUpperCase()} • {doc.totalPageCount} pages
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="animate-pulse">
+          <div className="bg-gray-200 rounded-2xl p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-300 rounded w-24"></div>
+                <div className="h-3 bg-gray-300 rounded w-16"></div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-300 rounded w-full"></div>
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Content Scraper</h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Extract content from YouTube channels to repurpose for LinkedIn
-        </p>
+      {/* Main Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Content Scraper</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Extract content from YouTube channels to repurpose for LinkedIn
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setSavedPostsModalOpen(true)}
+          className="gap-2 whitespace-nowrap"
+        >
+          <Folder className="h-4 w-4" />
+          View Saved Posts ({savedTwitterPosts.length + savedLinkedInPosts.length})
+        </Button>
       </div>
+
+      {/* Saved Posts Modal */}
+      <SavedPostsModal
+        isOpen={savedPostsModalOpen}
+        onClose={() => setSavedPostsModalOpen(false)}
+        savedTwitterPosts={savedTwitterPosts}
+        savedLinkedInPosts={savedLinkedInPosts}
+      />
       
       <Card className="mb-8">
         <CardHeader>
@@ -2051,10 +2590,9 @@ const ScraperPage: React.FC = () => {
             onValueChange={value => {
               setActiveTab(value);
               
-              // Don't clear YouTube channel results when switching tabs
-              if (value !== 'youtube') {
+              // Don't clear YouTube, LinkedIn, and Twitter channel results when switching tabs
+              if (value !== 'youtube' && value !== 'linkedin' && value !== 'twitter') {
               setResult(null);
-              setTwitterResult(null);
               setLinkedinContent('');
               }
             }}
@@ -2069,10 +2607,9 @@ const ScraperPage: React.FC = () => {
                 <Linkedin className="h-4 w-4" />
                 <span className="hidden sm:inline">LinkedIn</span>
               </TabsTrigger>
-              <TabsTrigger value="twitter" className="flex items-center gap-2 relative opacity-70" disabled>
+              <TabsTrigger value="twitter" className="flex items-center gap-2">
                 <Twitter className="h-4 w-4" />
                 <span className="hidden sm:inline">Twitter</span>
-                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1 rounded-full">Soon</span>
               </TabsTrigger>
               <TabsTrigger value="web" className="flex items-center gap-2 relative opacity-70" disabled>
                 <Globe className="h-4 w-4" />
@@ -2130,37 +2667,50 @@ const ScraperPage: React.FC = () => {
       
       {/* Twitter Results Section */}
       {activeTab === 'twitter' && twitterResult && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+        <div className="w-full space-y-6">
+          {/* Twitter Profile Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-md p-4 border border-gray-100 gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 min-w-0 flex-1">
               {twitterResult.profileImageUrl && (
                 <img 
                   src={twitterResult.profileImageUrl} 
-                  alt={twitterResult.username}
-                  className="w-10 h-10 rounded-full" 
+                  alt={twitterResult.username || 'User'}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-blue-500/20 flex-shrink-0" 
                 />
               )}
-              <div>
-                <h3 className="font-semibold">@{twitterResult.username}</h3>
-                <p className="text-sm text-gray-500">
-                  {twitterResult.tweets.length} tweets scraped
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-base sm:text-lg truncate">@{twitterResult.username || 'Unknown'}</h3>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  {twitterResult.totalCount || 0} tweets scraped
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setSelectedTweets(new Set(twitterResult.tweets.map(t => t.id)))}
+                onClick={() => {
+                  const allTweetIds = new Set([
+                    ...(Array.isArray(twitterResult.tweets) ? twitterResult.tweets.map(t => t.id) : []),
+                    ...(Array.isArray(twitterResult.threads) ? twitterResult.threads.flatMap(thread => (thread.tweets || []).map(t => t.id)) : [])
+                  ]);
+                  setSelectedTweets(allTweetIds);
+                  setSelectedThreads(new Set((twitterResult.threads || []).map(t => t.id)));
+                }}
                 disabled={isLoading}
+                className="bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
               >
                 Select All
               </Button>
               <Button
                 variant="outline" 
                 size="sm"
-                onClick={() => setSelectedTweets(new Set())}
+                onClick={() => {
+                  setSelectedTweets(new Set());
+                  setSelectedThreads(new Set());
+                }}
                 disabled={isLoading || selectedTweets.size === 0}
+                className="bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
               >
                 Clear Selection
               </Button>
@@ -2169,7 +2719,7 @@ const ScraperPage: React.FC = () => {
                 size="sm"
                 onClick={handleSaveSelectedTweets}
                 disabled={isLoading || selectedTweets.size === 0}
-                className="gap-2"
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-xs whitespace-nowrap"
               >
                 {isLoading ? (
                   <>
@@ -2179,97 +2729,93 @@ const ScraperPage: React.FC = () => {
                 ) : (
                   <>
                     <Save className="h-3 w-3" />
-                    Save Selected ({selectedTweets.size})
+                    Save ({selectedTweets.size})
                   </>
                 )}
               </Button>
             </div>
           </div>
           
-          <div className="space-y-4">
-            {twitterResult.tweets.map(tweet => (
-              <Card key={tweet.id} className={`overflow-hidden ${selectedTweets.has(tweet.id) ? 'border-primary' : ''}`}>
-                <CardHeader className="p-4 pb-2 flex flex-row justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <img 
-                        src={tweet.author.profile_image_url} 
-                        alt={tweet.author.name}
-                        className="w-8 h-8 rounded-full" 
-                      />
-                      <div>
-                        <CardTitle className="text-base">{tweet.author.name}</CardTitle>
-                        <CardDescription className="text-xs">@{tweet.author.username}</CardDescription>
-                      </div>
-                    </div>
-                    <CardDescription className="text-xs">
-                      {new Date(tweet.created_at).toLocaleDateString()}
-                    </CardDescription>
-                  </div>
-                  <div>
-                    <Button
-                      variant={selectedTweets.has(tweet.id) ? "secondary" : "ghost"}
-                      size="sm"
-                      onClick={() => handleToggleTweetSelection(tweet.id)}
-                      className="h-8 w-8 p-0"
+          {/* Category Filter */}
+          <TweetCategories
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            tweetCounts={twitterResult.categories}
+          />
+
+          {/* Twitter Content Display - Mixed tweets and threads chronologically */}
+          <div className="space-y-6">
+            {(() => {
+              // Combine and sort tweets and threads chronologically
+              const allContent: (Tweet | Thread)[] = [];
+              
+              // Add standalone tweets
+              if (twitterResult.tweets && Array.isArray(twitterResult.tweets)) {
+                const filteredTweets = twitterResult.tweets.filter(tweet => {
+                  if (selectedCategory === 'normal') return !tweet.is_long;
+                  if (selectedCategory === 'long') return tweet.is_long;
+                  if (selectedCategory === 'thread') return false; // Don't show standalone tweets in thread category
+                  return true; // Show all for 'all' category
+                });
+                allContent.push(...filteredTweets);
+              }
+              
+              // Add threads
+              if (twitterResult.threads && Array.isArray(twitterResult.threads)) {
+                // Only show threads in 'all' and 'thread' categories
+                // Do NOT show threads in 'long' or 'normal' categories  
+                if (selectedCategory === 'all' || selectedCategory === 'thread') {
+                  allContent.push(...twitterResult.threads);
+                }
+              }
+              
+              // Sort by date (newest first)
+              allContent.sort((a, b) => {
+                const dateA = new Date('tweets' in a ? a.tweets[0]?.created_at || a.created_at : a.created_at || '');
+                const dateB = new Date('tweets' in b ? b.tweets[0]?.created_at || b.created_at : b.created_at || '');
+                return dateB.getTime() - dateA.getTime();
+              });
+              
+              if (allContent.length === 0) {
+                return (
+                  <div className="text-center py-10 bg-white/50 rounded-xl border border-gray-200">
+                    <p className="text-gray-500">No {selectedCategory} content found.</p>
+                    <Button 
+                      onClick={() => setSelectedCategory('all')} 
+                      variant="link" 
+                      className="text-blue-500 mt-2"
                     >
-                      {selectedTweets.has(tweet.id) ? (
-                        <div className="h-5 w-5 rounded-sm bg-primary text-primary-foreground flex items-center justify-center">
-                          ✓
-                        </div>
-                      ) : (
-                        <div className="h-5 w-5 rounded-sm border border-input"></div>
-                      )}
+                      Show all content
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <p className="whitespace-pre-line text-sm">
-                    {tweet.full_text || tweet.text}
-                  </p>
-                  
-                  {tweet.media && tweet.media.length > 0 && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {tweet.media.map((media, index) => (
-                        media.type === 'photo' && (
-                          <div key={media.media_key || index} className="rounded overflow-hidden">
-                            <img 
-                              src={media.url} 
-                              alt={media.alt_text || 'Tweet media'} 
-                              className="w-full h-auto"
-                            />
-                          </div>
-                        )
-                      ))}
+                );
+              }
+              
+              return (
+                <div className="columns-1 md:columns-2 gap-6">
+                  {allContent.map((item) => (
+                    <div key={item.id} className="break-inside-avoid mb-6 w-full">
+                      {'tweets' in item ? (
+                        // This is a thread
+                        <TweetThread
+                          thread={item}
+                          selectedTweets={selectedTweets}
+                          onSelectToggle={handleToggleTweetSelection}
+                          onSelectThread={handleToggleThreadSelection}
+                        />
+                      ) : (
+                        // This is a standalone tweet
+                        <TweetCard
+                          tweet={item}
+                          isSelected={selectedTweets.has(item.id)}
+                          onSelectToggle={handleToggleTweetSelection}
+                        />
+                      )}
                     </div>
-                  )}
-                </CardContent>
-                <CardFooter className="p-3 border-t flex justify-between bg-gray-50">
-                  <div className="flex items-center gap-6 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="h-3 w-3" />
-                      {tweet.public_metrics.reply_count}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                      </svg>
-                      {tweet.public_metrics.retweet_count}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      {tweet.public_metrics.like_count}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleCopy(tweet.full_text || tweet.text)}>
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -2287,7 +2833,7 @@ const ScraperPage: React.FC = () => {
             </div>
           )}
           
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
             <div className="flex items-center gap-3">
               <Youtube className="h-8 w-8" />
               <div>
@@ -2297,7 +2843,7 @@ const ScraperPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
@@ -2410,36 +2956,36 @@ const ScraperPage: React.FC = () => {
         <div className="space-y-6">
           {/* Profile Header */}
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   {linkedinResult.profileData.avatar && (
                     <img 
                       src={linkedinResult.profileData.avatar} 
                       alt={linkedinResult.profileData.name}
-                      className="w-16 h-16 rounded-full border-4 border-white shadow-lg" 
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-white shadow-lg flex-shrink-0" 
                     />
                   )}
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{linkedinResult.profileData.name}</h2>
-                    <p className="text-sm text-gray-600 mb-1">{linkedinResult.profileData.headline}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{linkedinResult.profileData.name}</h2>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 line-clamp-2 break-words">{linkedinResult.profileData.headline}</p>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
-                        <Linkedin className="h-3 w-3" />
-                        {linkedinResult.totalPosts} posts scraped
+                        <Linkedin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{linkedinResult.totalPosts} posts</span>
                       </span>
-                      <span>•</span>
-                      <span>{linkedinResult.profileData.username}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="truncate">@{linkedinResult.profileData.username}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedLinkedInPosts(new Set(linkedinResult.posts.map(p => p.id)))}
                     disabled={isLoading}
-                    className="bg-white"
+                    className="bg-white text-xs whitespace-nowrap"
                   >
                     Select All
                   </Button>
@@ -2448,7 +2994,7 @@ const ScraperPage: React.FC = () => {
                     size="sm"
                     onClick={() => setSelectedLinkedInPosts(new Set())}
                     disabled={isLoading || selectedLinkedInPosts.size === 0}
-                    className="bg-white"
+                    className="bg-white text-xs whitespace-nowrap"
                   >
                     Clear Selection
                   </Button>
@@ -2457,7 +3003,7 @@ const ScraperPage: React.FC = () => {
                     size="sm"
                     onClick={handleSaveSelectedLinkedInPosts}
                     disabled={isLoading || selectedLinkedInPosts.size === 0}
-                    className="gap-2 bg-blue-600 hover:bg-blue-700"
+                    className="gap-2 bg-blue-600 hover:bg-blue-700 text-xs whitespace-nowrap"
                   >
                     {isLoading ? (
                       <>
@@ -2467,7 +3013,7 @@ const ScraperPage: React.FC = () => {
                     ) : (
                       <>
                         <Save className="h-3 w-3" />
-                        Save Selected ({selectedLinkedInPosts.size})
+                        Save ({selectedLinkedInPosts.size})
                       </>
                     )}
                   </Button>
@@ -2476,8 +3022,8 @@ const ScraperPage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Posts Grid - 3 columns like LinkedIn */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Posts Grid - Responsive: 1 mobile, 2 tablet, 3 laptop */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {linkedinResult.posts.map((post, postIndex) => (
               <Card 
                 key={`${post.id}-${postIndex}`} 
@@ -2823,7 +3369,7 @@ const ScraperPage: React.FC = () => {
       )}
       
       {/* Instructions when no result */}
-      {!result && !isLoading && !youtubeChannelResult && !linkedinResult && (
+      {!result && !isLoading && !youtubeChannelResult && !linkedinResult && !twitterResult && (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center max-w-xl mx-auto">
@@ -2832,6 +3378,8 @@ const ScraperPage: React.FC = () => {
                   <Youtube className="h-8 w-8 text-primary" />
                 ) : activeTab === 'linkedin' ? (
                   <Linkedin className="h-8 w-8 text-primary" />
+                ) : activeTab === 'twitter' ? (
+                  <Twitter className="h-8 w-8 text-primary" />
                 ) : (
                   <Search className="h-8 w-8 text-primary" />
                 )}
@@ -2842,6 +3390,8 @@ const ScraperPage: React.FC = () => {
                   ? 'Extract Content from YouTube Channels'
                   : activeTab === 'linkedin'
                   ? 'Scrape LinkedIn Profiles'
+                  : activeTab === 'twitter'
+                  ? 'Extract Tweets from Twitter'
                   : 'Extract Content from Social Media'
                 }
               </h3>
@@ -2851,6 +3401,8 @@ const ScraperPage: React.FC = () => {
                   ? 'Paste a YouTube channel handle (starting with @) or URL to extract videos and transcripts for your LinkedIn content.'
                   : activeTab === 'linkedin'
                   ? 'Enter a LinkedIn username to scrape their profile and recent posts for content inspiration.'
+                  : activeTab === 'twitter'
+                  ? 'Enter a Twitter username to fetch their recent tweets and threads for content analysis and inspiration.'
                   : 'Select a platform above and enter the appropriate URL or username to start scraping content.'
                 }
               </p>
@@ -2902,6 +3454,31 @@ const ScraperPage: React.FC = () => {
                         3
                       </div>
                       <span>Select posts to save for content inspiration and analysis</span>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'twitter' && (
+                  <>
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        1
+                      </div>
+                      <span>Enter a Twitter username (e.g., @username) in the input field above</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        2
+                      </div>
+                      <span>Click "Get Tweets" to fetch their recent tweets and threads</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium">
+                        3
+                      </div>
+                      <span>Select tweets and threads to save for content inspiration and analysis</span>
                     </div>
                   </>
                 )}

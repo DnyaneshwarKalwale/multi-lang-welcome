@@ -5,7 +5,8 @@ import {
   Sparkles, RefreshCw, Lightbulb, TextQuote,
   ListOrdered, Loader2, Settings, Download,
   Image, UploadCloud, X, Check, Trash, CameraIcon,
-  ArrowRight
+  ArrowRight, Edit3, FileText, PenTool, CheckCircle, Save,
+  Zap, BarChart3, Users, FileText as FileTextIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,10 @@ const AIWriterPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [selectedFormat, setSelectedFormat] = useState<ContentFormat>('short');
+  const [topic, setTopic] = useState('');
+  const [keyPoints, setKeyPoints] = useState('');
+  const [generatedContent, setGeneratedContent] = useState<AIResponse | null>(null);
   
   // Example AI responses for demonstration
   const exampleResponses: Record<ContentFormat, AIResponse> = {
@@ -334,502 +339,285 @@ const AIWriterPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">AI Writer</h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Generate professional LinkedIn content and images
-        </p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-black">AI Content Writer</h1>
+          <p className="text-neutral-medium mt-1">Create engaging LinkedIn content with AI assistance</p>
+        </div>
       </div>
-      
-      <Tabs defaultValue="text" value={activeTab} onValueChange={(value) => setActiveTab(value as 'text' | 'image')}>
-        <TabsList className="grid grid-cols-2 w-80 mb-6">
-          <TabsTrigger value="text">Text Content</TabsTrigger>
-          <TabsTrigger value="image">Image Content</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="text" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left column - Input */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Content Details</CardTitle>
-                  <CardDescription>
-                    Describe what you want to write about
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Topic or Notes</label>
-                    <Textarea
-                      placeholder="Enter a topic, idea, or copy & paste your raw notes here"
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      className="min-h-[150px]"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Be specific to get the best results
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Content Format</label>
-                    <Tabs 
-                      defaultValue="short" 
-                      value={contentFormat}
-                      onValueChange={(value) => setContentFormat(value as ContentFormat)}
-                      className="w-full"
-                    >
-                      <TabsList className="grid grid-cols-4 w-full">
-                        <TabsTrigger value="short" className="text-xs">Short</TabsTrigger>
-                        <TabsTrigger value="long" className="text-xs">Long</TabsTrigger>
-                        <TabsTrigger value="listicle" className="text-xs">Listicle</TabsTrigger>
-                        <TabsTrigger value="hook" className="text-xs">Hook Only</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Tone</label>
-                    <Select value={tone} onValueChange={setTone}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select tone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="professional">Professional</SelectItem>
-                        <SelectItem value="conversational">Conversational</SelectItem>
-                        <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                        <SelectItem value="informative">Informative</SelectItem>
-                        <SelectItem value="thought-leadership">Thought Leadership</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-4">
-                  <div className="text-xs text-gray-500 flex items-center">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    <span>AI-powered content</span>
-                  </div>
-                  
-                  <Button 
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !prompt.trim()}
-                    className="gap-2"
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Content - Main AI Writer */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Content Format Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-primary" />
+                Choose Content Format
+              </CardTitle>
+              <CardDescription>
+                Select the type of content you want to create
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { key: 'short' as ContentFormat, label: 'Short Post', icon: MessageSquare, desc: 'Quick insights' },
+                  { key: 'long' as ContentFormat, label: 'Long Form', icon: FileText, desc: 'Detailed articles' },
+                  { key: 'listicle' as ContentFormat, label: 'List Post', icon: ListOrdered, desc: 'Numbered lists' },
+                  { key: 'hook' as ContentFormat, label: 'Hook', icon: TextQuote, desc: 'Engaging openers' }
+                ].map(({ key, label, icon: Icon, desc }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedFormat(key)}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 text-left hover:shadow-md ${
+                      selectedFormat === key
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <MessageSquare className="h-4 w-4" />
-                        Generate
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              {/* Format descriptions */}
-              <div className="mt-6">
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="format-info">
-                    <AccordionTrigger className="text-sm">
-                      About Content Formats
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-3 text-sm">
-                        <div>
-                          <div className="font-medium mb-1">Short-form</div>
-                          <p className="text-gray-500 dark:text-gray-400 text-xs">
-                            Concise 1-2 paragraph posts (150-300 characters) ideal for quick engagement
-                          </p>
-                        </div>
-                        <div>
-                          <div className="font-medium mb-1">Long-form</div>
-                          <p className="text-gray-500 dark:text-gray-400 text-xs">
-                            Detailed 3-5 paragraph posts (500-1500 characters) for in-depth topics
-                          </p>
-                        </div>
-                        <div>
-                          <div className="font-medium mb-1">Listicle</div>
-                          <p className="text-gray-500 dark:text-gray-400 text-xs">
-                            Numbered or bulleted list format for easy-to-scan content
-                          </p>
-                        </div>
-                        <div>
-                          <div className="font-medium mb-1">Hook Only</div>
-                          <p className="text-gray-500 dark:text-gray-400 text-xs">
-                            Attention-grabbing opening line to start your post (50-150 characters)
-                          </p>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                    <Icon className={`h-5 w-5 mb-2 ${selectedFormat === key ? 'text-primary' : 'text-gray-500'}`} />
+                    <div className="font-medium text-sm">{label}</div>
+                    <div className="text-xs text-gray-500 mt-1">{desc}</div>
+                  </button>
+                ))}
               </div>
-            </div>
-            
-            {/* Right column - Output */}
-            <div className="lg:col-span-2">
-              {response ? (
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <div>
-                      <CardTitle>Generated Content</CardTitle>
-                      <CardDescription>
-                        {contentFormat === 'short' 
-                          ? 'Short-form LinkedIn post' 
-                          : contentFormat === 'long'
-                            ? 'Long-form LinkedIn post'
-                            : contentFormat === 'listicle'
-                              ? 'Listicle format post'
-                              : 'Attention-grabbing hook'}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-1">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={handleRefresh}>
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Regenerate content</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={() => handleCopy(response.content)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Copy to clipboard</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-5 bg-white dark:bg-gray-900 min-h-[300px] mb-4">
-                      <div className="whitespace-pre-line text-gray-700 dark:text-gray-300">
-                        {response.content}
-                      </div>
-                    </div>
-                    
-                    {response.suggestedHashtags.length > 0 && (
-                      <div className="mb-4">
-                        <div className="text-sm font-medium mb-2">Suggested Hashtags</div>
-                        <div className="flex flex-wrap gap-2">
-                          {response.suggestedHashtags.map((tag, index) => (
-                            <span 
-                              key={index}
-                              className="bg-primary-50 dark:bg-primary-900/20 text-primary px-2 py-1 rounded-md text-sm"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-center mt-6">
-                      <Button onClick={handleCreatePost} className="gap-2">
-                        <PlusCircle className="h-4 w-4" />
-                        Create Post with This Content
-                      </Button>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-800 pt-4">
-                    <div className="text-xs text-gray-500 flex items-center">
-                      <Lightbulb className="h-3 w-3 mr-1" />
-                      <span>Edit or refine the content before publishing</span>
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+            </CardContent>
+          </Card>
+
+          {/* Input Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PenTool className="h-5 w-5 text-primary" />
+                Content Input
+              </CardTitle>
+              <CardDescription>
+                Provide your topic, key points, or ideas to get started
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Topic or Main Idea</label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g., Remote work productivity tips, AI in marketing, Career advice"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Key Points (Optional)</label>
+                <textarea
+                  value={keyPoints}
+                  onChange={(e) => setKeyPoints(e.target.value)}
+                  placeholder="Add specific points, statistics, or insights you want to include..."
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                />
+              </div>
+
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating || !topic.trim()}
+                className="w-full bg-primary hover:bg-primary/90 text-white py-3"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating Content...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate {selectedFormat === 'short' ? 'Short Post' : 
+                             selectedFormat === 'long' ? 'Long Form' :
+                             selectedFormat === 'listicle' ? 'List Post' : 'Hook'}
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Generated Content */}
+          {generatedContent && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Generated Content
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopy}
                       className="gap-1"
-                      onClick={() => handleCopy(response.content)}
                     >
                       <Copy className="h-4 w-4" />
                       Copy
                     </Button>
-                  </CardFooter>
-                </Card>
-              ) : (
-                <Card className="min-h-[500px] flex flex-col items-center justify-center text-center p-8">
-                  <div className="max-w-md">
-                    <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20">
-                      <MessageSquare className="h-8 w-8 text-primary" />
-                    </div>
-                    
-                    <h3 className="text-lg font-medium mb-2">
-                      AI-Powered LinkedIn Content Generator
-                    </h3>
-                    
-                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-                      Enter a topic or paste your raw notes on the left to generate professional LinkedIn content. Choose from different formats based on your needs.
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left">
-                        <div className="flex items-center gap-2 mb-1">
-                          <TextQuote className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium">Short & Long Form</span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Generate concise posts or detailed articles
-                        </p>
-                      </div>
-                      
-                      <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left">
-                        <div className="flex items-center gap-2 mb-1">
-                          <ListOrdered className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium">Listicles</span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Create engaging numbered list posts
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {isGenerating ? (
-                      <div className="text-center">
-                        <Loader2 className="h-8 w-8 text-primary mx-auto animate-spin mb-3" />
-                        <p className="text-sm text-gray-500">Generating your content...</p>
-                      </div>
-                    ) : (
-                      <Button
-                        onClick={handleGenerate}
-                        disabled={!prompt.trim()}
-                        className="gap-2"
-                      >
-                        <Sparkles className="h-4 w-4" />
-                        Generate Content
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="image" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left column - Image Generation Input */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Image Generator</CardTitle>
-                  <CardDescription>
-                    Create professional images for your LinkedIn posts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Image Description</label>
-                    <Textarea
-                      placeholder="Describe the image you want to generate (e.g., 'Professional businessman giving a presentation on digital marketing trends')"
-                      value={imagePrompt}
-                      onChange={(e) => setImagePrompt(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Be specific to get the best results
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    onClick={handleGenerateImage}
-                    disabled={isGeneratingImage || !imagePrompt.trim()}
-                    className="w-full gap-2"
-                  >
-                    {isGeneratingImage ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <CameraIcon className="h-4 w-4" />
-                        Generate Image
-                      </>
-                    )}
-                  </Button>
-                  
-                  <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 text-center">
-                    {uploadedImage ? (
-                      <div className="relative">
-                        <img 
-                          src={uploadedImage} 
-                          alt="Selected file preview" 
-                          className="max-w-full h-auto rounded-md mx-auto object-contain"
-                          style={{ maxHeight: '300px' }}
-                        />
-                        <button 
-                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
-                          onClick={handleClearSelectedImage}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <UploadCloud className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-500 mb-2">
-                          Or upload your own image
-                        </p>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          id="image-upload"
-                          onChange={handleFileSelect}
-                          className="hidden"
-                        />
-                        <label 
-                          htmlFor="image-upload" 
-                          className="inline-block px-4 py-2 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600 text-sm"
-                        >
-                          Select File
-                        </label>
-                      </>
-                    )}
-                  </div>
-                  
-                  {selectedFile && !isUploading && (
-                    <Button 
-                      onClick={handleUploadFile}
-                      className="w-full gap-2"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreatePost}
+                      className="gap-1"
                     >
-                      <UploadCloud className="h-4 w-4" />
-                      Upload Image
+                      <PlusCircle className="h-4 w-4" />
+                      Create Post
                     </Button>
-                  )}
-                  
-                  {isUploading && (
-                    <div className="flex justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Right column - Image Preview & Suggestions */}
-            <div className="lg:col-span-2">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Generated Image</CardTitle>
-                  <CardDescription>
-                    Use this image in your LinkedIn posts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {generatedImage ? (
-                    <div className="text-center">
-                      <div className="flex justify-center items-center bg-gray-50 dark:bg-gray-900 rounded-md p-2 mb-4" style={{ minHeight: '300px' }}>
-                        <img 
-                          src={generatedImage.secure_url} 
-                          alt="Generated image" 
-                          className="rounded-md mx-auto"
-                          style={{ 
-                            maxWidth: '100%', 
-                            maxHeight: '500px',
-                            objectFit: 'contain'
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
+                    {generatedContent.content}
+                  </pre>
+                </div>
+                
+                {generatedContent.suggestedHashtags && generatedContent.suggestedHashtags.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Suggested Hashtags:</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {generatedContent.suggestedHashtags.map((hashtag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary cursor-pointer hover:bg-primary/20"
+                          onClick={() => {
+                            navigator.clipboard.writeText(hashtag);
+                            toast.success('Hashtag copied!');
                           }}
-                        />
-                      </div>
-                      {generatedImage.revised_prompt && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          {generatedImage.revised_prompt}
-                        </p>
-                      )}
-                      <div className="flex justify-center gap-4 mt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => window.open(generatedImage.secure_url, '_blank')}
-                          className="gap-2"
                         >
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
-                        <Button
-                          onClick={() => navigate('/dashboard/post', { 
-                            state: { image: generatedImage.secure_url } 
-                          })}
-                          className="gap-2"
-                        >
-                          <PlusCircle className="h-4 w-4" />
-                          Create Post
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Image className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-gray-500 dark:text-gray-400">
-                        No image generated yet. Enter a description and click "Generate Image".
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Suggested Images</CardTitle>
-                  <CardDescription>
-                    Previously generated images you can use
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingSuggestions ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    </div>
-                  ) : suggestedImages.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {suggestedImages.map((image, index) => (
-                        <div key={index} className="relative group cursor-pointer aspect-square overflow-hidden rounded-md" onClick={() => handleSelectSuggestedImage(image)}>
-                          <img 
-                            src={image.secure_url} 
-                            alt={`Suggestion ${index + 1}`} 
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <Check className="h-8 w-8 text-white" />
-                          </div>
-                        </div>
+                          {hashtag}
+                        </span>
                       ))}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 dark:text-gray-400">
-                        No suggested images available yet. Generate some images to see them here.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-              <div className="flex justify-end mt-4">
-                <Button variant="outline" onClick={() => navigate('/dashboard/images')}>
-                  View All Images in Gallery <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+        {/* Right Sidebar - Coming Soon */}
+        <div className="space-y-6">
+          {/* Coming Soon - Advanced AI Features */}
+          <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-8 w-8 text-primary" />
               </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+              <CardTitle className="text-lg text-primary">Advanced AI Features</CardTitle>
+              <CardDescription className="text-sm">
+                Powerful AI enhancements coming soon
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Zap className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm">AI Style Matching</div>
+                    <div className="text-xs text-gray-500">Match your writing style</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <BarChart3 className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm">Performance Insights</div>
+                    <div className="text-xs text-gray-500">Optimize for engagement</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Users className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm">Audience Targeting</div>
+                    <div className="text-xs text-gray-500">Personalized content</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-primary/20">
+                <div className="text-primary font-semibold text-lg mb-1">Coming Soon</div>
+                <div className="text-xs text-gray-600">Get notified when available</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tips Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-amber-500" />
+                Writing Tips
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Start with a hook</div>
+                    <div className="text-gray-600 text-xs">Grab attention in the first line</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Add personal insights</div>
+                    <div className="text-gray-600 text-xs">Share your unique perspective</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  </div>
+                  <div>
+                    <div className="font-medium">End with engagement</div>
+                    <div className="text-gray-600 text-xs">Ask questions or call to action</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Content Templates - Coming Soon */}
+          <Card className="border-dashed border-gray-300">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FileTextIcon className="h-6 w-6 text-gray-400" />
+              </div>
+              <CardTitle className="text-base text-gray-600">Content Templates</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-sm text-gray-500 mb-4">
+                Pre-built templates for common LinkedIn post types
+              </p>
+              <div className="text-primary font-semibold">Coming Soon</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

@@ -471,11 +471,10 @@ const DashboardPage: React.FC = () => {
                   <p className="text-sm font-medium text-blue-700">Total Posts</p>
                   <h3 className="text-2xl font-bold text-blue-900 mt-1">{dashboardData.totalPosts}</h3>
                   <div className="flex items-center gap-1 mt-2">
-                    <ArrowUp className="h-3 w-3 text-green-600" />
-                    <span className="text-sm text-green-600 font-medium">
-                      {calculatePercentageChange(dashboardData.totalPosts, dashboardData.lastMonthStats.totalPosts)}%
+                    <ArrowUp className="h-3 w-3 text-blue-600" />
+                    <span className="text-sm text-blue-600 font-medium">
+                      All your content
                     </span>
-                    <span className="text-xs text-gray-600">vs last month</span>
                   </div>
               </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
@@ -495,9 +494,8 @@ const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-1 mt-2">
                     <Sparkles className="h-3 w-3 text-amber-500" />
                     <span className="text-sm text-amber-600 font-medium">
-                      {calculatePercentageChange(dashboardData.aiGeneratedContent, dashboardData.lastMonthStats.aiGeneratedContent)}%
+                      Posts & Videos
                     </span>
-                    <span className="text-xs text-gray-600">growth</span>
               </div>
             </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">

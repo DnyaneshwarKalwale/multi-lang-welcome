@@ -23,7 +23,10 @@ import {
   ArrowUpRight,
   CheckCircle,
   Filter,
-  Flame
+  Flame,
+  Copy,
+  TrendingUp,
+  Calendar
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -127,7 +130,7 @@ const InspirationPage: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-neutral-black">Inspiration Vault</h1>
-          <p className="text-neutral-medium mt-1">Find and save content ideas for your LinkedIn posts</p>
+          <p className="text-neutral-medium mt-1">Discover trending content ideas for your LinkedIn posts</p>
         </div>
         
         <Button 
@@ -138,169 +141,177 @@ const InspirationPage: React.FC = () => {
         </Button>
       </div>
       
-      {/* Search and filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-medium" size={18} />
-          <Input 
-            placeholder="Search for ideas, topics, or formats..." 
-            className="pl-10"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Content - Main Inspiration */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Search and filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-medium" size={18} />
+              <Input 
+                placeholder="Search for ideas, topics, or formats..." 
+                className="pl-10"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-1">
+                    <Filter size={16} />
+                    Filters
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>All Ideas</DropdownMenuItem>
+                  <DropdownMenuItem>Saved Ideas</DropdownMenuItem>
+                  <DropdownMenuItem>Text Posts</DropdownMenuItem>
+                  <DropdownMenuItem>Carousels</DropdownMenuItem>
+                  <DropdownMenuItem>Documents</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <Button variant="outline" className="flex items-center gap-1">
-                <Filter size={16} />
-                Filters
+                <Sparkles size={16} className="text-amber-500" />
+                AI Suggestions
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>All Ideas</DropdownMenuItem>
-              <DropdownMenuItem>Saved Ideas</DropdownMenuItem>
-              <DropdownMenuItem>Text Posts</DropdownMenuItem>
-              <DropdownMenuItem>Carousels</DropdownMenuItem>
-              <DropdownMenuItem>Documents</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button variant="outline" className="flex items-center gap-1">
-            <Sparkles size={16} className="text-amber-500" />
-            AI Suggestions
-          </Button>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left column - Content Ideas */}
-        <div className="md:col-span-2">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Lightbulb className="text-amber-500" size={20} />
-            Content Ideas
-          </h2>
-          
-          <div className="space-y-4">
-            {filteredIdeas.map(idea => (
-              <Card key={idea.id} className="overflow-hidden">
-                <div className="flex items-start p-5">
-                  <div className="flex-1">
-                    <div className="flex gap-2 mb-2">
-                      <Badge variant="outline" className="bg-primary-50 text-primary border-primary-100">
-                        {idea.category}
-                      </Badge>
-                      <Badge variant="outline" className="bg-secondary-50 text-secondary border-secondary-100">
-                        {idea.type}
-                      </Badge>
-                      {idea.trending && (
-                        <Badge className="bg-accent text-white">
-                          <Flame size={12} className="mr-1" /> 
-                          Trending
+            </div>
+          </div>
+
+          {/* Content Ideas Grid */}
+          <div className="grid grid-cols-1 gap-4">
+            {filteredIdeas.map((idea) => (
+              <Card key={idea.id} className="border border-gray-200 hover:shadow-md transition-all duration-200">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-lg text-gray-900">{idea.title}</h3>
+                        {idea.trending && (
+                          <Badge className="bg-red-100 text-red-700 text-xs">
+                            <Flame size={12} className="mr-1" />
+                            Trending
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-4 mb-3">
+                        <Badge variant="outline" className="text-xs">
+                          {idea.category}
                         </Badge>
-                      )}
-                    </div>
-                    
-                    <h3 className="text-lg font-medium mb-3">{idea.title}</h3>
-                    <p className="text-neutral-medium text-sm mb-4">{idea.prompt}</p>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center text-xs font-medium px-2 py-1 rounded-full bg-primary-50 text-primary">
-                          <Sparkles size={12} className="mr-1" />
-                          Engagement Score: {idea.engagementScore}
+                        <Badge variant="outline" className="text-xs">
+                          {idea.type}
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-gray-500">Engagement Score:</span>
+                          <span className="text-xs font-medium text-green-600">{idea.engagementScore}/10</span>
                         </div>
                       </div>
                       
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => toggleSaveIdea(idea.id)}
-                          className={savedIdeas.includes(idea.id) ? 'text-primary' : 'text-neutral-medium'}
-                        >
-                          {savedIdeas.includes(idea.id) ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-                        </Button>
-                        
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={() => window.location.href = '/create-post'}
-                        >
-                          Use Idea
-                          <ArrowRight size={14} />
-                        </Button>
-                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        {idea.prompt}
+                      </p>
                     </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleSaveIdea(idea.id)}
+                      className={`ml-4 ${savedIdeas.includes(idea.id) ? 'bg-primary text-white' : ''}`}
+                    >
+                      {savedIdeas.includes(idea.id) ? (
+                        <BookmarkCheck size={16} />
+                      ) : (
+                        <Bookmark size={16} />
+                      )}
+                    </Button>
                   </div>
-                </div>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-primary"
+                      onClick={() => {
+                        navigator.clipboard.writeText(idea.prompt);
+                        // Add toast notification here if needed
+                      }}
+                    >
+                      <Copy size={14} />
+                      Copy Idea
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      className="gap-1 bg-primary hover:bg-primary/90"
+                      onClick={() => window.location.href = `/create-post?idea=${encodeURIComponent(idea.prompt)}`}
+                    >
+                      <ArrowRight size={14} />
+                      Use This Idea
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
         </div>
-        
-        {/* Right column - Sidebar */}
-        <div className="md:col-span-1">
-          {/* Saved Ideas section */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookmarkCheck size={18} className="text-primary" />
-                Saved Ideas
-              </CardTitle>
-              <CardDescription>
-                Your bookmarked content ideas
+
+        {/* Right Sidebar - Coming Soon & Features */}
+        <div className="space-y-6">
+          {/* Coming Soon - AI Personalization */}
+          <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+            <CardHeader className="text-center pb-4">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-lg text-primary">AI Personalization</CardTitle>
+              <CardDescription className="text-sm">
+                Tailored content ideas coming soon
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {savedIdeas.length === 0 ? (
-                <div className="text-center py-6 text-neutral-medium text-sm">
-                  No saved ideas yet. Bookmark ideas to save them for later.
-                </div>
-              ) : (
-                <ScrollArea className="h-[200px]">
-                  <div className="space-y-3">
-                    {contentIdeas
-                      .filter(idea => savedIdeas.includes(idea.id))
-                      .map(idea => (
-                        <div key={idea.id} className="flex items-start gap-3 p-2 rounded-md hover:bg-neutral-lightest">
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium">{idea.title}</h4>
-                            <div className="flex gap-1 mt-1">
-                              <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
-                                {idea.type}
-                              </Badge>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => toggleSaveIdea(idea.id)}
-                          >
-                            <BookmarkCheck size={16} className="text-primary" />
-                          </Button>
-                        </div>
-                      ))}
+            <CardContent className="text-center space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Lightbulb className="h-4 w-4 text-blue-600" />
                   </div>
-                </ScrollArea>
-              )}
+                  <div className="text-left">
+                    <div className="font-medium text-sm">Smart Suggestions</div>
+                    <div className="text-xs text-gray-500">Based on your style</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm">Trend Analysis</div>
+                    <div className="text-xs text-gray-500">Industry-specific ideas</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Calendar className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm">Content Calendar</div>
+                    <div className="text-xs text-gray-500">Scheduled ideas</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-primary/20">
+                <div className="text-primary font-semibold text-lg mb-1">Coming Soon</div>
+                <div className="text-xs text-gray-600">Intelligent content suggestions</div>
+              </div>
             </CardContent>
-            <CardFooter className="border-t pt-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full"
-                onClick={() => window.location.href = '/create-post'}
-              >
-                Create from Saved Idea
-              </Button>
-            </CardFooter>
           </Card>
-          
-          {/* Trending Topics section */}
+
+          {/* Trending Topics */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -326,9 +337,9 @@ const InspirationPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
-          {/* Create custom idea */}
-          <div className="mt-6">
+
+          {/* Quick Actions */}
+          <div className="space-y-3">
             <Button 
               variant="outline" 
               className="w-full justify-center bg-primary-50 border-primary-100 hover:bg-primary-100 text-primary gap-2"
@@ -337,19 +348,32 @@ const InspirationPage: React.FC = () => {
               <PlusCircle size={16} />
               Create Custom Idea
             </Button>
-          </div>
-          
-          {/* Get AI suggestions */}
-          <div className="mt-3">
+            
             <Button 
               variant="outline" 
               className="w-full justify-center bg-secondary-50 border-secondary-100 hover:bg-secondary-100 text-secondary gap-2"
               onClick={() => {}}
             >
               <Sparkles size={16} />
-              Get AI Topic Suggestions
+              Get AI Suggestions
             </Button>
           </div>
+
+          {/* Saved Ideas Count - Coming Soon */}
+          <Card className="border-dashed border-gray-300">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <BookmarkCheck className="h-6 w-6 text-gray-400" />
+              </div>
+              <CardTitle className="text-base text-gray-600">Smart Collections</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-sm text-gray-500 mb-4">
+                Organize your saved ideas into smart collections
+              </p>
+              <div className="text-primary font-semibold">Coming Soon</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
