@@ -2301,6 +2301,60 @@ const ScraperPage: React.FC = () => {
       .custom-checkbox-checked {
         @apply bg-blue-500 border-blue-500;
       }
+      
+      /* LinkedIn Masonry Layout Styles - Fixed alignment */
+      .masonry-container {
+        column-fill: balance;
+        column-gap: 1.5rem;
+        orphans: 1;
+        widows: 1;
+      }
+      
+      .masonry-container .linkedin-post-card {
+        display: inline-block;
+        width: 100%;
+        margin: 0 0 1.5rem 0;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .masonry-container .linkedin-post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      }
+      
+      /* Responsive masonry columns */
+      @media (max-width: 768px) {
+        .masonry-container {
+          column-count: 1;
+          column-width: auto;
+        }
+      }
+      
+      @media (min-width: 768px) and (max-width: 1024px) {
+        .masonry-container {
+          column-count: 2;
+          column-width: auto;
+        }
+      }
+      
+      @media (min-width: 1024px) {
+        .masonry-container {
+          column-count: 3;
+          column-width: auto;
+        }
+      }
+      
+      /* Smooth image loading for masonry */
+      .masonry-container img {
+        transition: opacity 0.3s ease;
+      }
+      
+      .masonry-container img:not([src]) {
+        opacity: 0;
+      }
     }
 
     /* Animations */
@@ -2345,6 +2399,31 @@ const ScraperPage: React.FC = () => {
 
     .lazy-image.loading {
       @apply bg-gray-200 animate-pulse;
+    }
+    
+    /* Pinterest-style masonry for LinkedIn posts */
+    .linkedin-masonry {
+      columns: 1;
+      column-gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+      .linkedin-masonry {
+        columns: 2;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .linkedin-masonry {
+        columns: 3;
+      }
+    }
+    
+    .linkedin-masonry .linkedin-post-card {
+      break-inside: avoid;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      display: inline-block;
     }
   `;
 
@@ -2435,9 +2514,12 @@ const ScraperPage: React.FC = () => {
                   {savedLinkedInPosts.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No saved LinkedIn posts</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="masonry-container columns-1 md:columns-2 xl:columns-3 gap-6">
                       {savedLinkedInPosts.map((post, index) => (
-                        <Card key={`saved-${post.id}-${index}`} className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200">
+                        <Card 
+                          key={`saved-${post.id}-${index}`} 
+                          className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid"
+                        >
                           <CardHeader className="p-4 pb-3">
                             <div className="flex items-start gap-3">
                               <img 
@@ -2456,10 +2538,10 @@ const ScraperPage: React.FC = () => {
                           </CardHeader>
                           <CardContent className="p-4 pt-0">
                             <div className="text-sm text-gray-800 leading-relaxed mb-3">
-                              {post.content.length > 200 ? (
+                              {post.content.length > 250 ? (
                                 <>
                                   <p className="whitespace-pre-line break-words">
-                                    {post.content.substring(0, 200)}...
+                                    {post.content.substring(0, 250)}...
                                   </p>
                                   <button className="text-blue-500 hover:text-blue-600 text-xs mt-1">
                                     Show more
@@ -2477,7 +2559,8 @@ const ScraperPage: React.FC = () => {
                                   <img 
                                     src={post.media[0].url} 
                                     alt="Post media" 
-                                    className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
+                                    className="w-full object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
+                                    style={{ height: 'auto', maxHeight: '300px' }}
                                     onClick={() => window.open(post.media[0].url, '_blank')}
                                   />
                                 ) : (
@@ -3022,12 +3105,12 @@ const ScraperPage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Posts Grid - Responsive: 1 mobile, 2 tablet, 3 laptop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Posts Masonry Grid - Pinterest-style layout */}
+          <div className="masonry-container columns-1 md:columns-2 lg:columns-3 gap-6">
             {linkedinResult.posts.map((post, postIndex) => (
               <Card 
                 key={`${post.id}-${postIndex}`} 
-                className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 ${
+                className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid ${
                   selectedLinkedInPosts.has(post.id) ? 'ring-2 ring-blue-500 border-blue-500' : ''
                 }`}
               >
@@ -3080,12 +3163,12 @@ const ScraperPage: React.FC = () => {
                 {/* Post Content */}
                 <CardContent className="p-4 pt-0">
                   <div className="space-y-3 linkedin-post-content">
-                    {/* Text Content */}
+                    {/* Text Content - No truncation for masonry layout */}
                     <div className="text-sm text-gray-800 leading-relaxed">
-                      {post.content.length > 150 ? (
+                      {post.content.length > 300 ? (
                         <div>
                           <p className="whitespace-pre-line break-words overflow-hidden">
-                            {post.content.substring(0, 150)}...
+                            {post.content.substring(0, 300)}...
                           </p>
                           <Button 
                             variant="link" 
@@ -3127,7 +3210,8 @@ const ScraperPage: React.FC = () => {
                             <img 
                               src={post.media[0].url} 
                               alt="Post media" 
-                              className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                              className="w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                              style={{ height: 'auto', maxHeight: '400px' }}
                               onClick={() => window.open(post.media[0].url, '_blank')}
                             />
                           </div>
@@ -3137,19 +3221,19 @@ const ScraperPage: React.FC = () => {
                       </div>
                     )}
                     
-                                         {/* Documents */}
-                     {post.documents && post.documents.length > 0 && (
-                       <div className="space-y-3">
-                         {post.documents.map((doc, docIndex) => (
-                           <LinkedInDocumentCarousel 
-                             key={`${post.id}-doc-${docIndex}`}
-                             document={doc}
-                             postId={post.id}
-                             onOpenPdf={openPdfViewer}
-                           />
-                         ))}
-                       </div>
-                     )}
+                    {/* Documents */}
+                    {post.documents && post.documents.length > 0 && (
+                      <div className="space-y-3">
+                        {post.documents.map((doc, docIndex) => (
+                          <LinkedInDocumentCarousel 
+                            key={`${post.id}-doc-${docIndex}`}
+                            document={doc}
+                            postId={post.id}
+                            onOpenPdf={openPdfViewer}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 
@@ -3214,7 +3298,7 @@ const ScraperPage: React.FC = () => {
                 </CardFooter>
               </Card>
             ))}
-                        </div>
+          </div>
         </div>
       )}
       
