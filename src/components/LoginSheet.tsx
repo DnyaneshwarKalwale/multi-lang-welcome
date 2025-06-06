@@ -29,23 +29,37 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   const [openRegistrationSheet, setOpenRegistrationSheet] = useState(false);
   
   const handleGoogleAuth = () => {
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Get the base API URL and normalize it
+    let baseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    
+    // Remove trailing slashes and /api suffix to get the clean base URL
+    baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
     
     onOpenChange(false);
     toast.info("Redirecting to Google authentication...");
     
-    window.location.href = `${baseUrl}/api/auth/google`;
+    // Construct the clean Google auth URL
+    const loginUrl = `${baseUrl}/api/auth/google`;
+    
+    console.log('Google OAuth URL (login sheet):', loginUrl);
+    window.location.href = loginUrl;
   };
   
   const handleLinkedInAuth = () => {
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Get the base API URL and normalize it
+    let baseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    
+    // Remove trailing slashes and /api suffix to get the clean base URL
+    baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
     
     onOpenChange(false);
     toast.info("Redirecting to LinkedIn authentication...");
     
-    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+    // Construct the clean LinkedIn auth URL
+    const loginUrl = `${baseUrl}/api/auth/linkedin-direct`;
+    
+    console.log('LinkedIn OAuth URL (login sheet):', loginUrl);
+    window.location.href = loginUrl;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {

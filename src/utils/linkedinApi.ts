@@ -24,9 +24,11 @@ const refreshLinkedInToken = (): void => {
   localStorage.removeItem('linkedin-refresh-token');
   localStorage.removeItem('linkedin-token-expiry');
   
-  // Get the backend URL from environment variable or fallback to Render deployed URL
-  const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-  const baseUrl = baseApiUrl.replace('/api', '');
+  // Get the base API URL and normalize it
+  let baseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+  
+  // Remove trailing slashes and /api suffix to get the clean base URL
+  baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
   
   // Store current URL in localStorage to redirect back after LinkedIn reconnection
   localStorage.setItem('redirectAfterAuth', window.location.pathname);
@@ -34,8 +36,12 @@ const refreshLinkedInToken = (): void => {
   // Add a timestamp to prevent caching issues with OAuth redirect
   const timestamp = Date.now();
   
+  // Construct the clean LinkedIn auth URL
+  const authUrl = `${baseUrl}/api/auth/linkedin-direct?t=${timestamp}`;
+  
+  console.log('LinkedIn token refresh URL:', authUrl);
   // Redirect to LinkedIn OAuth endpoint with timestamp to force new auth flow
-  window.location.href = `${baseUrl}/api/auth/linkedin-direct?t=${timestamp}`;
+  window.location.href = authUrl;
 };
 
 // Types for LinkedIn API requests

@@ -35,15 +35,20 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   
   // Handle Google auth
   const handleGoogleAuth = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Get the base API URL and normalize it
+    let baseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    
+    // Remove trailing slashes and /api suffix to get the clean base URL
+    baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
     
     // Close the registration sheet immediately
     onOpenChange(false);
     
-    // Redirect to backend Google auth endpoint with the dynamic URL
-    window.location.href = `${baseUrl}/api/auth/google`;
+    // Construct the clean Google auth URL
+    const loginUrl = `${baseUrl}/api/auth/google`;
+    
+    console.log('Google OAuth URL (registration):', loginUrl);
+    window.location.href = loginUrl;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,15 +232,20 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
                   variant="outline" 
                   className="w-full h-12 flex justify-center gap-2 bg-white border-gray-200 hover:bg-blue-50 transition-all duration-200 text-gray-700 shadow-sm" 
                   onClick={() => {
-                    // Get the backend URL from environment variable or fallback to Render deployed URL
-                    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-                    const baseUrl = baseApiUrl.replace('/api', '');
+                    // Get the base API URL and normalize it
+                    let baseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+                    
+                    // Remove trailing slashes and /api suffix to get the clean base URL
+                    baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
                     
                     // Close the registration sheet immediately
                     onOpenChange(false);
                     
-                    // Redirect to backend direct LinkedIn auth endpoint
-                    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+                    // Construct the clean LinkedIn auth URL
+                    const loginUrl = `${baseUrl}/api/auth/linkedin-direct`;
+                    
+                    console.log('LinkedIn OAuth URL (registration):', loginUrl);
+                    window.location.href = loginUrl;
                   }}
                   disabled={loading}
                 >
