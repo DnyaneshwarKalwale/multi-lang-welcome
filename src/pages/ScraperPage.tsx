@@ -2636,10 +2636,10 @@ const ScraperPage: React.FC = () => {
       {/* Main Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Content Scraper</h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            Extract content from YouTube channels to repurpose for LinkedIn
-          </p>
+        <h1 className="text-3xl font-bold mb-2">Content Scraper</h1>
+        <p className="text-gray-500 dark:text-gray-400">
+          Extract content from YouTube channels to repurpose for LinkedIn
+        </p>
         </div>
         <Button
           variant="outline"
@@ -2869,7 +2869,7 @@ const ScraperPage: React.FC = () => {
                       className="text-blue-500 mt-2"
                     >
                       Show all content
-                    </Button>
+                  </Button>
                   </div>
                 );
               }
@@ -3221,19 +3221,19 @@ const ScraperPage: React.FC = () => {
                       </div>
                     )}
                     
-                    {/* Documents */}
-                    {post.documents && post.documents.length > 0 && (
-                      <div className="space-y-3">
-                        {post.documents.map((doc, docIndex) => (
-                          <LinkedInDocumentCarousel 
-                            key={`${post.id}-doc-${docIndex}`}
-                            document={doc}
-                            postId={post.id}
-                            onOpenPdf={openPdfViewer}
-                          />
-                        ))}
-                      </div>
-                    )}
+                                         {/* Documents */}
+                     {post.documents && post.documents.length > 0 && (
+                       <div className="space-y-3">
+                         {post.documents.map((doc, docIndex) => (
+                           <LinkedInDocumentCarousel 
+                             key={`${post.id}-doc-${docIndex}`}
+                             document={doc}
+                             postId={post.id}
+                             onOpenPdf={openPdfViewer}
+                           />
+                         ))}
+                       </div>
+                     )}
                   </div>
                 </CardContent>
                 
@@ -3298,7 +3298,7 @@ const ScraperPage: React.FC = () => {
                 </CardFooter>
               </Card>
             ))}
-          </div>
+                        </div>
         </div>
       )}
       
