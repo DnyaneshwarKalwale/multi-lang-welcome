@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit, AlertCircle, RefreshCw } from "lucide-react";
+import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit, AlertCircle, RefreshCw, Link2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -102,9 +102,16 @@ interface SavedCarouselVideo {
 
 // Content generation types
 interface ContentGenerationOptions {
-  type: 'post-short' | 'post-long' | 'carousel';
+  type: 'text-post' | 'carousel';
   title: string;
   icon: React.ReactNode;
+}
+
+// LinkedIn post attachment interface
+interface LinkedInPost {
+  id: string;
+  content: string;
+  attachedAt: Date;
 }
 
 // Add interfaces for saved content
@@ -112,7 +119,7 @@ interface SavedContent {
   id: string;
   title: string;
   content: string;
-  type: 'post-short' | 'post-long' | 'carousel';
+  type: 'text-post' | 'carousel';
   videoId?: string;
   videoTitle?: string;
   createdAt: string;
@@ -342,6 +349,10 @@ const RequestCarouselPage: React.FC = () => {
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // LinkedIn post attachment states
+  const [attachedLinkedInPost, setAttachedLinkedInPost] = useState<string>('');
+  const [showLinkedInPostInput, setShowLinkedInPostInput] = useState(false);
 
   // Add a missing state variable for saving content:
   const [isSavingContent, setIsSavingContent] = useState(false);
@@ -1137,14 +1148,9 @@ const RequestCarouselPage: React.FC = () => {
   // LinkedIn content generation options
   const contentGenerationOptions: ContentGenerationOptions[] = [
     {
-      type: 'post-short',
-      title: 'Short Post',
+      type: 'text-post',
+      title: 'Text Post',
       icon: <MessageSquare className="h-4 w-4" />
-    },
-    {
-      type: 'post-long',
-      title: 'Long Post',
-      icon: <FileText className="h-4 w-4" />
     },
     {
       type: 'carousel',
@@ -1226,7 +1232,7 @@ const RequestCarouselPage: React.FC = () => {
         : `${baseUrl}/api/generate-content`;
 
       const response = await axios.post(apiUrl, {
-        type: type, // Now using the actual selected type instead of hardcoding 'carousel'
+        type: type, // Use the type directly since backend now supports 'text-post'
         transcript: selectedVideo.transcript,
         videoId: selectedVideo.id,
         videoTitle: selectedVideo.title
@@ -1984,7 +1990,7 @@ const RequestCarouselPage: React.FC = () => {
         id: contentId,
         title: contentTitle,
         content: content,
-        type: selectedContentType as 'post-short' | 'post-long' | 'carousel',
+        type: selectedContentType as 'text-post' | 'carousel',
         createdAt: new Date().toISOString()
       };
       
@@ -2670,7 +2676,7 @@ const RequestCarouselPage: React.FC = () => {
                                   </Button>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">
                                   {contentGenerationOptions.map((option) => (
                                     <Button 
                                       key={option.type}
@@ -2685,6 +2691,50 @@ const RequestCarouselPage: React.FC = () => {
                                       <span className="text-xs sm:text-sm font-medium line-clamp-1">{option.title}</span>
                                     </Button>
                                   ))}
+                                </div>
+                                
+                                {/* LinkedIn Post Attachment Section */}
+                                <div className="mt-4 border-t pt-4">
+                                  <div className="flex justify-between items-center mb-3">
+                                                                         <h4 className="text-sm font-medium flex items-center gap-2">
+                                       <Link2 className="h-4 w-4 text-blue-500" />
+                                       LinkedIn Post Analysis (Optional)
+                                     </h4>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => setShowLinkedInPostInput(!showLinkedInPostInput)}
+                                      className="text-xs"
+                                    >
+                                      {showLinkedInPostInput ? 'Hide' : 'Attach Post'}
+                                    </Button>
+                                  </div>
+                                  
+                                  {showLinkedInPostInput && (
+                                    <div className="space-y-3">
+                                      <Textarea
+                                        placeholder="Paste a LinkedIn post content here to analyze its writing style and structure for your carousel generation..."
+                                        value={attachedLinkedInPost}
+                                        onChange={(e) => setAttachedLinkedInPost(e.target.value)}
+                                        className="min-h-[100px] text-sm"
+                                      />
+                                      <div className="flex justify-between items-center">
+                                        <p className="text-xs text-muted-foreground">
+                                          This will help the AI understand your preferred writing style and tone.
+                                        </p>
+                                        {attachedLinkedInPost && (
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => setAttachedLinkedInPost('')}
+                                            className="text-xs"
+                                          >
+                                            Clear
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                                       </div>

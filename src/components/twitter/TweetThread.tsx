@@ -53,8 +53,8 @@ const TweetThread: React.FC<TweetThreadProps> = ({
             // Automatically expand preloaded tweets in threads for better readability
         if (!expandedTweets.has(tweet.id)) {
               setExpandedTweets(prev => new Set(prev).add(tweet.id));
-        }
-      }
+            }
+          }
     });
   }, [thread.tweets]);
   
@@ -286,7 +286,7 @@ const TweetThread: React.FC<TweetThreadProps> = ({
                   <span className="font-semibold">{thread.tweets.length}</span>
                   <span>tweets</span>
                 </div>
-              </div>
+            </div>
           </div>
         </div>
         
@@ -355,7 +355,7 @@ const TweetThread: React.FC<TweetThreadProps> = ({
                 checked={selectedTweets.has(tweet.id)}
                 onCheckedChange={() => onSelectToggle(tweet)}
                         className="h-3 w-3"
-                      />
+              />
                     </div>
             </div>
             
@@ -383,12 +383,12 @@ const TweetThread: React.FC<TweetThreadProps> = ({
                                   <div className="animate-spin rounded-full h-2 w-2 border-b-2 border-blue-500"></div>
                                   <span>Loading...</span>
                                 </>
-                              ) : (
+                      ) : (
                                 <>
                                   <span>{expandedTweets.has(tweet.id) ? 'Show less' : 'Show more'}</span>
                                   {expandedTweets.has(tweet.id) ? (
                                     <ChevronUp className="h-3 w-3" />
-                                  ) : (
+                        ) : (
                                     <ChevronDown className="h-3 w-3" />
                                   )}
                                 </>

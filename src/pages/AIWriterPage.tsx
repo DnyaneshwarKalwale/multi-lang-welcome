@@ -346,7 +346,7 @@ const AIWriterPage: React.FC = () => {
           <p className="text-neutral-medium mt-1">Create engaging LinkedIn content with AI assistance</p>
         </div>
       </div>
-
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Content - Main AI Writer */}
         <div className="lg:col-span-2 space-y-6">
@@ -388,18 +388,18 @@ const AIWriterPage: React.FC = () => {
           </Card>
 
           {/* Input Section */}
-          <Card>
-            <CardHeader>
+              <Card>
+                <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PenTool className="h-5 w-5 text-primary" />
                 Content Input
               </CardTitle>
-              <CardDescription>
+                  <CardDescription>
                 Provide your topic, key points, or ideas to get started
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
                 <label className="text-sm font-medium mb-2 block">Topic or Main Idea</label>
                 <input
                   type="text"
@@ -408,9 +408,9 @@ const AIWriterPage: React.FC = () => {
                   placeholder="e.g., Remote work productivity tips, AI in marketing, Career advice"
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
-              </div>
-              
-              <div>
+                  </div>
+                  
+                  <div>
                 <label className="text-sm font-medium mb-2 block">Key Points (Optional)</label>
                 <textarea
                   value={keyPoints}
@@ -419,33 +419,33 @@ const AIWriterPage: React.FC = () => {
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                 />
-              </div>
-
-              <Button
-                onClick={handleGenerate}
+                  </div>
+                  
+                  <Button 
+                    onClick={handleGenerate}
                 disabled={isGenerating || !topic.trim()}
                 className="w-full bg-primary hover:bg-primary/90 text-white py-3"
-              >
-                {isGenerating ? (
-                  <>
+                  >
+                    {isGenerating ? (
+                      <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Generating Content...
-                  </>
-                ) : (
-                  <>
+                      </>
+                    ) : (
+                      <>
                     <Sparkles className="w-4 h-4 mr-2" />
                     Generate {selectedFormat === 'short' ? 'Short Post' : 
                              selectedFormat === 'long' ? 'Long Form' :
                              selectedFormat === 'listicle' ? 'List Post' : 'Hook'}
-                  </>
-                )}
-              </Button>
+                      </>
+                    )}
+                  </Button>
             </CardContent>
-          </Card>
-
+              </Card>
+              
           {/* Generated Content */}
           {generatedContent && (
-            <Card>
+                <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
@@ -453,9 +453,9 @@ const AIWriterPage: React.FC = () => {
                     Generated Content
                   </CardTitle>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
                       onClick={handleCopy}
                       className="gap-1"
                     >
@@ -471,16 +471,16 @@ const AIWriterPage: React.FC = () => {
                       <PlusCircle className="h-4 w-4" />
                       Create Post
                     </Button>
-                  </div>
-                </div>
+                    </div>
+                        </div>
               </CardHeader>
               <CardContent>
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
                     {generatedContent.content}
                   </pre>
-                </div>
-                
+                      </div>
+                      
                 {generatedContent.suggestedHashtags && generatedContent.suggestedHashtags.length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2 text-sm">Suggested Hashtags:</h4>
@@ -501,9 +501,9 @@ const AIWriterPage: React.FC = () => {
                   </div>
                 )}
               </CardContent>
-            </Card>
-          )}
-        </div>
+                </Card>
+              )}
+            </div>
 
         {/* Right Sidebar - Coming Soon */}
         <div className="space-y-6">
@@ -512,12 +512,12 @@ const AIWriterPage: React.FC = () => {
             <CardHeader className="text-center pb-4">
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="h-8 w-8 text-primary" />
-              </div>
+          </div>
               <CardTitle className="text-lg text-primary">Advanced AI Features</CardTitle>
               <CardDescription className="text-sm">
                 Powerful AI enhancements coming soon
-              </CardDescription>
-            </CardHeader>
+                  </CardDescription>
+                </CardHeader>
             <CardContent className="text-center space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
@@ -527,9 +527,9 @@ const AIWriterPage: React.FC = () => {
                   <div className="text-left">
                     <div className="font-medium text-sm">AI Style Matching</div>
                     <div className="text-xs text-gray-500">Match your writing style</div>
+                      </div>
                   </div>
-                </div>
-                
+                  
                 <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
                   <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                     <BarChart3 className="h-4 w-4 text-green-600" />
@@ -537,9 +537,9 @@ const AIWriterPage: React.FC = () => {
                   <div className="text-left">
                     <div className="font-medium text-sm">Performance Insights</div>
                     <div className="text-xs text-gray-500">Optimize for engagement</div>
-                  </div>
-                </div>
-                
+                    </div>
+            </div>
+            
                 <div className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
                   <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                     <Users className="h-4 w-4 text-purple-600" />
@@ -547,26 +547,26 @@ const AIWriterPage: React.FC = () => {
                   <div className="text-left">
                     <div className="font-medium text-sm">Audience Targeting</div>
                     <div className="text-xs text-gray-500">Personalized content</div>
-                  </div>
-                </div>
-              </div>
+                      </div>
+                      </div>
+                    </div>
               
               <div className="pt-4 border-t border-primary/20">
                 <div className="text-primary font-semibold text-lg mb-1">Coming Soon</div>
                 <div className="text-xs text-gray-600">Get notified when available</div>
-              </div>
-            </CardContent>
-          </Card>
-
+                    </div>
+                </CardContent>
+              </Card>
+              
           {/* Tips Card */}
-          <Card>
-            <CardHeader>
+              <Card>
+                <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
                 Writing Tips
               </CardTitle>
-            </CardHeader>
-            <CardContent>
+                </CardHeader>
+                <CardContent>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-2">
                   <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
@@ -581,12 +581,12 @@ const AIWriterPage: React.FC = () => {
                 <div className="flex items-start gap-2">
                   <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  </div>
+                    </div>
                   <div>
                     <div className="font-medium">Add personal insights</div>
                     <div className="text-gray-600 text-xs">Share your unique perspective</div>
-                  </div>
-                </div>
+                          </div>
+                        </div>
                 
                 <div className="flex items-start gap-2">
                   <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center mt-0.5">
@@ -596,10 +596,10 @@ const AIWriterPage: React.FC = () => {
                     <div className="font-medium">End with engagement</div>
                     <div className="text-gray-600 text-xs">Ask questions or call to action</div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+                    </div>
+                </CardContent>
+              </Card>
 
           {/* Content Templates - Coming Soon */}
           <Card className="border-dashed border-gray-300">
@@ -616,8 +616,8 @@ const AIWriterPage: React.FC = () => {
               <div className="text-primary font-semibold">Coming Soon</div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+            </div>
+          </div>
     </div>
   );
 };

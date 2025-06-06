@@ -1,44 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { 
-  Mic, Upload, Calendar, 
-  Edit3, Eye, Clock, PlusCircle, Zap, Sparkles,
-  Maximize2, MessageSquare, ThumbsUp, Share2,
-  LogOut, User, Settings, ChevronDown, Users, Bell,
-  Newspaper, BookOpen, LucideIcon, Lightbulb, FileText,
-  Home, BookMarked, TrendingUp, UserCircle, ChevronRight,
-  Layers, LayoutGrid, ArrowUp, CreditCard, Building, Loader2,
-  AlertCircle, Linkedin, CheckCircle, Youtube, BarChart3,
-  Target, Activity, Flame, Star, Award, Briefcase, Plus
+  FileText, Sparkles, LayoutGrid, Calendar, PlusCircle, Zap,
+  User, Linkedin, TrendingUp
 } from "lucide-react";
 import { 
-  Card, CardContent, CardDescription, CardFooter, 
-  CardHeader, CardTitle 
+  Card, CardContent, CardHeader, CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { BrandOutIcon } from "@/components/BrandOutIcon";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CarouselPreview } from "@/components/CarouselPreview";
 import ScheduledPostsCalendar from "@/components/ScheduledPostsCalendar";
 import axios from "axios";
 import { toast } from "sonner";
-import { useTheme } from '@/contexts/ThemeContext';
-import { CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Interface for LinkedIn profile data
 interface LinkedInProfile {
@@ -83,9 +59,8 @@ interface DashboardData {
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useLanguage();
-  const { user, logout, token } = useAuth();
+  const { user, token } = useAuth();
   
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
@@ -103,9 +78,6 @@ const DashboardPage: React.FC = () => {
   
   // Generate a LinkedIn username based on user's name
   const [linkedInUsername, setLinkedInUsername] = useState<string>('');
-
-  // For displaying scheduled posts (empty since scheduled post functionality is removed)
-  const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
 
   // Weekly AI tip
   const [weeklyTip, setWeeklyTip] = useState({
@@ -392,6 +364,31 @@ const DashboardPage: React.FC = () => {
     window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
   };
 
+  // Sample data for charts based on real data
+  const monthlyPostData = [
+    { month: 'JAN', posts: Math.max(dashboardData.totalPosts - 8, 0) },
+    { month: 'FEB', posts: Math.max(dashboardData.totalPosts - 5, 0) },
+    { month: 'MAR', posts: Math.max(dashboardData.totalPosts - 3, 0) },
+    { month: 'APR', posts: Math.max(dashboardData.totalPosts - 1, 0) },
+    { month: 'MAY', posts: dashboardData.totalPosts },
+    { month: 'JUN', posts: dashboardData.totalPosts + dashboardData.scheduledPosts }
+  ];
+
+  const aiContentData = [
+    { month: 'JAN', ai: Math.max(dashboardData.aiGeneratedContent - 4, 0) },
+    { month: 'FEB', ai: Math.max(dashboardData.aiGeneratedContent - 2, 0) },
+    { month: 'MAR', ai: Math.max(dashboardData.aiGeneratedContent - 1, 0) },
+    { month: 'APR', ai: dashboardData.aiGeneratedContent },
+    { month: 'MAY', ai: dashboardData.aiGeneratedContent + 1 },
+    { month: 'JUN', ai: dashboardData.aiGeneratedContent + 2 }
+  ];
+
+  const carouselProgressData = [
+    { name: 'Completed', value: dashboardData.completedCarousels, color: '#10b981' },
+    { name: 'Pending', value: dashboardData.pendingCarousels, color: '#3b82f6' },
+    { name: 'In Progress', value: Math.max(dashboardData.carouselRequests - dashboardData.completedCarousels - dashboardData.pendingCarousels, 0), color: '#6b7280' }
+  ];
+
   // Get current time greeting
   const getTimeGreeting = () => {
     const hour = new Date().getHours();
@@ -401,371 +398,319 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50/30 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
-        >
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">
+        {/* Clean Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">
               {getTimeGreeting()}, {user?.firstName || 'there'}! 👋
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-500 mt-1">
               {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 month: 'long', 
-                day: 'numeric',
-                year: 'numeric'
+                day: 'numeric'
               })}
             </p>
-      </div>
-      
-          {/* Profile Section */}
-          <Card className="border-primary/20 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12 border-2 border-primary/20">
-                  {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
-                    <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
-                  ) : user?.profilePicture ? (
-                    <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
-                  ) : (
-                    <AvatarFallback className="bg-primary text-white">{getUserInitials()}</AvatarFallback>
-                  )}
-                </Avatar>
-              <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {user?.authMethod === 'linkedin' && linkedInProfile?.name ? 
-                      linkedInProfile.name : 
-                      getUserFullName()}
-                  </h3>
-                  <p className="text-sm text-gray-600 flex items-center gap-1">
-                    {user?.authMethod === 'linkedin' ? (
-                      <><Linkedin className="h-3 w-3 text-primary" /> LinkedIn</>
-                    ) : (
-                      <><User className="h-3 w-3 text-primary" /> Member</>
-                    )}
-                  </p>
-              </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9">
+              {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
+                <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
+              ) : user?.profilePicture ? (
+                <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
+              ) : (
+                <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">{getUserInitials()}</AvatarFallback>
+              )}
+            </Avatar>
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-900">{getUserFullName()}</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                {user?.authMethod === 'linkedin' ? (
+                  <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
+                ) : (
+                  <><User className="h-3 w-3" /> Member</>
+                )}
+              </p>
             </div>
-          </CardContent>
-        </Card>
-        </motion.div>
+          </div>
+        </div>
 
-        {/* Key Metrics Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {/* Total Posts */}
-          <Card className="border-primary/20 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-md transition-all duration-300">
-            <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                  <p className="text-sm font-medium text-blue-700">Total Posts</p>
-                  <h3 className="text-2xl font-bold text-blue-900 mt-1">{dashboardData.totalPosts}</h3>
-                  <div className="flex items-center gap-1 mt-2">
-                    <ArrowUp className="h-3 w-3 text-blue-600" />
-                    <span className="text-sm text-blue-600 font-medium">
-                      All your content
-                    </span>
-                  </div>
-              </div>
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-          {/* AI Generated Content */}
-          <Card className="border-primary/20 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md transition-all duration-300">
-            <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                  <p className="text-sm font-medium text-purple-700">AI Content</p>
-                  <h3 className="text-2xl font-bold text-purple-900 mt-1">{dashboardData.aiGeneratedContent}</h3>
-                  <div className="flex items-center gap-1 mt-2">
-                    <Sparkles className="h-3 w-3 text-amber-500" />
-                    <span className="text-sm text-amber-600 font-medium">
-                      Posts & Videos
-                    </span>
-              </div>
-            </div>
-                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-white" />
+        {/* Compact Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.totalPosts}</p>
+                  <p className="text-sm text-gray-600">Total Posts</p>
+                </div>
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Carousel Requests */}
-          <Card className="border-primary/20 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-md transition-all duration-300">
-            <CardContent className="p-6">
+          
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-700">Carousels</p>
-                  <h3 className="text-2xl font-bold text-green-900 mt-1">{dashboardData.carouselRequests}</h3>
-                  <div className="flex items-center gap-1 mt-2">
-                    <LayoutGrid className="h-3 w-3 text-green-600" />
-                    <span className="text-sm text-green-600 font-medium">
-                      {dashboardData.completedCarousels} completed
-                    </span>
-              </div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.aiGeneratedContent}</p>
+                  <p className="text-sm text-gray-600">AI Content</p>
                 </div>
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <LayoutGrid className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <Sparkles className="h-5 w-5 text-green-600" />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-          {/* Scheduled Posts */}
-          <Card className="border-primary/20 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-md transition-all duration-300">
-            <CardContent className="p-6">
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-orange-700">Scheduled</p>
-                  <h3 className="text-2xl font-bold text-orange-900 mt-1">{dashboardData.scheduledPosts}</h3>
-                  <div className="flex items-center gap-1 mt-2">
-                    <Clock className="h-3 w-3 text-orange-600" />
-                    <span className="text-sm text-orange-600 font-medium">
-                      {dashboardData.draftPosts} drafts
-                    </span>
-              </div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.carouselRequests}</p>
+                  <p className="text-sm text-gray-600">Carousels</p>
                 </div>
-                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <LayoutGrid className="h-5 w-5 text-blue-600" />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        </motion.div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.scheduledPosts}</p>
+                  <p className="text-sm text-gray-600">Scheduled</p>
+                </div>
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Left Column - Calendar and Quick Actions */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2 space-y-6"
-          >
-            {/* Calendar */}
-            <ScheduledPostsCalendar />
+          {/* Charts Section */}
+          <div className="lg:col-span-2 space-y-6">
             
-            {/* Quick Actions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-md transition-all duration-300 cursor-pointer group" 
-                    onClick={() => navigate('/dashboard/post')}>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <PlusCircle className="h-6 w-6 text-white" />
+            {/* Growth Chart */}
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Content Growth</CardTitle>
+                    <p className="text-sm text-gray-500">Monthly posts trend</p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Create Post</h3>
-                  <p className="text-sm text-gray-600">Write a new LinkedIn post</p>
-            </CardContent>
-          </Card>
-          
-              <Card className="border-primary/20 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md transition-all duration-300 cursor-pointer group"
-                    onClick={() => navigate('/dashboard/request-carousel')}>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <LayoutGrid className="h-6 w-6 text-white" />
+                  <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    +{Math.max(dashboardData.totalPosts - 5, 0)}% growth
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">AI Carousel</h3>
-                  <p className="text-sm text-gray-600">Generate carousel posts</p>
-            </CardContent>
-          </Card>
-
-              <Card className="border-primary/20 bg-gradient-to-br from-teal-50 to-teal-100 hover:shadow-md transition-all duration-300 cursor-pointer group"
-                    onClick={() => navigate('/dashboard/scraper')}>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <FileText className="h-6 w-6 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={monthlyPostData}>
+                    <defs>
+                      <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area 
+                      type="monotone" 
+                      dataKey="posts" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      fill="url(#gradient)" 
+                    />
+                    <XAxis 
+                      dataKey="month" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <YAxis hide />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            
+            {/* AI & Carousel Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-green-600" />
+                    AI Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Generated Posts</span>
+                      <span className="font-semibold text-green-600">{dashboardData.savedAiPosts}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Video Transcripts</span>
+                      <span className="font-semibold text-blue-600">{dashboardData.videoTranscripts}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-green-500 to-blue-500 rounded-full"
+                        style={{ width: `${Math.min((dashboardData.aiGeneratedContent / 50) * 100, 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Scrape Content</h3>
-                  <p className="text-sm text-gray-600">Extract content from URLs</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4 text-blue-600" />
+                    Carousels
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Completed</span>
+                      <span className="font-semibold text-green-600">{dashboardData.completedCarousels}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">In Progress</span>
+                      <span className="font-semibold text-blue-600">{dashboardData.pendingCarousels}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
+                        style={{ 
+                          width: `${dashboardData.carouselRequests > 0 ? (dashboardData.completedCarousels / dashboardData.carouselRequests) * 100 : 0}%` 
+                        }}
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
-          </motion.div>
-
-          {/* Right Column - Stats and Information */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-6"
-          >
+          </div>
+          
+          {/* Sidebar */}
+          <div className="space-y-6">
             
-            {/* Post Status Breakdown */}
-            <Card className="border-primary/20 bg-white/80 backdrop-blur-sm">
+            {/* Profile Card */}
+            <Card className="border-0 shadow-sm bg-white">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  Post Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{dashboardData.draftPosts}</div>
-                    <div className="text-sm text-blue-700">Drafts</div>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{dashboardData.publishedPosts}</div>
-                    <div className="text-sm text-green-700">Published</div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Scheduled Posts</span>
-                    <Badge variant="secondary">{dashboardData.scheduledPosts}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">AI Generated</span>
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-700">{dashboardData.savedAiPosts}</Badge>
-                    </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Video Transcripts</span>
-                    <Badge variant="secondary" className="bg-orange-100 text-orange-700">{dashboardData.videoTranscripts}</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          
-            {/* AI Tip of the Week */}
-            <Card className="border-primary/20 bg-gradient-to-br from-amber-50 to-amber-100">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-amber-500" />
-                  <span className="text-amber-900">Weekly AI Tip</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <h4 className="font-semibold text-amber-900 mb-2">{weeklyTip.title}</h4>
-                <p className="text-sm text-amber-800 leading-relaxed">
-                  {weeklyTip.content}
-                </p>
-                <div className="mt-3 pt-3 border-t border-amber-200">
-                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white">
-                    <Star className="h-4 w-4 mr-1" />
-                    Get More Tips
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Carousel Status */}
-            <Card className="border-primary/20 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  Carousel Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                    <span className="text-sm font-medium text-yellow-800">Pending</span>
-                  </div>
-                  <span className="text-lg font-bold text-yellow-600">{dashboardData.pendingCarousels}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-800">Completed</span>
-                  </div>
-                  <span className="text-lg font-bold text-green-600">{dashboardData.completedCarousels}</span>
-                </div>
-                <div className="pt-2">
-                <Button
-                  variant="outline"
-                    className="w-full border-primary text-primary hover:bg-primary hover:text-white"
-                  onClick={() => navigate('/dashboard/request-carousel')}
-                >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Request New Carousel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-            {/* LinkedIn Connection - Show if not connected */}
-            {(!isLinkedInConnected && !loading.profile) && (
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/15">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Linkedin className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-primary mb-2">
-                    Connect LinkedIn Account
-                  </h3>
-                  <p className="text-sm text-gray-700 mb-4">
-                    Link your LinkedIn profile to unlock advanced analytics and scheduling features.
-                  </p>
-                  <Button
-                    onClick={handleConnectLinkedIn}
-                    className="bg-primary hover:bg-primary/90 text-white"
-                  >
-                    <Linkedin className="w-4 h-4 mr-2" />
-                    Connect Now
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Recent Activity */}
-            <Card className="border-primary/20 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
-                  Recent Activity
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Linkedin className="h-4 w-4 text-blue-600" />
+                  LinkedIn Profile
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Created new post</p>
-                      <p className="text-xs text-gray-500">2 hours ago</p>
-                    </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="h-12 w-12">
+                    {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
+                      <AvatarImage src={linkedInProfile.profileImage} alt="Profile" />
+                    ) : (
+                      <AvatarFallback className="bg-blue-500 text-white font-semibold">{getUserInitials()}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">
+                      {user?.authMethod === 'linkedin' && linkedInProfile?.name ? 
+                        linkedInProfile.name : 
+                        getUserFullName()}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {linkedInProfile?.location || 'Content Creator'}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <LayoutGrid className="h-4 w-4 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Carousel completed</p>
-                      <p className="text-xs text-gray-500">Yesterday</p>
-                    </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-lg font-bold text-blue-600">{linkedInProfile?.connections || 0}</p>
+                    <p className="text-xs text-gray-600">Connections</p>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Post scheduled</p>
-                      <p className="text-xs text-gray-500">3 days ago</p>
-                            </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <p className="text-lg font-bold text-green-600">{linkedInProfile?.followers || 0}</p>
+                    <p className="text-xs text-gray-600">Followers</p>
                   </div>
-              </div>
+                </div>
               </CardContent>
             </Card>
-          </motion.div>
+            
+            {/* Quick Actions */}
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-3 h-12 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                  onClick={() => navigate('/dashboard/post')}
+                >
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <PlusCircle className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <span className="font-medium">Create Post</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-3 h-12 border-green-200 hover:bg-green-50 hover:border-green-300"
+                  onClick={() => navigate('/dashboard/request-carousel')}
+                >
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <LayoutGrid className="h-4 w-4 text-green-600" />
+                  </div>
+                  <span className="font-medium">AI Carousel</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-3 h-12 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                  onClick={() => navigate('/dashboard/scraper')}
+                >
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Zap className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <span className="font-medium">Smart Extract</span>
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Calendar */}
+            <div className="lg:hidden">
+              <ScheduledPostsCalendar />
+            </div>
+          </div>
         </div>
+
+        {/* Calendar for larger screens */}
+        <div className="hidden lg:block">
+          <ScheduledPostsCalendar />
+        </div>
+
       </div>
     </div>
   );
