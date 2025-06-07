@@ -4,7 +4,7 @@ import axios from 'axios';
 const setupMockApi = async () => {
   try {
     // Try to ping the backend health check endpoint
-    await axios.get(`https://backend-scripe.onrender.com/health`);
+    await axios.get(`https://api.brandout.ai/health`);
     console.log('Backend is available, using real API');
     return false;
   } catch (error) {

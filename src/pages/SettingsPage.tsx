@@ -60,7 +60,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 // API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
 
 // Add interface for subscription info
 interface SubscriptionInfo {
@@ -462,7 +462,7 @@ const SettingsPage: React.FC = () => {
   const connectLinkedIn = () => {
     try {
       // Get the backend URL from environment variable or fallback to Render deployed URL
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       const baseUrl = baseApiUrl.replace('/api', '');
       
       // Store current URL in localStorage to redirect back after LinkedIn connection

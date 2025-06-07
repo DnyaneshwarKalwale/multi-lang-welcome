@@ -158,7 +158,7 @@ const DashboardPage: React.FC = () => {
       profile: true,
     });
     
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -230,7 +230,7 @@ const DashboardPage: React.FC = () => {
   // Fetch dashboard data
   const fetchDashboardData = async () => {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -354,7 +354,7 @@ const DashboardPage: React.FC = () => {
   // Function to handle LinkedIn connection
   const handleConnectLinkedIn = () => {
     // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Store current URL in localStorage to redirect back after LinkedIn connection

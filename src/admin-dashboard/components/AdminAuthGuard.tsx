@@ -22,7 +22,7 @@ const AdminAuthGuard: React.FC = () => {
         
         // Verify the token with the backend
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/auth/me`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/auth/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`

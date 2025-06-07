@@ -2,7 +2,7 @@ import axios from 'axios';
 import { tokenManager } from '@/services/api';
 
 // Import the API_URL from the services/api.ts file or define it here
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
 
 // Helper function to get the best available LinkedIn token
 const getLinkedInToken = (accessToken?: string): string => {
@@ -25,7 +25,7 @@ const refreshLinkedInToken = (): void => {
   localStorage.removeItem('linkedin-token-expiry');
   
   // Get the base API URL and normalize it
-  let baseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+  let baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
   
   // Remove trailing slashes and /api suffix to get the clean base URL
   baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');

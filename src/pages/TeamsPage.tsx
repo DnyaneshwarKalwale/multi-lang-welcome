@@ -145,7 +145,7 @@ export default function TeamsPage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
+      const baseApiUrl = import.meta.env.VITE_API_URL || "https://api.brandout.ai/api";
       const response = await axios.get(`${baseApiUrl}/teams`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -202,7 +202,7 @@ export default function TeamsPage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
+      const baseApiUrl = import.meta.env.VITE_API_URL || "https://api.brandout.ai/api";
       const formattedInvitations = [{ email: inviteEmail, role: inviteRole }];
 
       const response = await axios.post(
@@ -312,7 +312,7 @@ export default function TeamsPage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api";
+      const baseApiUrl = import.meta.env.VITE_API_URL || "https://api.brandout.ai/api";
       const response = await axios.post(
         `${baseApiUrl}/teams`,
         {

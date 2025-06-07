@@ -66,7 +66,7 @@ export default function PendingInvitationsPage() {
   const processInvitationToken = async (token: string) => {
     try {
       setProcessingToken(true);
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       // First verify the invitation token
       const verifyResponse = await axios.post(`${baseApiUrl}/teams/invitations/verify-token`, { token });
@@ -143,7 +143,7 @@ export default function PendingInvitationsPage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       const response = await axios.get(`${baseApiUrl}/teams/invitations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -170,7 +170,7 @@ export default function PendingInvitationsPage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       // Check if this is a token-based invitation (from URL) or a regular invitation
       if (invitationId.length > 30) { // Token is typically longer than regular IDs
@@ -211,7 +211,7 @@ export default function PendingInvitationsPage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       // Check if this is a token-based invitation (from URL) or a regular invitation
       if (invitationId.length > 30) { // Token is typically longer than regular IDs

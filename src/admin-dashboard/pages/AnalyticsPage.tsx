@@ -149,7 +149,7 @@ const AnalyticsPage: React.FC = () => {
           return;
         }
         
-        console.log("Using API URL:", import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api");
+        console.log("Using API URL:", import.meta.env.VITE_API_URL || "https://api.brandout.ai/api");
         
         // Log request details for debugging
         console.log("Making dashboard request with timeRange:", timeRange);
@@ -157,7 +157,7 @@ const AnalyticsPage: React.FC = () => {
         
         // Get dashboard analytics from the API
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/dashboard?timeRange=${timeRange}`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai/api"}/admin/dashboard?timeRange=${timeRange}`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -167,7 +167,7 @@ const AnalyticsPage: React.FC = () => {
         
         // Get user limits (for subscription analysis)
         const userLimitsResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/user-limits/all`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai/api"}/user-limits/all`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -177,7 +177,7 @@ const AnalyticsPage: React.FC = () => {
         
         // Get all content
         const contentResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/content`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai/api"}/admin/content`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -187,7 +187,7 @@ const AnalyticsPage: React.FC = () => {
         
         // Get carousel requests
         const carouselRequestsResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/carousel-requests`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai/api"}/carousel-requests`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -197,7 +197,7 @@ const AnalyticsPage: React.FC = () => {
         
         // Get saved videos with additional metrics
         const savedVideosResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/saved-videos/metrics`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai/api"}/admin/saved-videos/metrics`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -207,7 +207,7 @@ const AnalyticsPage: React.FC = () => {
         
         // Get subscription metrics
         const subscriptionMetricsResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com/api"}/admin/subscriptions/metrics`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai/api"}/admin/subscriptions/metrics`,
           {
             headers: {
               Authorization: `Bearer ${token}`
