@@ -30,7 +30,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   
   const handleGoogleAuth = () => {
     // Get the base API URL and normalize it
-    let baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
     // Remove trailing slashes and /api suffix to get the clean base URL
     baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
@@ -47,7 +47,7 @@ export function LoginSheet({ open, onOpenChange, onSuccess }: LoginSheetProps) {
   
   const handleLinkedInAuth = () => {
     // Get the base API URL and normalize it
-    let baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
     // Remove trailing slashes and /api suffix to get the clean base URL
     baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');

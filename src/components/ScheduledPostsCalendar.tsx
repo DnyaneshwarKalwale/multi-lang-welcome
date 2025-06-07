@@ -60,7 +60,7 @@ const ScheduledPostsCalendar: React.FC = () => {
     try {
       // Try to fetch from API if token exists
       if (token) {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const response = await fetch(`${apiBaseUrl}/posts?status=scheduled`, {
           headers: {
             'Authorization': `Bearer ${token}`,
