@@ -1259,7 +1259,7 @@ const RequestCarouselPage: React.FC = () => {
       // Increment user count after successful generation
       const token = tokenManager.getToken();
       await axios.post(
-        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/user-limits/${user?.id}/increment`,
+        `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
         {},
         {
           headers: {
@@ -1552,7 +1552,7 @@ const RequestCarouselPage: React.FC = () => {
       // Increment user count for carousel request - THIS IS THE KEY CHANGE - counting carousel requests against the limit
       try {
         await axios.post(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/user-limits/${user?.id}/increment`,
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
           {},
           {
             headers: {

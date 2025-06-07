@@ -158,7 +158,7 @@ const DashboardPage: React.FC = () => {
       profile: true,
     });
     
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -230,7 +230,7 @@ const DashboardPage: React.FC = () => {
   // Fetch dashboard data
   const fetchDashboardData = async () => {
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -354,7 +354,7 @@ const DashboardPage: React.FC = () => {
   // Function to handle LinkedIn connection
   const handleConnectLinkedIn = () => {
     // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
@@ -414,92 +414,92 @@ const DashboardPage: React.FC = () => {
                 day: 'numeric'
               })}
             </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
+      </div>
+      
+              <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
-                <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
-              ) : user?.profilePicture ? (
-                <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
-              ) : (
+                  {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
+                    <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
+                  ) : user?.profilePicture ? (
+                    <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
+                  ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">{getUserInitials()}</AvatarFallback>
-              )}
-            </Avatar>
+                  )}
+                </Avatar>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{getUserFullName()}</p>
               <p className="text-xs text-gray-500 flex items-center gap-1">
-                {user?.authMethod === 'linkedin' ? (
+                    {user?.authMethod === 'linkedin' ? (
                   <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
-                ) : (
+                    ) : (
                   <><User className="h-3 w-3" /> Member</>
-                )}
-              </p>
+                    )}
+                  </p>
+              </div>
             </div>
-          </div>
         </div>
 
         {/* Compact Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
+            <div className="flex items-center justify-between">
+              <div>
                   <p className="text-2xl font-bold text-gray-900">{dashboardData.totalPosts}</p>
                   <p className="text-sm text-gray-600">Total Posts</p>
-                </div>
+              </div>
                 <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                   <FileText className="h-5 w-5 text-blue-600" />
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
+            </div>
+          </CardContent>
+        </Card>
+        
           <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
+            <div className="flex items-center justify-between">
+              <div>
                   <p className="text-2xl font-bold text-gray-900">{dashboardData.aiGeneratedContent}</p>
                   <p className="text-sm text-gray-600">AI Content</p>
-                </div>
+              </div>
                 <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{dashboardData.carouselRequests}</p>
                   <p className="text-sm text-gray-600">Carousels</p>
-                </div>
+              </div>
                 <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                   <LayoutGrid className="h-5 w-5 text-blue-600" />
-                </div>
               </div>
-            </CardContent>
-          </Card>
-          
+            </div>
+          </CardContent>
+        </Card>
+
           <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{dashboardData.scheduledPosts}</p>
                   <p className="text-sm text-gray-600">Scheduled</p>
-                </div>
+              </div>
                 <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
                   <Calendar className="h-5 w-5 text-green-600" />
-                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Charts Section */}
           <div className="lg:col-span-2 space-y-6">
@@ -550,9 +550,9 @@ const DashboardPage: React.FC = () => {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            
+            </CardContent>
+          </Card>
+          
             {/* AI & Carousel Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="border-0 shadow-sm bg-white">
@@ -579,9 +579,9 @@ const DashboardPage: React.FC = () => {
                       />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              
+            </CardContent>
+          </Card>
+
               <Card className="border-0 shadow-sm bg-white">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -612,7 +612,7 @@ const DashboardPage: React.FC = () => {
               </Card>
             </div>
           </div>
-          
+
           {/* Sidebar */}
           <div className="space-y-6">
             
@@ -657,7 +657,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+          
             {/* Quick Actions */}
             <Card className="border-0 shadow-sm bg-white">
               <CardHeader className="pb-3">
@@ -675,8 +675,8 @@ const DashboardPage: React.FC = () => {
                   <span className="font-medium">Create Post</span>
                 </Button>
                 
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start gap-3 h-12 border-green-200 hover:bg-green-50 hover:border-green-300"
                   onClick={() => navigate('/dashboard/request-carousel')}
                 >
@@ -695,16 +695,16 @@ const DashboardPage: React.FC = () => {
                     <Zap className="h-4 w-4 text-blue-600" />
                   </div>
                   <span className="font-medium">Smart Extract</span>
-                </Button>
-              </CardContent>
-            </Card>
+                  </Button>
+                </CardContent>
+              </Card>
             
             {/* Calendar */}
             <div className="lg:hidden">
               <ScheduledPostsCalendar />
-            </div>
-          </div>
-        </div>
+                            </div>
+                  </div>
+              </div>
 
         {/* Calendar for larger screens */}
         <div className="hidden lg:block">

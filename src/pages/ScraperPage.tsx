@@ -1089,7 +1089,7 @@ const ScraperPage: React.FC = () => {
     setSelectedLinkedInPosts(new Set());
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
       const token = localStorage.getItem('token');
       
       // Prepare headers - include auth if available, but don't require it
@@ -1424,7 +1424,7 @@ const ScraperPage: React.FC = () => {
       // Save to backend first
       let backendSaveSuccess = false;
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
         const response = await axios.post(`${apiBaseUrl}/linkedin/save-scraped-posts`, {
           posts: postsToSave,
           profileData: linkedinResult.profileData,
@@ -1657,13 +1657,6 @@ const ScraperPage: React.FC = () => {
   };
 
   const handleGetTranscript = async (videoId: string) => {
-    const maxRetries = 2; // Maximum number of retries
-    let currentRetryCount = 0;
-    let lastError: any = null;
-
-    // Helper function to delay execution
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
     try {
       setLoadingTranscriptIds(prev => {
         const newSet = new Set(prev);
@@ -1674,162 +1667,40 @@ const ScraperPage: React.FC = () => {
       setCurrentVideoId(videoId);
       setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
       
-      // Try both methods in parallel
-      let ytdlpPromise: Promise<any> | null = null;
-      let ytTranscriptPromise: Promise<any> | null = null;
-      let transcriptData: any = null;
-      let failedMethods = 0;
-      
-      // Start both API calls
-      toast({
-        description: "Fetching transcript using multiple methods...",
-        variant: "default",
-      });
-            
-      // Start primary method (youtube-transcript-api)
-      ytTranscriptPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, useScraperApi: false })
-      }).then(res => {
-        if (!res.ok) throw new Error(`Primary method failed: ${res.status}`);
-        return res.json();
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ 
+          videoId,
+          useScraperApi: true // Always use ScraperAPI to avoid rate limits
+        })
       });
       
-      // Start fallback method (yt-dlp)
-      ytdlpPromise = fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
-            method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId })
-      }).then(res => {
-        if (!res.ok) throw new Error(`Fallback method failed: ${res.status}`);
-        return res.json();
-      });
-      
-      // Use Promise.race with promises that handle their own rejection
-      const safePromises = [
-        ytTranscriptPromise.then(
-          data => {
-            console.log("Primary method succeeded");
-            toastSuccess("Transcript fetched successfully (primary method)");
-            return data;
-          },
-          (err) => {
-            console.error("Primary method failed:", err);
-            return new Promise((_, reject) => setTimeout(() => reject(new Error(`Primary method failed: ${err.message}`)), 100))
-          }
-        ),
-        ytdlpPromise.then(
-          data => {
-            console.log("Fallback method succeeded");
-            toastSuccess("Transcript fetched successfully (fallback method)");
-            return data;
-          },
-          (err) => {
-            console.error("Fallback method failed:", err);
-            return new Promise((_, reject) => setTimeout(() => reject(new Error(`Fallback method failed: ${err.message}`)), 100))
-          }
-        )
-      ];
-      
-      try {
-      transcriptData = await Promise.race(safePromises);
-      } catch (raceError) {
-        console.error("Both transcript methods failed:", raceError);
-        
-        // Try them sequentially as a last resort, with the most reliable first
-        try {
-          console.log("Trying yt-dlp method sequentially");
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript-yt-dlp`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ videoId })
-          });
-          
-          if (response.ok) {
-            transcriptData = await response.json();
-            console.log("Sequential yt-dlp method succeeded");
-          } else {
-            throw new Error(`Sequential yt-dlp method failed: ${response.status}`);
-          }
-        } catch (sequential1Error) {
-          console.error("Sequential yt-dlp method failed:", sequential1Error);
-          
-          // Try the primary method as a last resort
-          try {
-            console.log("Trying primary method sequentially");
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/youtube/transcript`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ videoId, useScraperApi: false })
-            });
-            
-            if (response.ok) {
-              transcriptData = await response.json();
-              console.log("Sequential primary method succeeded");
-            } else {
-              throw new Error(`Sequential primary method failed: ${response.status}`);
-            }
-          } catch (sequential2Error) {
-            console.error("All transcript methods failed");
-            throw new Error("All transcript methods failed");
-          }
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch transcript");
       }
       
-      // Successfully got transcript data, now save and process it
-      if (transcriptData && (transcriptData.transcript || transcriptData.success)) {
-        // Find the video in youtubeChannelResult
-        const foundVideo = youtubeChannelResult?.videos.find(v => v.id === videoId);
-        
-        if (!foundVideo) {
-          toastError("Could not find video data to save transcript");
-          return;
+      const data = await response.json();
+      
+      if (data.success) {
+        // Instead of setting youtubeTranscript state, directly handle saving the video with transcript
+        const video = youtubeChannelResult?.videos.find(v => v.id === videoId);
+        if (video) {
+          await handleSaveVideoWithTranscript(video, data.transcript, data.language || "Unknown", data.is_generated || false);
+          toastSuccess("Successfully retrieved and saved the video transcript.");
+            } else {
+          toastError("Could not find the video data for the transcript.");
         }
-        
-        // Extract transcript from response data
-        const transcript = transcriptData.transcript || '';
-        const language = transcriptData.language || 'en';
-        const is_generated = transcriptData.is_generated || false;
-        
-        if (!transcript || transcript.length < 20) {
-          toastError("Retrieved transcript is too short or empty. Try a different video.");
-          return;
-        }
-        
-        try {
-          // Call the save function with the transcript data - use transcript as formattedTranscript too
-          await handleSaveVideoWithTranscript(
-            foundVideo, 
-            transcript,
-            language,
-            is_generated,
-            [transcript] // Use raw transcript instead of formatted bullet points
-          );
-          
-          toastSuccess("Transcript saved successfully!");
-        } catch (saveError) {
-          console.error("Error saving transcript:", saveError);
-          toastError("Transcript fetched but could not be saved. Try again.");
-        }
+        return; // Success, exit function
       } else {
-        toastError("Received invalid transcript data or the video has no transcript");
+        throw new Error(data.message || "Failed to fetch transcript");
       }
     } catch (error: any) {
       console.error("Error fetching transcript:", error);
-      
-      // Provide better error messages based on error type
-      let errorMsg = error instanceof Error ? error.message : "Failed to fetch transcript";
-      
-      if (error.code === 'ERR_NETWORK') {
-        errorMsg = "Network error: Check your connection and make sure the API server is running.";
-      } else if (error.response?.status === 500) {
-        errorMsg = "Server error: The transcript service is experiencing technical issues.";
-      } else if (error.response?.status === 404) {
-        errorMsg = "No transcript found: This video might not have captions available.";
-      }
-      
-      toastError(errorMsg);
+      toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
     } finally {
       setLoadingTranscriptIds(prev => {
         const newSet = new Set(prev);
@@ -1842,7 +1713,7 @@ const ScraperPage: React.FC = () => {
     }
   };
 
-  // Update: modified to preserve the raw transcript
+  // Update: Instead of handling youtubeTranscript, create a direct method for saving with transcript
   const handleSaveVideoWithTranscript = async (
     video: YouTubeVideo, 
     transcript: string, 

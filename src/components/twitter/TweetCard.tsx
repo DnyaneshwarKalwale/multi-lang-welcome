@@ -87,7 +87,7 @@ const TweetCard: React.FC<TweetCardProps> = ({ tweet, isSelected, onSelectToggle
     const text = fullTweet?.full_text || tweet.full_text || tweet.text || '';
     return detectTruncatedText(text) || tweet.is_long === true;
   }, [tweet, fullTweet]);
-
+  
   // Handle showing more/less content
   const handleShowMoreClick = async () => {
     // Toggle expanded state
@@ -153,7 +153,7 @@ const TweetCard: React.FC<TweetCardProps> = ({ tweet, isSelected, onSelectToggle
     }
     
     console.log(`Tweet ${tweet.id} text: original=${tweet.text?.length || 0}, full_text=${tweet.full_text?.length || 0}, using=${fullText.length}, expanded=${showMore}`);
-    
+
     // If tweet is expanded, show the full text
     if (showMore) {
       return fullText;
