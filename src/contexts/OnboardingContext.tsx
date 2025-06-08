@@ -128,7 +128,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
           if (!token) return;
           
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
           const response = await axios.get(`${baseApiUrl}/onboarding`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -179,7 +179,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       if (!token) return;
       
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       // Build the onboarding data object
       const onboardingData = {
@@ -291,7 +291,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
           if (!token) return;
           
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
           
           await axios.patch(`${baseApiUrl}/users/me`, { onboardingCompleted: true }, {
             headers: { Authorization: `Bearer ${token}` }

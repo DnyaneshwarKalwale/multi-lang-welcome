@@ -50,7 +50,7 @@ const InvitationCheckRoute = () => {
           return;
         }
 
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
         
         // Do this check in the background without blocking the UI
         axios.get(`${baseApiUrl}/teams/invitations`, {

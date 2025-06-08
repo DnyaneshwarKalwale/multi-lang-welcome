@@ -23,7 +23,7 @@ export default function TeamInvitationNotification() {
       if (!token) return;
       
       console.log('Checking for notification invitations');
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       console.log(`Using API URL: ${baseApiUrl}`);
       
       try {
@@ -92,7 +92,7 @@ export default function TeamInvitationNotification() {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       try {
         const response = await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/accept`, {}, {
@@ -127,7 +127,7 @@ export default function TeamInvitationNotification() {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       try {
         await axios.post(`${baseApiUrl}/teams/invitations/${invitationId}/decline`, {}, {
