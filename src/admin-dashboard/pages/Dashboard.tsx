@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/dashboard`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/dashboard`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`

@@ -24,7 +24,7 @@ interface ApiFont {
 type FontLoadedListener = (font: CustomFont) => void;
 
 // API base URL - make it configurable for different environments
-const API_BASE_URL = (window as any)._env_?.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (window as any)._env_?.NEXT_PUBLIC_API_URL || 'https://api.brandout.ai';
 
 export class FontManager {
   private static instance: FontManager;

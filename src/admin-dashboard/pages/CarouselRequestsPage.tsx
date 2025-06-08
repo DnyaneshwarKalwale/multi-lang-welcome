@@ -449,7 +449,7 @@ const CarouselRequestsPage: React.FC = () => {
     
     // If the URL is a relative path (local storage), prefix with API URL
     if (url.startsWith('uploads/') || url.startsWith('/uploads/')) {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
     }
     
