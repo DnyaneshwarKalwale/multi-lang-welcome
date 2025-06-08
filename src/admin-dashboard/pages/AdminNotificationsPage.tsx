@@ -135,7 +135,7 @@ const apiHelpers = {
     }
     
     // Get the base URL without potential trailing slash
-    const baseUrl = (import.meta.env.VITE_API_URL || 'https://api.brandout.ai').replace(/\/$/, '');
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
     
     // If baseUrl already ends with /api, remove /api from the endpoint
     if (baseUrl.endsWith('/api')) {

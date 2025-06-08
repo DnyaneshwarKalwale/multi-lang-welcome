@@ -51,7 +51,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CarouselPreview } from '@/components/CarouselPreview';
 
 // API base URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Server base URL for static files (remove /api from API_URL)
 const SERVER_BASE_URL = API_URL.endsWith('/api') 
   ? API_URL.substring(0, API_URL.length - 4) 
@@ -401,7 +401,7 @@ const MyCarouselsPage: React.FC = () => {
     }
     
     // The base URL for API endpoints
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
     // For uploads, we need to access them at the server root level, not through /api
     const uploadsBaseUrl = baseUrl.endsWith('/api') 
