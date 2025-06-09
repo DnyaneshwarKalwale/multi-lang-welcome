@@ -1244,7 +1244,7 @@ const ScraperPage: React.FC = () => {
     
     try {
       // Use the backend API instead of frontend API calls
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/user/${username}`
         : `${baseUrl}/api/twitter/user/${username}`;
@@ -1512,7 +1512,7 @@ const ScraperPage: React.FC = () => {
       
       // Save to backend first - this should be the primary storage
       try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-videos`
           : `${baseUrl}/api/youtube/save-videos`;
@@ -1576,7 +1576,7 @@ const ScraperPage: React.FC = () => {
       // Try creating carousels only if backend save was successful
       if (backendSaveSuccess) {
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           const carouselApiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube-carousels` // Use the new non-protected endpoint
             : `${baseUrl}/api/youtube-carousels`; // Use the new non-protected endpoint
@@ -1616,7 +1616,7 @@ const ScraperPage: React.FC = () => {
     try {
       const prompt = youtubeChannelResult?.videos.length ? youtubeChannelResult.videos[0].title : linkedinContent.substring(0, 200);
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/cloudinary/generate`
         : `${baseUrl}/api/cloudinary/generate`;
@@ -1667,7 +1667,7 @@ const ScraperPage: React.FC = () => {
       setCurrentVideoId(videoId);
       setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/youtube/transcript` 
         : `${baseUrl}/api/youtube/transcript`;
@@ -1783,7 +1783,7 @@ const ScraperPage: React.FC = () => {
       // Now try to save to backend
       let backendSaveSuccess = false;
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
           : `${baseUrl}/api/youtube/save-video-transcript`;
@@ -2372,9 +2372,9 @@ const ScraperPage: React.FC = () => {
                   {savedTwitterPosts.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No saved Twitter posts</p>
                   ) : (
-                    <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {savedTwitterPosts.map((tweet) => (
-                        <div key={tweet.id} className="break-inside-avoid mb-6 w-full">
+                        <div key={tweet.id} className="w-full">
                           <TweetCard
                             tweet={tweet}
                             isSelected={false}
@@ -3043,23 +3043,26 @@ const ScraperPage: React.FC = () => {
                     <div className="text-sm text-gray-800 leading-relaxed">
                       {post.content.length > 300 ? (
                         <div>
+                          <div id={`truncated-content-${post.id}`}>
                           <p className="whitespace-pre-line break-words overflow-hidden">
-                            {post.content.substring(0, 300)}...
+                              {post.content.substring(0, 300)}...
                           </p>
                           <Button 
                             variant="link" 
                             size="sm" 
                             className="p-0 h-auto text-xs text-gray-500 hover:text-blue-600 mt-1"
                             onClick={() => {
-                              // Toggle full content view
-                              const element = document.getElementById(`full-content-${post.id}`);
+                                const truncatedElement = document.getElementById(`truncated-content-${post.id}`);
+                                const fullElement = document.getElementById(`full-content-${post.id}`);
                               const button = document.getElementById(`see-more-btn-${post.id}`);
-                              if (element && button) {
-                                if (element.style.display === 'none' || !element.style.display) {
-                                  element.style.display = 'block';
+                                if (truncatedElement && fullElement && button) {
+                                  if (fullElement.style.display === 'none' || !fullElement.style.display) {
+                                    truncatedElement.style.display = 'none';
+                                    fullElement.style.display = 'block';
                                   button.textContent = 'see less';
                                 } else {
-                                  element.style.display = 'none';
+                                    truncatedElement.style.display = 'block';
+                                    fullElement.style.display = 'none';
                                   button.textContent = 'see more';
                                 }
                               }
@@ -3067,6 +3070,7 @@ const ScraperPage: React.FC = () => {
                           >
                             <span id={`see-more-btn-${post.id}`}>see more</span>
                           </Button>
+                          </div>
                           <div id={`full-content-${post.id}`} style={{ display: 'none' }}>
                             <p className="whitespace-pre-line break-words overflow-hidden mt-2">
                               {post.content}

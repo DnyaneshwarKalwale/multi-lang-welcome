@@ -5,10 +5,20 @@
 
 // Cloudinary configuration
 const CLOUDINARY_CONFIG = {
-  cloudName: import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv',
+  cloudName: import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbvs',
   uploadPreset: import.meta.env.VITE_UPLOAD_PRESET || 'eventapp',
   folder: 'gallery'
 };
+
+// Debug log the configuration
+console.log('Cloudinary Config:', {
+  cloudName: CLOUDINARY_CONFIG.cloudName,
+  uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+  usingEnvVars: {
+    cloudName: !!import.meta.env.VITE_CLOUD_NAME,
+    uploadPreset: !!import.meta.env.VITE_UPLOAD_PRESET
+  }
+});
 
 // Local storage key for gallery images
 const GALLERY_STORAGE_KEY = 'cloudinary_gallery_images';
@@ -28,7 +38,7 @@ export interface CloudinaryImage {
 }
 
 /**
- * Upload image directly to Cloudinary
+ * Upload image through our secure backend endpoint
  * @param file File object to upload
  * @param options Additional options (folder, tags, etc)
  * @returns Promise with upload result
@@ -46,26 +56,24 @@ export const uploadToCloudinaryDirect = async (
     // Create form data
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
-    formData.append('folder', options.folder || CLOUDINARY_CONFIG.folder);
     
-    // Add optional parameters
-    if (options.tags && options.tags.length > 0) {
-      formData.append('tags', options.tags.join(','));
-    }
-    
-    // Upload to Cloudinary directly
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
+    // Get the API URL from environment or use default
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const apiUrl = baseUrl.endsWith('/api') 
+      ? `${baseUrl}/upload/upload`
+      : `${baseUrl}/api/upload/upload`;
+
+    // Upload through our backend
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      body: formData,
+      // Include credentials if needed
+      credentials: 'include'
+    });
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to upload image');
+      throw new Error(errorData.error || 'Failed to upload image');
     }
     
     const data = await response.json();

@@ -64,7 +64,7 @@ const UserLimitsPage: React.FC = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/user-limits/all`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/user-limits/all`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -150,7 +150,7 @@ const UserLimitsPage: React.FC = () => {
       }
       
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/user-limits/${userId}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/user-limits/${userId}`,
         { 
           limit: limitValue,
           planId: planId,
@@ -266,7 +266,7 @@ const UserLimitsPage: React.FC = () => {
   const handleResetUsage = async (userId: string) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/user-limits/${userId}/reset`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/user-limits/${userId}/reset`,
         {},
         {
           headers: {

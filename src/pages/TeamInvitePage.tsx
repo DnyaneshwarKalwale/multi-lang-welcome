@@ -60,7 +60,7 @@ export default function TeamInvitePage() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+        const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const response = await axios.get(
           `${baseApiUrl}/teams`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -137,7 +137,7 @@ export default function TeamInvitePage() {
         return;
       }
 
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       
       // First, create the team if it doesn't exist
       let currentTeamId = teamId;

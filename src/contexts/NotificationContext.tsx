@@ -84,7 +84,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/notifications?page=${page}&limit=${limit}`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/notifications?page=${page}&limit=${limit}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -131,7 +131,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       
       // Make the API call to persist the change
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/notifications/${id}/read`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/notifications/${id}/read`,
         {},
         {
           headers: {
@@ -171,7 +171,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/notifications/read-all`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/notifications/read-all`,
         {},
         {
           headers: {
@@ -213,7 +213,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/notifications/${id}`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/notifications/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

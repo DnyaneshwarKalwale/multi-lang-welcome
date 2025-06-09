@@ -386,7 +386,7 @@ const RequestCarouselPage: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/stripe/subscription`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/stripe/subscription`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -441,7 +441,7 @@ const RequestCarouselPage: React.FC = () => {
         
         // Try to load videos from backend first
         try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube/saved/${user?.id || 'anonymous'}`
             : `${baseUrl}/api/youtube/saved/${user?.id || 'anonymous'}`;
@@ -593,7 +593,7 @@ const RequestCarouselPage: React.FC = () => {
 
     try {
       console.log('Fetching user limit for user:', user.id);
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const limitResponse = await axios.get(`${baseUrl}/user-limits/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -805,7 +805,7 @@ const RequestCarouselPage: React.FC = () => {
       let transcriptData = null;
       let primaryError = null;
       let fallbackError = null;
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
       // Try the primary method first (yt-dlp), which tends to be more reliable
       const ytdlpApiUrl = baseUrl.endsWith('/api')
@@ -1049,7 +1049,7 @@ const RequestCarouselPage: React.FC = () => {
       // Now try to save to backend with retry logic
       const saveToBackend = async (retryCount = 0, maxRetries = 2) => {
         try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
           : `${baseUrl}/api/youtube/save-video-transcript`;
@@ -1161,25 +1161,69 @@ const RequestCarouselPage: React.FC = () => {
 
   // Add a new useEffect to load saved content on component mount
   useEffect(() => {
-    // Load saved AI-generated content from localStorage on mount
-    const savedContent = localStorage.getItem('ai_generated_content');
-    const savedTimestamp = localStorage.getItem('ai_generated_content_timestamp');
-    const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
-    
-    if (savedContent) {
-      setGeneratedContent(savedContent);
-      
-      // If we have a saved video ID and it matches the current selected video, use the saved content
-      if (savedVideoId && selectedVideo?.id === savedVideoId) {
-        setPreviewContent(savedContent);
+    const loadInitialContent = async () => {
+      try {
+        // Load content from backend first
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents`
+          : `${baseUrl}/api/carousel-contents`;
+
+        const response = await axios.get(apiUrl, {
+          params: { userId: user?.id || 'anonymous' }
+        });
+
+        if (response.data.success && Array.isArray(response.data.data)) {
+          // Set the contents from backend
+          setSavedContents(response.data.data);
+          
+          // Update localStorage with backend data
+          localStorage.setItem('savedLinkedInContents', JSON.stringify(response.data.data));
+          
+          // If we have a video ID in localStorage, try to find its content
+          const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
+          if (savedVideoId) {
+            const videoContent = response.data.data.find(
+              content => content.videoId === savedVideoId
+            );
+            if (videoContent) {
+              setGeneratedContent(videoContent.content);
+              setPreviewContent(videoContent.content);
+              setPreviewTitle(videoContent.title);
+              setPreviewType(videoContent.type);
+            }
+          }
+        }
+      } catch (backendError) {
+        console.error('Error loading content from backend:', backendError);
+        
+        // Fall back to localStorage
+        const savedContent = localStorage.getItem('ai_generated_content');
+        const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
+        
+        if (savedContent && savedVideoId) {
+          setGeneratedContent(savedContent);
+          if (selectedVideo?.id === savedVideoId) {
+            setPreviewContent(savedContent);
+          }
+        }
+        
+        // Also try to load saved contents from localStorage
+        const localContentJSON = localStorage.getItem('savedLinkedInContents');
+        if (localContentJSON) {
+          try {
+            const localContents = JSON.parse(localContentJSON);
+            setSavedContents(localContents);
+          } catch (parseError) {
+            console.error('Error parsing local contents:', parseError);
+            setSavedContents([]);
+          }
+        }
       }
-      
-      console.log('Loaded saved AI-generated content from', savedTimestamp);
-      
-      // Also fetch from backend to see if there are newer versions
-      loadSavedContents();
-    }
-  }, []);
+    };
+
+    loadInitialContent();
+  }, [user?.id, selectedVideo]);
 
   // Update the part in handleGenerateContent where content is set to save to localStorage
   const handleGenerateContent = async (type: string) => {
@@ -1226,7 +1270,7 @@ const RequestCarouselPage: React.FC = () => {
     
     try {
       // Call the backend API to generate content
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/generate-content`
         : `${baseUrl}/api/generate-content`;
@@ -1445,14 +1489,18 @@ const RequestCarouselPage: React.FC = () => {
               // Standard upload for smaller files
               const formData = new FormData();
               formData.append('file', file);
-              formData.append('upload_preset', import.meta.env.VITE_UPLOAD_PRESET || 'eventapp');
-              formData.append('cloud_name', import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv');
               
               console.log(`Uploading file: ${file.name}, size: ${file.size} bytes`);
               
-              fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv'}/auto/upload`, {
+              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+              const apiUrl = baseUrl.endsWith('/api') 
+                ? `${baseUrl}/upload/upload`
+                : `${baseUrl}/api/upload/upload`;
+                
+              fetch(apiUrl, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'include'
               })
               .then(response => {
                 if (!response.ok) {
@@ -1503,7 +1551,7 @@ const RequestCarouselPage: React.FC = () => {
       };
       
       // VITE_API_URL already includes /api
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       // Use the original endpoint since the new one doesn't exist yet
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/carousels/submit-request` 
@@ -1600,11 +1648,10 @@ const RequestCarouselPage: React.FC = () => {
   // Helper function for chunked upload of large files
   const handleLargeFileUpload = (file: File, resolve: (url: string) => void, reject: (error: Error) => void) => {
     const CHUNK_SIZE = 10485760; // 10MB chunks
-    const cloudName = import.meta.env.VITE_CLOUD_NAME || 'dexlsqpbv';
-    const uploadPreset = import.meta.env.VITE_UPLOAD_PRESET || 'eventapp';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
-    // Generate a unique public ID for this file
-    const publicId = `large_${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    // Generate a unique ID for this file
+    const fileId = `large_${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     let bytesUploaded = 0;
     let totalChunks = Math.ceil(file.size / CHUNK_SIZE);
     let chunkIndex = 0;
@@ -1621,23 +1668,26 @@ const RequestCarouselPage: React.FC = () => {
       
       const formData = new FormData();
       formData.append('file', chunk);
-      formData.append('cloud_name', cloudName);
-      formData.append('upload_preset', uploadPreset);
-      
-      // For first chunk, initialize the upload
-      if (chunkIndex === 0) {
-        formData.append('public_id', publicId);
-      } else {
-        // For subsequent chunks, include the upload ID
-        formData.append('public_id', publicId);
-        formData.append('resource_type', 'raw');
-      }
+      formData.append('fileId', fileId);
+      formData.append('chunkIndex', chunkIndex.toString());
+      formData.append('totalChunks', totalChunks.toString());
+      formData.append('originalName', file.name);
       
       try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`, {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const chunkApiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/upload/chunk`
+          : `${baseUrl}/api/upload/chunk`;
+          
+        const response = await fetch(chunkApiUrl, {
           method: 'POST',
-          body: formData
+          body: formData,
+          credentials: 'include'
         });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to upload chunk ${chunkIndex + 1}/${totalChunks}`);
+        }
         
         const result = await response.json();
         bytesUploaded += chunk.size;
@@ -1651,9 +1701,27 @@ const RequestCarouselPage: React.FC = () => {
           chunkIndex++;
           await uploadChunk();
         } else {
-          // All chunks uploaded
+          // All chunks uploaded, get the final URL
+          const finalizeApiUrl = baseUrl.endsWith('/api') 
+            ? `${baseUrl}/upload/finalize`
+            : `${baseUrl}/api/upload/finalize`;
+            
+          const finalizeResponse = await fetch(finalizeApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ fileId }),
+            credentials: 'include'
+          });
+          
+          if (!finalizeResponse.ok) {
+            throw new Error('Failed to finalize chunked upload');
+          }
+          
+          const finalResult = await finalizeResponse.json();
           console.log(`File ${file.name} uploaded successfully`);
-          resolve(result.secure_url);
+          resolve(finalResult.secure_url);
         }
       } catch (error) {
         console.error('Error uploading chunk:', error);
@@ -1902,7 +1970,7 @@ const RequestCarouselPage: React.FC = () => {
       
       // Delete from backend
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/delete-video`
           : `${baseUrl}/api/youtube/delete-video`;
@@ -1999,8 +2067,8 @@ const RequestCarouselPage: React.FC = () => {
         contentData.videoTitle = selectedVideo.title;
       }
       
-      // Save to backend API
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      // Save to backend API first
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/carousel-contents`
         : `${baseUrl}/api/carousel-contents`;
@@ -2016,49 +2084,49 @@ const RequestCarouselPage: React.FC = () => {
         throw new Error('Failed to save content to backend');
       }
       
-      // Save to localStorage only after successful backend save
+      // After successful backend save, update localStorage
       localStorage.setItem('ai_generated_content', content);
       localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
       if (selectedVideo) {
         localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
       }
       
-      // Immediately update the savedContents state with the new content
-      setSavedContents(prevContents => {
-        // Check if content with same ID already exists
-        const existingIndex = prevContents.findIndex(c => c.id === contentId);
-        if (existingIndex !== -1) {
-          // Update existing content
-          const updatedContents = [...prevContents];
-          updatedContents[existingIndex] = contentData;
-          return updatedContents;
-        } else {
-          // Add new content at the beginning
-          return [contentData, ...prevContents];
-        }
-      });
-      
-      // Also save to localStorage for persistence
-      const savedContentsStr = localStorage.getItem('savedLinkedInContents');
-      const savedContents = savedContentsStr ? JSON.parse(savedContentsStr) : [];
-      const updatedSavedContents = [contentData, ...savedContents];
-      localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedSavedContents));
-      
-      toast({
-        title: "Content saved",
-        description: "Your content has been saved successfully",
-      });
-      
-      // Refresh the list of saved contents from backend
+      // Update the local savedContents list
       await loadSavedContents();
       
-    } catch (error) {
-      console.error("Error saving content:", error);
       toast({
-        title: "Error",
-        description: "Failed to save content. Please try again.",
-        variant: "destructive"
+        title: "Content saved successfully",
+        description: "Your content has been saved to the cloud",
       });
+      
+      setIsSavingContent(false);
+      setShowContentGenerator(false);
+      
+    } catch (error) {
+      console.error('Error saving content:', error);
+      
+      // If backend save fails, try to save to localStorage as backup
+      try {
+        const content = generatedContent || previewContent;
+        localStorage.setItem('ai_generated_content', content);
+        localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
+        if (selectedVideo) {
+          localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
+        }
+        
+        toast({
+          title: "Content saved locally",
+          description: "Could not save to cloud, but content is saved on your device",
+          variant: "warning"
+        });
+      } catch (localStorageError) {
+        console.error('Error saving to localStorage:', localStorageError);
+        toast({
+          title: "Failed to save content",
+          description: "Please try again or check your connection",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSavingContent(false);
     }
@@ -2068,41 +2136,64 @@ const RequestCarouselPage: React.FC = () => {
   const loadSavedContents = async () => {
     try {
       // Try to load from backend first
-      let backendContents: SavedContent[] = [];
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/carousel-contents`
-          : `${baseUrl}/api/carousel-contents`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/carousel-contents`
+        : `${baseUrl}/api/carousel-contents`;
 
-        const response = await axios.get(apiUrl, {
-          params: { userId: user?.id || 'anonymous' }
-        });
+      const response = await axios.get(apiUrl, {
+        params: { userId: user?.id || 'anonymous' }
+      });
 
-        if (response.data.success && Array.isArray(response.data.data)) {
-          backendContents = response.data.data;
-          // Set the contents from backend directly
-          setSavedContents(backendContents);
-          // Also update localStorage with backend data
-          localStorage.setItem('savedLinkedInContents', JSON.stringify(backendContents));
-          return; // Exit early if we got data from backend
+      if (response.data.success && Array.isArray(response.data.data)) {
+        // Set the contents from backend
+        setSavedContents(response.data.data);
+        
+        // Also update localStorage with backend data for offline access
+        localStorage.setItem('savedLinkedInContents', JSON.stringify(response.data.data));
+        
+        // If we have a currently selected video, check for its content
+        if (selectedVideo?.id) {
+          const videoContent = response.data.data.find(
+            content => content.videoId === selectedVideo.id
+          );
+          if (videoContent) {
+            setGeneratedContent(videoContent.content);
+            setPreviewContent(videoContent.content);
+            setPreviewTitle(videoContent.title);
+            setPreviewType(videoContent.type);
+          }
         }
-      } catch (backendError) {
-        console.error('Error loading content from backend:', backendError);
-        // Will fall back to localStorage
+        return;
       }
-
-      // Only load from localStorage if backend failed
-      const localContentJSON = localStorage.getItem('savedLinkedInContents');
-      if (localContentJSON) {
-        const localContents = JSON.parse(localContentJSON);
-        setSavedContents(localContents);
-      } else {
+    } catch (backendError) {
+      console.error('Error loading content from backend:', backendError);
+      // Fall back to localStorage
+      try {
+        const localContentJSON = localStorage.getItem('savedLinkedInContents');
+        if (localContentJSON) {
+          const localContents = JSON.parse(localContentJSON);
+          setSavedContents(localContents);
+          
+          // If we have a currently selected video, check for its content
+          if (selectedVideo?.id) {
+            const videoContent = localContents.find(
+              content => content.videoId === selectedVideo.id
+            );
+            if (videoContent) {
+              setGeneratedContent(videoContent.content);
+              setPreviewContent(videoContent.content);
+              setPreviewTitle(videoContent.title);
+              setPreviewType(videoContent.type);
+            }
+          }
+        } else {
+          setSavedContents([]);
+        }
+      } catch (localStorageError) {
+        console.error('Error loading from localStorage:', localStorageError);
         setSavedContents([]);
       }
-    } catch (error) {
-      console.error('Error loading saved contents:', error);
-      setSavedContents([]);
     }
   };
 
@@ -2112,7 +2203,7 @@ const RequestCarouselPage: React.FC = () => {
       // Try to delete from backend first
       let backendDeleteSuccess = false;
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents/${id}`
           : `${baseUrl}/api/carousel-contents/${id}`;
@@ -2284,7 +2375,7 @@ const RequestCarouselPage: React.FC = () => {
       };
       
       // Save to backend API
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/carousel-contents`
         : `${baseUrl}/api/carousel-contents`;
@@ -2550,56 +2641,104 @@ const RequestCarouselPage: React.FC = () => {
                         </div>
                       )}
                       
-                      {/* Pagination Controls */}
-                      {filteredVideos.length > videosPerPage && (
-                        <Pagination className="mt-3 sm:mt-4">
-                          <PaginationContent className="h-8 sm:h-10">
-                            <PaginationItem>
-                              <PaginationPrevious 
-                                onClick={prevPage} 
-                                className={`${currentPage === 1 ? "pointer-events-none opacity-50" : ""} h-7 sm:h-9 text-xs sm:text-sm`}
-                              />
-                            </PaginationItem>
-                            
-                            {/* Show limited page numbers on mobile */}
-                            {Array.from({ length: totalPages }, (_, i) => i + 1)
-                              .filter(page => {
-                                // On mobile, show only current page and immediate neighbors
-                                const isMobile = window.innerWidth < 640;
-                                if (isMobile) {
-                                  return page === 1 || page === totalPages || 
-                                    Math.abs(page - currentPage) <= 1;
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-center mt-4 gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => prevPage()}
+                            disabled={currentPage === 1}
+                            className="h-8 px-2"
+                          >
+                            Previous
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {(() => {
+                              const pages = [];
+                              const maxVisible = 5;
+                              const halfVisible = Math.floor(maxVisible / 2);
+                              
+                              let startPage = Math.max(1, currentPage - halfVisible);
+                              let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                              
+                              // Adjust start if we're near the end
+                              if (endPage - startPage + 1 < maxVisible) {
+                                startPage = Math.max(1, endPage - maxVisible + 1);
+                              }
+                              
+                              // Add first page and ellipsis if needed
+                              if (startPage > 1) {
+                                pages.push(
+                                  <Button
+                                    key="1"
+                                    variant={currentPage === 1 ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => goToPage(1)}
+                                    className="h-8 w-8 p-0 text-xs"
+                                  >
+                                    1
+                                  </Button>
+                                );
+                                if (startPage > 2) {
+                                  pages.push(
+                                    <span key="start-ellipsis" className="px-1">
+                                      ...
+                                    </span>
+                                  );
                                 }
-                                return true;
-                              })
-                              .map((page, idx, arr) => (
-                                <React.Fragment key={page}>
-                                  {/* Add ellipsis if pages are skipped */}
-                                  {idx > 0 && arr[idx-1] !== page-1 && (
-                                    <PaginationItem className="h-7 sm:h-9">
-                                      <span className="px-1.5 sm:px-2.5">...</span>
-                                    </PaginationItem>
-                                  )}
-                                  <PaginationItem>
-                                    <PaginationLink 
-                                      isActive={page === currentPage}
-                                      onClick={() => goToPage(page)}
-                                      className="h-7 sm:h-9 w-7 sm:w-9 text-xs sm:text-sm"
-                                    >
-                                      {page}
-                                    </PaginationLink>
-                                  </PaginationItem>
-                                </React.Fragment>
-                              ))}
-                            
-                            <PaginationItem>
-                              <PaginationNext 
-                                onClick={nextPage}
-                                className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : ""} h-7 sm:h-9 text-xs sm:text-sm`}
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
+                              }
+                              
+                              // Add visible page numbers
+                              for (let i = startPage; i <= endPage; i++) {
+                                pages.push(
+                                  <Button
+                                    key={i}
+                                    variant={currentPage === i ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => goToPage(i)}
+                                    className="h-8 w-8 p-0 text-xs"
+                                  >
+                                    {i}
+                                  </Button>
+                                );
+                              }
+                              
+                              // Add last page and ellipsis if needed
+                              if (endPage < totalPages) {
+                                if (endPage < totalPages - 1) {
+                                  pages.push(
+                                    <span key="end-ellipsis" className="px-1">
+                                      ...
+                                    </span>
+                                  );
+                                }
+                                pages.push(
+                                  <Button
+                                    key={totalPages}
+                                    variant={currentPage === totalPages ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => goToPage(totalPages)}
+                                    className="h-8 w-8 p-0 text-xs"
+                                  >
+                                    {totalPages}
+                                  </Button>
+                                );
+                              }
+                              
+                              return pages;
+                            })()}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => nextPage()}
+                            disabled={currentPage === totalPages}
+                            className="h-8 px-2"
+                          >
+                            Next
+                          </Button>
+                        </div>
                       )}
                       
                       {showTranscript && selectedVideo && (
