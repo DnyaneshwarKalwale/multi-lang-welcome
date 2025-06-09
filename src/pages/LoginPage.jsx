@@ -27,7 +27,7 @@
               className="social-auth-button linkedin"
               onClick={() => {
                 setLoading(true);
-                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
                 const loginUrl = baseUrl.endsWith('/api')
                   ? `${baseUrl}/auth/linkedin-direct`
                   : `${baseUrl}/api/auth/linkedin-direct`;
