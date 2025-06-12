@@ -92,7 +92,27 @@ export const uploadToCloudinaryDirect = async (
       height: data.height
     };
     
-    // Save to local storage
+    // Save to both database and local storage
+    try {
+      // Save to database
+      const dbApiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/gallery/save`
+        : `${baseUrl}/api/gallery/save`;
+        
+      await fetch(dbApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(result)
+      });
+    } catch (dbError) {
+      console.error('Error saving to database:', dbError);
+      // Continue with localStorage save even if database save fails
+    }
+    
+    // Save to local storage as backup
     saveImageToGallery(result);
     
     return result;
@@ -134,7 +154,29 @@ export const saveImageToGallery = (image: CloudinaryImage): void => {
  * Get all images from gallery
  * @returns Array of gallery images
  */
-export const getGalleryImages = (): CloudinaryImage[] => {
+export const getGalleryImages = async (): Promise<CloudinaryImage[]> => {
+  try {
+    // Try to get images from database first
+    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiUrl = baseUrl.endsWith('/api') 
+      ? `${baseUrl}/gallery/images`
+      : `${baseUrl}/api/gallery/images`;
+      
+    const response = await fetch(apiUrl, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const dbImages = await response.json();
+      // Update localStorage with database images
+      localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(dbImages));
+      return dbImages;
+    }
+  } catch (dbError) {
+    console.error('Error fetching from database:', dbError);
+  }
+  
+  // Fall back to localStorage if database fetch fails
   try {
     const storedImages = localStorage.getItem(GALLERY_STORAGE_KEY);
     return storedImages ? JSON.parse(storedImages) : [];
@@ -148,7 +190,23 @@ export const getGalleryImages = (): CloudinaryImage[] => {
  * Remove image from gallery
  * @param publicId Public ID of image to remove
  */
-export const removeImageFromGallery = (publicId: string): void => {
+export const removeImageFromGallery = async (publicId: string): Promise<void> => {
+  try {
+    // Remove from database first
+    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiUrl = baseUrl.endsWith('/api') 
+      ? `${baseUrl}/gallery/delete/${publicId}`
+      : `${baseUrl}/api/gallery/delete/${publicId}`;
+      
+    await fetch(apiUrl, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  } catch (dbError) {
+    console.error('Error removing from database:', dbError);
+  }
+  
+  // Remove from localStorage
   try {
     const storedImages = localStorage.getItem(GALLERY_STORAGE_KEY);
     if (!storedImages) return;
@@ -167,9 +225,9 @@ export const removeImageFromGallery = (publicId: string): void => {
  * @param publicId Public ID of image
  * @returns Image or null if not found
  */
-export const getImageFromGallery = (publicId: string): CloudinaryImage | null => {
+export const getImageFromGallery = async (publicId: string): Promise<CloudinaryImage | null> => {
   try {
-    const images = getGalleryImages();
+    const images = await getGalleryImages();
     return images.find(img => img.public_id === publicId) || null;
   } catch (error) {
     console.error('Error getting image from gallery:', error);

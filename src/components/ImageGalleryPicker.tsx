@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Folder, Upload, Image as ImageIcon, Loader2, Check, X } from 'lucide-react';
 import ImageUploader from '@/components/ImageUploader';
 import { getGalleryImages, CloudinaryImage } from '@/utils/cloudinaryDirectUpload';
+import { toast } from '@/components/ui/use-toast';
 
 interface ImageGalleryPickerProps {
   onSelectImage: (image: CloudinaryImage) => void;
@@ -61,14 +62,15 @@ const ImageGalleryPicker: React.FC<ImageGalleryPickerProps> = ({
   }, [searchQuery, images]);
   
   // Load images from gallery
-  const loadImages = () => {
+  const loadImages = async () => {
     setIsLoading(true);
     try {
-      const galleryImages = getGalleryImages();
+      const galleryImages = await getGalleryImages();
       setImages(galleryImages);
       setFilteredImages(galleryImages);
     } catch (error) {
       console.error('Error loading gallery images:', error);
+      toast.error('Failed to load images');
     } finally {
       setIsLoading(false);
     }

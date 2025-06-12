@@ -71,7 +71,7 @@ const ImageGalleryPage: React.FC = () => {
       
       // Get images from utility function
       try {
-        const cloudinaryImages = getGalleryImages();
+        const cloudinaryImages = await getGalleryImages();
         if (cloudinaryImages.length > 0) {
           const galleryImages = cloudinaryImages.map(img => ({
             id: img.id || img.public_id,
@@ -193,9 +193,9 @@ const ImageGalleryPage: React.FC = () => {
       const selectedImageObjects = images.filter(image => selectedImages.has(image.id));
       
       // Delete each image using the utility function
-      selectedImageObjects.forEach(image => {
-        removeImageFromGallery(image.public_id);
-      });
+      for (const image of selectedImageObjects) {
+        await removeImageFromGallery(image.public_id);
+      }
       
       // Update local state
       setImages(images.filter(image => !selectedImages.has(image.id)));
@@ -218,29 +218,31 @@ const ImageGalleryPage: React.FC = () => {
   };
 
   // Delete single image
-  const deleteImage = (id: string) => {
+  const deleteImage = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this image? This cannot be undone.")) {
       // Find the image to get its public_id
       const imageToDelete = images.find(img => img.id === id);
       if (!imageToDelete) return;
       
-      // Remove from state
-      setImages(images.filter(img => img.id !== id));
-      
-      // Remove from selected images if it was selected
-      if (selectedImages.has(id)) {
-        const newSelection = new Set(selectedImages);
-        newSelection.delete(id);
-        setSelectedImages(newSelection);
+      try {
+        // Remove from database and localStorage using the utility function
+        await removeImageFromGallery(imageToDelete.public_id);
+        
+        // Remove from state
+        setImages(images.filter(img => img.id !== id));
+        
+        // Remove from selected images if it was selected
+        if (selectedImages.has(id)) {
+          const newSelection = new Set(selectedImages);
+          newSelection.delete(id);
+          setSelectedImages(newSelection);
+        }
+        
+        toast.success("Image deleted successfully");
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        toast.error("Failed to delete image");
       }
-      
-      // Remove from localStorage using the utility function with public_id
-      removeImageFromGallery(imageToDelete.public_id);
-      
-      toast({
-        title: "Image deleted",
-        description: "The image has been removed from your gallery.",
-      });
     }
   };
 
