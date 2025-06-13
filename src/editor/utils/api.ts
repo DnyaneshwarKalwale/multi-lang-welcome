@@ -4,7 +4,7 @@ import { LINKEDIN_SLIDE_WIDTH, LINKEDIN_SLIDE_HEIGHT } from '../constants';
 import html2canvas from 'html2canvas';
 
 // API base URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
 
 // Function to convert Slide structure to backend format
 const convertSlideToBackendFormat = async (slide: Slide, index: number) => {

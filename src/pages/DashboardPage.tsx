@@ -328,7 +328,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLinkedInConnect = () => {
     // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
