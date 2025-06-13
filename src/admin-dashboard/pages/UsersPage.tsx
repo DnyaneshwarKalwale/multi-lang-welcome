@@ -72,7 +72,7 @@ const UsersPage: React.FC = () => {
         setLoading(true);
         // Get users from the API
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/users`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/users`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -195,7 +195,7 @@ const UsersPage: React.FC = () => {
       }
       
       await axios.delete(
-        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/users/${userId}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/users/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -224,7 +224,7 @@ const UsersPage: React.FC = () => {
   const handlePromoteToAdmin = async (userId: string) => {
     try {
       const response = await axios.patch(
-        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/users/${userId}/promote`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/users/${userId}/promote`,
         {},
         {
           headers: {
