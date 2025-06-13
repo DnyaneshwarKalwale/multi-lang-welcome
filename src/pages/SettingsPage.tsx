@@ -33,7 +33,8 @@ import {
   Loader2,
   AlertCircle,
   Download,
-  FileText
+  FileText,
+  Linkedin
 } from 'lucide-react';
 import {
   Select,
@@ -60,7 +61,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 // API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Add interface for subscription info
 interface SubscriptionInfo {
@@ -93,18 +94,30 @@ interface Invoice {
   downloadUrl: string;
 }
 
-const SettingsPage: React.FC = () => {
+// Add LinkedIn profile state and fetch logic
+interface LinkedInProfile {
+  id: string;
+  username: string;
+  name: string;
+  profileImage: string;
+  bio: string;
+  location: string;
+  url: string;
+  joinedDate: string;
+  connections: number;
+  followers: number;
+  verified: boolean;
+}
+
+const SettingsPage = () => {
   const { user, logout, updateUserProfile, fetchUser } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [linkedInStatus, setLinkedInStatus] = useState({
-    connected: !!localStorage.getItem('linkedin-login-token'),
-    lastSynced: localStorage.getItem('linkedin-last-synced') || 'never'
-  });
+  const [showLinkedInConnectDialog, setShowLinkedInConnectDialog] = useState(false);
+  const [showLinkedInDisconnectDialog, setShowLinkedInDisconnectDialog] = useState(false);
   
   // For deletion confirmation
-  const [showDeleteContentDialog, setShowDeleteContentDialog] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   
@@ -130,6 +143,15 @@ const SettingsPage: React.FC = () => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   
+  // LinkedIn status: use backend/user context, not just localStorage
+  const [linkedInStatus, setLinkedInStatus] = useState({
+    connected: !!user?.linkedinConnected
+  });
+  
+  // LinkedIn profile state and fetch logic
+  const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
+  const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
+  
   // Update profile from user data when it changes
   useEffect(() => {
     if (user) {
@@ -139,11 +161,8 @@ const SettingsPage: React.FC = () => {
         email: user.email || '',
         profilePicture: user.profilePicture || ''
       });
-      
-      // Update LinkedIn connection status
       setLinkedInStatus({
-        connected: !!localStorage.getItem('linkedin-login-token') || !!user.linkedinConnected,
-        lastSynced: localStorage.getItem('linkedin-last-synced') || 'never'
+        connected: !!user.linkedinConnected
       });
     }
   }, [user]);
@@ -219,30 +238,16 @@ const SettingsPage: React.FC = () => {
       const token = tokenManager.getToken();
       if (!token) return;
       
-      // Placeholder for API call - replace with actual implementation
-      // const response = await axios.get(`${API_URL}/payment-methods`, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
+      const response = await axios.get(`${API_URL}/payments/methods`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      // For now, using mock data
-      setPaymentMethods([
-        {
-          id: 'pm-1',
-          type: 'card',
-          lastFour: '4242',
-          expiryDate: '04/25',
-          brand: 'Visa',
-          isDefault: true
-        },
-        {
-          id: 'pm-2',
-          type: 'paypal',
-          email: user?.email || 'user@example.com',
-          isDefault: false
-        }
-      ]);
+      if (response.data.success) {
+        setPaymentMethods(response.data.data || []);
+      }
     } catch (error) {
       console.error('Error fetching payment methods:', error);
+      toast.error('Failed to load payment methods');
     }
   };
   
@@ -252,30 +257,16 @@ const SettingsPage: React.FC = () => {
       const token = tokenManager.getToken();
       if (!token) return;
       
-      // Placeholder for API call - replace with actual implementation
-      // const response = await axios.get(`${API_URL}/invoices`, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
+      const response = await axios.get(`${API_URL}/payments/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      // For now, using mock data
-      setInvoices([
-        {
-          id: 'inv-001',
-          amount: 100,
-          date: new Date('2023-10-15'),
-          status: 'paid',
-          downloadUrl: '/invoices/inv-001.pdf'
-        },
-        {
-          id: 'inv-002',
-          amount: 100,
-          date: new Date('2023-09-15'),
-          status: 'paid',
-          downloadUrl: '/invoices/inv-002.pdf'
-        }
-      ]);
+      if (response.data.success) {
+        setInvoices(response.data.data.transactions || []);
+      }
     } catch (error) {
       console.error('Error fetching invoices:', error);
+      toast.error('Failed to load billing history');
     }
   };
   
@@ -283,15 +274,20 @@ const SettingsPage: React.FC = () => {
   const handleSetDefaultPayment = async (paymentId: string) => {
     try {
       const token = tokenManager.getToken();
-      if (!token) return;
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        logout();
+        return;
+      }
       
-      // Placeholder for API call - replace with actual implementation
-      // await axios.put(
-      //   `${API_URL}/payment-methods/${paymentId}/default`,
-      //   {},
-      //   { headers: { Authorization: `Bearer ${token}` } }
-      // );
+      // Make API call to update default payment method
+      const response = await axios.put(
+        `${API_URL}/payments/methods/${paymentId}/default`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       
+      if (response.data.success) {
       // Update local state
       setPaymentMethods(methods => 
         methods.map(method => ({
@@ -301,9 +297,12 @@ const SettingsPage: React.FC = () => {
       );
       
       toast.success('Default payment method updated');
-    } catch (error) {
+      } else {
+        throw new Error(response.data.message || 'Failed to update payment method');
+      }
+    } catch (error: any) {
       console.error('Error setting default payment method:', error);
-      toast.error('Failed to update payment method');
+      toast.error(error.response?.data?.message || error.message || 'Failed to update payment method');
     }
   };
   
@@ -311,30 +310,34 @@ const SettingsPage: React.FC = () => {
   const handleDownloadInvoice = async (invoice: Invoice) => {
     try {
       const token = tokenManager.getToken();
-      if (!token) return;
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        logout();
+        return;
+      }
       
-      // Placeholder for actual download logic
-      // const response = await axios.get(
-      //   `${API_URL}/invoices/${invoice.id}/download`,
-      //   { 
-      //     headers: { Authorization: `Bearer ${token}` },
-      //     responseType: 'blob'
-      //   }
-      // );
+      const response = await axios.get(
+        `${API_URL}/payments/invoices/${invoice.id}/download`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
+        }
+      );
       
       // Create download link
-      // const url = window.URL.createObjectURL(new Blob([response.data]));
-      // const link = document.createElement('a');
-      // link.href = url;
-      // link.setAttribute('download', `invoice-${invoice.id}.pdf`);
-      // document.body.appendChild(link);
-      // link.click();
-      // link.remove();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${invoice.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
       
       toast.success('Invoice download started');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading invoice:', error);
-      toast.error('Failed to download invoice');
+      toast.error(error.response?.data?.message || error.message || 'Failed to download invoice');
     }
   };
   
@@ -342,30 +345,34 @@ const SettingsPage: React.FC = () => {
   const handleDownloadBillingHistory = async () => {
     try {
       const token = tokenManager.getToken();
-      if (!token) return;
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        logout();
+        return;
+      }
       
-      // Placeholder for actual download logic
-      // const response = await axios.get(
-      //   `${API_URL}/billing/history/download`,
-      //   { 
-      //     headers: { Authorization: `Bearer ${token}` },
-      //     responseType: 'blob'
-      //   }
-      // );
+      const response = await axios.get(
+        `${API_URL}/payments/history/download`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
+        }
+      );
       
       // Create download link
-      // const url = window.URL.createObjectURL(new Blob([response.data]));
-      // const link = document.createElement('a');
-      // link.href = url;
-      // link.setAttribute('download', 'billing-history.pdf');
-      // document.body.appendChild(link);
-      // link.click();
-      // link.remove();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `billing-history-${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
       
       toast.success('Billing history download started');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading billing history:', error);
-      toast.error('Failed to download billing history');
+      toast.error(error.response?.data?.message || error.message || 'Failed to download billing history');
     }
   };
   
@@ -429,14 +436,24 @@ const SettingsPage: React.FC = () => {
     }
   };
   
-  // Function to disconnect LinkedIn
+  // Function to disconnect LinkedIn (calls backend to revoke and clears all tokens)
   const disconnectLinkedIn = async () => {
     try {
+      setShowLinkedInDisconnectDialog(false);
+      const token = tokenManager.getToken();
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        logout();
+        return;
+      }
+      // Call backend to revoke LinkedIn
+      await axios.post(`${API_URL}/auth/linkedin/disconnect`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       // Clear LinkedIn tokens from localStorage
       localStorage.removeItem('linkedin-login-token');
       localStorage.removeItem('linkedin-refresh-token');
       localStorage.removeItem('linkedin-token-expiry');
-      
       // Update user context if needed
       if (user?.linkedinConnected) {
         updateUserProfile({
@@ -444,31 +461,26 @@ const SettingsPage: React.FC = () => {
           linkedinAccessToken: undefined
         });
       }
-      
-      // Update local state
       setLinkedInStatus({
-        connected: false,
-        lastSynced: 'never'
+        connected: false
       });
-      
-      toast.success('LinkedIn disconnected successfully');
+      toast.success('LinkedIn disconnected and permissions revoked.');
     } catch (error) {
       console.error('Error disconnecting LinkedIn:', error);
       toast.error('Failed to disconnect LinkedIn');
     }
   };
   
-  // Function to connect to LinkedIn
+  // Function to connect to LinkedIn (show warning first)
   const connectLinkedIn = () => {
+    setShowLinkedInConnectDialog(true);
+  };
+  const confirmConnectLinkedIn = () => {
+    setShowLinkedInConnectDialog(false);
     try {
-      // Get the backend URL from environment variable or fallback to Render deployed URL
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       const baseUrl = baseApiUrl.replace('/api', '');
-      
-      // Store current URL in localStorage to redirect back after LinkedIn connection
       localStorage.setItem('redirectAfterAuth', '/dashboard/settings');
-      
-      // Redirect to LinkedIn OAuth endpoint
       window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
     } catch (error) {
       console.error('Error connecting to LinkedIn:', error);
@@ -476,42 +488,10 @@ const SettingsPage: React.FC = () => {
     }
   };
   
-  // Function to delete all content
-  const deleteAllContent = async () => {
-    try {
-      setIsDeleting(true);
-      
-      // Get token
-      const token = tokenManager.getToken();
-      if (!token) {
-        toast.error('Authentication required. Please log in again.');
-        logout();
-        return;
-      }
-      
-      // Make API call to delete all content
-      await axios.delete(`${API_URL}/users/content`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      toast.success('All content deleted successfully. You have 10 days to recover it if needed.');
-      setShowDeleteContentDialog(false);
-    } catch (error: any) {
-      console.error('Error deleting content:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete content');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-  
   // Function to delete account
   const deleteAccount = async () => {
     try {
       setIsDeleting(true);
-      
-      // Get token
       const token = tokenManager.getToken();
       if (!token) {
         toast.error('Authentication required. Please log in again.');
@@ -519,97 +499,94 @@ const SettingsPage: React.FC = () => {
         return;
       }
       
-      // Make API call to delete account
-      await axios.delete(`${API_URL}/users/account`, {
+      // Only try to disconnect LinkedIn if the user is connected with LinkedIn
+      if (user?.linkedinConnected || user?.authMethod === 'linkedin') {
+        try {
+          await axios.post(`${API_URL}/auth/linkedin/disconnect`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (error) {
+          console.error('Error disconnecting LinkedIn:', error);
+          // Continue with account deletion even if LinkedIn disconnect fails
+        }
+      }
+      
+      // Call backend to delete account with auth method info
+      const response = await axios.delete(`${API_URL}/users/account`, {
         headers: {
           'Authorization': `Bearer ${token}`
+        },
+        data: {
+          authMethod: user?.authMethod // Send auth method to backend
         }
       });
       
-      toast.success('Account scheduled for deletion. You have 10 days to log in again to recover it.');
+      if (response.data.success) {
+        // Clear all local storage data
+        localStorage.clear();
+        
+        toast.success('Account scheduled for deletion. All data and logins will be removed.');
       setShowDeleteAccountDialog(false);
+        setConfirmText('');
       
-      // Log out the user
+        // Logout user
       logout();
+        
+        // Redirect to home page
+        navigate('/');
+      } else {
+        throw new Error(response.data.message || 'Failed to delete account');
+      }
     } catch (error: any) {
       console.error('Error deleting account:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete account');
+      // More specific error message based on auth method
+      if (user?.authMethod === 'google') {
+        toast.error('Unable to delete account. Please try again later.');
+      } else {
+        toast.error(error.response?.data?.message || error.message || 'Failed to delete account');
+      }
     } finally {
       setIsDeleting(false);
     }
   };
   
-  // Function to change password
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  
-  const handlePasswordChange = (field: string, value: string) => {
-    setPasswordData({
-      ...passwordData,
-      [field]: value
-    });
-  };
-  
-  const changePassword = async () => {
-    try {
-      setIsChangingPassword(true);
-      
-      // Validate passwords
-      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-        toast.error('Please fill in all password fields');
-        return;
-      }
-      
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        toast.error('New password and confirmation do not match');
-        return;
-      }
-      
-      // Get token
-      const token = tokenManager.getToken();
-      if (!token) {
-        toast.error('Authentication required. Please log in again.');
-        logout();
-        return;
-      }
-      
-      // Make API call to change password
-      await axios.put(
-        `${API_URL}/users/change-password`, 
-        {
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
-      toast.success('Password changed successfully');
-      setShowPasswordDialog(false);
-      
-      // Clear password fields
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-    } catch (error: any) {
-      console.error('Error changing password:', error);
-      toast.error(error.response?.data?.message || 'Failed to change password');
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
-  
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && tokenManager.getToken()) {
+      fetchLinkedInProfile();
+    }
+  }, [user]);
+
+  const fetchLinkedInProfile = async () => {
+    setLoadingLinkedIn(true);
+      const token = tokenManager.getToken();
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+    try {
+      // Try to fetch basic LinkedIn profile first
+      const basicProfileRes = await axios.get(`${apiBaseUrl}/linkedin/basic-profile`, { headers });
+      if (basicProfileRes.data && basicProfileRes.data.data) {
+        setLinkedInProfile(basicProfileRes.data.data);
+        setLoadingLinkedIn(false);
+        return;
+      }
+    } catch (error) {
+      // Try fallback
+      try {
+        const profileRes = await axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
+        if (profileRes.data && profileRes.data.data) {
+          setLinkedInProfile(profileRes.data.data);
+        }
+      } catch (err) {
+        setLinkedInProfile(null);
+      }
+    }
+    setLoadingLinkedIn(false);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -741,66 +718,70 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-[#0088FF] rounded-lg flex items-center justify-center">
-                        <LinkedinIcon className="text-white" size={24} />
+                        <Linkedin className="text-white" size={24} />
                       </div>
                       <div>
                         <h3 className="font-medium text-lg">LinkedIn</h3>
                         <p className="text-neutral-medium text-sm">
-                          {linkedInStatus.connected 
-                            ? `Connected • Last synced ${linkedInStatus.lastSynced}` 
-                            : 'Not connected'}
+                          {user?.authMethod === 'google' && !user?.linkedinConnected ? (
+                            'Not connected'
+                          ) : user?.authMethod === 'linkedin' || user?.linkedinConnected ? (
+                            'Connected'
+                          ) : (
+                            'Not connected'
+                          )}
                         </p>
                       </div>
                     </div>
-                    
-                    {linkedInStatus.connected ? (
-                      <Button 
-                        variant="outline" 
-                        className="border-red-200 text-red-500 hover:bg-red-50"
-                        onClick={disconnectLinkedIn}
-                      >
-                        Disconnect
-                      </Button>
-                    ) : (
+                    {user?.authMethod === 'google' && !user?.linkedinConnected ? (
                       <Button 
                         className="bg-[#0088FF] text-white hover:bg-[#0066CC]"
                         onClick={connectLinkedIn}
                       >
                         Connect
                       </Button>
-                    )}
+                    ) : user?.authMethod === 'linkedin' || user?.linkedinConnected ? (
+                      <Button 
+                        variant="outline" 
+                        className="border-red-200 text-red-500 hover:bg-red-50"
+                        onClick={() => setShowLinkedInDisconnectDialog(true)}
+                      >
+                        Disconnect
+                      </Button>
+                    ) : null}
                   </div>
-                  
-                  {linkedInStatus.connected && (
+                  {/* Show LinkedIn profile if connected */}
+                  {user?.authMethod === 'linkedin' || user?.linkedinConnected ? (
                     <div className="mt-6 space-y-2">
-                      <h4 className="text-sm font-medium">Connected to</h4>
-                      <div className="p-3 border rounded bg-white flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                      <h4 className="text-sm font-medium">Connected LinkedIn Profile</h4>
+                      <div className="p-3 border rounded bg-white flex items-center gap-3">
                           <Avatar className="w-10 h-10">
-                            {profile.profilePicture ? (
-                              <AvatarImage src={profile.profilePicture} />
+                          {linkedInProfile?.profileImage ? (
+                            <AvatarImage src={linkedInProfile.profileImage} />
                             ) : (
                             <AvatarFallback>
-                              {profile.firstName?.[0]}{profile.lastName?.[0]}
+                              {user.firstName?.[0]}{user.lastName?.[0]}
                             </AvatarFallback>
                             )}
                           </Avatar>
                           <div>
-                            <div className="font-medium">{profile.firstName} {profile.lastName}</div>
-                            <div className="text-neutral-medium text-xs">{profile.email}</div>
+                          <div className="font-medium">{linkedInProfile?.name || user.firstName + ' ' + user.lastName}</div>
+                          <div className="text-neutral-medium text-xs">{linkedInProfile?.location || 'LinkedIn User'}</div>
                           </div>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => window.open('https://www.linkedin.com/in/me', '_blank')}
+                        <a
+                          href={linkedInProfile?.url || 'https://linkedin.com'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto text-blue-600 hover:underline text-xs"
                         >
                           View Profile
-                        </Button>
+                        </a>
                       </div>
-                      <p className="text-neutral-medium text-xs mt-4">
-                        Your LinkedIn connection allows you to directly post content to your profile. You can revoke access at any time.
-                      </p>
+                    </div>
+                  ) : null}
+                  {user?.authMethod === 'google' && !user?.linkedinConnected && (
+                    <div className="mt-6 text-xs text-gray-500">
+                      Connect your LinkedIn account to publish content directly.
                     </div>
                   )}
                 </div>
@@ -819,39 +800,8 @@ const SettingsPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <h3 className="text-base font-medium mb-4">Account Security</h3>
-                  <Button 
-                    variant="outline" 
-                    className="w-full sm:w-auto mb-4"
-                    onClick={() => setShowPasswordDialog(true)}
-                  >
-                    Change Password
-                  </Button>
-                  <p className="text-neutral-medium text-sm">
-                    We recommend changing your password regularly and using a strong, unique password.
-                  </p>
-                </div>
-                
-                <Separator />
-                
-                <div>
                   <h3 className="text-base font-medium mb-4">Data & Privacy</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm">Delete all your content</p>
-                        <p className="text-neutral-medium text-xs mt-1">Remove all your posts and content. This can be recovered within 10 days.</p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-500 border-red-200 hover:bg-red-50"
-                        onClick={() => setShowDeleteContentDialog(true)}
-                      >
-                        Delete Content
-                      </Button>
-                    </div>
-                    
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm">Delete your account</p>
@@ -1038,50 +988,6 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Delete Content Confirmation Dialog */}
-      <Dialog open={showDeleteContentDialog} onOpenChange={setShowDeleteContentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-red-500">Delete All Content</DialogTitle>
-            <DialogDescription>
-              This action will delete all your posts and content. You will have 10 days to recover your data if needed.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <p className="mb-4 text-sm">To confirm, type <strong>DELETE</strong> below:</p>
-            <Input 
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="Type DELETE to confirm"
-            />
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteContentDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive"
-              disabled={confirmText !== 'DELETE' || isDeleting}
-              onClick={deleteAllContent}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 size={16} className="mr-2" />
-                  Delete All Content
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
       {/* Delete Account Confirmation Dialog */}
       <Dialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
         <DialogContent>
@@ -1133,65 +1039,34 @@ const SettingsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Change Password Dialog */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+      {/* LinkedIn Connect Warning Dialog */}
+      <Dialog open={showLinkedInConnectDialog} onOpenChange={setShowLinkedInConnectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
+            <DialogTitle>Connect LinkedIn</DialogTitle>
             <DialogDescription>
-              Update your password to maintain account security
+              You will be redirected to LinkedIn to grant permissions. Do you want to continue?
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input 
-                id="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input 
-                id="newPassword"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input 
-                id="confirmPassword"
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-              />
-            </div>
-          </div>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              disabled={isChangingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-              onClick={changePassword}
-            >
-              {isChangingPassword ? (
-                <>
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                  Changing...
-                </>
-              ) : (
-                'Change Password'
-              )}
-            </Button>
+            <Button variant="outline" onClick={() => setShowLinkedInConnectDialog(false)}>Cancel</Button>
+            <Button onClick={confirmConnectLinkedIn}>Continue</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* LinkedIn Disconnect Warning Dialog */}
+      <Dialog open={showLinkedInDisconnectDialog} onOpenChange={setShowLinkedInDisconnectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Disconnect LinkedIn</DialogTitle>
+            <DialogDescription>
+              This will revoke all LinkedIn permissions and remove all tokens. Are you sure?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLinkedInDisconnectDialog(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={disconnectLinkedIn}>Disconnect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

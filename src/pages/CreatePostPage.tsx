@@ -379,6 +379,60 @@ const CreatePostPage: React.FC = () => {
   const { clearState } = useAppState();
   const { updatePostCounts } = usePostCount();
   
+  // Change from usePersistentState to useState for content
+  const [content, setContent] = useState('');
+
+  // Clear all state when component unmounts or on navigation
+  useEffect(() => {
+    return () => {
+      // Clear localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('state:createPost.') || 
+            key === 'editingDraftId' || 
+            key === 'editingScheduledId') {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear sessionStorage
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('createPost.')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    };
+  }, []);
+
+  // Add beforeunload event listener to clear state on page refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Clear localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('state:createPost.') || 
+            key === 'editingDraftId' || 
+            key === 'editingScheduledId') {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear sessionStorage
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('createPost.')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [activeTab, setActiveTab] = useState('text');
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [newHashtag, setNewHashtag] = useState('');
+  const [postImage, setPostImage] = useState<ExtendedCloudinaryImage | null>(null);
+  
   // Add state for tracking save status
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveStatusTimeoutRef = React.useRef<number | null>(null);
@@ -408,9 +462,6 @@ const CreatePostPage: React.FC = () => {
   }, []);
   
   // Use persistent state for all form fields
-  const [content, setContent] = usePersistentState('createPost.content', '');
-  const [showSidebar, setShowSidebar] = usePersistentState('createPost.showSidebar', true);
-  const [activeTab, setActiveTab] = usePersistentState('createPost.activeTab', 'text');
   const [selectedTemplate, setSelectedTemplate] = usePersistentState<string | null>('createPost.selectedTemplate', null);
   const [sliderType, setSliderType] = usePersistentState<SliderVariant>('createPost.sliderType', 'basic');
   const [slides, setSlides] = usePersistentState<{id: string, content: string, imageUrl?: string, cloudinaryImage?: ExtendedCloudinaryImage}[]>('createPost.slides', [
@@ -419,13 +470,7 @@ const CreatePostPage: React.FC = () => {
     { id: '3', content: 'Slide 3: Key point or insight #2' },
   ]);
   
-  const [hashtags, setHashtags] = usePersistentState<string[]>('createPost.hashtags', [
-    'LinkedInTips', 'ContentCreation', 'ProfessionalDevelopment'
-  ]);
-  
-  const [newHashtag, setNewHashtag] = useState('');
   const [aiGeneratedImage, setAiGeneratedImage] = usePersistentState<string | null>('createPost.aiGeneratedImage', null);
-  const [postImage, setPostImage] = usePersistentState<ExtendedCloudinaryImage | null>('createPost.postImage', null);
   
   const [isPollActive, setIsPollActive] = usePersistentState('createPost.isPollActive', false);
   const [pollOptions, setPollOptions] = usePersistentState<string[]>('createPost.pollOptions', ['', '']);
@@ -632,7 +677,11 @@ const CreatePostPage: React.FC = () => {
   };
 
   // Handle direct image upload complete
-  const handleUploadComplete = (image: CloudinaryImage) => {
+  const handleUploadComplete = async (image: CloudinaryImage) => {
+    try {
+      // Save the image to gallery first
+      await saveImageToGallery(image);
+      
     setPostImage(image);
     
     // Add visual feedback to preview
@@ -645,7 +694,11 @@ const CreatePostPage: React.FC = () => {
     }, 100);
     
     showSaveIndicator();
-    toast.success('Image uploaded and added to your post');
+      toast.success('Image uploaded and added to your gallery');
+    } catch (error) {
+      console.error('Error saving image to gallery:', error);
+      toast.error('Failed to save image to gallery');
+    }
   };
   
   const handleAddPollOption = () => {
@@ -678,7 +731,7 @@ const CreatePostPage: React.FC = () => {
   // Function to handle LinkedIn reconnection
   const handleReconnectLinkedIn = () => {
     // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     const baseUrl = baseApiUrl.replace('/api', '');
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
@@ -1391,25 +1444,9 @@ const CreatePostPage: React.FC = () => {
   useEffect(() => {
     // Check if we have a post to create or if we're editing an existing one
     const isEditing = !!localStorage.getItem('editingDraftId') || !!localStorage.getItem('editingScheduledId');
-    
-    // Function to handle beforeunload event
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (content.trim() || slides.some(slide => slide.content.trim())) {
-        // Show a confirmation dialog if there's unsaved content
-        const confirmationMessage = 'You have unsaved changes. Are you sure you want to leave?';
-        e.returnValue = confirmationMessage;
-        return confirmationMessage;
-      }
-    };
-    
-    // Add the event listener
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      // Remove the event listener
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       
       // Clean up edit IDs if the user navigates away without saving
+    return () => {
       if (!isEditing) {
         localStorage.removeItem('editingDraftId');
         localStorage.removeItem('editingScheduledId');
@@ -1677,10 +1714,8 @@ const CreatePostPage: React.FC = () => {
         {/* Left Side - Post Editor */}
         <div>
           <Tabs defaultValue="text" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="text">Text Post</TabsTrigger>
-              <TabsTrigger value="carousel">Carousel</TabsTrigger>
-              <TabsTrigger value="document">Document</TabsTrigger>
             </TabsList>
             
             <TabsContent value="text" className="mt-4">
@@ -1698,7 +1733,23 @@ const CreatePostPage: React.FC = () => {
                       className="min-h-[200px] resize-y"
                       value={content}
                       onChange={(e) => {
-                        setContent(e.target.value);
+                        const newContent = e.target.value;
+                        setContent(newContent);
+                        
+                        // Auto-detect hashtags
+                        const hashtagRegex = /#[^\s#]+/g;
+                        const matches = newContent.match(hashtagRegex);
+                        
+                        if (matches) {
+                          const newHashtags = matches.map(tag => tag.slice(1)); // Remove # prefix
+                          // Add only new hashtags that don't exist
+                          newHashtags.forEach(tag => {
+                            if (!hashtags.includes(tag)) {
+                              setHashtags([...hashtags, tag]);
+                            }
+                          });
+                        }
+                        
                         // Add visual feedback to preview
                         const previewEl = document.querySelector('.preview-section');
                         if (previewEl) {
@@ -1715,10 +1766,14 @@ const CreatePostPage: React.FC = () => {
                           key={tag} 
                           variant="secondary" 
                           className="cursor-pointer hover:bg-neutral-light px-2 py-1 flex items-center gap-1"
-                          onClick={() => removeHashtag(tag)}
                         >
                           #{tag}
-                          <span className="text-xs ml-1">×</span>
+                          <button 
+                            className="ml-1 text-xs hover:text-red-500"
+                            onClick={() => removeHashtag(tag)}
+                          >
+                            ×
+                          </button>
                         </Badge>
                       ))}
                       
@@ -1727,11 +1782,21 @@ const CreatePostPage: React.FC = () => {
                           placeholder="Add hashtag"
                           className="w-32 h-8"
                           value={newHashtag}
-                          onChange={(e) => setNewHashtag(e.target.value)}
+                          onChange={(e) => {
+                            // Remove # if user types it
+                            setNewHashtag(e.target.value.replace('#', ''));
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
-                              addHashtag();
+                              // Split by spaces and # to handle multiple hashtags
+                              const tags = newHashtag.split(/[\s#]+/).filter(Boolean);
+                              tags.forEach(tag => {
+                                if (!hashtags.includes(tag)) {
+                                  setHashtags([...hashtags, tag]);
+                                }
+                              });
+                              setNewHashtag('');
                             }
                           }}
                         />
@@ -1739,7 +1804,16 @@ const CreatePostPage: React.FC = () => {
                           variant="outline" 
                           size="icon" 
                           className="h-8 w-8"
-                          onClick={addHashtag}
+                          onClick={() => {
+                            // Split by spaces and # to handle multiple hashtags
+                            const tags = newHashtag.split(/[\s#]+/).filter(Boolean);
+                            tags.forEach(tag => {
+                              if (!hashtags.includes(tag)) {
+                                setHashtags([...hashtags, tag]);
+                              }
+                            });
+                            setNewHashtag('');
+                          }}
                         >
                           <PlusCircle size={16} />
                         </Button>
@@ -1795,363 +1869,6 @@ const CreatePostPage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2 mt-3">
-                      <Button 
-                        variant={isPollActive ? "default" : "outline"}
-                        size="sm" 
-                        className="gap-1"
-                        onClick={() => setIsPollActive(!isPollActive)}
-                      >
-                        <BarChart4 size={14} />
-                        {isPollActive ? 'Remove Poll' : 'Add Poll'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="carousel" className="mt-4 space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create Carousel Post</CardTitle>
-                  <CardDescription>
-                    Create professional slide decks to share on LinkedIn
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Text input above carousel */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Post Text</label>
-                    <Textarea
-                      placeholder="Add text above your carousel slides..."
-                      className="min-h-[80px] resize-none"
-                      value={content}
-                      onChange={(e) => {
-                        setContent(e.target.value);
-                        showSaveIndicator();
-                      }}
-                    />
-                    <p className="text-xs text-muted-foreground">This text will appear above your carousel in the LinkedIn post</p>
-                        </div>
-
-                  <Separator />
-                  
-                  {/* Slider Type Selection */}
-                    <div className="flex flex-col gap-3">
-                      <label className="text-sm font-medium">Slider Type</label>
-                      <Select 
-                        value={sliderType} 
-                        onValueChange={(value) => setSliderType(value as SliderVariant)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a slider type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sliderOptions.map(option => (
-                            <SelectItem key={option} value={option}>
-                              {option.charAt(0).toUpperCase() + option.slice(1)} Slider
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  
-                  <div className="flex justify-between">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/dashboard/templates')}
-                      className="gap-1 text-xs truncate w-[48%]"
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">Browse Templates</span>
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/dashboard/carousels/request')}
-                      className="gap-1 text-xs truncate w-[48%]"
-                    >
-                      <PlusCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">Request Carousel</span>
-                    </Button>
-                    </div>
-                    
-                    <Separator />
-                    
-                    {/* Slides editor */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-base font-medium">Carousel Slides</h3>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={addSlide} 
-                          className="gap-1"
-                        >
-                          <PlusCircle size={16} className="flex-shrink-0" />
-                          <span className="hidden sm:inline">Add Slide</span>
-                          <span className="sm:hidden">Add</span>
-                        </Button>
-                      </div>
-                      
-                      <ScrollArea className="h-[400px] pr-4">
-                        <div className="space-y-4">
-                          {slides.map((slide, index) => (
-                            <Card key={slide.id} className="relative">
-                              <CardHeader className="py-3">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-base">Slide {index + 1}</CardTitle>
-                                  {slides.length > 1 && (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => removeSlide(slide.id)}
-                                    >
-                                      <span className="sr-only">Remove slide</span>
-                                      ×
-                                    </Button>
-                                  )}
-                                </div>
-                              </CardHeader>
-                            <CardContent className="py-2 space-y-4">
-                              {/* Image upload section */}
-                              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                                {slide.cloudinaryImage ? (
-                                  <div className="relative">
-                                    <img 
-                                      src={slide.cloudinaryImage.secure_url} 
-                                      alt="Slide" 
-                                      className="mx-auto max-h-40 object-contain rounded-lg"
-                                      style={{ backgroundColor: 'white' }}
-                                    />
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      className="absolute top-2 right-2 h-7 w-7 p-0 rounded-full"
-                                      onClick={() => {
-                                        // Remove image from slide
-                                        const updatedSlides = slides.map(s => 
-                                          s.id === slide.id ? {...s, cloudinaryImage: undefined, imageUrl: undefined} : s
-                                        );
-                                        setSlides(updatedSlides);
-                                        showSaveIndicator();
-                                      }}
-                                    >
-                                      <X size={14} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <Upload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
-                                    <p className="text-sm text-gray-500 mb-3">Add an image to this slide</p>
-                                    <div className="flex justify-center gap-2">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="gap-1"
-                                        onClick={() => document.getElementById("file-upload-" + slide.id)?.click()}
-                                      >
-                                        <Upload size={14} />
-                                        Upload
-                                      </Button>
-                                      <input
-                                        id={"file-upload-" + slide.id}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) {
-                                            // Handle upload directly when file is selected
-                                            const uploadToCloudinary = async () => {
-                                              try {
-                                                toast.info("Uploading image...");
-                                                // Import dynamically to avoid circular deps
-                                                const { uploadToCloudinaryDirect } = await import('@/utils/cloudinaryDirectUpload');
-                                                const image = await uploadToCloudinaryDirect(file, {
-                                                  folder: 'linkedin_uploads',
-                                                  tags: ['carousel', 'slide'],
-                                                  type: 'uploaded'
-                                                });
-                                                
-                                                // Update slide with Cloudinary image
-                                                const updatedSlides = slides.map(s => 
-                                                  s.id === slide.id ? {
-                                                    ...s, 
-                                                    cloudinaryImage: image as ExtendedCloudinaryImage,
-                                                    imageUrl: (image as ExtendedCloudinaryImage).secure_url
-                                                  } : s
-                                                );
-                                                setSlides(updatedSlides);
-                                                showSaveIndicator();
-                                                toast.success('Image uploaded to slide');
-                                              } catch (error) {
-                                                console.error('Upload error:', error);
-                                                toast.error('Failed to upload image');
-                                              }
-                                            };
-                                            uploadToCloudinary();
-                                          }
-                                        }}
-                                      />
-                                      <ImageGalleryPicker
-                                        onSelectImage={(image: CloudinaryImage) => {
-                                          // Update slide with Cloudinary image from gallery
-                                          const updatedSlides = slides.map(s => 
-                                            s.id === slide.id ? {
-                                              ...s, 
-                                              cloudinaryImage: image as ExtendedCloudinaryImage,
-                                              imageUrl: (image as ExtendedCloudinaryImage).secure_url
-                                            } : s
-                                          );
-                                          setSlides(updatedSlides);
-                                          showSaveIndicator();
-                                          toast.success('Image added to slide');
-                                        }}
-                                        triggerButton={
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="gap-1"
-                                          >
-                                            <Folder size={14} />
-                                            Gallery
-                                          </Button>
-                                        }
-                                      />
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-
-                              {/* Text content */}
-                                <Textarea
-                                placeholder="Add text for this slide..."
-                                className="min-h-[80px]"
-                                  value={slide.content}
-                                  onChange={(e) => {
-                                    updateSlide(slide.id, e.target.value);
-                                    // Add a small haptic-like visual feedback
-                                    const previewEl = document.querySelector('.preview-section');
-                                    if (previewEl) {
-                                      previewEl.classList.add('preview-pulse');
-                                      setTimeout(() => previewEl.classList.remove('preview-pulse'), 300);
-                                    }
-                                    showSaveIndicator();
-                                  }}
-                                />
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="document" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upload Document</CardTitle>
-                  <CardDescription>
-                    Share PDF documents, presentations, or other files
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div 
-                    className={`border-2 border-dashed rounded-lg p-10 text-center bg-neutral-lightest relative transition-all ${documentFile ? 'border-primary bg-primary/5' : 'border-neutral-light hover:border-primary/50'}`}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      
-                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                        const file = e.dataTransfer.files[0];
-                        setDocumentFile(file);
-                        showSaveIndicator();
-                      }
-                    }}
-                  >
-                    {documentFile ? (
-                      <>
-                        <FileText size={48} className="mx-auto mb-4 text-primary" />
-                        <h3 className="text-lg font-medium mb-2 break-all">{documentFile.name}</h3>
-                        <p className="text-sm text-neutral-medium mb-4">
-                          {(documentFile.size / 1024 / 1024).toFixed(2)} MB · {documentFile.type}
-                        </p>
-                        <div className="flex justify-center gap-3">
-                          <Button variant="outline" onClick={() => setDocumentFile(null)}>
-                            Remove
-                          </Button>
-                          <Button onClick={() => {
-                            const fileInput = document.getElementById('document-file-input');
-                            if (fileInput) fileInput.click();
-                          }}>
-                            Replace
-                          </Button>
-                        </div>
-                        <input 
-                          type="file" 
-                          id="document-file-input"
-                          className="hidden"
-                          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              setDocumentFile(e.target.files[0]);
-                              showSaveIndicator();
-                            }
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <>
-                    <FileText size={48} className="mx-auto mb-4 text-neutral-medium" />
-                    <h3 className="text-lg font-medium mb-2">Upload Document</h3>
-                    <p className="text-sm text-neutral-medium mb-4">
-                      Drag and drop a file here, or click to browse
-                    </p>
-                        <Button onClick={() => {
-                          const fileInput = document.getElementById('document-file-input');
-                          if (fileInput) fileInput.click();
-                        }}>
-                          Select File
-                        </Button>
-                        <input 
-                          type="file" 
-                          id="document-file-input"
-                          className="hidden"
-                          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              setDocumentFile(e.target.files[0]);
-                              showSaveIndicator();
-                            }
-                          }}
-                        />
-                      </>
-                    )}
-                  </div>
-                  
-                  <div className="mt-6">
-                    <label className="text-sm font-medium">Add a description</label>
-                    <Textarea
-                      placeholder="Add a description for your document..."
-                      className="mt-2 min-h-[120px]"
-                      value={documentDescription}
-                      onChange={(e) => {
-                        setDocumentDescription(e.target.value);
-                        showSaveIndicator();
-                      }}
-                    />
                   </div>
                 </CardContent>
               </Card>
@@ -2204,7 +1921,6 @@ const CreatePostPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {activeTab === 'text' && (
                   <div className="mb-4 transition-all duration-200">
                     <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200 break-words">
                       {content || "Your post content will appear here"}
@@ -2226,85 +1942,12 @@ const CreatePostPage: React.FC = () => {
                       </div>
                     )}
                     
-                    {/* Display poll if active */}
-                    {isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2 && (
-                      <div className="mb-3 border rounded-lg p-3 bg-white">
-                        <p className="text-sm font-medium mb-2 text-black">Poll ({pollDuration} day{pollDuration > 1 ? 's' : ''})</p>
-                        <div className="space-y-2">
-                          {pollOptions.filter(opt => opt.trim()).map((option, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full border border-primary flex-shrink-0"></div>
-                              <span className="text-sm text-black">{option || `Option ${index + 1}`}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {hashtags.map(tag => (
                         <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer break-all">{`#${tag}`}</span>
                       ))}
                     </div>
                   </div>
-                )}
-                
-                {activeTab === 'carousel' && (
-                  <div className="mb-4">
-                    {/* Show the post text above the carousel like in a real LinkedIn post */}
-                    {content && (
-                      <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200">
-                        {content}
-                      </p>
-                    )}
-                    
-                    <InlineCarouselPreview slides={slides} variant={sliderType} />
-                    
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {hashtags.map(tag => (
-                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer break-all">{`#${tag}`}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'document' && (
-                  <div className="mb-4">
-                    {content && (
-                      <p className="text-[14px] leading-relaxed text-black whitespace-pre-line mb-3 transition-all duration-200">
-                        {content}
-                      </p>
-                    )}
-                    
-                    <div className="bg-neutral-lightest border rounded-lg p-6 mb-3 text-center">
-                      {documentFile ? (
-                        <>
-                          <FileText size={40} className="mx-auto mb-2 text-primary" />
-                          <p className="text-sm font-medium text-black mb-1">{documentFile.name}</p>
-                          <p className="text-xs text-neutral-medium">
-                            {(documentFile.size / 1024 / 1024).toFixed(2)} MB · {documentFile.type}
-                          </p>
-                          {documentDescription && (
-                            <p className="text-sm text-neutral-dark mt-3 text-left bg-white rounded p-2 border">
-                              {documentDescription}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                    <FileText size={40} className="mx-auto mb-2 text-neutral-medium" />
-                    <p className="text-sm text-neutral-medium">Document Preview</p>
-                        </>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {hashtags.map(tag => (
-                        <span key={tag} className="text-blue-600 text-[13px] hover:underline cursor-pointer break-all">{`#${tag}`}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 
                 {/* LinkedIn engagement stats */}
                 <div className="flex items-center gap-1 text-neutral-medium text-xs mb-1 pt-2">
@@ -2343,7 +1986,7 @@ const CreatePostPage: React.FC = () => {
         </div>
         
       {/* Tools Section Below */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* AI Tools */}
         <Card className="bg-white border-2">
               <CardHeader>
@@ -2363,23 +2006,43 @@ const CreatePostPage: React.FC = () => {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                    className="w-full justify-start text-sm bg-white text-black truncate"
-                          onClick={() => navigate('/dashboard/ai-writer')}
+                    className="w-full justify-start text-sm bg-white text-black truncate opacity-50 cursor-not-allowed"
+                    disabled
                         >
                           <Wand2 className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
-                          <span className="truncate">Go to AI Writer</span>
+                    <span className="truncate">AI Writer (Coming Soon)</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
-                          <span className="truncate">Generate a professional post</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start text-sm bg-white text-black truncate opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <span className="truncate">Generate Post (Coming Soon)</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
-                          <span className="truncate">Improve writing style</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start text-sm bg-white text-black truncate opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <span className="truncate">Improve Writing (Coming Soon)</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
-                          <span className="truncate">Create catchy hook</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start text-sm bg-white text-black truncate opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <span className="truncate">Create Hook (Coming Soon)</span>
                         </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start text-sm bg-white text-black truncate">
-                          <span className="truncate">Suggest hashtags</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start text-sm bg-white text-black truncate opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <span className="truncate">Suggest Hashtags (Coming Soon)</span>
                         </Button>
                       </div>
                     </div>
@@ -2396,7 +2059,6 @@ const CreatePostPage: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {activeTab === 'text' && (
               <div className="space-y-4">                
                     <div>
                   <h3 className="text-sm font-medium mb-2 flex items-center gap-1 text-black">
@@ -2413,54 +2075,6 @@ const CreatePostPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                )}
-                
-                {activeTab === 'carousel' && (
-                  <div className="space-y-4">
-                    <div>
-                  <h3 className="text-sm font-medium mb-2 text-black">Carousel Templates</h3>
-                  <ScrollArea className="h-[200px]">
-                        <div className="space-y-2 pr-4">
-                          {carouselTemplates.map(template => (
-                            <div 
-                              key={template.id}
-                              className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                                selectedTemplate === template.id 
-                                  ? 'bg-primary-50 border-primary' 
-                              : 'hover:bg-white border-2'
-                              }`}
-                              onClick={() => applyTemplate(template.id)}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="font-medium text-black truncate">{template.name}</h4>
-                                <Badge variant="outline" className="text-xs">
-                                  {template.slideCount} slides
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-black truncate">{template.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'document' && (
-                  <div className="space-y-4">
-                    <div>
-                  <h3 className="text-sm font-medium mb-2 text-black">Document Tips</h3>
-                  <div className="bg-white border-2 rounded-lg p-3 text-sm">
-                    <ul className="list-disc list-inside space-y-1 text-black">
-                          <li>Use PDFs for best compatibility</li>
-                          <li>Ensure document is under 100MB</li>
-                          <li>Use landscape orientation for presentations</li>
-                          <li>Add your branding and contact info</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
       </div>

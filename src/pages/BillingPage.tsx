@@ -254,7 +254,7 @@ const BillingPage: React.FC = () => {
       setIsLoadingSubscription(true);
       
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/user-limits/me`, 
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/user-limits/me`, 
         {
         headers: {
           Authorization: `Bearer ${token}`
@@ -419,7 +419,7 @@ const BillingPage: React.FC = () => {
       
       // Update backend user limit
       await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/user-limits/${user?.id}/update-plan`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/user-limits/${user?.id}/update-plan`,
         planData,
           {
             headers: {
@@ -494,7 +494,7 @@ const BillingPage: React.FC = () => {
       }
       
       // Fix the API URL format - ensure consistency
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/stripe/create-checkout-session`
         : `${baseUrl}/api/stripe/create-checkout-session`;
@@ -585,7 +585,7 @@ const BillingPage: React.FC = () => {
     
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/stripe/cancel-subscription`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/stripe/cancel-subscription`,
         {},
         {
           headers: {
@@ -623,7 +623,7 @@ const BillingPage: React.FC = () => {
       const creditsAmount = creditPack?.credits || parseInt(packId.split('-')[1]) || 0;
       
       // Fix the API URL format
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       // Make sure we're including /api in the URL if not already included
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/stripe/create-checkout-session`
@@ -688,7 +688,7 @@ const BillingPage: React.FC = () => {
   const verifySessionAndUpdatePlan = async (sessionId: string) => {
     try {
       // Fix the API URL format
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       // Make sure we're including /api in the URL if not already included
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/stripe/verify-session`
@@ -776,7 +776,7 @@ const BillingPage: React.FC = () => {
       const lastFour = cardInfo.cardNumber.slice(-4);
       
       // Make API call to save card information
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/payment-methods`
         : `${baseUrl}/api/payment-methods`;
@@ -832,7 +832,7 @@ const BillingPage: React.FC = () => {
       setAutoPayEnabled(enabled);
       
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/users/subscription/auto-pay`, 
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/users/subscription/auto-pay`, 
         { 
           autoPay: enabled 
         },
@@ -1114,35 +1114,18 @@ const BillingPage: React.FC = () => {
                 {/* Subscription Plan Selector */}
                 <div className="flex items-center justify-center space-x-4 mb-8">
                   <span className={!isAnnualBilling ? "font-semibold" : "text-gray-500"}>Monthly</span>
-                    <button
-                    type="button"
-                    role="switch"
-                    aria-checked={isAnnualBilling}
-                    className={`${
-                      isAnnualBilling ? 'bg-blue-600' : 'bg-gray-200'
-                    } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    onClick={() => setIsAnnualBilling(!isAnnualBilling)}
-                  >
-                    <span
-                      className={`${
-                        isAnnualBilling ? 'translate-x-6' : 'translate-x-1'
-                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                    />
-                    </button>
-                  <span className={isAnnualBilling ? "font-semibold" : "text-gray-500"}>
-                    Annual <span className="text-green-600 text-xs font-medium">(Save 20%)</span>
-                  </span>
                   </div>
                   
                 {/* Plan upgrade/downgrade policy information */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-800 dark:text-blue-300 mb-6">
+                <div className=" border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-800 dark:text-blue-300 mb-6">
                   <div className="flex">
                     <svg className="h-5 w-5 text-blue-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div>
-                      <p><strong>Plan Change Policy:</strong> You can upgrade your plan at any time to get immediate access to additional features and credits.</p>
-                      <p className="mt-1">However, downgrades are only possible at the end of your current billing period. If you request a downgrade, it will automatically take effect once your current subscription expires.</p>
+                      <p>Plan Change Policy:</p>
+                <p>You can upgrade your plan at any time to get immediate access to additional features and credits.</p>
+                <p className="mt-1">However, downgrades are only possible at the end of your current billing period. If you request a downgrade, it will automatically take effect once your current subscription expires.</p>
                     </div>
                   </div>
                 </div>

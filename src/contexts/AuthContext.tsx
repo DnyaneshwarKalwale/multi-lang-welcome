@@ -30,8 +30,6 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
-  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void | User>;
   linkedinAuth: (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => Promise<void>;
   googleAuth: (userData: { name: string; googleId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
@@ -123,67 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuthStatus();
   }, []);
 
-  const register = async (firstName: string, lastName: string, email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await authApi.register(firstName, lastName, email, password);
-      
-      // Check if we need to redirect to LinkedIn
-      if (response.redirectToLinkedIn) {
-        // This would normally redirect to LinkedIn
-        setError('Please use LinkedIn to register');
-        return;
-      }
-      
-      // For backwards compatibility, handle response if it contains user data
-      if (response.user) {
-        setUser(response.user);
-        localStorage.setItem('pendingVerificationEmail', email);
-        navigate('/verify-email');
-      }
-      
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
-      console.error('Registration error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Instead of email login, redirect to LinkedIn auth
-      const response = await authApi.login(email, password);
-      
-      // We no longer store email tokens - this would be handled by LinkedIn OAuth
-      if (response.redirectToLinkedIn) {
-        // This would normally redirect to LinkedIn
-        setError('Please use LinkedIn to log in');
-        return;
-      }
-      
-      // For backwards compatibility, handle response if it contains user data
-      if (response.user) {
-        setUser(response.user);
-        localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted || false ? 'true' : 'false');
-        return response.user;
-      }
-      
-      return;
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
-      console.error('Login error:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const linkedinAuth = async (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => {
     setLoading(true);
     
@@ -191,37 +128,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.linkedinAuth(userData);
       
       if (response.token) {
-        // Store token using the tokenManager
         tokenManager.storeToken(response.token, 'linkedin');
-        
         setToken(response.token);
         
-        // Always set user when we get it in the response
         if (response.user) {
           setUser(response.user);
           localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted ? 'true' : 'false');
-          console.log('AuthContext - linkedinAuth - User set from response', { id: response.user.id });
-        } else {
-          // If no user in response, fetch it
-          console.log('AuthContext - linkedinAuth - No user in response, fetching');
-          await fetchUser();
+          localStorage.setItem('auth-method', 'linkedin');
         }
-        
-        return response.user;
-      } else {
-        setError('Failed to authenticate with LinkedIn');
-        return null;
       }
-    } catch (error) {
-      console.error('LinkedIn Auth Error:', error);
-      setError('Failed to authenticate with LinkedIn');
-      return null;
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'LinkedIn authentication failed');
+      console.error('LinkedIn auth error:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Add Google authentication method
   const googleAuth = async (userData: { name: string; googleId: string; email: string; profileImage?: string }) => {
     setLoading(true);
     
@@ -229,48 +153,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.googleAuth(userData);
       
       if (response.token) {
-        // Store token using the tokenManager
         tokenManager.storeToken(response.token, 'google');
-        
         setToken(response.token);
         
-        // Always set user when we get it in the response
         if (response.user) {
           setUser(response.user);
           localStorage.setItem('onboardingCompleted', response.user.onboardingCompleted ? 'true' : 'false');
-          console.log('AuthContext - googleAuth - User set from response', { id: response.user.id });
-        } else {
-          // If no user in response, fetch it
-          console.log('AuthContext - googleAuth - No user in response, fetching');
-          await fetchUser();
+          localStorage.setItem('auth-method', 'google');
         }
-        
-        return response.user;
-      } else {
-        setError('Failed to authenticate with Google');
-        return null;
       }
-    } catch (error) {
-      console.error('Google Auth Error:', error);
-      setError('Failed to authenticate with Google');
-      return null;
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Google authentication failed');
+      console.error('Google auth error:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const logout = () => {
-    // Clear all tokens using the tokenManager
     tokenManager.clearAllTokens();
-    
+    localStorage.removeItem('auth-method');
+    localStorage.removeItem('onboardingCompleted');
     setUser(null);
     setToken(null);
-    navigate('/', { replace: true });
+    navigate('/');
   };
 
-  const clearError = () => {
-    setError(null);
-  };
+  const clearError = () => setError(null);
 
   const updateUserProfile = (updates: Partial<User>) => {
     if (user) {
@@ -283,11 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
+        isAuthenticated: !!user,
         loading,
         error,
-        isAuthenticated: !!user,
-        register,
-        login,
         linkedinAuth,
         googleAuth,
         logout,
@@ -304,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

@@ -58,14 +58,14 @@ export const uploadToCloudinaryDirect = async (
     formData.append('file', file);
     
     // Get the API URL from environment or use default
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const apiUrl = baseUrl.endsWith('/api') 
       ? `${baseUrl}/upload/upload`
       : `${baseUrl}/api/upload/upload`;
 
     // Upload through our backend
     const response = await fetch(apiUrl, {
-      method: 'POST',
+        method: 'POST',
       body: formData,
       // Include credentials if needed
       credentials: 'include'
@@ -92,27 +92,7 @@ export const uploadToCloudinaryDirect = async (
       height: data.height
     };
     
-    // Save to both database and local storage
-    try {
-      // Save to database
-      const dbApiUrl = baseUrl.endsWith('/api') 
-        ? `${baseUrl}/gallery/save`
-        : `${baseUrl}/api/gallery/save`;
-        
-      await fetch(dbApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(result)
-      });
-    } catch (dbError) {
-      console.error('Error saving to database:', dbError);
-      // Continue with localStorage save even if database save fails
-    }
-    
-    // Save to local storage as backup
+    // Save to local storage
     saveImageToGallery(result);
     
     return result;
@@ -154,29 +134,7 @@ export const saveImageToGallery = (image: CloudinaryImage): void => {
  * Get all images from gallery
  * @returns Array of gallery images
  */
-export const getGalleryImages = async (): Promise<CloudinaryImage[]> => {
-  try {
-    // Try to get images from database first
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-    const apiUrl = baseUrl.endsWith('/api') 
-      ? `${baseUrl}/gallery/images`
-      : `${baseUrl}/api/gallery/images`;
-      
-    const response = await fetch(apiUrl, {
-      credentials: 'include'
-    });
-    
-    if (response.ok) {
-      const dbImages = await response.json();
-      // Update localStorage with database images
-      localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(dbImages));
-      return dbImages;
-    }
-  } catch (dbError) {
-    console.error('Error fetching from database:', dbError);
-  }
-  
-  // Fall back to localStorage if database fetch fails
+export const getGalleryImages = (): CloudinaryImage[] => {
   try {
     const storedImages = localStorage.getItem(GALLERY_STORAGE_KEY);
     return storedImages ? JSON.parse(storedImages) : [];
@@ -190,23 +148,7 @@ export const getGalleryImages = async (): Promise<CloudinaryImage[]> => {
  * Remove image from gallery
  * @param publicId Public ID of image to remove
  */
-export const removeImageFromGallery = async (publicId: string): Promise<void> => {
-  try {
-    // Remove from database first
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-    const apiUrl = baseUrl.endsWith('/api') 
-      ? `${baseUrl}/gallery/delete/${publicId}`
-      : `${baseUrl}/api/gallery/delete/${publicId}`;
-      
-    await fetch(apiUrl, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-  } catch (dbError) {
-    console.error('Error removing from database:', dbError);
-  }
-  
-  // Remove from localStorage
+export const removeImageFromGallery = (publicId: string): void => {
   try {
     const storedImages = localStorage.getItem(GALLERY_STORAGE_KEY);
     if (!storedImages) return;
@@ -225,9 +167,9 @@ export const removeImageFromGallery = async (publicId: string): Promise<void> =>
  * @param publicId Public ID of image
  * @returns Image or null if not found
  */
-export const getImageFromGallery = async (publicId: string): Promise<CloudinaryImage | null> => {
+export const getImageFromGallery = (publicId: string): CloudinaryImage | null => {
   try {
-    const images = await getGalleryImages();
+    const images = getGalleryImages();
     return images.find(img => img.public_id === publicId) || null;
   } catch (error) {
     console.error('Error getting image from gallery:', error);

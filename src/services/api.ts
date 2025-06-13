@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with base URL
 // In Vite, we need to use import.meta.env instead of process.env
 // Fall back to localhost if environment variable is not available during development
-export const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 console.log("Using API URL:", API_URL);
 
@@ -77,30 +77,7 @@ api.interceptors.request.use(
 
 // Auth services
 export const authApi = {
-  // Register with email and password (switched to use LinkedIn auth)
-  register: async (firstName: string, lastName: string, email: string, password: string) => {
-    // Instead of directly storing email credentials, we'll redirect to LinkedIn auth
-    // This is just a mock implementation since we're removing email auth
-    const response = await api.post('/auth/register-redirect', {
-      firstName,
-      lastName,
-      email,
-      redirectToLinkedIn: true
-    });
-    return response.data;
-  },
-
-  // Login with LinkedIn instead of email/password
-  login: async (email: string, password: string) => {
-    // Redirect to LinkedIn auth instead of email login
-    // This is just a mock implementation since we're removing email auth
-    const response = await api.post('/auth/login-redirect', {
-      redirectToLinkedIn: true
-    });
-    return response.data;
-  },
-
-  // LinkedIn direct authentication (for development)
+  // LinkedIn direct authentication
   linkedinAuth: async (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => {
     const response = await api.post('/auth/linkedin-auth', userData);
     return response.data;

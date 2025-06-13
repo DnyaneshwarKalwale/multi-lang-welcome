@@ -75,6 +75,11 @@ const DashboardPage: React.FC = () => {
   const [isLinkedInConnected, setIsLinkedInConnected] = useState<boolean>(
     user?.authMethod === 'linkedin' || !!user?.linkedinId || !!user?.linkedinConnected
   );
+
+  // Add state for showing LinkedIn prompt
+  const [showLinkedInPrompt, setShowLinkedInPrompt] = useState<boolean>(
+    user?.authMethod === 'google' && !user?.linkedinConnected
+  );
   
   // Generate a LinkedIn username based on user's name
   const [linkedInUsername, setLinkedInUsername] = useState<string>('');
@@ -153,76 +158,33 @@ const DashboardPage: React.FC = () => {
 
   // Function to fetch LinkedIn data from our API
   const fetchLinkedInData = async () => {
-    // Set loading states
-    setLoading({
-      profile: true,
-    });
-    
+    setLoading({ profile: true });
     const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     };
-    
     try {
       // Try to fetch basic LinkedIn profile first (doesn't rely on LinkedIn API tokens)
-      console.log('Fetching basic LinkedIn profile data');
       const basicProfilePromise = axios.get(`${apiBaseUrl}/linkedin/basic-profile`, { headers });
-      
-      // Execute request
       const basicProfileRes = await basicProfilePromise;
-      
-      // Check if basic profile fetch was successful
       if (basicProfileRes.data) {
-        console.log('Basic LinkedIn profile data fetched successfully');
         setLinkedInProfile(basicProfileRes.data.data);
         setLoading({ profile: false });
+        setShowLinkedInPrompt(false); // Hide prompt if we have data
       }
     } catch (error) {
-      console.error('Basic profile fetch failed, trying regular profile endpoint');
-      
-      try {
-        // If basic profile failed, try the standard profile endpoint (with LinkedIn API)
-        const profileRes = await axios.get(`${apiBaseUrl}/linkedin/profile`, { headers });
-        console.log('Standard LinkedIn profile fetch result:', profileRes.data);
-        setLinkedInProfile(profileRes.data.data);
-        setLoading({ profile: false });
-        
-        // Show toast if using sample data
-        if (profileRes.data.usingRealData === false) {
-          console.warn('Using sample LinkedIn profile data:', profileRes.data.error);
-          
-          let errorMessage = 'Some LinkedIn data could not be fetched.';
-          let errorDescription = profileRes.data.errorDetails || 'Try reconnecting your LinkedIn account.';
-          
-          // Only show token expiry messages, not permission errors which can be confusing
-          if (profileRes.data.errorType === 'token_expired') {
-          toast.warning(errorMessage, {
-            description: errorDescription,
-            duration: 5000
-          });
-          
-          // Mark toast as shown
-          setShownToasts(prev => [...prev, 'profile-warning']);
-          }
-        } else if (profileRes.data.usingRealData === true) {
-          console.log('Using real LinkedIn profile data');
-          toast.success('Successfully connected to LinkedIn', {
-            description: 'Your profile data has been loaded.',
-            duration: 3000
-          });
-        }
-      } catch (error) {
-        console.error('All LinkedIn profile fetch methods failed:', error);
-        setLoading({ profile: false });
-        
-        // Don't show error toasts for permission issues as they're expected now
-        if (!error.response || error.response.status !== 403) {
+      // Only show error if user is not a Google-only user
+      if (user?.authMethod === 'linkedin' || user?.linkedinConnected) {
           toast.error('Failed to load LinkedIn profile', {
             description: error.response?.data?.message || error.message || 'Unknown error',
               duration: 5000
             });
         }
+      setLoading({ profile: false });
+      // For Google users who haven't connected LinkedIn yet, show the prompt
+      if (user?.authMethod === 'google' && !user?.linkedinConnected) {
+        setShowLinkedInPrompt(true);
       }
     }
   };
@@ -364,6 +326,21 @@ const DashboardPage: React.FC = () => {
     window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
   };
 
+  const handleLinkedInConnect = () => {
+    // Get the backend URL from environment variable or fallback to Render deployed URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
+    localStorage.setItem('redirectAfterAuth', '/dashboard');
+    
+    // Store that this is a LinkedIn connection attempt from a Google user
+    localStorage.setItem('linkedin-login-type', 'google_connect');
+    
+    // Redirect to LinkedIn OAuth endpoint with connection type
+    window.location.href = `${baseUrl}/api/auth/linkedin-direct?type=google_connect&googleUserId=${user?._id}`;
+  };
+
   // Sample data for charts based on real data
   const monthlyPostData = [
     { month: 'JAN', posts: Math.max(dashboardData.totalPosts - 8, 0) },
@@ -428,13 +405,27 @@ const DashboardPage: React.FC = () => {
                 </Avatar>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{getUserFullName()}</p>
-              <p className="text-xs text-gray-500 flex items-center gap-1">
+              {user?.authMethod === 'google' && !user?.linkedinConnected ? (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-normal"
+                  onClick={handleLinkedInConnect}
+                >
+                  <Linkedin className="h-3 w-3 mr-1" />
+                  Connect LinkedIn
+                </Button>
+              ) : (
+                <p className="text-xs text-gray-500 flex items-center gap-1 justify-end">
                     {user?.authMethod === 'linkedin' ? (
+                    <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
+                  ) : user?.linkedinConnected ? (
                   <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
                     ) : (
-                  <><User className="h-3 w-3" /> Member</>
+                    <><User className="h-3 w-3" /> Google User</>
                     )}
                   </p>
+              )}
               </div>
             </div>
         </div>
@@ -625,6 +616,21 @@ const DashboardPage: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {user?.authMethod === 'google' && !user?.linkedinConnected ? (
+                  <div className="text-center py-6">
+                    <Linkedin className="h-12 w-12 text-blue-600/20 mx-auto mb-3" />
+                    <h3 className="text-sm font-medium mb-2">Connect Your LinkedIn Account</h3>
+                    <p className="text-xs text-gray-500 mb-4">Link your LinkedIn profile to publish content directly</p>
+                    <Button 
+                      onClick={handleLinkedInConnect}
+                      className="gap-2"
+                    >
+                      <Linkedin className="h-4 w-4" />
+                      Connect LinkedIn
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-12 w-12">
                     {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
@@ -655,6 +661,8 @@ const DashboardPage: React.FC = () => {
                     <p className="text-xs text-gray-600">Followers</p>
                   </div>
                 </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           

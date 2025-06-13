@@ -51,7 +51,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CarouselPreview } from '@/components/CarouselPreview';
 
 // API base URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Server base URL for static files (remove /api from API_URL)
 const SERVER_BASE_URL = API_URL.endsWith('/api') 
   ? API_URL.substring(0, API_URL.length - 4) 
@@ -155,6 +155,8 @@ const MyCarouselsPage: React.FC = () => {
     newFiles?: File[];
   }>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<{url: string; type: string; name: string} | null>(null);
+  const [showFilePreview, setShowFilePreview] = useState(false);
   
   // Fetch user's carousels from backend
   const fetchCarousels = useCallback(async () => {
@@ -279,6 +281,30 @@ const MyCarouselsPage: React.FC = () => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
   
+  // Function to force download a file
+  const forceDownload = async (url: string | undefined, filename: string) => {
+    if (!url) {
+      toast.error('Invalid file URL');
+      return;
+    }
+
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
+    }
+  };
+  
   // Function to download carousel as PDF
   const downloadCarouselPdf = async (carouselId: string, title: string) => {
     try {
@@ -296,32 +322,77 @@ const MyCarouselsPage: React.FC = () => {
         config
       );
       
-      // Create a blob from the PDF data
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      
-      // Create a URL for the blob
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create a temporary link to trigger the download
+      const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`);
-      
-      // Append to the body
+      link.href = blobUrl;
+      link.download = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`;
       document.body.appendChild(link);
-      
-      // Trigger the download
       link.click();
-      
-      // Clean up
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
       
       toast.success('PDF downloaded successfully');
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast.error('Failed to download PDF');
     }
+  };
+
+  // Function to download all files from a completed request
+  const downloadCompletedFiles = async (request: CarouselRequest) => {
+    const completedFiles = request.completedFiles || [];
+    
+    if (completedFiles.length === 0) {
+      toast.error('No completed files available to download');
+      return;
+    }
+    
+    toast.info(`Preparing ${completedFiles.length} files for download...`);
+    
+    // For a single file
+    if (completedFiles.length === 1) {
+      const file = completedFiles[0];
+      if (!file || !file.url) {
+        toast.error('Invalid file');
+        return;
+      }
+      await forceDownload(
+        getProperFileUrl(file.url),
+        file.originalName || getFileNameFromUrl(file.url)
+      );
+      return;
+    }
+    
+    // For multiple files
+    let downloadCount = 0;
+    
+    const downloadNext = async (index: number) => {
+      if (index >= completedFiles.length) {
+        toast.success(`All ${completedFiles.length} files downloaded successfully`);
+        return;
+      }
+      
+      const file = completedFiles[index];
+      if (!file || !file.url) {
+        console.error(`Invalid file at index ${index}`);
+        setTimeout(() => downloadNext(index + 1), 500);
+        return;
+      }
+
+      await forceDownload(
+        getProperFileUrl(file.url),
+        file.originalName || getFileNameFromUrl(file.url)
+      );
+      
+      downloadCount++;
+      toast.info(`Downloading file ${downloadCount} of ${completedFiles.length}`);
+      
+      // Add small delay between downloads
+      setTimeout(() => downloadNext(index + 1), 1500);
+    };
+    
+    await downloadNext(0);
   };
 
   // Function to delete a carousel
@@ -370,14 +441,18 @@ const MyCarouselsPage: React.FC = () => {
   };
 
   // Helper to determine if a file is an image
-  const isImageFile = (url: string = '') => {
+  const isImageFile = (url: string | undefined) => {
+    if (!url) return false;
+    
     return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url) || 
            url.includes('/image/upload/') ||
            url.includes('cloudinary') && url.includes('/image/');
   };
 
   // Helper to get file name from URL
-  const getFileNameFromUrl = (url: string = '') => {
+  const getFileNameFromUrl = (url: string | undefined) => {
+    if (!url) return 'file';
+    
     const urlParts = url.split('/');
     const lastPart = urlParts[urlParts.length - 1];
     const nameWithoutParams = lastPart.split('?')[0];
@@ -394,14 +469,16 @@ const MyCarouselsPage: React.FC = () => {
   };
 
   // Helper function to get the proper URL for a file
-  const getProperFileUrl = (url: string = '') => {
+  const getProperFileUrl = (url: string | undefined) => {
+    if (!url) return '';
+    
     // If URL is already absolute, return it
     if (url.startsWith('http')) {
       return url;
     }
     
     // The base URL for API endpoints
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
     // For uploads, we need to access them at the server root level, not through /api
     const uploadsBaseUrl = baseUrl.endsWith('/api') 
@@ -438,82 +515,6 @@ const MyCarouselsPage: React.FC = () => {
     return request.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
            (request.description || '').toLowerCase().includes(searchQuery.toLowerCase());
   });
-
-  // Function to download all files from a completed request
-  const downloadCompletedFiles = async (request: CarouselRequest) => {
-    const completedFiles = request.completedFiles || [];
-    
-    if (completedFiles.length === 0) {
-      toast.error('No completed files available to download');
-      return;
-    }
-    
-    toast.info(`Preparing ${completedFiles.length} files for download...`);
-    
-    // Debug the file URLs
-    console.log('Completed files to download:', completedFiles.map(file => ({
-      originalUrl: file.url,
-      processedUrl: getProperFileUrl(file.url),
-      fileName: file.originalName || getFileNameFromUrl(file.url)
-    })));
-    
-    // For a single file, just trigger the download directly
-    if (completedFiles.length === 1) {
-      const file = completedFiles[0];
-      const fileUrl = getProperFileUrl(file.url);
-      console.log('Downloading single file from URL:', fileUrl);
-      
-      try {
-        // Create and click the download link
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = file.originalName || getFileNameFromUrl(file.url);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('File download started');
-      } catch (error) {
-        console.error('Download error:', error);
-        toast.error('Failed to download file. Please try again or contact support.');
-      }
-      return;
-    }
-    
-    // For multiple files, download them sequentially with a slight delay
-    let downloadCount = 0;
-    
-    const downloadNext = (index: number) => {
-      if (index >= completedFiles.length) {
-        toast.success(`All ${completedFiles.length} files downloaded successfully`);
-        return;
-      }
-      
-      const file = completedFiles[index];
-      const fileUrl = getProperFileUrl(file.url);
-      console.log(`Downloading file ${index + 1}/${completedFiles.length} from URL:`, fileUrl);
-      
-      try {
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = file.originalName || getFileNameFromUrl(file.url);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        downloadCount++;
-        toast.info(`Downloading file ${downloadCount} of ${completedFiles.length}`);
-        
-        // Add small delay between downloads to prevent browser blocking
-        setTimeout(() => downloadNext(index + 1), 1500);
-      } catch (error) {
-        console.error(`Error downloading file ${index + 1}:`, error);
-        toast.error(`Failed to download file ${index + 1}. Continuing with next file...`);
-        setTimeout(() => downloadNext(index + 1), 1000);
-      }
-    };
-    
-    downloadNext(0);
-  };
 
   // Add function to open edit mode for resending a request
   const openEditMode = (request: CarouselRequest, startEditing: boolean = false) => {
@@ -676,6 +677,20 @@ const MyCarouselsPage: React.FC = () => {
       console.error('Error deleting carousel request:', err);
       toast.error(err.response?.data?.message || 'Failed to delete carousel request');
     }
+  };
+
+  // Function to view file in preview dialog
+  const viewFile = (file: { url?: string; originalName?: string } | null) => {
+    if (!file || !file.url) {
+      toast.error('Invalid file');
+      return;
+    }
+
+    const fileUrl = getProperFileUrl(file.url);
+    const fileName = file.originalName || getFileNameFromUrl(file.url);
+    const fileType = isImageFile(file.url) ? 'image' : 'document';
+    setSelectedFile({ url: fileUrl, type: fileType, name: fileName });
+    setShowFilePreview(true);
   };
 
   return (
@@ -1066,37 +1081,44 @@ const MyCarouselsPage: React.FC = () => {
                       <div className="mt-2">
                         <p className="text-sm font-medium mb-2">Delivered Files:</p>
                         <div className="grid grid-cols-2 gap-2">
-                          {(request.completedFiles || []).slice(0, 4).map((file, index) => (
+                          {(request.completedFiles || []).map((file, index) => (
                             <div 
                               key={index}
-                              className="border rounded p-2 flex flex-col bg-green-50 border-green-100"
+                              className="border rounded p-3 flex flex-col h-[120px]"
                             >
-                              <div className="flex items-center mb-1">
-                                {isImageFile(file.url) ? (
-                                  <FileImage className="h-4 w-4 mr-2 text-green-600" />
+                              <div className="flex items-center mb-2">
+                                {file && file.url && isImageFile(file.url) ? (
+                                  <FileImage className="h-4 w-4 mr-2 text-blue-500" />
                                 ) : (
-                                  <FileText className="h-4 w-4 mr-2 text-green-600" />
+                                  <FileText className="h-4 w-4 mr-2 text-orange-500" />
                                 )}
-                                <span className="text-xs truncate font-medium">
-                                  {file.originalName || getFileNameFromUrl(file.url)}
+                                <span className="text-sm truncate font-medium">
+                                  {file?.originalName || getFileNameFromUrl(file?.url)}
                                 </span>
                               </div>
                               
                               {/* Show image preview for image files */}
-                              {isImageFile(file.url) && (
-                                <div className="mb-1 bg-white rounded p-1">
+                              {file && file.url && isImageFile(file.url) && (
+                                <div className="flex-1 bg-gray-100 rounded p-1 flex items-center justify-center overflow-hidden">
                                   <img 
                                     src={getProperFileUrl(file.url)} 
                                     alt={file.originalName || "Preview"} 
-                                    className="max-h-16 mx-auto object-contain"
+                                    className="max-h-full max-w-full object-contain"
                                   />
+                                </div>
+                              )}
+                              
+                              {/* Show document icon for non-image files */}
+                              {file && file.url && !isImageFile(file.url) && (
+                                <div className="flex-1 flex items-center justify-center">
+                                  <FileText className="h-12 w-12 text-gray-300" />
                                 </div>
                               )}
                             </div>
                           ))}
                           
                           {(request.completedFiles || []).length > 4 && (
-                            <div className="border rounded p-2 flex items-center justify-center bg-green-50 border-green-100">
+                            <div className="border rounded p-2 flex items-center justify-center bg-green-50 border-green-100 h-[120px]">
                               <span className="text-xs text-green-700">
                               +{(request.completedFiles || []).length - 4} more
                             </span>
@@ -1104,7 +1126,7 @@ const MyCarouselsPage: React.FC = () => {
                         )}
                         
                         {(request.completedFiles || []).length === 0 && (
-                            <div className="col-span-2 border rounded p-2 text-center">
+                            <div className="col-span-2 border rounded p-2 text-center h-[120px] flex items-center justify-center">
                               <span className="text-xs text-gray-500">No delivered files available</span>
                             </div>
                           )}
@@ -1112,31 +1134,34 @@ const MyCarouselsPage: React.FC = () => {
                       </div>
                     </CardContent>
                     
-                    <CardFooter className="pt-0 flex justify-between">
+                    <CardFooter className="pt-0">
+                      <div className="w-full flex items-center justify-between">
                       <div className="text-xs text-gray-500 flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
                         {formatDate(request.updatedAt)}
                       </div>
                       
-                      <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                         <Button 
-                          variant="outline"
-                          size="sm"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-full text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                           onClick={() => openEditMode(request)}
+                            title="View Details"
                         >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
+                            <Eye className="h-4 w-4" />
                         </Button>
                         
                         <Button 
-                          variant="outline"
-                          size="sm"
-                          className="text-green-600 border-green-300 hover:bg-green-50"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-full text-green-600 hover:text-green-800 hover:bg-green-50"
                           onClick={() => downloadCompletedFiles(request)}
+                            title="Download All"
                         >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download All
+                            <Download className="h-4 w-4" />
                         </Button>
+                        </div>
                       </div>
                     </CardFooter>
                   </Card>
@@ -1397,6 +1422,8 @@ const MyCarouselsPage: React.FC = () => {
           setSelectedRequest(null);
           setIsEditing(false);
           setEditedRequest({});
+          setSelectedFile(null);
+          setShowFilePreview(false);
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -1424,6 +1451,64 @@ const MyCarouselsPage: React.FC = () => {
                 </DialogDescription>
               </DialogHeader>
               
+              {/* Show completed files section if available */}
+              {selectedRequest.status === 'completed' && selectedRequest.completedFiles && selectedRequest.completedFiles.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Completed Files</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {selectedRequest.completedFiles.map((file, index) => (
+                      <div key={index} className="border rounded p-4 flex flex-col">
+                        <div className="flex items-center mb-3">
+                          {file && file.url && isImageFile(file.url) ? (
+                            <FileImage className="h-5 w-5 mr-2 text-blue-500" />
+                          ) : (
+                            <FileText className="h-5 w-5 mr-2 text-orange-500" />
+                          )}
+                          <span className="text-sm font-medium truncate">
+                            {file?.originalName || getFileNameFromUrl(file?.url)}
+                          </span>
+                        </div>
+
+                        {/* Show preview for image files */}
+                        {file && file.url && isImageFile(file.url) && (
+                          <div className="mb-3 bg-gray-100 rounded p-1">
+                            <img 
+                              src={getProperFileUrl(file.url)} 
+                              alt={file.originalName || "Preview"} 
+                              className="max-h-40 mx-auto object-contain"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex justify-end mt-auto gap-2">
+                          <Button 
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => viewFile(file)}
+                            className="h-8 w-8 rounded-full text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            title="View File"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {file && file.url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => forceDownload(getProperFileUrl(file.url), file.originalName || getFileNameFromUrl(file.url))}
+                              className="h-8 w-8 rounded-full text-green-600 hover:text-green-800 hover:bg-green-50"
+                              title="Download File"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rest of the dialog content */}
               <div className="grid gap-4 py-4">
                 {/* Request Description */}
                 <div>
@@ -1620,16 +1705,16 @@ const MyCarouselsPage: React.FC = () => {
                               </div>
                             )}
                             
-                            <div className="flex justify-end mt-auto">
-                              <a 
-                                href={getProperFileUrl(file.url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                            <div className="flex justify-end mt-auto gap-2">
+                              <Button 
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => viewFile(file)}
+                                className="h-8 w-8 rounded-full text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                                title="View File"
                               >
-                                <Eye className="h-3 w-3 mr-1" /> 
-                                View
-                              </a>
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         ))}
@@ -1800,6 +1885,49 @@ const MyCarouselsPage: React.FC = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* File Preview Dialog */}
+      <Dialog open={showFilePreview} onOpenChange={setShowFilePreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh] w-[90vw]">
+          <DialogHeader>
+            <DialogTitle className="flex justify-between items-center">
+              <span>{selectedFile?.name}</span>
+              {selectedFile?.url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedFile?.url) {
+                      forceDownload(selectedFile.url, selectedFile.name || 'file');
+                    }
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="relative w-full h-[60vh] bg-gray-50 rounded-lg overflow-hidden">
+            {selectedFile?.url && (
+              selectedFile.type === 'image' ? (
+                <img
+                  src={selectedFile.url}
+                  alt={selectedFile.name || 'Image preview'}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <iframe
+                  src={selectedFile.url}
+                  title={selectedFile.name || 'Document preview'}
+                  className="w-full h-full border-0"
+                />
+              )
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
