@@ -52,6 +52,12 @@ type OnboardingContextType = {
   website: string;
   mobileNumber: string;
   inspirationProfiles: string[];
+  socialLoginData?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    profileUrl?: string;
+  };
   setCurrentStep: (step: OnboardingStep) => void;
   setWorkspaceType: (type: WorkspaceType) => void;
   setWorkspaceName: (name: string) => void;
@@ -71,6 +77,7 @@ type OnboardingContextType = {
   saveProgress: () => void;
   getStepProgress: () => { current: number; total: number };
   getApplicableSteps: () => OnboardingStep[];
+  setSocialLoginData: (data: any) => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -119,6 +126,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [inspirationProfiles, setInspirationProfiles] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [socialLoginData, setSocialLoginData] = useState<any>(undefined);
 
   // Load saved onboarding progress when user authenticates
   useEffect(() => {
@@ -128,7 +136,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
           if (!token) return;
           
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
           const response = await axios.get(`${baseApiUrl}/onboarding`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -179,7 +187,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
       if (!token) return;
       
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
       
       // Build the onboarding data object
       const onboardingData = {
@@ -291,7 +299,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           const token = tokenManager.getToken(localStorage.getItem('auth-method') || undefined);
           if (!token) return;
           
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
           
           await axios.patch(`${baseApiUrl}/users/me`, { onboardingCompleted: true }, {
             headers: { Authorization: `Bearer ${token}` }
@@ -329,43 +337,45 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setInspirationProfiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const value = {
+    currentStep,
+    workspaceType,
+    workspaceName,
+    teamMembers,
+    postFormat,
+    postFrequency,
+    selectedDays,
+    firstName,
+    lastName,
+    email,
+    website,
+    mobileNumber,
+    inspirationProfiles,
+    socialLoginData,
+    setCurrentStep,
+    setWorkspaceType,
+    setWorkspaceName,
+    setTeamMembers,
+    setPostFormat,
+    setPostFrequency,
+    setSelectedDays,
+    setFirstName,
+    setLastName,
+    setEmail,
+    setWebsite,
+    setMobileNumber,
+    addInspirationProfile,
+    removeInspirationProfile,
+    nextStep,
+    prevStep,
+    saveProgress,
+    getStepProgress,
+    getApplicableSteps,
+    setSocialLoginData,
+  };
+
   return (
-    <OnboardingContext.Provider
-      value={{
-        currentStep,
-        workspaceType,
-        workspaceName,
-        teamMembers,
-        postFormat,
-        postFrequency,
-        selectedDays,
-        firstName,
-        lastName,
-        email,
-        website,
-        mobileNumber,
-        inspirationProfiles,
-        setCurrentStep,
-        setWorkspaceType,
-        setWorkspaceName,
-        setTeamMembers,
-        setPostFormat,
-        setPostFrequency,
-        setSelectedDays,
-        setFirstName,
-        setLastName,
-        setEmail,
-        setWebsite,
-        setMobileNumber,
-        addInspirationProfile,
-        removeInspirationProfile,
-        nextStep,
-        prevStep,
-        saveProgress,
-        getStepProgress,
-        getApplicableSteps
-      }}
-    >
+    <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
   );

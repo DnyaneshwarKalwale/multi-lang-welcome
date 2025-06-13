@@ -1,15 +1,18 @@
-import React, { useState } from "react";
-import { ContinueButton } from "@/components/ContinueButton";
-import { BackButton } from "@/components/BackButton";
-import { ProgressDots } from "@/components/ProgressDots";
+import React, { useState, useEffect } from "react";
+import { BrandOutLogotype } from "@/components/BrandOutIcon";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Globe, Phone, Linkedin, ArrowRight } from "lucide-react";
+import { User, Mail, Globe, Phone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+interface SocialLoginData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  profileUrl?: string;
+}
 
 export default function PersonalInfoPage() {
   const navigate = useNavigate();
@@ -19,9 +22,12 @@ export default function PersonalInfoPage() {
     email, setEmail,
     website, setWebsite,
     mobileNumber, setMobileNumber,
-    nextStep, prevStep,
-    getStepProgress
+    nextStep,
+    socialLoginData
   } = useOnboarding();
+  
+  const [countryCode, setCountryCode] = useState("+1");
+  const [numberPlaceholder, setNumberPlaceholder] = useState("+1 (123) 456-7890");
   
   const [errors, setErrors] = useState({
     firstName: "",
@@ -31,7 +37,45 @@ export default function PersonalInfoPage() {
     mobileNumber: ""
   });
   
-  const { current, total } = getStepProgress();
+  useEffect(() => {
+    const getUserLocation = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        switch(data.country_code) {
+          case 'IN':
+            setCountryCode("+91");
+            setNumberPlaceholder("+91 98765 43210");
+            break;
+          case 'GB':
+            setCountryCode("+44");
+            setNumberPlaceholder("+44 7911 123456");
+            break;
+          case 'AU':
+            setCountryCode("+61");
+            setNumberPlaceholder("+61 412 345 678");
+            break;
+          default:
+            setCountryCode("+1");
+            setNumberPlaceholder("+1 (123) 456-7890");
+        }
+      } catch (error) {
+        console.error('Error fetching location:', error);
+      }
+    };
+
+    getUserLocation();
+  }, []);
+
+  useEffect(() => {
+    if (socialLoginData) {
+      if (socialLoginData.firstName) setFirstName(socialLoginData.firstName);
+      if (socialLoginData.lastName) setLastName(socialLoginData.lastName);
+      if (socialLoginData.email) setEmail(socialLoginData.email);
+      if (socialLoginData.profileUrl) setWebsite(socialLoginData.profileUrl);
+    }
+  }, [socialLoginData]);
   
   const validateForm = () => {
     let isValid = true;
@@ -43,15 +87,11 @@ export default function PersonalInfoPage() {
       mobileNumber: ""
     };
     
-    // Validate firstName
     if (!firstName.trim()) {
       newErrors.firstName = "First name is required";
       isValid = false;
     }
     
-    // lastName is now optional - no validation needed
-    
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) {
       newErrors.email = "Email is required";
@@ -61,7 +101,6 @@ export default function PersonalInfoPage() {
       isValid = false;
     }
     
-    // Validate website (optional)
     if (website.trim()) {
       const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
       if (!urlRegex.test(website)) {
@@ -70,9 +109,8 @@ export default function PersonalInfoPage() {
       }
     }
     
-    // Validate mobile number (optional)
     if (mobileNumber.trim()) {
-      const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
+      const phoneRegex = /^[+\s\d()-]+$/;
       if (!phoneRegex.test(mobileNumber)) {
         newErrors.mobileNumber = "Please enter a valid phone number";
         isValid = false;
@@ -89,84 +127,50 @@ export default function PersonalInfoPage() {
     }
   };
   
-  const handleBack = () => {
-    prevStep();
-  };
-  
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleContinue();
     }
   };
-  
-  // Animation variants
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3
-      }
+
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/[^\d+]/g, '');
+    
+    if (cleaned.startsWith('+')) {
+      return cleaned;
     }
+    
+    return countryCode + cleaned;
   };
-  
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { type: "spring", stiffness: 50 } 
-    }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedNumber = formatPhoneNumber(e.target.value);
+    setMobileNumber(formattedNumber);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gradient-to-b from-white via-blue-50/20 to-white text-gray-800 relative overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 opacity-80 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 opacity-60 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+      {/* Background with simple blue gradient */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-primary/5"></div>
       </div>
       
-      <motion.div 
-        className="max-w-xl w-full mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
+      <div className="max-w-xl w-full mb-8">
         <div className="mb-10 flex justify-center">
-          <div className="relative">
-            <BrandOutLogotype className="h-20 w-auto" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={26} />
-          </div>
+          <BrandOutLogotype className="h-12 w-auto" />
         </div>
         
-        <motion.h1 
-          className="text-3xl font-bold text-center mb-3 text-gray-900"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
+        <h1 className="text-3xl font-bold text-center mb-3 text-gray-900">
           Tell us about yourself
-        </motion.h1>
+        </h1>
         
-        <motion.p 
-          className="text-center text-gray-600 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
+        <p className="text-center text-gray-600 mb-8">
           We'll personalize your experience based on this information
-        </motion.p>
+        </p>
         
-        <motion.div 
-          className="bg-white p-8 rounded-xl shadow-lg border border-gray-100"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
+        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <motion.div variants={item}>
+            <div>
               <Label htmlFor="firstName" className="text-gray-700 mb-2 block">
                 First Name <span className="text-red-500">*</span>
               </Label>
@@ -185,17 +189,17 @@ export default function PersonalInfoPage() {
                   <span className="text-red-500 text-sm mt-1 block">{errors.firstName}</span>
                 )}
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div variants={item}>
+            <div>
               <Label htmlFor="lastName" className="text-gray-700 mb-2 block">
-                Last Name <span className="text-gray-400 text-sm">(optional)</span>
+                Last Name 
               </Label>
               <div className="relative">
                 <Input
                   id="lastName"
                   type="text"
-                  placeholder="Enter your last name (optional)"
+                  placeholder="Enter your last name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.lastName ? 'border-red-500' : ''}`}
@@ -206,10 +210,10 @@ export default function PersonalInfoPage() {
                   <span className="text-red-500 text-sm mt-1 block">{errors.lastName}</span>
                 )}
               </div>
-            </motion.div>
+            </div>
           </div>
           
-          <motion.div variants={item} className="mb-6">
+          <div className="mb-6">
             <Label htmlFor="email" className="text-gray-700 mb-2 block">
               Email Address <span className="text-red-500">*</span>
             </Label>
@@ -228,11 +232,11 @@ export default function PersonalInfoPage() {
                 <span className="text-red-500 text-sm mt-1 block">{errors.email}</span>
               )}
             </div>
-          </motion.div>
+          </div>
           
-          <motion.div variants={item} className="mb-6">
+          <div className="mb-6">
             <Label htmlFor="website" className="text-gray-700 mb-2 block">
-              Website URL <span className="text-gray-400 text-sm">(optional)</span>
+              Website URL 
             </Label>
             <div className="relative">
               <Input
@@ -249,19 +253,19 @@ export default function PersonalInfoPage() {
                 <span className="text-red-500 text-sm mt-1 block">{errors.website}</span>
               )}
             </div>
-          </motion.div>
+          </div>
           
-          <motion.div variants={item} className="mb-6">
+          <div className="mb-6">
             <Label htmlFor="mobileNumber" className="text-gray-700 mb-2 block">
-              Mobile Number <span className="text-gray-400 text-sm">(optional)</span>
+              Mobile Number 
             </Label>
             <div className="relative">
               <Input
                 id="mobileNumber"
                 type="tel"
-                placeholder="+1 (123) 456-7890"
+                placeholder={numberPlaceholder}
                 value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
+                onChange={handlePhoneChange}
                 className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.mobileNumber ? 'border-red-500' : ''}`}
                 onKeyPress={handleKeyPress}
               />
@@ -270,40 +274,19 @@ export default function PersonalInfoPage() {
                 <span className="text-red-500 text-sm mt-1 block">{errors.mobileNumber}</span>
               )}
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
         
-        <motion.div 
-          className="mt-8 flex justify-center gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <BackButton 
-            onClick={handleBack} 
-            variant="subtle" 
-            className="px-8"
-          />
-          
+        <div className="mt-8 flex justify-center">
           <Button 
             onClick={handleContinue} 
-            className="bg-primary hover:bg-primary-600 text-white px-8 py-6 text-base rounded-full shadow-md"
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base rounded-full shadow-md w-full max-w-md flex items-center justify-center gap-2"
           >
             Continue
-            <ArrowRight className="ml-2 w-5 h-5" />
+            <ArrowRight className="w-5 h-5" />
           </Button>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.6 }}
-          className="flex flex-col items-center mt-8"
-        >
-          <ProgressDots total={total} current={current} color="cyan" />
-          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 } 

@@ -1,95 +1,61 @@
-import React from "react";
-import { ContinueButton } from "@/components/ContinueButton";
-import { ProgressDots } from "@/components/ProgressDots";
+import React, { useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Users, User, UserPlus, UserCircle, Check, Linkedin } from "lucide-react";
-import { motion } from "framer-motion";
-import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
+import { Users, UserCircle, Check } from "lucide-react";
+import { BrandOutLogotype } from "@/components/BrandOutIcon";
 import { Button } from "@/components/ui/button";
 
 export default function TeamSelectionPage() {
-  const { workspaceType, setWorkspaceType, nextStep, getStepProgress } = useOnboarding();
-  const { current, total } = getStepProgress();
+  const { workspaceType, setWorkspaceType, nextStep } = useOnboarding();
 
-  // Animation variants
-  const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
+  // Auto-select personal use on mount
+  useEffect(() => {
+    if (!workspaceType) {
+      setWorkspaceType("personal");
+    }
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-white text-gray-900 relative overflow-hidden">
-      {/* Light background with subtle pattern */}
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+      {/* Background with simple blue gradient */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        <div className="absolute inset-0 bg-primary/5"></div>
       </div>
       
-      <motion.div 
-        className="max-w-3xl w-full text-center"
-        variants={fadeIn}
-        initial="initial"
-        animate="animate"
-      >
-        <motion.div 
-          className="mb-8 flex justify-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <div className="relative">
-            <BrandOutLogotype className="h-20 w-auto" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full w-7 h-7 shadow-md" />
-          </div>
-        </motion.div>
+      <div className="max-w-3xl w-full text-center">
+        <div className="mb-10 flex justify-center">
+          <BrandOutLogotype className="h-12 w-auto" />
+        </div>
         
-        <motion.h1 
-          className="text-3xl md:text-4xl font-bold text-gray-900"
-          variants={fadeIn}
-          transition={{ delay: 0.2 }}
-        >
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
           How would you like to use BrandOut?
-        </motion.h1>
+        </h1>
         
-        <motion.p 
-          className="text-xl text-gray-600 mb-10"
-          variants={fadeIn}
-          transition={{ delay: 0.3 }}
-        >
+        <p className="text-xl text-gray-600 mb-10">
           We'll setup your workspace accordingly.
-        </motion.p>
+        </p>
         
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-2xl mx-auto"
-          variants={fadeIn}
-          transition={{ delay: 0.4 }}
-        >
-          <motion.div 
-            className={`bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center relative opacity-50 cursor-not-allowed shadow-sm`}
-            whileHover={{ y: 0 }}
-          >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-2xl mx-auto">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center relative opacity-50 cursor-not-allowed shadow-sm">
             <div className="absolute top-4 right-4">
               <span className="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full font-medium">
                 Coming Soon
               </span>
             </div>
-            <div className={`p-5 rounded-full mb-6 bg-gray-100`}>
-              <Users className={`w-14 h-14 text-gray-400`} />
+            <div className="p-5 rounded-full mb-6 bg-gray-100">
+              <Users className="w-14 h-14 text-gray-400" />
             </div>
             <h3 className="text-xl font-bold mb-3 text-gray-500">For my team</h3>
             <p className="text-gray-400 text-base mb-6">
               One place to create, review and track content for your team.
             </p>
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className={`bg-white border ${workspaceType === "personal" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
+          <div 
+            className={`bg-white border ${workspaceType === "personal" ? "border-primary ring-2 ring-primary/30" : "border-gray-200"} rounded-xl p-6 flex flex-col items-center cursor-pointer shadow-sm hover:shadow-md transition-all`}
             onClick={() => setWorkspaceType("personal")}
-            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
-            <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-blue-100" : "bg-gray-100"}`}>
-              <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-blue-500" : "text-gray-500"}`} />
+            <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-primary/10" : "bg-gray-100"}`}>
+              <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-primary" : "text-gray-500"}`} />
             </div>
             <h3 className="text-xl font-bold mb-3 text-gray-900">For personal use</h3>
             <p className="text-gray-600 text-base mb-6">
@@ -97,39 +63,24 @@ export default function TeamSelectionPage() {
             </p>
             {workspaceType === "personal" && (
               <div className="mt-2 flex items-center justify-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                   <Check className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-medium text-blue-500">Selected</span>
+                <span className="font-medium text-primary">Selected</span>
               </div>
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
         
-        <motion.div 
-          className="flex justify-center mb-8"
-          variants={fadeIn}
-          transition={{ delay: 0.5 }}
-        >
+        <div className="flex justify-center">
           <Button
-            variant="default"
-            className="w-64 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-full shadow-lg hover:shadow-xl"
-            disabled={!workspaceType}
             onClick={nextStep}
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base rounded-full shadow-md w-full max-w-md flex items-center justify-center gap-2"
           >
             Continue
           </Button>
-        </motion.div>
-        
-        <motion.div
-          variants={fadeIn}
-          transition={{ delay: 0.6 }}
-          className="flex flex-col items-center mt-4"
-        >
-          <ProgressDots total={total} current={current} color="cyan" />
-          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

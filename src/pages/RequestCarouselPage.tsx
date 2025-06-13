@@ -386,7 +386,7 @@ const RequestCarouselPage: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/stripe/subscription`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/stripe/subscription`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -441,7 +441,7 @@ const RequestCarouselPage: React.FC = () => {
         
         // Try to load videos from backend first
         try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const apiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube/saved/${user?.id || 'anonymous'}`
             : `${baseUrl}/api/youtube/saved/${user?.id || 'anonymous'}`;
@@ -593,7 +593,7 @@ const RequestCarouselPage: React.FC = () => {
 
     try {
       console.log('Fetching user limit for user:', user.id);
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const limitResponse = await axios.get(`${baseUrl}/user-limits/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -805,7 +805,7 @@ const RequestCarouselPage: React.FC = () => {
       let transcriptData = null;
       let primaryError = null;
       let fallbackError = null;
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       
       // Try the primary method first (yt-dlp), which tends to be more reliable
       const ytdlpApiUrl = baseUrl.endsWith('/api')
@@ -1049,7 +1049,7 @@ const RequestCarouselPage: React.FC = () => {
       // Now try to save to backend with retry logic
       const saveToBackend = async (retryCount = 0, maxRetries = 2) => {
         try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
           : `${baseUrl}/api/youtube/save-video-transcript`;
@@ -1164,7 +1164,7 @@ const RequestCarouselPage: React.FC = () => {
     const loadInitialContent = async () => {
       try {
         // Load content from backend first
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
@@ -1270,7 +1270,7 @@ const RequestCarouselPage: React.FC = () => {
     
     try {
       // Call the backend API to generate content
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/generate-content`
         : `${baseUrl}/api/generate-content`;
@@ -1492,7 +1492,7 @@ const RequestCarouselPage: React.FC = () => {
               
               console.log(`Uploading file: ${file.name}, size: ${file.size} bytes`);
               
-              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+              const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
               const apiUrl = baseUrl.endsWith('/api') 
                 ? `${baseUrl}/upload/upload`
                 : `${baseUrl}/api/upload/upload`;
@@ -1551,7 +1551,7 @@ const RequestCarouselPage: React.FC = () => {
       };
       
       // VITE_API_URL already includes /api
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       // Use the original endpoint since the new one doesn't exist yet
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/carousels/submit-request` 
@@ -1648,7 +1648,7 @@ const RequestCarouselPage: React.FC = () => {
   // Helper function for chunked upload of large files
   const handleLargeFileUpload = (file: File, resolve: (url: string) => void, reject: (error: Error) => void) => {
     const CHUNK_SIZE = 10485760; // 10MB chunks
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
     
     // Generate a unique ID for this file
     const fileId = `large_${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
@@ -1674,7 +1674,7 @@ const RequestCarouselPage: React.FC = () => {
       formData.append('originalName', file.name);
       
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const chunkApiUrl = baseUrl.endsWith('/api') 
           ? `${baseUrl}/upload/chunk`
           : `${baseUrl}/api/upload/chunk`;
@@ -1970,7 +1970,7 @@ const RequestCarouselPage: React.FC = () => {
       
       // Delete from backend
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/delete-video`
           : `${baseUrl}/api/youtube/delete-video`;
@@ -2068,7 +2068,7 @@ const RequestCarouselPage: React.FC = () => {
       }
       
       // Save to backend API first
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/carousel-contents`
         : `${baseUrl}/api/carousel-contents`;
@@ -2136,7 +2136,7 @@ const RequestCarouselPage: React.FC = () => {
   const loadSavedContents = async () => {
     try {
       // Try to load from backend first
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
@@ -2203,7 +2203,7 @@ const RequestCarouselPage: React.FC = () => {
       // Try to delete from backend first
       let backendDeleteSuccess = false;
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents/${id}`
           : `${baseUrl}/api/carousel-contents/${id}`;
@@ -2375,7 +2375,7 @@ const RequestCarouselPage: React.FC = () => {
       };
       
       // Save to backend API
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/carousel-contents`
         : `${baseUrl}/api/carousel-contents`;

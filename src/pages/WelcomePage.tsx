@@ -6,52 +6,58 @@ import { ProgressDots } from "@/components/ProgressDots";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Clock, LineChart, Zap, Linkedin, MessageCircle, BarChart, ThumbsUp, Users, FileText } from "lucide-react";
+import { ArrowRight, Youtube, Linkedin, FileText, Layout, Image } from "lucide-react";
 
 export default function WelcomePage() {
   const { nextStep, setCurrentStep } = useOnboarding();
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    // Explicitly set the current step to ensure we go to personal-info
     setCurrentStep("personal-info");
     navigate("/onboarding/personal-info");
   };
 
-  const handleSkipToDashboard = () => {
-    // Mark onboarding as completed in localStorage
-    localStorage.setItem('onboardingCompleted', 'true');
-    navigate("/dashboard");
-  };
-
-  // Framer motion variants for staggered animations
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { type: "spring", stiffness: 50 } 
-    }
-  };
+  // Floating icons animation
+  const floatingIcons = [
+    { icon: <Linkedin size={32} />, delay: 0 },
+    { icon: <Youtube size={32} />, delay: 0.2 },
+    { icon: <FileText size={32} />, delay: 0.4 },
+    { icon: <Layout size={32} />, delay: 0.6 },
+    { icon: <Image size={32} />, delay: 0.8 }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
-      {/* Background pattern with LinkedIn-inspired blue gradient */}
+      {/* Background with simple blue gradient */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-primary-100 dark:bg-primary/30 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-200 dark:bg-blue-800/20 blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] opacity-5"></div>
+        <div className="absolute inset-0 bg-primary/5"></div>
+      </div>
+
+      {/* Floating Icons */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {floatingIcons.map((item, index) => (
+          <motion.div
+            key={index}
+            className="absolute text-primary/20"
+            initial={{ y: "100vh", x: Math.random() * 100 - 50 }}
+            animate={{ 
+              y: "-100vh",
+              x: Math.random() * 100 - 50,
+              rotate: [0, 360]
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              delay: item.delay,
+              ease: "linear"
+            }}
+            style={{
+              left: `${(index + 1) * 20}%`,
+            }}
+          >
+            {item.icon}
+          </motion.div>
+        ))}
       </div>
       
       <motion.div 
@@ -66,14 +72,11 @@ export default function WelcomePage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <div className="relative">
-            <BrandOutLogotype className="h-20 w-auto" />
-            <Linkedin className="absolute bottom-0 right-0 text-primary bg-white dark:bg-gray-900 p-1 rounded-full shadow-md" size={24} />
-          </div>
+          <BrandOutLogotype className="h-12 w-auto" />
         </motion.div>
         
         <motion.h1 
-          className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500"
+          className="text-5xl font-bold mb-6 text-primary"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
@@ -86,11 +89,11 @@ export default function WelcomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4 }}
         >
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-            Create engaging LinkedIn content in minutes, not hours.
+          <p className="text-xl mb-2 font-medium">
+            Transform Your LinkedIn Presence with AI-Powered Content
           </p>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            AI-powered posts optimized for professional growth and influence.
+          <p className="text-xl mb-8 font-medium">
+            Create, Schedule, and Grow Your Professional Brand
           </p>
         </motion.div>
         
@@ -102,94 +105,53 @@ export default function WelcomePage() {
         >
           <Button 
             onClick={handleGetStarted} 
-            className="w-full py-6 px-8 text-lg font-bold mb-4 flex items-center justify-center gap-2 group bg-primary hover:bg-primary-600 text-white rounded-full"
+            className="w-full py-6 px-8 text-lg font-bold mb-4 flex items-center justify-center gap-2 group bg-primary hover:bg-primary/90 text-white rounded-full"
           >
             <span>Get started</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
           </Button>
-          
-          <Button
-            variant="ghost"
-            className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary hover:bg-gray-100/50 dark:hover:bg-gray-800/50 px-8 py-3 text-sm rounded-full"
-            onClick={handleSkipToDashboard}
+        </motion.div>
+        
+        {/* Modern Content Preview Cards */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* LinkedIn Post Preview */}
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-6 transform hover:-translate-y-1 transition-all duration-300"
+            whileHover={{ scale: 1.02 }}
           >
-            Skip to dashboard
-          </Button>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.6 }}
-        >
-          <ProgressDots total={8} current={0} />
-        </motion.div>
-        
-        {/* LinkedIn post previews */}
-        <motion.div 
-          className="mt-16 flex flex-col gap-4"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div variants={item} className="bg-white p-5 rounded-xl border border-gray-200 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full">
-            <div className="flex items-start mb-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white mr-3">
-                <Users size={20} />
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Linkedin className="text-primary" size={24} />
               </div>
-              <div>
-                <p className="font-bold text-gray-900">John Smith</p>
-                <p className="text-gray-500 text-sm">Marketing Director at TechGrowth Solutions</p>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900">LinkedIn Posts</h3>
+                <p className="text-gray-600 text-sm">Professional content that engages</p>
               </div>
             </div>
-            <p className="text-gray-800 mb-3">
-              Just discovered an incredible platform for content creation! AI-powered posts that sound authentic and professional. Perfect for busy professionals looking to grow their brand. Engagement rates up 65% in just 2 weeks. #ContentTips #BrandGrowth
-            </p>
-            <div className="flex justify-between text-gray-500 text-sm">
-              <span className="flex items-center gap-1"><MessageCircle size={14} /> 32</span>
-              <span className="flex items-center gap-1"><ArrowRight size={14} className="rotate-90" /> 56</span>
-              <span className="flex items-center gap-1"><ThumbsUp size={14} /> 198</span>
-              <span className="flex items-center gap-1"><BarChart size={14} /> 8.4K</span>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-gray-800 text-left">Create compelling LinkedIn posts that drive engagement and establish thought leadership.</p>
             </div>
           </motion.div>
-          
-          <motion.div variants={item} className="bg-white p-5 rounded-xl border border-gray-200 text-left shadow-sm hover:shadow-md transition-all duration-300 max-w-lg mx-auto w-full flex">
-            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white mr-3">
-              <Users size={20} />
+
+          {/* Carousel Preview */}
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-6 transform hover:-translate-y-1 transition-all duration-300"
+            whileHover={{ scale: 1.02 }}
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Layout className="text-primary" size={24} />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900">Carousel Posts</h3>
+                <p className="text-gray-600 text-sm">Visual storytelling made easy</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <div className="mb-2">
-                <p className="font-bold text-gray-900">Sarah Johnson</p>
-                <p className="text-gray-500 text-sm">Senior Product Manager • SaaS Technology</p>
-              </div>
-              <div className="mb-4">
-                <p className="text-gray-800 font-medium mb-2">5 ways BrandOut transformed my content strategy:</p>
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="p-3 bg-gray-50 border-b flex items-center justify-between">
-                    <span className="text-gray-600 text-sm">Professional Carousel Post</span>
-                    <FileText size={14} className="text-primary" />
-                  </div>
-                  <div className="p-6 text-center">
-                    <p className="text-gray-700 font-medium">Carousel Preview</p>
-                    <div className="flex mt-3 justify-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                      <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                      <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                      <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                      <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between text-gray-500 text-sm">
-                <span className="flex items-center gap-1"><MessageCircle size={14} /> 45</span>
-                <span className="flex items-center gap-1"><ArrowRight size={14} className="rotate-90" /> 98</span>
-                <span className="flex items-center gap-1"><ThumbsUp size={14} /> 327</span>
-                <span className="flex items-center gap-1"><BarChart size={14} /> 15.2K</span>
-              </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-gray-800 text-left">Design beautiful carousel posts that educate and inspire your professional network.</p>
             </div>
           </motion.div>
-        </motion.div>
+        </div>
       </motion.div>
     </div>
   );
