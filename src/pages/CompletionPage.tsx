@@ -96,7 +96,7 @@ export default function CompletionPage() {
 
       console.log('Using token for auth method:', user?.authMethod || localStorage.getItem('auth-method'));
 
-      // Update onboarding status using PUT
+      // Update onboarding status using POST
       await api.post('/onboarding/complete', {
         workspaceType: workspaceType || 'personal',
         workspaceName: workspaceName || `${firstName}'s Workspace`,
@@ -132,10 +132,17 @@ export default function CompletionPage() {
   };
   
   const handleConnectLinkedIn = () => {
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Get the backend URL from environment variable or fallback to production URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    
+    // Store current URL in localStorage to redirect back after LinkedIn connection
     localStorage.setItem('redirectAfterAuth', '/dashboard');
-    window.location.href = `${baseUrl}/auth/linkedin-direct`;
+    
+    // Store that this is a LinkedIn connection attempt from a Google user
+    localStorage.setItem('linkedin-login-type', 'google_connect');
+    
+    // Redirect to LinkedIn OAuth endpoint with connection type
+    window.location.href = `${baseApiUrl}/auth/linkedin-direct?type=google_connect&googleUserId=${user?.id}`;
   };
 
   // If user is logged in with LinkedIn, show a simple completion message with animation

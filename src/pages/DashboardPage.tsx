@@ -331,9 +331,8 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleLinkedInConnect = () => {
-    // Get the backend URL from environment variable or fallback to Render deployed URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
+    // Get the backend URL from environment variable or fallback to production URL
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
     localStorage.setItem('redirectAfterAuth', '/dashboard');
@@ -342,7 +341,7 @@ const DashboardPage: React.FC = () => {
     localStorage.setItem('linkedin-login-type', 'google_connect');
     
     // Redirect to LinkedIn OAuth endpoint with connection type
-    window.location.href = `${baseUrl}/api/auth/linkedin-direct?type=google_connect&googleUserId=${user?._id}`;
+    window.location.href = `${baseApiUrl}/auth/linkedin-direct?type=google_connect&googleUserId=${user?.id}`;
   };
 
   // Sample data for charts based on real data
