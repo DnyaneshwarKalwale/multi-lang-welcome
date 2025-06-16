@@ -301,17 +301,30 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           
           const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
           
+          // First call the onboarding complete endpoint
+          await axios.post(`${baseApiUrl}/onboarding/complete`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          // Then update the user profile
           await axios.patch(`${baseApiUrl}/users/me`, { onboardingCompleted: true }, {
             headers: { Authorization: `Bearer ${token}` }
           });
+          
+          // Update user state
+          if (user) {
+            user.onboardingCompleted = true;
+          }
           
         } catch (error) {
           console.error("Error marking onboarding as completed:", error);
         }
       };
       
-      completeOnboarding();
-      navigate('/dashboard');
+      // Call the async function and navigate
+      completeOnboarding().then(() => {
+        navigate('/dashboard', { replace: true });
+      });
     }
   };
 
@@ -338,38 +351,38 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const value = {
-    currentStep,
-    workspaceType,
-    workspaceName,
-    teamMembers,
-    postFormat,
-    postFrequency,
-    selectedDays,
-    firstName,
-    lastName,
-    email,
-    website,
-    mobileNumber,
-    inspirationProfiles,
+        currentStep,
+        workspaceType,
+        workspaceName,
+        teamMembers,
+        postFormat,
+        postFrequency,
+        selectedDays,
+        firstName,
+        lastName,
+        email,
+        website,
+        mobileNumber,
+        inspirationProfiles,
     socialLoginData,
-    setCurrentStep,
-    setWorkspaceType,
-    setWorkspaceName,
-    setTeamMembers,
-    setPostFormat,
-    setPostFrequency,
-    setSelectedDays,
-    setFirstName,
-    setLastName,
-    setEmail,
-    setWebsite,
-    setMobileNumber,
-    addInspirationProfile,
-    removeInspirationProfile,
-    nextStep,
-    prevStep,
-    saveProgress,
-    getStepProgress,
+        setCurrentStep,
+        setWorkspaceType,
+        setWorkspaceName,
+        setTeamMembers,
+        setPostFormat,
+        setPostFrequency,
+        setSelectedDays,
+        setFirstName,
+        setLastName,
+        setEmail,
+        setWebsite,
+        setMobileNumber,
+        addInspirationProfile,
+        removeInspirationProfile,
+        nextStep,
+        prevStep,
+        saveProgress,
+        getStepProgress,
     getApplicableSteps,
     setSocialLoginData,
   };

@@ -418,11 +418,8 @@ class LinkedInApi {
             
             // Create a clean direct URL with no transformations
             directImageUrl = `${baseUrl}/upload/${publicId}`;
-            
-            console.log('Cleaned Cloudinary URL:', directImageUrl);
           }
         } catch (urlError) {
-          console.error('Error processing Cloudinary URL:', urlError);
           // If there's an error parsing the URL, try with the original URL
         }
       }
@@ -434,7 +431,7 @@ class LinkedInApi {
         postContent: text,
         imagePath: directImageUrl,
         imageTitle: imageTitle || fileName,
-        imageDescription: "Shared via Scripe",
+        imageDescription: "Shared via BrandOut",
         isCloudinaryImage: true, // Flag to tell backend this is a Cloudinary URL
         visibility: visibility
       };
@@ -527,7 +524,7 @@ class LinkedInApi {
         postContent: text,
         articleUrl: articleUrl,
         articleTitle: articleTitle || 'Shared Article',
-        articleDescription: articleDescription || 'Shared via Scripe',
+        articleDescription: articleDescription || 'Shared via BrandOut',
         visibility: visibility
       };
 

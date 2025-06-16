@@ -68,13 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Make sure localStorage accurately reflects the user's onboarding status from server
         localStorage.setItem('onboardingCompleted', user.onboardingCompleted.toString());
         console.log(`Setting onboardingCompleted to ${user.onboardingCompleted}`);
+        return user;
       } else {
         console.log('AuthContext - fetchUser - No user data returned from API');
+        // Clear tokens if no user data returned
+        tokenManager.clearAllTokens();
+        setUser(null);
+        setToken(null);
+        return null;
       }
-      
-      return user;
     } catch (error) {
       console.error("Failed to get user data:", error);
+      // Clear tokens on error
+      tokenManager.clearAllTokens();
+      setUser(null);
+      setToken(null);
       return null;
     } finally {
       setLoading(false);
@@ -96,10 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
           setUser(user);
           localStorage.setItem('onboardingCompleted', user.onboardingCompleted ? 'true' : 'false');
-          console.log('AuthContext - checkAuthStatus - User loaded on init', { id: user.id, email: user.email });
         } else {
           // If API returns success but no user, clear token
-          console.warn('AuthContext - checkAuthStatus - API returned no user data');
           tokenManager.clearAllTokens();
           setUser(null);
           setToken(null);
@@ -172,11 +178,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Clear all tokens
     tokenManager.clearAllTokens();
+    // Clear all localStorage items related to auth
     localStorage.removeItem('auth-method');
     localStorage.removeItem('onboardingCompleted');
+    localStorage.removeItem('linkedin-login-token');
+    localStorage.removeItem('google-login-token');
+    localStorage.removeItem('onboardingStep');
+    localStorage.removeItem('redirectAfterAuth');
+    localStorage.removeItem('pendingInvitationToken');
+    // Clear user state
     setUser(null);
     setToken(null);
+    // Navigate to home
     navigate('/');
   };
 

@@ -70,7 +70,12 @@ export default function OAuthCallbackPage() {
       console.log('OAuth callback - Determined authMethod:', authMethod);
       
       try {
-        // First store the token - important to do this before fetchUser
+        // Clear any existing tokens first
+        tokenManager.clearAllTokens();
+        localStorage.removeItem('onboardingCompleted');
+        localStorage.removeItem('onboardingStep');
+        
+        // Store the new token
         console.log('OAuth callback - Storing token with authMethod:', authMethod);
         tokenManager.storeToken(token, authMethod as 'linkedin' | 'google');
         
@@ -102,61 +107,69 @@ export default function OAuthCallbackPage() {
         } else if (redirectAfterAuth) {
           // Navigate to the stored redirect path and remove it from localStorage
           console.log('OAuth callback - Redirecting to previously stored path:', redirectAfterAuth);
+          // Mark onboarding as completed if redirecting to dashboard
+          if (redirectAfterAuth === '/dashboard') {
+            localStorage.setItem('onboardingCompleted', 'true');
+            if (userData) {
+              userData.onboardingCompleted = true;
+            }
+          }
           navigate(redirectAfterAuth, { replace: true });
           localStorage.removeItem('redirectAfterAuth');
         } else {
-          // Get onboarding status from localStorage (set by fetchUser)
-          const onboardingCompleted = localStorage.getItem('onboardingCompleted');
+          // Get onboarding status from the server response
+          const onboardingCompleted = userData.onboardingCompleted;
           
           console.log('OAuthCallback - Onboarding param:', onboarding);
-          console.log('OAuthCallback - onboardingCompleted from localStorage:', onboardingCompleted);
+          console.log('OAuthCallback - onboardingCompleted from server:', onboardingCompleted);
           
-          // If onboarding is true in query params OR onboardingCompleted is not 'true', go to onboarding
-          if (onboarding || onboardingCompleted !== 'true') {
+          // If onboarding is true in query params OR onboardingCompleted is false from server, go to onboarding
+          if (onboarding || !onboardingCompleted) {
             console.log('OAuthCallback - Redirecting to onboarding');
             navigate('/onboarding/welcome', { replace: true });
           } else {
             console.log('OAuthCallback - Redirecting to dashboard');
+            // Ensure onboarding is marked as completed
+            localStorage.setItem('onboardingCompleted', 'true');
+            if (userData) {
+              userData.onboardingCompleted = true;
+            }
             navigate('/dashboard', { replace: true });
           }
         }
       } catch (error) {
-        console.error('Error processing authentication:', error);
-        setError('Error processing authentication. Please try again.');
-        // Wait a moment before redirecting on error
+        console.error('OAuth callback - Error processing authentication:', error);
+        setError('Failed to process authentication. Please try again.');
         setTimeout(() => navigate('/', { replace: true }), 2000);
       } finally {
         setIsLoading(false);
       }
     };
     
-    // Process authentication immediately
     processAuth();
-  }, [location, navigate, fetchUser]);
-
-  // Return loading indicator or error message
+  }, [navigate, location, fetchUser]);
+  
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
-      <div className="flex flex-col items-center gap-4">
-        {error ? (
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">Authentication Error</h2>
-            <p className="text-gray-500">{error}</p>
-            <p className="text-sm mt-4">Redirecting you back...</p>
-          </div>
-        ) : (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="relative w-20 h-20"
-            >
-              <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-primary/30 animate-spin"></div>
-              <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" style={{animationDuration: '1.5s'}}></div>
-            </motion.div>
-            <p className="text-gray-500 mt-4">Completing authentication...</p>
-          </>
-        )}
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        {isLoading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-lg text-gray-600">Processing your login...</p>
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-red-600"
+          >
+            {error}
+          </motion.div>
+        ) : null}
       </div>
     </div>
   );

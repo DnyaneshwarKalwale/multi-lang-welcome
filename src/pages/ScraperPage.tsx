@@ -1065,19 +1065,24 @@ const ScraperPage: React.FC = () => {
   // Handle LinkedIn profile scraping
   const handleLinkedInScrape = async () => {
     if (!inputUrl) {
-      toastError('Please enter a LinkedIn username');
+      toastError('Please enter a LinkedIn username or profile URL');
       return;
     }
 
     // Extract username from URL or use as is
     let username = inputUrl.trim();
+    
+    // Handle different URL formats
     if (username.includes('linkedin.com/in/')) {
       const match = username.match(/linkedin\.com\/in\/([^\/\?]+)/);
       username = match ? match[1] : username;
+    } else if (username.includes('linkedin.com/company/')) {
+      const match = username.match(/linkedin\.com\/company\/([^\/\?]+)/);
+      username = match ? match[1] : username;
     }
     
-    // Remove @ if present
-    username = username.replace('@', '').replace('/', '');
+    // Remove @ if present and any trailing slashes
+    username = username.replace('@', '').replace(/\/+$/, '');
 
     // If searching for a different profile, clear previous results
     if (lastSearchedLinkedInProfile && lastSearchedLinkedInProfile !== username) {
@@ -1112,7 +1117,7 @@ const ScraperPage: React.FC = () => {
         // Save to localStorage for persistence
         saveLinkedInResultToStorage(response.data);
         
-        toastSuccess(`Successfully scraped ${response.data.totalPosts} posts from @${username}`);
+        toastSuccess(`Successfully scraped ${response.data.totalPosts} posts from ${username}`);
       } else {
         toastError(response.data.message || 'Failed to scrape LinkedIn profile');
       }
@@ -1131,11 +1136,33 @@ const ScraperPage: React.FC = () => {
       return;
     }
 
-    // Extract channel name for comparison
-    const inputChannelName = inputUrl.includes('@') ? inputUrl.split('@')[1] : inputUrl;
+    // Extract channel name/ID from input
+    let channelIdentifier = inputUrl;
+    
+    // Handle different URL formats
+    if (inputUrl.includes('youtube.com/')) {
+      if (inputUrl.includes('/channel/')) {
+        // Direct channel ID URL
+        const parts = inputUrl.split('/channel/');
+        channelIdentifier = parts[1]?.split('/')[0] || inputUrl;
+      } else if (inputUrl.includes('/c/') || inputUrl.includes('/user/')) {
+        // Custom URL format
+        const parts = inputUrl.split(/\/c\/|\/user\//);
+        channelIdentifier = parts[1]?.split('/')[0] || inputUrl;
+      } else {
+        // Handle format
+        const parts = inputUrl.split('/');
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i].startsWith('@')) {
+            channelIdentifier = parts[i];
+            break;
+          }
+        }
+      }
+    }
     
     // If searching for a different channel, clear previous results
-    if (lastSearchedChannel && lastSearchedChannel !== inputChannelName) {
+    if (lastSearchedChannel && lastSearchedChannel !== channelIdentifier) {
       clearYoutubeResults();
     }
 
@@ -1143,12 +1170,12 @@ const ScraperPage: React.FC = () => {
     
     try {
       const response = await api.post('/youtube/channel', {
-        channelName: inputUrl
+        channelName: channelIdentifier
       });
       
       if (response.data && response.data.success) {
         // Get channel name from the first video if available
-        let detectedChannelName = inputChannelName;
+        let detectedChannelName = channelIdentifier;
         if (response.data.data && response.data.data.length > 0 && response.data.data[0].channelName) {
           detectedChannelName = response.data.data[0].channelName;
         }
@@ -1159,7 +1186,7 @@ const ScraperPage: React.FC = () => {
         };
         
         setYoutubeChannelResult(channelResult);
-        setLastSearchedChannel(inputChannelName); // Keep using input for search comparison
+        setLastSearchedChannel(channelIdentifier); // Keep using input for search comparison
         
         // Save to localStorage for persistence
         saveYoutubeChannelToStorage(channelResult);
@@ -1220,17 +1247,23 @@ const ScraperPage: React.FC = () => {
   };
 
   const handleTwitterScrape = async () => {
-    let username = inputUrl;
+    if (!inputUrl) {
+      toastError('Please enter a Twitter username or profile URL');
+      return;
+    }
+
+    // Extract username from URL or use as is
+    let username = inputUrl.trim();
     
-    if (inputUrl.includes('twitter.com/') || inputUrl.includes('x.com/')) {
-      const urlParts = inputUrl.split('/');
+    // Handle different URL formats
+    if (username.includes('twitter.com/') || username.includes('x.com/')) {
+      const urlParts = username.split('/');
       username = urlParts[urlParts.length - 1];
-      username = username.split('?')[0];
+      username = username.split('?')[0]; // Remove query parameters
     }
     
-    if (username.startsWith('@')) {
-      username = username.substring(1);
-    }
+    // Remove @ if present and any trailing slashes
+    username = username.replace('@', '').replace(/\/+$/, '');
     
     if (!username) {
       toastError('Please enter a valid Twitter username');

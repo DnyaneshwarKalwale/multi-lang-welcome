@@ -162,9 +162,6 @@ const apiHelpers = {
         headers.Authorization = `Bearer ${authToken}`;
       }
       
-      console.log(`Making ${method} request to: ${url}`);
-      if (data) console.log("Request data:", data);
-      
       const response = await axios({
         method,
         url,
@@ -172,10 +169,8 @@ const apiHelpers = {
         headers
       });
       
-      console.log(`Response from ${url}:`, response.data);
       return response.data;
     } catch (error: any) {
-      console.error(`Error in ${method} request to ${endpoint}:`, error);
       throw error;
     }
   },

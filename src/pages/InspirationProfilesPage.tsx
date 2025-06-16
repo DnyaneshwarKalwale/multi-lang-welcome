@@ -3,23 +3,18 @@ import { ArrowRight, X, Plus, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { BackButton } from "@/components/BackButton";
-import { ProgressDots } from "@/components/ProgressDots";
 import { motion } from "framer-motion";
-import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
+import { BrandOutLogotype } from "@/components/BrandOutIcon";
 
 export default function InspirationProfilesPage() {
   const { 
     nextStep, 
-    prevStep, 
     inspirationProfiles, 
     addInspirationProfile, 
-    removeInspirationProfile,
-    getStepProgress 
+    removeInspirationProfile
   } = useOnboarding();
   
   const [inputValue, setInputValue] = useState("");
-  const { current, total } = getStepProgress();
 
   const handleAddProfile = () => {
     if (inputValue.trim()) {
@@ -34,7 +29,6 @@ export default function InspirationProfilesPage() {
       addInspirationProfile(inputValue.trim());
       setInputValue("");
     }
-    // Save progress first to ensure data is stored
     nextStep();
   };
   
@@ -60,43 +54,24 @@ export default function InspirationProfilesPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gradient-to-b from-white via-blue-50/20 to-white text-gray-800 relative overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 -left-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 opacity-80 blur-[120px]"></div>
-        <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-100 opacity-60 blur-[120px]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-background text-foreground relative overflow-hidden">
+      {/* Background with simple blue gradient */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-primary/5"></div>
       </div>
       
-      <motion.div 
-        className="max-w-xl w-full mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
+      <div className="max-w-xl w-full mb-8">
         <div className="mb-10 flex justify-center">
-          <div className="relative">
-            <BrandOutLogotype className="h-20 w-auto" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0077B5] bg-white p-1 rounded-full shadow-md" size={26} />
-          </div>
+          <BrandOutLogotype className="h-12 w-auto" />
         </div>
         
-        <motion.h1 
-          className="text-3xl font-bold text-center mb-3 text-gray-900"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
+        <h1 className="text-3xl font-bold text-center mb-3 text-gray-900">
           Which LinkedIn profiles inspire you?
-        </motion.h1>
+        </h1>
         
-        <motion.p 
-          className="text-center text-gray-600 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
+        <p className="text-center text-gray-600 mb-8">
           Add LinkedIn profiles whose content style you'd like to emulate for better recommendations
-        </motion.p>
+        </p>
         
         <motion.div 
           className="bg-white p-8 rounded-xl shadow-lg border border-gray-100"
@@ -118,7 +93,7 @@ export default function InspirationProfilesPage() {
               <Button 
                 type="button" 
                 onClick={handleAddProfile}
-                className="h-12 shrink-0 bg-primary hover:bg-primary-600"
+                className="h-12 shrink-0 bg-primary hover:bg-primary/90"
               >
                 <Plus className="h-5 w-5" />
               </Button>
@@ -153,37 +128,16 @@ export default function InspirationProfilesPage() {
           </motion.form>
         </motion.div>
         
-        <motion.div 
-          className="mt-8 flex justify-center gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <BackButton 
-            onClick={prevStep} 
-            variant="subtle" 
-            className="px-8"
-          />
-          
+        <div className="mt-8 flex justify-center">
           <Button 
             onClick={handleSubmit} 
-            className="bg-primary hover:bg-primary-600 text-white px-8 py-6 text-base rounded-full shadow-md"
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base rounded-full shadow-md w-full max-w-md flex items-center justify-center gap-2"
           >
             Continue
-            <ArrowRight className="ml-2 w-5 h-5" />
+            <ArrowRight className="w-5 h-5" />
           </Button>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.6 }}
-          className="flex flex-col items-center mt-8"
-        >
-          <ProgressDots total={total} current={current} color="cyan" />
-          <span className="text-xs text-gray-500 mt-3">Step {current + 1} of {total}</span>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 } 

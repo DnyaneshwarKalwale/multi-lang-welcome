@@ -1,11 +1,14 @@
 import React, { useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Users, UserCircle, Check } from "lucide-react";
+import { Users, UserCircle, Check, ArrowRight } from "lucide-react";
 import { BrandOutLogotype } from "@/components/BrandOutIcon";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function TeamSelectionPage() {
   const { workspaceType, setWorkspaceType, nextStep } = useOnboarding();
+  const { user } = useAuth();
 
   // Auto-select personal use on mount
   useEffect(() => {
@@ -24,7 +27,7 @@ export default function TeamSelectionPage() {
       <div className="max-w-3xl w-full text-center">
         <div className="mb-10 flex justify-center">
           <BrandOutLogotype className="h-12 w-auto" />
-        </div>
+          </div>
         
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
           How would you like to use BrandOut?
@@ -55,7 +58,14 @@ export default function TeamSelectionPage() {
             onClick={() => setWorkspaceType("personal")}
           >
             <div className={`p-5 rounded-full mb-6 ${workspaceType === "personal" ? "bg-primary/10" : "bg-gray-100"}`}>
-              <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-primary" : "text-gray-500"}`} />
+              {user?.profilePicture ? (
+                <Avatar className="w-14 h-14">
+                  <AvatarImage src={user.profilePicture} alt={`${user.firstName} ${user.lastName}`} />
+                  <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                </Avatar>
+              ) : (
+                <UserCircle className={`w-14 h-14 ${workspaceType === "personal" ? "text-primary" : "text-gray-500"}`} />
+              )}
             </div>
             <h3 className="text-xl font-bold mb-3 text-gray-900">For personal use</h3>
             <p className="text-gray-600 text-base mb-6">
@@ -78,6 +88,7 @@ export default function TeamSelectionPage() {
             className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base rounded-full shadow-md w-full max-w-md flex items-center justify-center gap-2"
           >
             Continue
+            <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
       </div>

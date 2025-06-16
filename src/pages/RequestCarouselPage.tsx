@@ -45,6 +45,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from "@/components/ui/textarea";
 import api, { tokenManager } from '@/services/api';
 // import { tokenManager as tokenManagerUtils } from '../utils/tokenManager';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Model options with fallbacks
 const AI_MODELS = {
@@ -469,15 +470,12 @@ const RequestCarouselPage: React.FC = () => {
               source: 'youtube'
             }));
             
-            console.log(`Loaded ${backendVideos.length} videos from backend`);
-            
             // If we got videos from the backend, we can update state
             if (backendVideos.length > 0) {
               setSavedVideos(backendVideos);
             }
           }
         } catch (backendError) {
-          console.error("Error loading videos from backend:", backendError);
           // Fall back to localStorage in case of error
         }
         
@@ -508,8 +506,6 @@ const RequestCarouselPage: React.FC = () => {
                 savedTimestamp: video.savedTimestamp || video.savedAt || new Date().toISOString(),
                 source: 'youtube'
               }));
-              
-              console.log(`Loaded ${storageVideos.length} videos from localStorage`);
             }
           }
         } catch (localStorageError) {
@@ -543,7 +539,6 @@ const RequestCarouselPage: React.FC = () => {
             });
           
           setSavedVideos(allVideos);
-          console.log(`Total: ${allVideos.length} unique videos after merging`);
         } else {
           // No videos found in either source
         setSavedVideos([]);
@@ -552,7 +547,6 @@ const RequestCarouselPage: React.FC = () => {
         // Always set loading to false, whether we found videos or not
         setIsLoadingVideos(false);
       } catch (error) {
-        console.error("Error in loadSavedVideos:", error);
         setIsLoadingVideos(false);
         
         // In case of complete failure, ensure we display an empty array
@@ -579,7 +573,6 @@ const RequestCarouselPage: React.FC = () => {
   // Define fetchUserLimit before using it in useEffect
   const fetchUserLimit = async () => {
     if (!user?.id) {
-      console.log('No user ID available, skipping limit fetch');
       return;
     }
 
@@ -587,20 +580,16 @@ const RequestCarouselPage: React.FC = () => {
     const token = authMethod ? tokenManager.getToken(authMethod) : null;
 
     if (!token) {
-      console.log('No token available, skipping limit fetch');
       return;
     }
 
     try {
-      console.log('Fetching user limit for user:', user.id);
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const limitResponse = await axios.get(`${baseUrl}/user-limits/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
-      console.log('User limit response:', limitResponse.data);
       
       if (limitResponse.data.success) {
         const userData = limitResponse.data.data;
@@ -1423,7 +1412,8 @@ const RequestCarouselPage: React.FC = () => {
       toast({
         title: "Title required",
         description: "Please enter a title for your carousel request",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000
       });
       return;
     }
@@ -1434,6 +1424,7 @@ const RequestCarouselPage: React.FC = () => {
         variant: "destructive",
         title: "Error",
         description: "Unable to verify your usage limits. Please try again later.",
+        duration: 2000
       });
       return;
     }
@@ -1449,6 +1440,7 @@ const RequestCarouselPage: React.FC = () => {
         variant: "destructive",
         title: "Credit Limit Reached",
         description: `You have used all ${userLimit.limit} credits from your ${userLimit.planName} plan. Please upgrade your plan or buy additional credits.`,
+        duration: 2000
       });
       
       // Show subscription modal for upgrade
@@ -1464,12 +1456,6 @@ const RequestCarouselPage: React.FC = () => {
       
       if (!token) {
         throw new Error('Authentication token not found. Please login again.');
-      }
-      
-      // Debug uploaded files
-      console.log("Files to upload:", uploadedFiles);
-      if (uploadedFiles.length === 0) {
-        console.log("No files to upload. Proceeding with empty files array.");
       }
       
       // Upload files to Cloudinary first, then send metadata to our API
@@ -1490,8 +1476,6 @@ const RequestCarouselPage: React.FC = () => {
               const formData = new FormData();
               formData.append('file', file);
               
-              console.log(`Uploading file: ${file.name}, size: ${file.size} bytes`);
-              
               const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
               const apiUrl = baseUrl.endsWith('/api') 
                 ? `${baseUrl}/upload/upload`
@@ -1504,13 +1488,11 @@ const RequestCarouselPage: React.FC = () => {
               })
               .then(response => {
                 if (!response.ok) {
-                  console.error("Upload response not OK:", response.status, response.statusText);
                   throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
                 }
                 return response.json();
               })
               .then(data => {
-                console.log("Upload successful, response:", data);
                 if (data.secure_url) {
                   resolve(data.secure_url);
                 } else {
@@ -1518,7 +1500,6 @@ const RequestCarouselPage: React.FC = () => {
                 }
               })
               .catch(error => {
-                console.error("Upload error:", error);
                 reject(error);
               });
             }
@@ -1528,9 +1509,7 @@ const RequestCarouselPage: React.FC = () => {
         try {
         // Wait for all files to upload
         fileUrls = await Promise.all(uploadPromises);
-          console.log("All files uploaded successfully:", fileUrls);
         } catch (uploadError) {
-          console.error("Error uploading files:", uploadError);
           throw new Error(`File upload failed: ${uploadError.message || 'Please try again with smaller files'}`);
         }
       }
@@ -1557,12 +1536,6 @@ const RequestCarouselPage: React.FC = () => {
         ? `${baseUrl}/carousels/submit-request` 
         : `${baseUrl}/api/carousels/submit-request`;
       
-      console.log('Submitting carousel request to:', apiUrl);
-      console.log('Request data:', JSON.stringify(requestData, null, 2));
-      
-      // For debugging purposes, let's also log raw form values
-      console.log('Form values:', form.getValues());
-      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -1577,24 +1550,22 @@ const RequestCarouselPage: React.FC = () => {
       const responseText = await response.text();
         try {
         responseData = JSON.parse(responseText);
-        console.log("API response data:", responseData);
         } catch (e) {
-        console.log("API response (not JSON):", responseText);
         responseData = { message: responseText };
       }
       
       if (!response.ok) {
-        console.error("API error response:", responseData);
-        
-        // Check if it's a status 500 error - in that case, we'll consider it successful
-        // since we know the files are being correctly uploaded
-        if (response.status === 500 && responseData?.error === 'this.isModified is not a function') {
-          console.log("Server returned 500 error but we know the request actually worked. Treating as success.");
-          // Continue with success flow instead of throwing
-        } else {
-          // For any other error, throw normally
-          throw new Error(responseData.message || responseData.error || 'Failed to submit carousel request');
+        if (response.status === 500) {
+          // For 500 errors, show a more user-friendly message
+          toast({
+            title: "Server Error",
+            description: "We're experiencing technical difficulties. Please try again in a few minutes.",
+            variant: "destructive",
+            duration: 2000
+          });
+          return;
         }
+          throw new Error(responseData.message || responseData.error || 'Failed to submit carousel request');
       }
       
       // Increment user count for carousel request - THIS IS THE KEY CHANGE - counting carousel requests against the limit
@@ -1615,10 +1586,7 @@ const RequestCarouselPage: React.FC = () => {
           count: prev.count + 1,
           remaining: prev.remaining - 1
         } : null);
-        
-        console.log("Incremented user limit count for carousel request");
       } catch (limitError) {
-        console.error("Error incrementing user limit:", limitError);
         // Don't stop the flow if this fails
       }
       
@@ -1632,13 +1600,15 @@ const RequestCarouselPage: React.FC = () => {
       toast({
         title: "Carousel request submitted",
         description: "We'll notify you when your carousel is ready.",
+        duration: 2000, // 2 seconds
       });
     } catch (error) {
       console.error("Error submitting carousel request:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit carousel request. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000, // 2 seconds
       });
     } finally {
       setIsSubmittingRequest(false);
@@ -1659,6 +1629,7 @@ const RequestCarouselPage: React.FC = () => {
       toast({
       title: "Large file detected",
       description: `Uploading ${file.name} in chunks (${Math.round(file.size / 1048576)}MB)`,
+      duration: 2000, // 2 seconds
     });
 
     const uploadChunk = async () => {
@@ -1694,7 +1665,6 @@ const RequestCarouselPage: React.FC = () => {
         
         // Update progress
         const progressPercent = Math.round((bytesUploaded / file.size) * 100);
-        console.log(`Upload progress for ${file.name}: ${progressPercent}%`);
         
         if (chunkIndex < totalChunks - 1) {
           // Upload next chunk
@@ -1720,7 +1690,6 @@ const RequestCarouselPage: React.FC = () => {
           }
           
           const finalResult = await finalizeResponse.json();
-          console.log(`File ${file.name} uploaded successfully`);
           resolve(finalResult.secure_url);
         }
       } catch (error) {
@@ -1791,7 +1760,8 @@ const RequestCarouselPage: React.FC = () => {
       toast({
         title: "Cannot edit",
         description: "Only carousel content can be edited in the editor",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000
       });
       return;
     }
@@ -3324,27 +3294,33 @@ const RequestCarouselPage: React.FC = () => {
       )}
 
       {/* Carousel Request Modal */}
-      {showRequestModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
-          <Card className="w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+      <Dialog open={showRequestModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowRequestModal(false);
+          if (requestStep === 3) {
+            // If we're on the success step, reset everything
+            setRequestStep(1);
+            form.reset();
+            setSelectedVideo(null);
+            setGeneratedContent('');
+            setPreviewContent('');
+            setCarouselType('professional');
+            setAdditionalNotes('');
+          }
+        }
+      }}>
+        <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <CardHeader className="border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base sm:text-lg">
+          <DialogHeader>
+            <DialogTitle>
                   {requestStep === 3 ? "Request Submitted" : "Carousel Request Details"}
-                </CardTitle>
-                {requestStep !== 3 && (
-                  <Button variant="ghost" size="sm" onClick={() => setShowRequestModal(false)}>
-                    ✕
-                  </Button>
-                )}
-              </div>
-              <CardDescription className="text-xs sm:text-sm">
+            </DialogTitle>
+            <DialogDescription>
                 {requestStep === 1 && "Provide additional details for your carousel request"}
-                {requestStep === 2 && "Review your request before submitting"}
+              {requestStep === 2 && "Review your carousel request details"}
                 {requestStep === 3 && "We'll create your carousel within 24 hours"}
-              </CardDescription>
-            </CardHeader>
+            </DialogDescription>
+          </DialogHeader>
             
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
@@ -3579,10 +3555,8 @@ const RequestCarouselPage: React.FC = () => {
               )}
             </div>
             
-
-            
             {/* Footer */}
-            <CardFooter className="border-t p-4 flex justify-between">
+          <DialogFooter className="border-t p-4 flex justify-between">
               {requestStep === 1 && (
                 <>
                   <Button 
@@ -3626,7 +3600,10 @@ const RequestCarouselPage: React.FC = () => {
                   <div></div> {/* Empty div for spacing */}
                   <div className="space-x-3">
                     <Button 
-                      onClick={() => navigate("/dashboard/my-carousels")}
+                    onClick={() => {
+                      setShowRequestModal(false);
+                      navigate("/dashboard/my-carousels");
+                    }}
                       className="gap-2"
                     >
                       <LayoutGrid className="h-4 w-4" />
@@ -3635,10 +3612,9 @@ const RequestCarouselPage: React.FC = () => {
                   </div>
                 </>
               )}
-            </CardFooter>
-          </Card>
-        </div>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Subscription Modal */}
       {showSubscriptionModal && (

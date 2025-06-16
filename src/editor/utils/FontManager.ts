@@ -184,12 +184,11 @@ export class FontManager {
           
           if (token) {
             headers['Authorization'] = `Bearer ${token}`;
-            console.log('Using authentication token for font upload');
           } else {
-            console.log('No valid auth token found for font upload');
+            // No token available
           }
         } catch (tokenError) {
-          console.log('Error accessing localStorage for auth token:', tokenError);
+          // Error accessing localStorage
         }
         
         const response = await axios.post(`${API_BASE_URL}/api/fonts`, formData, { headers });

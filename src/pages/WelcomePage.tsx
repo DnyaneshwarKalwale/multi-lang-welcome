@@ -115,7 +115,7 @@ export default function WelcomePage() {
         {/* Modern Content Preview Cards */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {/* LinkedIn Post Preview */}
-          <motion.div 
+        <motion.div
             className="bg-white rounded-2xl shadow-lg p-6 transform hover:-translate-y-1 transition-all duration-300"
             whileHover={{ scale: 1.02 }}
           >
@@ -132,7 +132,7 @@ export default function WelcomePage() {
               <p className="text-gray-800 text-left">Create compelling LinkedIn posts that drive engagement and establish thought leadership.</p>
             </div>
           </motion.div>
-
+          
           {/* Carousel Preview */}
           <motion.div 
             className="bg-white rounded-2xl shadow-lg p-6 transform hover:-translate-y-1 transition-all duration-300"

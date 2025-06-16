@@ -1,191 +1,62 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React, { useEffect, useState } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { ThemeProvider, applyTheme } from "@/contexts/ThemeContext";
-import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { StateProvider } from "@/contexts/StateContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { OnboardingRouter } from "@/components/OnboardingRouter";
 import InvitationCheckRoute from "@/components/InvitationCheckRoute";
 import AppLayout from "@/components/AppLayout";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
-import OAuthCallbackPage from "./pages/OAuthCallbackPage";
-import DashboardPage from "./pages/DashboardPage";
-import TeamsPage from "./pages/TeamsPage";
-import PendingInvitationsPage from "./pages/PendingInvitationsPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import FeaturesPage from "./pages/FeaturesPage";
-import HowItWorksPage from "./pages/HowItWorksPage";
-import TestimonialsPage from "./pages/TestimonialsPage";
-import PricingPage from "./pages/PricingPage";
-import ContextVerifier from "./components/ContextVerifier";
-import CreatePostPage from "./pages/CreatePostPage";
-import PostLibraryPage from "./pages/PostLibraryPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import InspirationPage from "./pages/InspirationPage";
-import SettingsPage from "./pages/SettingsPage";
-import RequestCarouselPage from "./pages/RequestCarouselPage";
-import CarouselsPage from "./pages/CarouselsPage";
-import MyCarouselsPage from "./pages/MyCarouselsPage";
-import CarouselTemplatesPage from "./pages/CarouselTemplatesPage";
-import ScraperPage from "./pages/ScraperPage";
-import AIWriterPage from "./pages/AIWriterPage";
-import BillingPage from "./pages/BillingPage";
-import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
-import CheckoutCancelPage from "./pages/CheckoutCancelPage";
-import CreditsSuccessPage from "./pages/CreditsSuccessPage";
-import ImageGalleryPage from "./pages/ImageGalleryPage";
-import EditorPage from "./editor/pages/Index";
-import { PostCountProvider } from "./components/CollapsibleSidebar";
-import AdminRouter from "./admin-dashboard/AdminRouter";
+import { PostCountProvider } from "@/components/CollapsibleSidebar";
+import AdminRouter from "@/admin-dashboard/AdminRouter";
 
 const queryClient = new QueryClient();
 
-// Initialize theme immediately to prevent flash
-const initializeTheme = () => {
-  // Always apply light theme
-  document.documentElement.classList.remove("dark");
-  document.documentElement.classList.add("light");
-  localStorage.setItem("theme", "light");
-};
+// Lazy load all pages
+const Index = React.lazy(() => import('./pages/Index'));
+const FeaturesPage = React.lazy(() => import('./pages/FeaturesPage'));
+const HowItWorksPage = React.lazy(() => import('./pages/HowItWorksPage'));
+const TestimonialsPage = React.lazy(() => import('./pages/TestimonialsPage'));
+const PricingPage = React.lazy(() => import('./pages/PricingPage'));
+const OAuthCallbackPage = React.lazy(() => import('./pages/OAuthCallbackPage'));
+const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
+const PendingInvitationsPage = React.lazy(() => import('./pages/PendingInvitationsPage'));
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
+const CreatePostPage = React.lazy(() => import('./pages/CreatePostPage'));
+const PostLibraryPage = React.lazy(() => import('./pages/PostLibraryPage'));
+const RequestCarouselPage = React.lazy(() => import('./pages/RequestCarouselPage'));
+const CarouselsPage = React.lazy(() => import('./pages/CarouselsPage'));
+const MyCarouselsPage = React.lazy(() => import('./pages/MyCarouselsPage'));
+const CarouselTemplatesPage = React.lazy(() => import('./pages/CarouselTemplatesPage'));
+const ScraperPage = React.lazy(() => import('./pages/ScraperPage'));
+const InspirationPage = React.lazy(() => import('./pages/InspirationPage'));
+const AIWriterPage = React.lazy(() => import('./pages/AIWriterPage'));
+const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
+const TeamsPage = React.lazy(() => import('./pages/TeamsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const BillingPage = React.lazy(() => import('./pages/BillingPage'));
+const CheckoutSuccessPage = React.lazy(() => import('./pages/CheckoutSuccessPage'));
+const CheckoutCancelPage = React.lazy(() => import('./pages/CheckoutCancelPage'));
+const CreditsSuccessPage = React.lazy(() => import('./pages/CreditsSuccessPage'));
+const ImageGalleryPage = React.lazy(() => import('./pages/ImageGalleryPage'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 
-// Run theme initialization immediately
-initializeTheme();
-
-// Global theme functions (simplified to always use light theme)
-// @ts-ignore
-window.setLightTheme = () => {
-  applyTheme();
-  console.log("Light theme applied");
-};
-
-// Add theme transition styles to prevent flicker
-const style = document.createElement('style');
-style.innerHTML = `
-  .theme-transition {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
-  }
-  
-  /* Add base colors that apply before React hydrates */
-  :root {
-    color-scheme: light;
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-  }
-  
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
-`;
-document.head.appendChild(style);
-
-// Loading spinner component with our new design
+// Loading spinner component
 function LoadingSpinner() {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-background">
-      <div className="relative">
-        {/* Background circle with subtle pulsing effect */}
-        <motion.div 
-          className="absolute inset-0 w-28 h-28 rounded-full bg-gradient-to-r from-primary-light/10 to-primary/10"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        
-        {/* Spinning borders */}
-        <div className="w-20 h-20 border-t-4 border-b-4 border-transparent rounded-full animate-spin-slow"></div>
-        <div className="absolute inset-0 w-20 h-20 border-t-4 border-l-4 border-r-4 border-transparent border-t-primary-light border-r-primary border-l-primary-light rounded-full animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '3s' }}></div>
-        <div className="absolute inset-0 w-20 h-20 border-b-4 border-r-4 border-transparent border-r-primary border-b-primary rounded-full animate-spin-slow" style={{ animationDuration: '2s' }}></div>
-        
-        {/* Pulsing checkmark */}
-        <motion.div 
-          className="absolute inset-0 flex items-center justify-center text-primary"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 16L14 20L22 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </motion.div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
-      
-      {/* Loading text */}
-      <motion.div 
-        className="absolute mt-28 text-sm font-medium text-gray-600"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-      >
-        {/* Loading BrandOut... */}
-      </motion.div>
     </div>
   );
-}
-
-// The AppRoutes component without BrowserRouter wrapper
-const AppRoutes = () => {
-  // Protected Onboarding Route Component with optimized loading
-  function ProtectedOnboardingRoute() {
-    const { user, isAuthenticated, loading } = useAuth();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const [loadingDuration, setLoadingDuration] = useState(0);
-    const [showLoader, setShowLoader] = useState(false);
-    
-    // Start load timer to only show loader if loading takes more than 500ms
-    useEffect(() => {
-      if (loading) {
-        const startTime = Date.now();
-        const loaderTimeout = setTimeout(() => {
-          setShowLoader(true);
-        }, 500);
-        
-        return () => {
-          clearTimeout(loaderTimeout);
-          setLoadingDuration(Date.now() - startTime);
-        };
-      }
-    }, [loading]);
-    
-    // Check for saved onboarding progress
-    useEffect(() => {
-      // Only run this if the user is authenticated and hasn't completed onboarding
-      if (isAuthenticated && user && !user.onboardingCompleted && !location.pathname.includes('/onboarding/')) {
-        // Get saved step from localStorage
-        const savedStep = localStorage.getItem('onboardingStep');
-        
-        if (savedStep) {
-          // Redirect to the saved step
-          navigate(`/onboarding/${savedStep}`, { replace: true });
-        } else {
-          // If no saved step, start from the beginning
-          navigate('/onboarding/welcome', { replace: true });
-        }
-      }
-    }, [isAuthenticated, user, navigate, location.pathname]);
-    
-    // Only show loading indicator if loading takes more than 500ms
-    if (loading && showLoader) {
-      return <LoadingSpinner />;
-    }
-    
-    // If user is authenticated and has completed onboarding, redirect to dashboard
-    if (isAuthenticated && user?.onboardingCompleted) {
-      return <Navigate to="/dashboard" replace />;
-    }
-    
-    // Otherwise, show the onboarding flow
-    return <OnboardingRouter />;
   }
 
   // Protected Dashboard Route Component with optimized loading
@@ -195,13 +66,17 @@ const AppRoutes = () => {
     
     // Only show loader after 500ms of loading
     useEffect(() => {
+    let loaderTimeout: NodeJS.Timeout;
       if (loading) {
-        const loaderTimeout = setTimeout(() => {
+      loaderTimeout = setTimeout(() => {
           setShowLoader(true);
         }, 500);
-        
-        return () => clearTimeout(loaderTimeout);
+    }
+    return () => {
+      if (loaderTimeout) {
+        clearTimeout(loaderTimeout);
       }
+    };
     }, [loading]);
     
     // Show loading spinner while authenticating
@@ -238,95 +113,200 @@ const AppRoutes = () => {
     return <Navigate to="/dashboard/home" replace />;
   }
 
+// The AppRoutes component without BrowserRouter wrapper
+const AppRoutes = () => {
   return (
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/features" element={<FeaturesPage />} />
-      <Route path="/how-it-works" element={<HowItWorksPage />} />
-      <Route path="/testimonials" element={<TestimonialsPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+      <Route path="/" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <Index />
+        </React.Suspense>
+      } />
+      <Route path="/features" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <FeaturesPage />
+        </React.Suspense>
+      } />
+      <Route path="/how-it-works" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <HowItWorksPage />
+        </React.Suspense>
+      } />
+      <Route path="/testimonials" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <TestimonialsPage />
+        </React.Suspense>
+      } />
+      <Route path="/pricing" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <PricingPage />
+        </React.Suspense>
+      } />
+      <Route path="/auth/social-callback" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <OAuthCallbackPage />
+        </React.Suspense>
+      } />
+      <Route path="/auth/callback" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <OAuthCallbackPage />
+        </React.Suspense>
+      } />
+      <Route path="/verify-email" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <VerifyEmailPage />
+        </React.Suspense>
+      } />
+      <Route path="/invitations" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <PendingInvitationsPage />
+        </React.Suspense>
+      } />
+      
+      {/* Protected onboarding routes */}
+      <Route path="/onboarding/*" element={<OnboardingRouter />} />
+      
+      {/* Protected dashboard routes */}
+      <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
       
       {/* Admin routes */}
       <Route path="/admin/*" element={<AdminRouter />} />
       
-      {/* Handle invitation token links */}
-      <Route path="/invitations" element={<PendingInvitationsPage />} />
-      
-      {/* OAuth callback route - kept separate to avoid invitation check */}
-      <Route path="/auth/social-callback" element={<OAuthCallbackPage />} />
-      
-      {/* Protected onboarding route */}
-      <Route path="/onboarding/*" element={<ProtectedOnboardingRoute />} />
-      
-      {/* Protected dashboard route */}
-      <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
-      
-      {/* Carousel Editor - accessible without AppLayout for a focused editing experience */}
-      <Route path="/editor" element={<EditorPage />} />
-      
-      {/* Protected routes with invitation check wrapped in AppLayout */}
+      {/* Protected routes with AppLayout */}
       <Route element={<InvitationCheckRoute />}>
-        {/* Dashboard and other pages - with AppLayout */}
         <Route element={<AppLayout />}>
-          <Route path="/dashboard/home" element={<DashboardPage />} />
-          <Route path="/dashboard/post" element={<CreatePostPage />} />
-          <Route path="/dashboard/posts" element={<PostLibraryPage />} />
-          <Route path="/dashboard/request-carousel" element={<RequestCarouselPage />} />
-          <Route path="/dashboard/carousels" element={<CarouselsPage />} />
-          <Route path="/dashboard/my-carousels" element={<MyCarouselsPage />} />
-          <Route path="/dashboard/templates" element={<CarouselTemplatesPage />} />
-          <Route path="/dashboard/scraper" element={<ScraperPage />} />
-          <Route path="/dashboard/inspiration" element={<InspirationPage />} />
-          <Route path="/dashboard/ai" element={<AIWriterPage />} />
-          <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
-          <Route path="/dashboard/notifications" element={<NotificationsPage />} />
-          <Route path="/dashboard/team" element={<TeamsPage />} />
-          <Route path="/dashboard/settings" element={<SettingsPage />} />
-          <Route path="/dashboard/billing" element={<BillingPage />} />
-          <Route path="/settings/billing" element={<BillingPage />} />
-          <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-          <Route path="/billing/cancel" element={<CheckoutCancelPage />} />
-          <Route path="/billing/credits-success" element={<CreditsSuccessPage />} />
-          <Route path="/dashboard/images" element={<ImageGalleryPage />} />
+          <Route path="/dashboard/home" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <DashboardPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/post" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <CreatePostPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/posts" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <PostLibraryPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/request-carousel" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <RequestCarouselPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/carousels" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <CarouselsPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/my-carousels" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <MyCarouselsPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/templates" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <CarouselTemplatesPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/scraper" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <ScraperPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/inspiration" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <InspirationPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/ai" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <AIWriterPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/analytics" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <AnalyticsPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/notifications" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <NotificationsPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/team" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <TeamsPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/settings" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <SettingsPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/billing" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <BillingPage />
+            </React.Suspense>
+          } />
+          <Route path="/settings/billing" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <BillingPage />
+            </React.Suspense>
+          } />
+          <Route path="/billing/success" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <CheckoutSuccessPage />
+            </React.Suspense>
+          } />
+          <Route path="/billing/cancel" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <CheckoutCancelPage />
+            </React.Suspense>
+          } />
+          <Route path="/billing/credits-success" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <CreditsSuccessPage />
+            </React.Suspense>
+          } />
+          <Route path="/dashboard/images" element={
+            <React.Suspense fallback={<LoadingSpinner />}>
+              <ImageGalleryPage />
+            </React.Suspense>
+          } />
         </Route>
       </Route>
       
       {/* Fallback route */}
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <NotFound />
+        </React.Suspense>
+      } />
     </Routes>
   );
 };
 
-// The App component with providers
-const App = () => (
+// Main App component
+export default function App() {
+  return (
   <QueryClientProvider client={queryClient}>
-    <ErrorBoundary>
       <ThemeProvider>
-        <LanguageProvider>
+        <StateProvider>
           <AuthProvider>
-            <StateProvider>
+            <LanguageProvider>
               <OnboardingProvider>
                 <NotificationProvider>
-                  <PostCountProvider>
-                    <TooltipProvider>
-                    
+                  <Toaster />
                         <AppRoutes />
-
-                      <Toaster />
-                      <Sonner position="top-right" />
-                    </TooltipProvider>
-                  </PostCountProvider>
                 </NotificationProvider>
               </OnboardingProvider>
-            </StateProvider>
+            </LanguageProvider>
           </AuthProvider>
-        </LanguageProvider>
+        </StateProvider>
       </ThemeProvider>
-    </ErrorBoundary>
   </QueryClientProvider>
 );
-
-export default App;
+}

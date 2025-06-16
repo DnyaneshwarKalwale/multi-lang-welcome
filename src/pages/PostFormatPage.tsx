@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ContinueButton } from "@/components/ContinueButton";
 import { BackButton } from "@/components/BackButton";
@@ -9,19 +9,26 @@ import { Slider } from "@/components/ui/slider";
 import { 
   AlignLeft, AlignCenter, 
   FileText, MessageSquareText, Check, 
-  ArrowLeft, ChevronRight, Linkedin,
+  ArrowLeft, ChevronRight,
   Hash, Sparkles, Image, HeartHandshake,
   TrendingUp, Reply, Layers, BarChart3, Users,
-  ThumbsUp
+  ThumbsUp, ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { BrandOutIcon, BrandOutLogotype } from "@/components/BrandOutIcon";
+import { BrandOutLogotype } from "@/components/BrandOutIcon";
 
 export default function PostFormatPage() {
-  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress } = useOnboarding();
+  const { postFormat, setPostFormat, nextStep, prevStep, getStepProgress, firstName, lastName } = useOnboarding();
   const { current, total } = getStepProgress();
   const [postLength, setPostLength] = React.useState(50);
-  const userInitials = "YN"; // User initials placeholder
+  const userInitials = `${firstName?.[0] || ''}${lastName?.[0] || ''}`;
+
+  // Auto-select text format on mount
+  useEffect(() => {
+    if (!postFormat) {
+      setPostFormat("text");
+    }
+  }, []);
 
   const formatOptions = [
     {
@@ -130,23 +137,6 @@ export default function PostFormatPage() {
         <div className="absolute bottom-0 -right-[40%] w-[80%] h-[80%] rounded-full bg-blue-50 blur-[120px] opacity-70"></div>
       </div>
       
-      {/* Back button */}
-      <motion.div
-        className="absolute top-6 left-6 z-10"
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="flex items-center justify-center w-10 h-10 text-gray-700 hover:bg-gray-100 hover:text-primary rounded-full"
-          onClick={prevStep}
-        >
-          <ArrowLeft size={18} />
-        </Button>
-      </motion.div>
-      
       <motion.div 
         className="max-w-6xl w-full" 
         variants={fadeIn}
@@ -159,10 +149,7 @@ export default function PostFormatPage() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <div className="relative">
-            <BrandOutLogotype className="h-20 w-auto" />
-            <Linkedin className="absolute bottom-0 right-0 text-[#0088FF] bg-white p-1 rounded-full shadow-md" size={26} />
-          </div>
+          <BrandOutLogotype className="h-12 w-auto" />
         </motion.div>
         
         <motion.h1 
@@ -179,7 +166,7 @@ export default function PostFormatPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          Scripe is trained on millions of viral posts. When you create posts, the best performing posts about the same topics will be used as a reference.
+          BrandOut is trained on millions of viral posts. When you create posts, the best performing posts about the same topics will be used as a reference.
         </motion.p>
         
         {/* Two-column layout with post preview on left and options on right */}
@@ -200,11 +187,10 @@ export default function PostFormatPage() {
                       {userInitials}
                     </div>
                     <div className="ml-2">
-                      <div className="text-sm font-medium">Your Name</div>
+                      <div className="text-sm font-medium">{firstName} {lastName}</div>
                       <div className="text-xs text-gray-500">Professional title</div>
                     </div>
                   </div>
-                  <Linkedin size={18} className="text-[#0088FF]" />
                 </div>
                 <div className="p-4 min-h-[300px]">
                   <p className="text-sm text-gray-700 whitespace-pre-line">
@@ -220,7 +206,7 @@ export default function PostFormatPage() {
                       <MessageSquareText size={14} /> {postLength > 50 ? "16" : "8"}
                     </span>
                   </div>
-                  <span>Content powered by Scripe AI</span>
+                  <span>Content powered by BrandOut AI</span>
                 </div>
               </motion.div>
             ) : (
@@ -342,7 +328,7 @@ export default function PostFormatPage() {
                 </div>
                 
                 <div className="text-center text-xs text-gray-400">
-                  Scripe will learn your individual preferences over time.
+                  Brandout will learn your individual preferences over time.
             </div>
         </motion.div>
         
@@ -352,25 +338,16 @@ export default function PostFormatPage() {
           transition={{ delay: 0.8 }}
         >
           <Button
-            onClick={nextStep} 
-            disabled={!postFormat}
-                  className="w-full sm:w-auto bg-[#0088FF] hover:bg-[#0066CC] text-white px-8"
+            onClick={nextStep}
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base rounded-full shadow-md w-full max-w-md flex items-center justify-center gap-2"
           >
-            <span>Continue</span>
-            <ChevronRight size={16} className="ml-2" />
+            Continue
+            <ArrowRight className="w-5 h-5" />
           </Button>
         </motion.div>
             </motion.div>
           </div>
         </div>
-        
-        <motion.div
-          className="flex justify-center" 
-          variants={fadeIn}
-          transition={{ delay: 0.9 }}
-        >
-          <ProgressDots current={current} total={total} />
-        </motion.div>
       </motion.div>
     </div>
   );

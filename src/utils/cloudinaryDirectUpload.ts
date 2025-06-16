@@ -10,16 +10,6 @@ const CLOUDINARY_CONFIG = {
   folder: 'gallery'
 };
 
-// Debug log the configuration
-console.log('Cloudinary Config:', {
-  cloudName: CLOUDINARY_CONFIG.cloudName,
-  uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-  usingEnvVars: {
-    cloudName: !!import.meta.env.VITE_CLOUD_NAME,
-    uploadPreset: !!import.meta.env.VITE_UPLOAD_PRESET
-  }
-});
-
 // Local storage key for gallery images
 const GALLERY_STORAGE_KEY = 'cloudinary_gallery_images';
 

@@ -15,7 +15,7 @@ const TestimonialsPage = () => {
       name: "Michael Johnson",
       role: "Social Media Manager at TechCorp",
       image: "https://randomuser.me/api/portraits/men/32.jpg",
-      quote: "Scripe has completely transformed our social media strategy. The AI-generated content is so authentic that our audience engagement has increased by over 200% in just three months.",
+      quote: "BrandOut has completely transformed our social media strategy. The AI-generated content is so authentic that our audience engagement has increased by over 200% in just three months.",
       rating: 5
     },
     {
@@ -23,7 +23,7 @@ const TestimonialsPage = () => {
       name: "Sarah Williams",
       role: "Content Creator",
       image: "https://randomuser.me/api/portraits/women/44.jpg",
-      quote: "As a solo content creator, I was struggling to maintain a consistent posting schedule. Scripe has been a game-changer, helping me create quality content in a fraction of the time.",
+      quote: "As a solo content creator, I was struggling to maintain a consistent posting schedule. BrandOut has been a game-changer, helping me create quality content in a fraction of the time.",
       rating: 5
     },
     {
@@ -39,7 +39,7 @@ const TestimonialsPage = () => {
       name: "Emily Rodriguez",
       role: "Influencer & Brand Consultant",
       image: "https://randomuser.me/api/portraits/women/29.jpg",
-      quote: "I manage multiple brand accounts and Scripe has made it so much easier to maintain distinct voices for each one. The platform understands nuance in a way other tools simply don't.",
+      quote: "I manage multiple brand accounts and BrandOut has made it so much easier to maintain distinct voices for each one. The platform understands nuance in a way other tools simply don't.",
       rating: 5
     },
     {
@@ -47,7 +47,7 @@ const TestimonialsPage = () => {
       name: "James Wilson",
       role: "E-commerce Entrepreneur",
       image: "https://randomuser.me/api/portraits/men/22.jpg",
-      quote: "Our product promotions used to fall flat on social media. With Scripe, we're creating compelling content that actually converts. Our ROI on social campaigns has doubled.",
+      quote: "Our product promotions used to fall flat on social media. With BrandOut, we're creating compelling content that actually converts. Our ROI on social campaigns has doubled.",
       rating: 5
     },
     {
@@ -97,7 +97,7 @@ const TestimonialsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Discover how Scripe has helped content creators, marketers, and businesses transform their content strategy and achieve remarkable results.
+            Discover how BrandOut has helped content creators, marketers, and businesses transform their content strategy and achieve remarkable results.
           </motion.p>
         </div>
       </section>
@@ -156,7 +156,7 @@ const TestimonialsPage = () => {
             Success Stories
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Read how these companies achieved incredible results with Scripe.
+            Read how these companies achieved incredible results with BrandOut.
           </p>
         </div>
         

@@ -1372,7 +1372,7 @@ const CreatePostPage: React.FC = () => {
       toast.info('LinkedIn token found. Attempting to post...');
       
       // Directly try a test post without running the connection test first
-      const testPostContent = 'This is a test post from Scripe. ' + new Date().toISOString();
+      const testPostContent = 'This is a test post from BrandOut. ' + new Date().toISOString();
       const response = await linkedInApi.createTextPost(testPostContent, 'PUBLIC');
       
       console.log('Test post successful:', response);

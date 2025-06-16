@@ -27,7 +27,7 @@ const FeaturesPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Discover all the tools and features that make Scripe the ultimate platform for content creators and social media managers.
+            Discover all the tools and features that make BrandOut the ultimate platform for content creators and social media managers.
           </motion.p>
         </div>
       </section>
@@ -228,7 +228,7 @@ const FeaturesPage = () => {
         <div className="bg-gradient-to-r from-teal-500 to-indigo-600 rounded-2xl p-10 text-white text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Experience These Features?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of content creators who are already using Scripe to create amazing content.
+            Join thousands of content creators who are already using BrandOut to create amazing content.
           </p>
           <Button 
             onClick={() => navigate("/")}

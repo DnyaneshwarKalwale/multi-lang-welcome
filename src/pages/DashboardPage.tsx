@@ -85,7 +85,7 @@ const DashboardPage: React.FC = () => {
   const [linkedInUsername, setLinkedInUsername] = useState<string>('');
 
   // Weekly AI tip
-  const [weeklyTip, setWeeklyTip] = useState({
+  const [weeklyTip] = useState({
     title: "Boost Your Engagement This Week",
     content: "When sharing achievements, focus on the lessons learned rather than the accolade itself. This approach creates more value for your audience and increases engagement."
   });
@@ -109,6 +109,10 @@ const DashboardPage: React.FC = () => {
       carouselRequests: 0
     }
   });
+
+  // Cache key for dashboard data
+  const DASHBOARD_CACHE_KEY = `dashboard_data_${user?.id || 'guest'}`;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   // Load LinkedIn profile data from extension if available
   useEffect(() => {
@@ -189,31 +193,40 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Fetch dashboard data
+  // Fetch dashboard data with caching
   const fetchDashboardData = async () => {
     try {
+      // Check cache first
+      const cachedData = localStorage.getItem(DASHBOARD_CACHE_KEY);
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setDashboardData(data);
+          return;
+        }
+      }
+
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
 
-      // Fetch posts data
-      const postsResponse = await axios.get(`${apiBaseUrl}/posts`, { headers });
-      const posts = postsResponse.data.data || [];
+      // Fetch all data in parallel
+      const [postsResponse, carouselRequestsResponse, carouselsResponse] = await Promise.all([
+        axios.get(`${apiBaseUrl}/posts`, { headers }),
+        axios.get(`${apiBaseUrl}/carousels/user/requests`, { headers }),
+        axios.get(`${apiBaseUrl}/carousels`, { headers })
+      ]);
 
-      // Fetch carousel requests
-      const carouselRequestsResponse = await axios.get(`${apiBaseUrl}/carousels/user/requests`, { headers });
+      const posts = postsResponse.data.data || [];
       const carouselRequests = carouselRequestsResponse.data.data || [];
-      
-      // Fetch carousels data
-      const carouselsResponse = await axios.get(`${apiBaseUrl}/carousels`, { headers });
       const carousels = carouselsResponse.data.data || [];
       
       // Get saved videos from localStorage
       const savedVideos = JSON.parse(localStorage.getItem('savedYoutubeVideos') || '[]');
 
-      // Calculate AI content statistics
+      // Calculate statistics
       const savedAiPosts = posts.filter(post => {
         const content = post.content?.toLowerCase() || '';
         const title = post.title?.toLowerCase() || '';
@@ -228,7 +241,6 @@ const DashboardPage: React.FC = () => {
 
       const totalAiContent = savedAiPosts + videoTranscripts;
 
-      // Calculate carousel request statistics
       const pendingRequests = carouselRequests.filter(request => 
         request.status === 'pending' || request.status === 'in_progress'
       ).length;
@@ -237,56 +249,48 @@ const DashboardPage: React.FC = () => {
         request.status === 'completed'
       ).length;
 
-      // Calculate carousel content statistics
-      const carouselContent = savedVideos.filter(video => 
-        video.source === 'youtube' && video.status === 'ready'
-      ).length;
-
-      // Get last month's date
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-
-      // Update dashboard data
-      setDashboardData({
+      const newDashboardData = {
         totalPosts: posts.length,
         draftPosts: posts.filter(post => post.status === 'draft').length,
         scheduledPosts: posts.filter(post => post.status === 'scheduled').length,
         publishedPosts: posts.filter(post => post.status === 'published').length,
         aiGeneratedContent: totalAiContent,
-        savedAiPosts: savedAiPosts,
-        videoTranscripts: videoTranscripts,
+        savedAiPosts,
+        videoTranscripts,
         carouselRequests: carouselRequests.length,
         pendingCarousels: pendingRequests,
         completedCarousels: completedRequests,
-        carouselContent: carouselContent,
+        carouselContent: carousels.length,
         lastMonthStats: {
-          totalPosts: posts.filter(post => new Date(post.createdAt) >= lastMonth).length,
-          aiGeneratedContent: posts.filter(post => {
-            const content = post.content?.toLowerCase() || '';
-            const title = post.title?.toLowerCase() || '';
-            return new Date(post.createdAt) >= lastMonth && 
-                   (content.includes('ai') || content.includes('artificial intelligence') || 
-                    title.includes('ai') || title.includes('artificial intelligence') ||
-                    post.isAI === true || post.aiGenerated === true);
-          }).length + savedVideos.filter(video => 
-            new Date(video.savedAt || video.createdAt) >= lastMonth && 
-            video.transcript && video.transcript.length > 0
-          ).length,
-          carouselRequests: carouselRequests.filter(request => 
-            new Date(request.createdAt) >= lastMonth
-          ).length
+          totalPosts: posts.filter(post => {
+            const postDate = new Date(post.createdAt);
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            return postDate >= lastMonth;
+          }).length,
+          aiGeneratedContent: totalAiContent,
+          carouselRequests: carouselRequests.filter(req => {
+            const reqDate = new Date(req.createdAt);
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            return reqDate >= lastMonth;
+          }).length
         }
-      });
+      };
+
+      // Update state and cache
+      setDashboardData(newDashboardData);
+      localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+        data: newDashboardData,
+        timestamp: Date.now()
+      }));
+
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data', {
-        description: error.response?.data?.message || 'Please try again later',
-        duration: 5000
-      });
+      console.error("Error fetching dashboard data:", error);
     }
   };
 
-  // Fetch data on component mount
+  // Fetch data on mount and when dependencies change
   useEffect(() => {
     if (token) {
       fetchDashboardData();
