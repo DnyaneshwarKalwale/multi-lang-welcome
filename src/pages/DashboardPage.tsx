@@ -160,36 +160,100 @@ const DashboardPage: React.FC = () => {
     }
   }, [user, token]);
 
-  // Function to fetch LinkedIn data from our API
+  // Add effect to check LinkedIn connection status on mount and URL params
+  useEffect(() => {
+    const checkLinkedInConnection = async () => {
+      // Check URL parameters for successful LinkedIn connection
+      const urlParams = new URLSearchParams(window.location.search);
+      const linkedInConnected = urlParams.get('linkedin_connected');
+      
+      if (linkedInConnected === 'true') {
+        // Clear the URL parameter
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        try {
+          // Refresh user data from backend
+          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+          const token = localStorage.getItem('google-login-token') || localStorage.getItem('linkedin-login-token');
+          
+          if (token) {
+            const response = await axios.get(`${baseApiUrl}/users/me`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (response.data?.data) {
+              // Update user state with new data
+              if (user && typeof user === 'object') {
+                Object.assign(user, {
+                  ...user,
+                  linkedinConnected: true
+                });
+              }
+              setIsLinkedInConnected(true);
+              setShowLinkedInPrompt(false);
+              
+              // Show success toast
+              toast.success('LinkedIn connected successfully!');
+              
+              // Refresh LinkedIn data
+              fetchLinkedInData();
+            }
+          }
+        } catch (error) {
+          console.error('Error updating user data:', error);
+          toast.error('Failed to update LinkedIn connection status');
+        }
+      }
+    };
+
+    checkLinkedInConnection();
+  }, [user, navigate]);
+
+  // Update the existing fetchLinkedInData function to handle connection status
   const fetchLinkedInData = async () => {
     setLoading({ profile: true });
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const token = localStorage.getItem('google-login-token') || localStorage.getItem('linkedin-login-token');
+    
+    if (!token) {
+      setLoading({ profile: false });
+      return;
+    }
+
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     };
+
     try {
-      // Try to fetch basic LinkedIn profile first (doesn't rely on LinkedIn API tokens)
-      const basicProfilePromise = axios.get(`${apiBaseUrl}/linkedin/basic-profile`, { headers });
-      const basicProfileRes = await basicProfilePromise;
-      if (basicProfileRes.data) {
+      // First check user's LinkedIn connection status
+      const userResponse = await axios.get(`${apiBaseUrl}/users/me`, { headers });
+      const userData = userResponse.data?.data;
+
+      if (userData?.linkedinConnected) {
+        setIsLinkedInConnected(true);
+        setShowLinkedInPrompt(false);
+      }
+
+      // Then try to fetch LinkedIn profile data
+      const basicProfileRes = await axios.get(`${apiBaseUrl}/linkedin/basic-profile`, { headers });
+      if (basicProfileRes.data?.data) {
         setLinkedInProfile(basicProfileRes.data.data);
-        setLoading({ profile: false });
-        setShowLinkedInPrompt(false); // Hide prompt if we have data
+        setIsLinkedInConnected(true);
+        setShowLinkedInPrompt(false);
       }
     } catch (error) {
-      // Only show error if user is not a Google-only user
+      console.error('Error fetching LinkedIn data:', error);
+      // Only show error for LinkedIn users or if explicitly connected
       if (user?.authMethod === 'linkedin' || user?.linkedinConnected) {
-          toast.error('Failed to load LinkedIn profile', {
-            description: error.response?.data?.message || error.message || 'Unknown error',
-              duration: 5000
-            });
-        }
-      setLoading({ profile: false });
+        toast.error('Failed to load LinkedIn profile');
+      }
       // For Google users who haven't connected LinkedIn yet, show the prompt
       if (user?.authMethod === 'google' && !user?.linkedinConnected) {
         setShowLinkedInPrompt(true);
       }
+    } finally {
+      setLoading({ profile: false });
     }
   };
 
