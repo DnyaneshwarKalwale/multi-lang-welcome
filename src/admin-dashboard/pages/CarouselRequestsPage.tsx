@@ -701,8 +701,7 @@ const CarouselRequestsPage: React.FC = () => {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem("admin-token")}`
             },
-            body: formData,
-            credentials: 'include'
+            body: formData
           })
           .then(async response => {
             const responseText = await response.text();
