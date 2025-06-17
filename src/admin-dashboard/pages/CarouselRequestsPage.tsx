@@ -696,15 +696,31 @@ const CarouselRequestsPage: React.FC = () => {
           
           console.log('Uploading file to:', apiUrl);
           
+          // Get the token
+          const token = localStorage.getItem("admin-token");
+          if (!token) {
+            reject(new Error('Authentication token not found'));
+            return;
+          }
+
           fetch(apiUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem("admin-token")}`
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json'
             },
             body: formData,
+            mode: 'cors',
             credentials: 'include'
           })
           .then(async response => {
+            // Log response headers for debugging
+            console.log('Response headers:', {
+              'content-type': response.headers.get('content-type'),
+              'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+              'access-control-allow-credentials': response.headers.get('access-control-allow-credentials')
+            });
+
             const responseText = await response.text();
             console.log('Upload response:', responseText);
             
@@ -763,8 +779,11 @@ const CarouselRequestsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("admin-token")}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify(requestBody)
       });
       
