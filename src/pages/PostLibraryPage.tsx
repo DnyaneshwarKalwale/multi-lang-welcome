@@ -600,7 +600,7 @@ const PostLibraryPage: React.FC = () => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
         // Make sure we don't store null/undefined values
         if (value !== null && value !== undefined) {
-        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+          localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
         }
       }
     });
@@ -686,7 +686,7 @@ const PostLibraryPage: React.FC = () => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status' && key !== 'scheduledTime') {
         // Make sure we don't store null/undefined values
         if (value !== null && value !== undefined) {
-        localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+          localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
         }
       }
     });
@@ -1152,7 +1152,7 @@ const PostLibraryPage: React.FC = () => {
       // Restore post to state if API call failed
       if (post) {
         setPublished(prevPublished => [...prevPublished, post]);
-        }
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -1233,17 +1233,17 @@ const PostLibraryPage: React.FC = () => {
             label: 'View on LinkedIn',
             icon: <ExternalLink size={14} />,
             onClick: () => {
-                window.open(`https://www.linkedin.com/feed/update/${post.platformPostId}`, '_blank');
-              }
-          });
+              window.open(`https://www.linkedin.com/feed/update/${post.platformPostId}`, '_blank');
             }
+          });
+        }
         
         items.push({
-            id: 'delete',
-            label: 'Delete Post',
-            icon: <Trash size={14} />,
-            className: 'text-red-500 hover:text-red-700',
-            onClick: () => deletePublishedPost(post)
+          id: 'delete',
+          label: 'Delete Post',
+          icon: <Trash size={14} />,
+          className: 'text-red-500 hover:text-red-700',
+          onClick: () => deletePublishedPost(post)
         });
         
         return items;
@@ -1363,9 +1363,9 @@ const PostLibraryPage: React.FC = () => {
                     className="flex-1 rounded-md gap-1"
                     onClick={() => window.open(`https://www.linkedin.com/feed/update/${post.platformPostId}`, '_blank')}
                   >
-                  <ExternalLink className="h-4 w-4" />
-                  <span className="text-xs">View on LinkedIn</span>
-                </Button>
+                    <ExternalLink className="h-4 w-4" />
+                    <span className="text-xs">View on LinkedIn</span>
+                  </Button>
                 ) : (
                   <Button 
                     variant="ghost" 

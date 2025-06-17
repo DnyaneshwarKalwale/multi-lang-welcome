@@ -981,11 +981,11 @@ const CreatePostPage: React.FC = () => {
               localStorage.removeItem(key);
             }
           });
-              
-              // Update post counts in sidebar
-              updatePostCounts();
-              
-              // Navigate to post library
+          
+          // Update post counts in sidebar
+          updatePostCounts();
+          
+          // Navigate to post library
           navigate('/dashboard/posts', { 
             state: { 
               newPost: true, 
@@ -998,13 +998,13 @@ const CreatePostPage: React.FC = () => {
           // Continue anyway, as the post was published to LinkedIn
           
           // Still navigate to post library
-        navigate('/dashboard/posts', {
-          state: { 
-            newPost: true,
+          navigate('/dashboard/posts', { 
+            state: { 
+              newPost: true, 
               activeTab: 'published',
               platformPostId: linkedInPostId // Pass the LinkedIn post ID even if DB save failed
-          }
-        });
+            }
+          });
         }
       }
     } catch (error: any) {
@@ -1087,7 +1087,7 @@ const CreatePostPage: React.FC = () => {
         status: 'draft',
         date: new Date().toLocaleDateString()
       };
-      
+
       try {
         if (editingDraftId) {
           // If editing an existing draft, update it in the backend
@@ -1112,10 +1112,10 @@ const CreatePostPage: React.FC = () => {
           }
           // Save to localStorage
           localStorage.setItem(draftData.id, JSON.stringify(draftData));
-      }
-      
-      // Clear the editing state
-      localStorage.removeItem('editingDraftId');
+        }
+
+        // Clear the editing state
+        localStorage.removeItem('editingDraftId');
         
         // Clear all createPost related state
         Object.keys(localStorage).forEach(key => {
@@ -1123,21 +1123,21 @@ const CreatePostPage: React.FC = () => {
             localStorage.removeItem(key);
           }
         });
-      
-      // Success message
+        
+        // Success message
         toast.success(editingDraftId ? "Draft updated successfully" : "Draft saved successfully");
-      
-      // Navigate to the post library
-      navigate('/dashboard/posts', {
-        state: { 
+        
+        // Navigate to the post library
+        navigate('/dashboard/posts', {
+          state: { 
             newDraft: !editingDraftId,
             updatedDraft: editingDraftId,
-          activeTab: 'drafts'
-        }
-      });
-      
-      // Update post counts in sidebar
-      updatePostCounts();
+            activeTab: 'drafts'
+          }
+        });
+        
+        // Update post counts in sidebar
+        updatePostCounts();
       } catch (error) {
         console.error('Error saving draft:', error);
         // Still save to localStorage as fallback
@@ -1220,10 +1220,10 @@ const CreatePostPage: React.FC = () => {
         } else {
           // Create new scheduled post
           response = await linkedInApi.createDBPost({
-        ...postData,
-        status: 'scheduled'
-      });
-      
+            ...postData,
+            status: 'scheduled'
+          });
+          
           if (response?.success && response?.data?._id) {
             // If backend save successful, use the backend ID
             postData.id = response.data._id;
@@ -1253,9 +1253,9 @@ const CreatePostPage: React.FC = () => {
             activeTab: 'scheduled' 
           }
         });
-            
-            // Update post counts in sidebar
-            updatePostCounts();
+        
+        // Update post counts in sidebar
+        updatePostCounts();
       } catch (error) {
         console.error('Error scheduling post:', error);
         // Save to localStorage as fallback
@@ -1774,7 +1774,7 @@ const CreatePostPage: React.FC = () => {
                               onClick={() => setPostImage(null)}
                             >
                               Remove
-                      </Button>
+                            </Button>
                           </div>
                         ) : (
                           <div className="flex flex-col sm:flex-row gap-2">
