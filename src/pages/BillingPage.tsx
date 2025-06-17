@@ -151,7 +151,7 @@ const BillingPage: React.FC = () => {
   const location = useLocation();
   const { user, token } = useAuth();
   const [isAnnualBilling, setIsAnnualBilling] = useState(false); // Default to monthly
-  const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [isChangingPlan, setIsChangingPlan] = useState<string | null>(null); // Change to track which plan is being changed
   const [isExpandedView, setIsExpandedView] = useState(false);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false); // Track if user is admin
@@ -443,10 +443,10 @@ const BillingPage: React.FC = () => {
     return planId !== 'expired' && planId !== undefined && planId !== null;
   }
 
-  // Update handleChangePlan function to correctly handle API calls
+  // Update handleChangePlan function to handle loading state per button
   const handleChangePlan = async (planId: string) => {
     try {
-      setIsChangingPlan(true);
+      setIsChangingPlan(planId); // Set the specific plan being changed
       
       // Define plan rankings to determine if it's an upgrade or downgrade
       const planRanking = {
@@ -467,7 +467,7 @@ const BillingPage: React.FC = () => {
       
       if (isDowngrade && hasActiveSubscription) {
         toast.error("Plan downgrade is not allowed during an active subscription period. You can downgrade once your current subscription expires.");
-        setIsChangingPlan(false);
+        setIsChangingPlan(null);
         return;
       }
       
@@ -489,7 +489,7 @@ const BillingPage: React.FC = () => {
         await fetchCurrentSubscription();
         
         toast.success(`Successfully changed to ${planData.planName} plan`);
-        setIsChangingPlan(false);
+        setIsChangingPlan(null);
         return;
       }
       
@@ -513,10 +513,10 @@ const BillingPage: React.FC = () => {
         planId, 
         billingPeriod: isAnnualBilling ? 'annual' : 'monthly',
         productType: 'subscription',
-        mode: 'subscription', // Add explicit mode for Stripe
-        recurring: isAnnualBilling ? 'year' : 'month', // Use non-empty value for recurring
-        remainingCredits: remainingCredits > 0 ? remainingCredits : 0, // Add remaining credits to transfer
-        currentPlanId: currentSubscription.planId, // Add current plan ID for reference
+        mode: 'subscription',
+        recurring: isAnnualBilling ? 'year' : 'month',
+        remainingCredits: remainingCredits > 0 ? remainingCredits : 0,
+        currentPlanId: currentSubscription.planId,
         successUrl: window.location.origin + window.location.pathname + '?success=true&session_id={CHECKOUT_SESSION_ID}',
         cancelUrl: window.location.origin + window.location.pathname + '?canceled=true'
       };
@@ -559,7 +559,7 @@ const BillingPage: React.FC = () => {
         toast.error("Failed to change plan. Please try again.");
       }
       
-      setIsChangingPlan(false);
+      setIsChangingPlan(null);
     }
   };
 
@@ -579,33 +579,6 @@ const BillingPage: React.FC = () => {
     toast.success('Invoice download started');
   };
 
-  // Cancel subscription
-  const handleCancelSubscription = async () => {
-    if (!token) return;
-    
-    try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/stripe/cancel-subscription`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      
-    setCurrentSubscription(prev => ({
-      ...prev,
-      status: 'cancelled'
-    }));
-      
-    toast.success('Your subscription has been cancelled. You will have access until the end of your billing period.');
-    } catch (error) {
-      console.error('Error cancelling subscription:', error);
-      toast.error('Failed to cancel subscription');
-    }
-  };
-
   // Buy credit pack
   const handleBuyCreditPack = async (packId: string) => {
     if (!user || !user.id) {
@@ -613,7 +586,7 @@ const BillingPage: React.FC = () => {
       return;
     }
     
-    setIsChangingPlan(true);
+    setIsChangingPlan(packId);
     
     try {
       // Get the credit pack details for better error messages
@@ -680,7 +653,7 @@ const BillingPage: React.FC = () => {
         toast.error('Failed to create checkout session. Please try again later.');
       }
       
-      setIsChangingPlan(false);
+      setIsChangingPlan(null);
     }
   };
 
@@ -914,27 +887,6 @@ const BillingPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                
-                {/* Add auto-renewal toggle */}
-                {currentSubscription.status !== 'cancelled' && (
-                  <div className="mt-3 border-t border-gray-200 pt-3">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm">
-                        <span className="font-medium text-black">Auto-renewal</span>
-                        <p className="text-xs text-black/70">
-                          {autoPayEnabled 
-                            ? 'Your subscription will automatically renew' 
-                            : 'Your subscription will expire at the end of period'}
-                        </p>
-                  </div>
-                      <Switch
-                        checked={autoPayEnabled}
-                        onCheckedChange={handleAutoPayToggle}
-                        disabled={isLoadingSubscription}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="w-full sm:w-auto py-2 px-4 rounded-lg bg-white border border-primary/10 shadow-sm">
@@ -1070,10 +1022,10 @@ const BillingPage: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleBuyCreditPack(pack.id)}
-                          disabled={isChangingPlan}
+                          disabled={isChangingPlan !== null}
                           className="border-primary/20 text-primary hover:bg-primary/10"
                         >
-                          {isChangingPlan ? (
+                          {isChangingPlan === pack.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <span>Buy</span>
@@ -1170,12 +1122,20 @@ const BillingPage: React.FC = () => {
                             </div>
                           )}
                         </div>
+                        </div>
                         
-                        {/* Add auto-renewal toggle */}
+                      <div className="sm:text-right">
+                        <div className="mt-3 bg-primary/5 px-3 py-2 inline-block rounded-lg text-center">
+                          <div className="text-sm font-medium text-black">
+                            {currentPlan.limitations.carousels} Credits
+                          </div>
+                          <div className="text-xs text-black/70">per {currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}</div>
+                        </div>
+                        
+                        {/* Auto-renewal toggle */}
                         {currentSubscription.status !== 'cancelled' && (
-                          <div className="mt-3 border-t border-gray-200 pt-3">
-                            <div className="flex justify-between items-center">
-                              <div className="text-sm">
+                          <div className="mt-3 flex justify-end items-center gap-2">
+                            <div className="text-sm text-right">
                                 <span className="font-medium text-black">Auto-renewal</span>
                                 <p className="text-xs text-black/70">
                                   {autoPayEnabled 
@@ -1188,29 +1148,8 @@ const BillingPage: React.FC = () => {
                                 onCheckedChange={handleAutoPayToggle}
                                 disabled={isLoadingSubscription}
                               />
-                            </div>
                           </div>
                         )}
-                      </div>
-                      
-                      <div className="sm:text-right">
-                        {currentSubscription.status !== 'cancelled' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-black/80 border-black/20 hover:bg-black/5"
-                            onClick={handleCancelSubscription}
-                          >
-                            Cancel Plan
-                          </Button>
-                        )}
-                        
-                        <div className="mt-3 bg-primary/5 px-3 py-2 inline-block rounded-lg text-center">
-                          <div className="text-sm font-medium text-black">
-                            {currentPlan.limitations.carousels} Credits
-                          </div>
-                          <div className="text-xs text-black/70">per {currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}</div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -1235,7 +1174,7 @@ const BillingPage: React.FC = () => {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setIsExpandedView(!isExpandedView)}
-                    className="text-primary"
+                    className="text-primary hover:text-primary/70 hover:bg-primary/5"
                   >
                     {isExpandedView ? 'Simple View' : 'Detailed View'}
                     </Button>
@@ -1310,7 +1249,7 @@ const BillingPage: React.FC = () => {
                       <Button 
                               variant={plan.id === 'custom' ? 'outline' : 'default'}
                         size="sm"
-                              disabled={isChangingPlan}
+                              disabled={isChangingPlan !== null}
                               onClick={() => plan.id === 'custom' 
                                 ? window.open('mailto:sales@yourcompany.com', '_blank') 
                                 : handleChangePlan(plan.id)
@@ -1320,7 +1259,7 @@ const BillingPage: React.FC = () => {
                                 : ''
                               }
                             >
-                              {isChangingPlan ? (
+                              {isChangingPlan === plan.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : plan.id === 'custom' ? (
                                 <span>Contact Us</span>

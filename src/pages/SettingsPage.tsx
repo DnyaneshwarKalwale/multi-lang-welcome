@@ -805,7 +805,7 @@ const SettingsPage = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm">Delete your account</p>
-                        <p className="text-neutral-medium text-xs mt-1">Your account will be scheduled for deletion. You can recover it within 10 days by logging in again.</p>
+                        
                       </div>
                       <Button 
                         variant="outline" 

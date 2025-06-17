@@ -177,7 +177,7 @@ const DashboardPage: React.FC = () => {
           const token = localStorage.getItem('google-login-token') || localStorage.getItem('linkedin-login-token');
           
           if (token) {
-            const response = await axios.get(`${baseApiUrl}/users/me`, {
+            const response = await axios.get(`${baseApiUrl}/auth/me`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             
@@ -227,7 +227,7 @@ const DashboardPage: React.FC = () => {
 
     try {
       // First check user's LinkedIn connection status
-      const userResponse = await axios.get(`${apiBaseUrl}/users/me`, { headers });
+      const userResponse = await axios.get(`${apiBaseUrl}/auth/me`, { headers });
       const userData = userResponse.data?.data;
 
       if (userData?.linkedinConnected) {
@@ -577,7 +577,7 @@ const DashboardPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={monthlyPostData}>
+                  <AreaChart data={monthlyPostData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -596,6 +596,7 @@ const DashboardPage: React.FC = () => {
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fontSize: 12, fill: '#6b7280' }}
+                      padding={{ left: 10, right: 10 }}
                     />
                     <YAxis hide />
                     <Tooltip 

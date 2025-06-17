@@ -588,24 +588,38 @@ const PostLibraryPage: React.FC = () => {
     const draft = drafts.find(d => d.id === draftId);
     if (!draft) return;
     
+    // Clean up any existing localStorage values to prevent issues
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('state:createPost.')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
     // Set up the form data in localStorage
     Object.entries(draft).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'status') {
+        // Make sure we don't store null/undefined values
+        if (value !== null && value !== undefined) {
         localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
+        }
       }
     });
     
     // Store the original draft ID so we can delete it when saving the edited version
     localStorage.setItem('editingDraftId', draftId);
     
-    // Navigate to the create post page
-    navigate('/dashboard/post');
+    // Navigate to the create post page with the content
+    navigate('/dashboard/post', { 
+      state: { 
+        content: draft.content,
+        hashtags: draft.hashtags,
+        image: draft.postImage?.secure_url
+      }
+    });
   };
   
   // Delete a draft
   const deleteDraft = async (draftId: string) => {
-    if (!window.confirm('Are you sure you want to delete this draft?')) return;
-    
     try {
       setIsDeleting(true);
       
@@ -661,10 +675,11 @@ const PostLibraryPage: React.FC = () => {
     setScheduled(updatedScheduled);
     
     // Clean up any existing localStorage values to prevent issues
-    localStorage.removeItem('state:createPost.postImage');
-    localStorage.removeItem('state:createPost.slides');
-    localStorage.removeItem('state:createPost.scheduledDate');
-    localStorage.removeItem('state:createPost.scheduleTime');
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('state:createPost.')) {
+        localStorage.removeItem(key);
+      }
+    });
     
     // Set up the form data in localStorage
     Object.entries(post).forEach(([key, value]) => {
@@ -672,9 +687,6 @@ const PostLibraryPage: React.FC = () => {
         // Make sure we don't store null/undefined values
         if (value !== null && value !== undefined) {
         localStorage.setItem(`state:createPost.${key}`, JSON.stringify(value));
-        } else {
-          // Remove the key if it exists to avoid parsing errors
-          localStorage.removeItem(`state:createPost.${key}`);
         }
       }
     });
@@ -703,8 +715,17 @@ const PostLibraryPage: React.FC = () => {
       // Store the original scheduled post ID
       localStorage.setItem('editingScheduledId', postId);
       
-      // Navigate to create post page with schedule dialog open
-    navigate('/dashboard/post', { state: { openScheduleDialog: true } });
+      // Navigate to create post page with the content and schedule dialog open
+      navigate('/dashboard/post', { 
+        state: { 
+          content: post.content,
+          hashtags: post.hashtags,
+          image: post.postImage?.secure_url,
+          openScheduleDialog: true,
+          scheduledDate: post.scheduledTime,
+          scheduleTime: `${scheduledDate.getHours().toString().padStart(2, '0')}:${scheduledDate.getMinutes().toString().padStart(2, '0')}`
+        }
+      });
     } catch (error) {
       console.error('Error removing scheduled post:', error);
       toast.error('Failed to edit scheduled post. Please try again later.');
@@ -718,12 +739,10 @@ const PostLibraryPage: React.FC = () => {
   
   // Delete a scheduled post
   const deleteScheduledPost = async (postId: string) => {
-    if (!window.confirm('Are you sure you want to cancel this scheduled post?')) return;
-    
     try {
       setIsDeleting(true);
       
-      // Immediately update UI - remove from scheduled
+      // Immediately update UI by removing from state
       const updatedScheduled = scheduled.filter(p => p.id !== postId);
       setScheduled(updatedScheduled);
       
@@ -731,18 +750,18 @@ const PostLibraryPage: React.FC = () => {
       if (postId.startsWith('scheduled_')) {
         // Remove from localStorage
         localStorage.removeItem(postId);
-        toast.success('Scheduled post cancelled');
+        toast.success('Scheduled post deleted successfully');
       } else {
         // Delete from backend API
         await linkedInApi.deleteDBPost(postId);
-        toast.success('Scheduled post cancelled');
+        toast.success('Scheduled post deleted successfully');
       }
       
       // Update post counts in sidebar
       updatePostCounts();
     } catch (error) {
-      console.error('Error cancelling scheduled post:', error);
-      toast.error('Failed to cancel scheduled post');
+      console.error('Error deleting scheduled post:', error);
+      toast.error('Failed to delete scheduled post');
       
       // Restore scheduled post to state if API call failed
       const post = scheduled.find(p => p.id === postId);
@@ -1111,25 +1130,18 @@ const PostLibraryPage: React.FC = () => {
     }
   };
   
+  // Delete a published post
   const deletePublishedPost = async (post: BasePost) => {
-    if (!post || !post.id) {
-      toast.error('Cannot delete post. Post data is missing.');
-      return;
-    }
-    
-    const confirmed = window.confirm('Are you sure you want to delete this published post? It will also be removed from LinkedIn.');
-    if (!confirmed) return;
-    
     try {
       setIsDeleting(true);
       
-      // Optimistically update UI
-      setPublished(prev => prev.filter(p => p.id !== post.id));
+      // Immediately update UI by removing from state
+      const updatedPublished = published.filter(p => p.id !== post.id);
+      setPublished(updatedPublished);
       
-      // Delete from LinkedIn and local library
+      // Delete from backend API
       await linkedInApi.deleteDBPost(post.id);
-      
-      toast.success('Post deleted successfully from LinkedIn and local library');
+      toast.success('Post deleted successfully');
       
       // Update post counts in sidebar
       updatePostCounts();
@@ -1138,12 +1150,9 @@ const PostLibraryPage: React.FC = () => {
       toast.error('Failed to delete post');
       
       // Restore post to state if API call failed
-      setPublished(prev => {
-        if (!prev.some(p => p.id === post.id)) {
-          return [...prev, post];
+      if (post) {
+        setPublished(prevPublished => [...prevPublished, post]);
         }
-        return prev;
-      });
     } finally {
       setIsDeleting(false);
     }
@@ -1208,35 +1217,36 @@ const PostLibraryPage: React.FC = () => {
           },
           {
             id: 'delete',
-            label: 'Cancel Scheduled Post',
+            label: 'Delete Scheduled Post',
             icon: <Trash size={14} />,
             className: 'text-red-500 hover:text-red-700',
             onClick: () => deleteScheduledPost(post.id)
           }
         ];
       } else if (type === 'published') {
-        return [
-          {
+        const items = [];
+        
+        // Only add View on LinkedIn if we have a platformPostId
+        if (post.platformPostId) {
+          items.push({
             id: 'view',
             label: 'View on LinkedIn',
             icon: <ExternalLink size={14} />,
             onClick: () => {
-              // Open in LinkedIn if platformPostId exists
-              if (post.platformPostId) {
                 window.open(`https://www.linkedin.com/feed/update/${post.platformPostId}`, '_blank');
-              } else {
-                toast.info('LinkedIn post link not available');
               }
+          });
             }
-          },
-          {
+        
+        items.push({
             id: 'delete',
             label: 'Delete Post',
             icon: <Trash size={14} />,
             className: 'text-red-500 hover:text-red-700',
             onClick: () => deletePublishedPost(post)
-          }
-        ];
+        });
+        
+        return items;
       }
       return [];
     };
@@ -1346,10 +1356,27 @@ const PostLibraryPage: React.FC = () => {
             // For published posts, show basic actions
             <div className="w-full">
               <div className="flex items-center justify-between p-1">
-                <Button variant="ghost" size="sm" className="flex-1 rounded-md gap-1">
+                {post.platformPostId ? (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1 rounded-md gap-1"
+                    onClick={() => window.open(`https://www.linkedin.com/feed/update/${post.platformPostId}`, '_blank')}
+                  >
                   <ExternalLink className="h-4 w-4" />
                   <span className="text-xs">View on LinkedIn</span>
                 </Button>
+                ) : (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1 rounded-md gap-1 opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span className="text-xs">Link Unavailable</span>
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" className="flex-1 rounded-md gap-1">
                   <Copy className="h-4 w-4" />
                   <span className="text-xs">Duplicate</span>

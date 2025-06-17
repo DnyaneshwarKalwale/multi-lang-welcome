@@ -268,12 +268,10 @@ const ScheduledPostsCalendar: React.FC = () => {
           <Button 
             size="sm" 
             className="gap-2 h-9 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-md hover:shadow-lg transition-all duration-200"
-            onClick={() => navigate('/dashboard/post', { 
-              state: { openScheduleDialog: true }  
-            })}
+            onClick={() => navigate('/dashboard/post')}
           >
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">Schedule Post</span>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Create Post</span>
             <span className="sm:hidden">New</span>
           </Button>
         </div>

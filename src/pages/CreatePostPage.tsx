@@ -552,19 +552,10 @@ const CreatePostPage: React.FC = () => {
   useEffect(() => {
     if (locationState?.openScheduleDialog) {
       console.log('Opening schedule dialog from location state');
-      setTimeout(() => {
-        // Check for any required state before opening
-        if (postImage === null) {
-          // Clear any existing postImage data in localStorage to prevent errors
-          localStorage.removeItem('state:createPost.postImage');
-        }
-        
-        // Now it's safe to open the dialog
-        setShowScheduleDialog(true);
-        console.log('Schedule dialog opened');
-      }, 500); // Increased timeout to ensure state is fully loaded
+      // Don't automatically open the dialog, let user create content first
+      setShowScheduleDialog(false);
     }
-  }, [locationState?.openScheduleDialog, postImage]);
+  }, [locationState?.openScheduleDialog]);
   
   // Helper function to show save indicator
   const showSaveIndicator = () => {
@@ -768,12 +759,16 @@ const CreatePostPage: React.FC = () => {
       }
       
       let response;
+      let linkedInPostId = null;
       
       // Handle different post types
       if (isPollActive && pollOptions.filter(opt => opt.trim()).length >= 2) {
         // Publish as poll
         const filteredOptions = pollOptions.filter(opt => opt.trim());
         response = await linkedInApi.createPollPost(content, filteredOptions, pollDuration);
+        if (response?.data?.id) {
+          linkedInPostId = response.data.id;
+        }
         toast.success('Poll published to LinkedIn successfully!');
       } else if (activeTab === 'carousel' && slides.length > 0) {
         // Handle carousel post - with slides from state
@@ -794,6 +789,9 @@ const CreatePostPage: React.FC = () => {
             const fullContent = `${content}\n\n${slideContent}`;
             
             response = await linkedInApi.createTextPost(fullContent, visibility);
+            if (response?.data?.id) {
+              linkedInPostId = response.data.id;
+            }
             toast.success('Carousel content published as text successfully!');
           } else {
             // Transform slides to the format expected by createCarouselPost
@@ -813,6 +811,10 @@ const CreatePostPage: React.FC = () => {
                 transformedSlides,
                 visibility
               );
+              
+              if (response?.data?.id) {
+                linkedInPostId = response.data.id;
+              }
               
               toast.success('Carousel content published to LinkedIn! Due to LinkedIn API limitations, the post includes the first image with all slide text.');
               toast.info('To create true carousel posts with multiple images, you need to post directly through the LinkedIn app.');
@@ -838,6 +840,10 @@ const CreatePostPage: React.FC = () => {
                 visibility
               );
               
+              if (response?.data?.id) {
+                linkedInPostId = response.data.id;
+              }
+              
               toast.success('Carousel content published as a single post with the first image.');
               toast.info('LinkedIn API limitations prevent creating true carousel posts with multiple images.');
             }
@@ -853,49 +859,10 @@ const CreatePostPage: React.FC = () => {
             const fullContent = `${content}\n\n${slideContent}`;
             
             response = await linkedInApi.createTextPost(fullContent, visibility);
+            if (response?.data?.id) {
+              linkedInPostId = response.data.id;
+            }
             toast.success('Carousel content published as text successfully!');
-          } catch (textError) {
-            console.error('Even text fallback failed:', textError);
-            throw textError; // Re-throw to be caught by outer catch
-          }
-        }
-      } else if (activeTab === 'document' && documentFile) {
-        // Handle document post
-        console.log('Publishing LinkedIn post with document:', documentFile);
-        
-        try {
-          toast.info('Uploading document to LinkedIn...');
-          
-          // If we have a document description, add it to the content
-          let fullContent = content;
-          if (documentDescription) {
-            fullContent = `${content}\n\n${documentDescription}`;
-          }
-          
-          // Use the createDocumentPost method if it exists
-          if (typeof linkedInApi.createDocumentPost === 'function') {
-            response = await linkedInApi.createDocumentPost(
-              fullContent,
-              documentFile,
-              documentFile.name || 'document',
-              visibility
-            );
-          } else {
-            // Fallback to text post with document information
-            fullContent = `${fullContent}\n\nDocument: ${documentFile.name}`;
-            response = await linkedInApi.createTextPost(fullContent, visibility);
-          }
-          
-          console.log('LinkedIn document post response:', response);
-          toast.success('Document post published to LinkedIn successfully!');
-        } catch (documentError: any) {
-          console.error('Error publishing LinkedIn document post:', documentError);
-          
-          // Fallback to text post with document information
-          try {
-            const postWithDocument = `${content}\n\nDocument: ${documentFile.name}`;
-            response = await linkedInApi.createTextPost(postWithDocument, visibility);
-            toast.success('Document information published as text successfully!');
           } catch (textError) {
             console.error('Even text fallback failed:', textError);
             throw textError; // Re-throw to be caught by outer catch
@@ -922,6 +889,10 @@ const CreatePostPage: React.FC = () => {
             postImage.original_filename || 'Shared image',
             visibility
           );
+          
+          if (response?.data?.id) {
+            linkedInPostId = response.data.id;
+          }
           
           console.log('LinkedIn image post response:', response);
           toast.success('Image post published to LinkedIn successfully!');
@@ -953,6 +924,9 @@ const CreatePostPage: React.FC = () => {
             const postWithImage = `${content}\n\n${imageTitle}: ${imageUrl}`;
             
             response = await linkedInApi.createTextPost(postWithImage, visibility);
+            if (response?.data?.id) {
+              linkedInPostId = response.data.id;
+            }
             console.log('LinkedIn text post fallback response:', response);
             toast.success('Post published to LinkedIn as text with image link.');
           } catch (textError) {
@@ -960,22 +934,13 @@ const CreatePostPage: React.FC = () => {
             throw textError; // Re-throw to be caught by outer catch
           }
         }
-      } else if (hasArticle && articleUrl) {
-        // Handle article post
-        console.log('Publishing LinkedIn post with article:', articleUrl);
-        response = await linkedInApi.createArticlePost(
-          content,
-          articleUrl,
-          articleTitle || '',
-          articleDescription || '',
-          visibility
-        );
-        console.log('LinkedIn article post response:', response);
-        toast.success('Article post published to LinkedIn successfully!');
       } else {
         // Simple text post
         console.log('Publishing LinkedIn text post');
         response = await linkedInApi.createTextPost(content, visibility);
+        if (response?.data?.id) {
+          linkedInPostId = response.data.id;
+        }
         console.log('LinkedIn text post response:', response);
         toast.success('Post published to LinkedIn successfully!');
       }
@@ -1002,63 +967,46 @@ const CreatePostPage: React.FC = () => {
             pollOptions: pollOptions.filter(Boolean),
             status: 'published',
             visibility: visibility,
-            publishedTime: new Date().toISOString()
+            publishedTime: new Date().toISOString(),
+            platformPostId: linkedInPostId // Add the LinkedIn post ID
           };
           
           // Save to the database
           const dbResponse = await linkedInApi.createDBPost(dbPostData);
           console.log('Published post saved to database:', dbResponse);
           
-          // If saving to database
-          if (process.env.NODE_ENV === 'production' || true) {
-            // ... existing code ...
-            
-            // Publish the post using the DB ID
-            const response = await linkedInApi.publishDBPost(dbResponse.data._id);
-            
-            if (response && response.success) {
-              // ... existing success handling ...
+          // Clear all createPost related state
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('state:createPost.')) {
+              localStorage.removeItem(key);
+            }
+          });
               
               // Update post counts in sidebar
               updatePostCounts();
               
               // Navigate to post library
-              navigate('/dashboard/posts', { state: { newPost: true, activeTab: 'published' } });
-            } else {
-              throw new Error('LinkedIn API returned an error');
+          navigate('/dashboard/posts', { 
+            state: { 
+              newPost: true, 
+              activeTab: 'published',
+              platformPostId: linkedInPostId // Pass the LinkedIn post ID to the library
             }
-          } else {
-            // ... existing localStorage-only code ...
-            
-            // Update post counts in sidebar
-            updatePostCounts();
-          }
+          });
         } catch (dbError) {
           console.error('Error saving published post to database:', dbError);
           // Continue anyway, as the post was published to LinkedIn
-        }
-      }
-      
-      // Clear the form after successful publishing
-      setTimeout(() => {
-        // Clear all createPost related state
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('state:createPost.')) {
-            localStorage.removeItem(key);
-          }
-        });
-        
-        // Redirect to the post library
+          
+          // Still navigate to post library
         navigate('/dashboard/posts', {
           state: { 
             newPost: true,
-            postId: response?.id,
-            platform: 'linkedin',
-            activeTab: 'published' // Explicitly set to published tab
+              activeTab: 'published',
+              platformPostId: linkedInPostId // Pass the LinkedIn post ID even if DB save failed
           }
         });
-      }, 1500);
-      
+        }
+      }
     } catch (error: any) {
       console.error('Error publishing to LinkedIn:', error);
       
@@ -1110,19 +1058,24 @@ const CreatePostPage: React.FC = () => {
   // Function to save post as draft
   const saveAsDraft = async () => {
     try {
+      // Validate content
+      if (!content.trim() && !postImage && !slides.length && !isPollActive) {
+        toast.error('Please add some content before saving as draft');
+        return;
+      }
+
       setIsSavingDraft(true);
       
       // Check if we're editing an existing draft
       const editingDraftId = localStorage.getItem('editingDraftId');
       
       // Create draft data
-      const draftId = editingDraftId || `draft_${Date.now()}`;
       const draftData = {
-        id: draftId,
+        id: editingDraftId || `draft_${Date.now()}`,
         title: 'Draft Post',
         content: content,
         excerpt: content.substring(0, 100) + '...',
-        createdAt: new Date().toISOString(),
+        createdAt: editingDraftId ? localStorage.getItem(`state:createPost.createdAt`) || new Date().toISOString() : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         slides: slides.length > 0 ? slides : [],
         postImage: postImage,
@@ -1135,52 +1088,62 @@ const CreatePostPage: React.FC = () => {
         date: new Date().toLocaleDateString()
       };
       
-      // Save directly to localStorage with the key matching the pattern expected by PostLibraryPage
-      localStorage.setItem(draftId, JSON.stringify(draftData));
-      
-      // Also try to save to backend if possible
       try {
-        // Helper function to check if it's a valid carousel post
-        const isValidCarousel = () => {
-          return activeTab === 'carousel' && 
-                 slides.length > 0 && 
-                 slides.some(slide => slide.content?.trim().length > 0 && slide.cloudinaryImage?.secure_url);
-        };
-        
-        // Save to backend API - this will only work if the API is connected
-        await linkedInApi.createDBPost({
-          title: 'Draft Post',
-          content: content,
-          hashtags: hashtags,
-          mediaType: postImage ? 'image' : isValidCarousel() ? 'carousel' : 'none',
-          postImage: postImage,
-          slides: slides,
-          isPollActive: isPollActive,
-          pollOptions: pollOptions.filter(Boolean),
-          status: 'draft',
-          visibility: visibility
-        });
-      } catch (apiError) {
-        // Silently ignore backend API errors since we've already saved to localStorage
-        console.log('Note: Draft saved to localStorage only, API save failed:', apiError);
+        if (editingDraftId) {
+          // If editing an existing draft, update it in the backend
+          if (!editingDraftId.startsWith('draft_')) {
+            await linkedInApi.updateDBPost(editingDraftId, {
+              ...draftData,
+              id: editingDraftId
+            });
+          }
+          // Update in localStorage
+          localStorage.setItem(editingDraftId, JSON.stringify(draftData));
+        } else {
+          // Create new draft
+          const response = await linkedInApi.createDBPost({
+            ...draftData,
+            status: 'draft'
+          });
+          
+          if (response?.success && response?.data?._id) {
+            // If backend save successful, use the backend ID
+            draftData.id = response.data._id;
+          }
+          // Save to localStorage
+          localStorage.setItem(draftData.id, JSON.stringify(draftData));
       }
       
       // Clear the editing state
       localStorage.removeItem('editingDraftId');
+        
+        // Clear all createPost related state
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('state:createPost.')) {
+            localStorage.removeItem(key);
+          }
+        });
       
       // Success message
-      toast.success("Draft saved successfully");
+        toast.success(editingDraftId ? "Draft updated successfully" : "Draft saved successfully");
       
       // Navigate to the post library
       navigate('/dashboard/posts', {
         state: { 
-          newDraft: true,
+            newDraft: !editingDraftId,
+            updatedDraft: editingDraftId,
           activeTab: 'drafts'
         }
       });
       
       // Update post counts in sidebar
       updatePostCounts();
+      } catch (error) {
+        console.error('Error saving draft:', error);
+        // Still save to localStorage as fallback
+        localStorage.setItem(draftData.id, JSON.stringify(draftData));
+        toast.warning('Draft saved locally only. Some features may be limited.');
+      }
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error('Failed to save draft', {
@@ -1194,31 +1157,25 @@ const CreatePostPage: React.FC = () => {
   // Function to schedule a post
   const schedulePost = async () => {
     try {
-      setIsPublishing(true); // Using existing state variable for publishing status
+      // Validate content
+      if (!content.trim() && !postImage && !slides.length && !isPollActive) {
+        toast.error('Please add some content before scheduling');
+        return;
+      }
+
+      setIsPublishing(true);
       toast.info('Preparing to schedule your post...');
       
       // Validate required fields
       if (!scheduledDate || !scheduleTime) {
         toast.error('Please select both date and time for scheduling');
-      return;
-    }
-
-      // Validate content based on active tab
-      if (activeTab === 'text' && !content.trim()) {
-        toast.error('Please add some content to your post');
-        return;
-      } else if (activeTab === 'carousel' && slides.length === 0) {
-        toast.error('Please add at least one slide to your carousel');
-        return;
-      } else if (activeTab === 'document' && !documentFile) {
-        toast.error('Please upload a document');
         return;
       }
       
       // Create a Date object from the scheduled date and time
       const scheduledDateTime = new Date(scheduledDate);
       const [hours, minutes] = scheduleTime.split(':').map(Number);
-      scheduledDateTime.setHours(hours, minutes);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
       
       // Check if the scheduled time is in the past
       if (scheduledDateTime <= new Date()) {
@@ -1226,80 +1183,58 @@ const CreatePostPage: React.FC = () => {
         return;
       }
       
-      // Prepare post data - only include data relevant to the active tab
-      const postData: {
-        title: string;
-        content: string;
-        hashtags: string[];
-        visibility: string;
-        platform: string;
-        status: string;
-        scheduledTime: string;
-        mediaType?: string;
-        postImage?: any;
-        slides?: any[];
-        isPollActive?: boolean;
-        pollOptions?: string[];
-        pollDuration?: number;
-        documentDescription?: string;
-      } = {
+      // Check if we're editing an existing scheduled post
+      const editingScheduledId = localStorage.getItem('editingScheduledId');
+      
+      // Prepare post data
+      const postData = {
+        id: editingScheduledId || `scheduled_${Date.now()}`,
         title: 'Scheduled Post',
-        content: activeTab === 'text' ? content : '',
+        content: content,
         hashtags: hashtags,
         visibility: visibility,
         platform: 'linkedin',
         status: 'scheduled',
-        scheduledTime: scheduledDateTime.toISOString()
+        scheduledTime: scheduledDateTime.toISOString(),
+        mediaType: postImage ? 'image' : activeTab === 'carousel' ? 'carousel' : 'none',
+        postImage: postImage,
+        slides: slides,
+        isPollActive: isPollActive,
+        pollOptions: pollOptions.filter(Boolean),
+        createdAt: editingScheduledId ? localStorage.getItem(`state:createPost.createdAt`) || new Date().toISOString() : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
-      
-      // Only include media data relevant to the selected tab
-      if (activeTab === 'text') {
-        // For text tab, include postImage if there is one
-        if (postImage) {
-          postData.postImage = postImage;
-          postData.mediaType = 'image';
+
+      try {
+        let response;
+        if (editingScheduledId) {
+          // If editing an existing scheduled post, update it
+          if (!editingScheduledId.startsWith('scheduled_')) {
+            response = await linkedInApi.updateDBPost(editingScheduledId, {
+              ...postData,
+              id: editingScheduledId
+            });
+          }
+          // Update in localStorage
+          localStorage.setItem(editingScheduledId, JSON.stringify(postData));
         } else {
-          postData.mediaType = 'none';
-        }
-        // Explicitly set slides to empty array for text posts
-        postData.slides = [];
-      } else if (activeTab === 'carousel') {
-        // For carousel tab, include the slides
-        postData.slides = slides;
-        postData.content = content; // Can still have content above carousel
-        postData.mediaType = 'carousel';
-      } else if (activeTab === 'document') {
-        // For document tab
-        postData.documentDescription = documentDescription;
-        postData.mediaType = 'document';
-      }
-      
-      // Add poll if active
-      if (isPollActive) {
-        postData.isPollActive = true;
-        postData.pollOptions = pollOptions.filter(opt => opt.trim());
-        postData.pollDuration = pollDuration;
-      }
-      
-      // Submit to the backend API
-      console.log('Scheduling post with data:', postData);
-      
-      // Check if we're editing an existing scheduled post
-      const editingScheduledId = localStorage.getItem('editingScheduledId');
-      
-      // Use different endpoint depending on whether we're using the local/backend API
-      const response = await linkedInApi.createDBPost({
+          // Create new scheduled post
+          response = await linkedInApi.createDBPost({
         ...postData,
         status: 'scheduled'
       });
       
-      console.log('Schedule response:', response);
-      
-      if (response && response.success) {
-        toast.success('Post scheduled successfully!');
+          if (response?.success && response?.data?._id) {
+            // If backend save successful, use the backend ID
+            postData.id = response.data._id;
+          }
+          // Save to localStorage
+          localStorage.setItem(postData.id, JSON.stringify(postData));
+        }
         
         // Clear the editor state
         localStorage.removeItem('editingScheduledId');
+        
         // Clear form data from localStorage
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('state:createPost.')) {
@@ -1307,37 +1242,25 @@ const CreatePostPage: React.FC = () => {
           }
         });
         
-        // Navigate to the post library scheduled tab - use /posts not /library
-        navigate('/dashboard/posts', { state: { scheduled: true, activeTab: 'scheduled' } });
+        // Success message
+        toast.success(editingScheduledId ? 'Post schedule updated successfully!' : 'Post scheduled successfully!');
         
-        // If sending to database
-        if (process.env.NODE_ENV === 'production' || true) {
-          // ... existing code ...
-          
-          // Schedule post in database
-          const response = await linkedInApi.createDBPost({
-            // ... existing post data ...
-          });
-          
-          if (response && response.success) {
-            // ... existing success handling ...
+        // Navigate to the post library scheduled tab
+        navigate('/dashboard/posts', { 
+          state: { 
+            scheduled: !editingScheduledId,
+            updatedScheduled: editingScheduledId,
+            activeTab: 'scheduled' 
+          }
+        });
             
             // Update post counts in sidebar
             updatePostCounts();
-            
-            // Navigate to the post library showing scheduled posts
-            navigate('/dashboard/posts', { state: { scheduled: true, activeTab: 'scheduled' } });
-          } else {
-            throw new Error('Failed to schedule post');
-          }
-        } else {
-          // ... existing localStorage-only code ...
-          
-          // Update post counts in sidebar
-          updatePostCounts();
-        }
-      } else {
-        toast.error('Failed to schedule post. Please try again.');
+      } catch (error) {
+        console.error('Error scheduling post:', error);
+        // Save to localStorage as fallback
+        localStorage.setItem(postData.id, JSON.stringify(postData));
+        toast.warning('Post scheduled locally only. Some features may be limited.');
       }
     } catch (error: any) {
       console.error('Error scheduling post:', error);
@@ -1454,6 +1377,19 @@ const CreatePostPage: React.FC = () => {
     };
   }, [content, slides]);
   
+  // Add a new function to handle scheduling
+  const handleScheduleClick = () => {
+    if (!content.trim() && activeTab === 'text') {
+      toast.error('Please add some content before scheduling');
+      return;
+    }
+    if (slides.length === 0 && activeTab === 'carousel') {
+      toast.error('Please add at least one slide before scheduling');
+      return;
+    }
+    setShowScheduleDialog(true);
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -1515,13 +1451,7 @@ const CreatePostPage: React.FC = () => {
             variant="outline" 
             size="sm" 
             className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200 text-xs sm:text-sm" 
-            onClick={() => {
-              // Only open the dialog if it's currently closed
-              if (!showScheduleDialog) {
-                console.log('Opening schedule dialog from button click');
-                setShowScheduleDialog(true);
-              }
-            }}
+            onClick={handleScheduleClick}
           >
             <Clock size={16} className="mr-1" />
             <span className="hidden xs:inline">Schedule</span>
@@ -1847,11 +1777,11 @@ const CreatePostPage: React.FC = () => {
                       </Button>
                           </div>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <ImageGalleryPicker
                               onSelectImage={handleImageSelected}
                               triggerButton={
-                                <Button variant="outline" className="gap-2">
+                                <Button variant="outline" className="w-full sm:w-auto gap-2">
                                   <ImageIcon className="h-4 w-4" />
                                   Select from Gallery
                                 </Button>
@@ -1859,7 +1789,7 @@ const CreatePostPage: React.FC = () => {
                             />
                             <Button 
                               variant="outline"
-                              className="gap-2"
+                              className="w-full sm:w-auto gap-2"
                               onClick={() => navigate('/dashboard/images')}
                             >
                               <Folder className="h-4 w-4" />

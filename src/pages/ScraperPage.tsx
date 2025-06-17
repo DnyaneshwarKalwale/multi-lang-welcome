@@ -1277,7 +1277,7 @@ const ScraperPage: React.FC = () => {
     
     try {
       // Use the backend API instead of frontend API calls
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/user/${username}`
         : `${baseUrl}/api/twitter/user/${username}`;
@@ -1545,7 +1545,7 @@ const ScraperPage: React.FC = () => {
       
       // Save to backend first - this should be the primary storage
       try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
       const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-videos`
           : `${baseUrl}/api/youtube/save-videos`;
@@ -1609,7 +1609,7 @@ const ScraperPage: React.FC = () => {
       // Try creating carousels only if backend save was successful
       if (backendSaveSuccess) {
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+          const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
           const carouselApiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube-carousels` // Use the new non-protected endpoint
             : `${baseUrl}/api/youtube-carousels`; // Use the new non-protected endpoint
@@ -1649,7 +1649,7 @@ const ScraperPage: React.FC = () => {
     try {
       const prompt = youtubeChannelResult?.videos.length ? youtubeChannelResult.videos[0].title : linkedinContent.substring(0, 200);
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/cloudinary/generate`
         : `${baseUrl}/api/cloudinary/generate`;
@@ -1700,7 +1700,7 @@ const ScraperPage: React.FC = () => {
       setCurrentVideoId(videoId);
       setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/youtube/transcript` 
         : `${baseUrl}/api/youtube/transcript`;
@@ -1816,7 +1816,7 @@ const ScraperPage: React.FC = () => {
       // Now try to save to backend
       let backendSaveSuccess = false;
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+          const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
           : `${baseUrl}/api/youtube/save-video-transcript`;
