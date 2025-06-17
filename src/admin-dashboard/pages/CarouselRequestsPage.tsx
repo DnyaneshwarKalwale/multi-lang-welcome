@@ -185,8 +185,8 @@ const CarouselRequestsPage: React.FC = () => {
         throw new Error('Authentication token not found');
       }
       
-      // Use the correct API endpoint path
-      const apiUrl = `${API_URL}/carousels/admin/requests/${requestId}/status`;
+      // Use the correct API endpoint path and _id field
+      const apiUrl = `${API_URL}/carousels/requests/${requestId}/status`;
       
       console.log('Updating request status at:', apiUrl);
       
@@ -195,8 +195,11 @@ const CarouselRequestsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify({ status })
       });
       
@@ -1168,10 +1171,10 @@ const CarouselRequestsPage: React.FC = () => {
                     </Button>
                   )}
                   
-                  {selectedRequest.status !== 'rejected' && (
+                  {selectedRequest.status !== 'completed' && selectedRequest.status !== 'rejected' && (
                     <Button 
                       variant="outline"
-                      onClick={() => updateRequestStatus(selectedRequest.id, 'rejected')}
+                      onClick={() => updateRequestStatus(selectedRequest._id || selectedRequest.id, 'rejected')}
                       className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 truncate"
                     >
                       <span className="truncate">Reject</span>
