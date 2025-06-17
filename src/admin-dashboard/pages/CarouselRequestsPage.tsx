@@ -186,7 +186,7 @@ const CarouselRequestsPage: React.FC = () => {
       }
       
       // Use the correct API endpoint path and id field
-      const apiUrl = `${API_URL}/requests/${requestId}/status`;
+      const apiUrl = `${API_URL}/carousels/requests/${requestId}/status`;
       
       console.log('Updating request status at:', apiUrl);
       console.log('Request ID:', requestId);
