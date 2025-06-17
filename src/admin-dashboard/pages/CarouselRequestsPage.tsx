@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, FileText, Image, FileUp, Eye, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { API_URL } from '../../services/api';
+import { uploadToCloudinaryDirect } from '@/utils/cloudinaryDirectUpload';
 
 // Define types for carousel requests
 interface CarouselFile {
@@ -73,7 +74,7 @@ interface CarouselRequest {
   createdAt: string;
   updatedAt: string;
   resendCount?: number;
-  isModified?: boolean;
+  wasModified?: boolean;
   originalContent?: {
     content?: string;
     files?: CarouselFile[];
@@ -447,21 +448,43 @@ const CarouselRequestsPage: React.FC = () => {
   const getFileUrl = (file: CarouselFile) => {
     const url = file.url || '';
     
-    // If the URL is a relative path (local storage), prefix with API URL
+    // If it's a Cloudinary URL, return it as is
+    if (url.includes('cloudinary.com')) {
+      return url;
+    }
+    
+    // If it's a relative path (local storage), prefix with API URL
     if (url.startsWith('uploads/') || url.startsWith('/uploads/')) {
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
     }
     
-    return getAuthenticatedUrl(url);
+    return url;
   };
 
-  // Enhanced file preview component
+  // Add function to get download URL
+  const getDownloadUrl = (file: CarouselFile) => {
+    const url = file.url || '';
+    
+    // For Cloudinary URLs, modify the URL to force download
+    if (url.includes('cloudinary.com')) {
+      // Add fl_attachment flag to force download
+      const parts = url.split('/upload/');
+      if (parts.length === 2) {
+        return `${parts[0]}/upload/fl_attachment/${parts[1]}`;
+      }
+    }
+    
+    return getFileUrl(file);
+  };
+
+  // Update the FilePreview component
   const FilePreview = ({ file }: { file: CarouselFile }) => {
     const [showPreview, setShowPreview] = useState(false);
     const isImage = isImageFile(file);
     const isPDF = isPdfFile(file);
     const fileUrl = getFileUrl(file);
+    const downloadUrl = getDownloadUrl(file);
 
     // Enhanced cloudinary URL generation for optimized viewing
     const getOptimizedUrl = (url: string) => {
@@ -479,9 +502,15 @@ const CarouselRequestsPage: React.FC = () => {
       return url;
     };
 
-    // Get auth token to handle 401 errors
-    const getAuthToken = () => {
-      return localStorage.getItem("admin-token") || '';
+    // Function to get thumbnail URL for preview
+    const getThumbnailUrl = (url: string) => {
+      if (url.includes('cloudinary.com')) {
+        const parts = url.split('/upload/');
+        if (parts.length === 2) {
+          return `${parts[0]}/upload/c_scale,w_200,q_auto,f_auto/${parts[1]}`;
+        }
+      }
+      return url;
     };
 
     return (
@@ -496,14 +525,35 @@ const CarouselRequestsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Preview modal */}
+        {/* Show thumbnail for images */}
+        {isImage && (
+          <div className="mb-2 bg-white rounded p-1 cursor-pointer" onClick={() => setShowPreview(true)}>
+            <img 
+              src={getThumbnailUrl(fileUrl)} 
+              alt={getFileName(file)} 
+              className="max-h-32 mx-auto object-contain"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        {/* Preview modal for images */}
         {showPreview && isImage && (
-          <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
-            <div className="bg-white p-2 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-auto shadow-lg border border-gray-200" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" 
+            onClick={() => setShowPreview(false)}
+          >
+            <div 
+              className="bg-white p-2 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-auto shadow-lg" 
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium text-lg truncate">{getFileName(file)}</h3>
-                <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-gray-200 rounded-full flex-shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <button 
+                  onClick={() => setShowPreview(false)} 
+                  className="p-1 hover:bg-gray-200 rounded-full"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -511,7 +561,8 @@ const CarouselRequestsPage: React.FC = () => {
               <img 
                 src={getOptimizedUrl(fileUrl)} 
                 alt={getFileName(file)} 
-                className="max-w-full max-h-[70vh] object-contain"
+                className="max-w-full max-h-[70vh] object-contain mx-auto"
+                loading="lazy"
               />
             </div>
           </div>
@@ -519,29 +570,28 @@ const CarouselRequestsPage: React.FC = () => {
         
         <div className="flex space-x-2 mt-2">
           {isViewableFile(file) && (
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => {
+                if (isImage) {
+                  setShowPreview(true);
+                } else {
+                  window.open(fileUrl, '_blank');
+                }
+              }}
               className="text-blue-500 hover:text-blue-700 text-sm flex-1 flex items-center justify-center p-1 border border-blue-500 rounded truncate"
             >
-              <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+              <Eye className="h-4 w-4 mr-1" />
               <span className="truncate">{isImage ? 'Preview' : 'View'}</span>
-            </a>
+            </button>
           )}
           <a
-            href={fileUrl}
+            href={downloadUrl}
             download={getFileName(file)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-green-500 hover:text-green-700 text-sm flex-1 flex items-center justify-center p-1 border border-green-500 rounded truncate"
           >
-            <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+            <Download className="h-4 w-4 mr-1" />
             <span className="truncate">Download</span>
           </a>
         </div>
@@ -618,12 +668,6 @@ const CarouselRequestsPage: React.FC = () => {
         return;
       }
       
-      // Create form data
-      const formData = new FormData();
-      completionFiles.forEach((file) => {
-        formData.append('files', file);
-      });
-      
       // Use _id instead of id field for MongoDB - this is critical
       const requestId = selectedRequest?._id;
       
@@ -639,38 +683,114 @@ const CarouselRequestsPage: React.FC = () => {
 
       console.log('Completing request with ID:', requestId);
       
-      // Add admin notes if available
-      if (completionNote) {
-        formData.append('adminNotes', completionNote);
-      }
+      // First upload files to Cloudinary through our backend endpoint
+      const uploadPromises = completionFiles.map(file => {
+        return new Promise<CarouselFile>((resolve, reject) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+          const apiUrl = baseUrl.endsWith('/api') 
+            ? `${baseUrl}/upload/upload`
+            : `${baseUrl}/api/upload/upload`;
+          
+          console.log('Uploading file to:', apiUrl);
+          
+          fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("admin-token")}`
+            },
+            body: formData,
+            credentials: 'include'
+          })
+          .then(async response => {
+            const responseText = await response.text();
+            console.log('Upload response:', responseText);
+            
+            if (!response.ok) {
+              throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${responseText}`);
+            }
+            
+            try {
+              const data = JSON.parse(responseText);
+              if (data.secure_url) {
+                resolve({
+                  url: data.secure_url,
+                  filename: data.public_id,
+                  originalName: file.name,
+                  mimetype: file.type,
+                  size: file.size
+                });
+              } else {
+                reject(new Error('Failed to upload file to Cloudinary - missing secure_url'));
+              }
+            } catch (error) {
+              reject(new Error(`Failed to parse upload response: ${error.message}`));
+            }
+          })
+          .catch(error => {
+            console.error('Error uploading file:', error);
+            reject(error);
+          });
+        });
+      });
+
+      // Upload all files to Cloudinary
+      const uploadedFiles = await Promise.all(uploadPromises);
       
-      // Set API URL using the _id directly
+      console.log('Successfully uploaded files:', uploadedFiles);
+      
+      // Now send the request to complete the carousel with Cloudinary URLs
       const url = `${API_URL}/carousels/requests/${requestId}/complete`;
       
-      console.log('Sending request to:', url);
+      const requestBody = {
+        files: uploadedFiles.map(file => ({
+          url: file.url,
+          filename: file.filename,
+          originalName: file.originalName,
+          mimetype: file.mimetype,
+          size: file.size
+        })),
+        adminNotes: completionNote
+      };
       
-      // Make the API call
+      console.log('Sending request to:', url);
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      
+      // Send the request with Cloudinary URLs
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin-token")}`,
-          // Don't set Content-Type with FormData - it will be set automatically with the boundary
+          'Authorization': `Bearer ${localStorage.getItem("admin-token")}`,
+          'Content-Type': 'application/json'
         },
-        body: formData,
+        body: JSON.stringify(requestBody)
       });
       
       // Debug response
       console.log('Response status:', response.status);
       
+      // Get full response text for debugging
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+      
       // Check response
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to complete carousel request');
+        let errorMessage = 'Failed to complete carousel request';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       // Process successful response
-      const data = await response.json();
+      const data = JSON.parse(responseText);
       
+      // Only update UI and show success message if the request was actually successful
       toast({
         title: 'Success',
         description: 'Carousel request completed successfully',
@@ -682,7 +802,7 @@ const CarouselRequestsPage: React.FC = () => {
       setCompletionNote('');
       setSelectedRequest(null);
       setUploadModalOpen(false);
-      await fetchRequests();
+      await fetchRequests(); // Refresh the list to show updated status
     } catch (error) {
       console.error('Error submitting completed carousel:', error);
       toast({
@@ -765,8 +885,28 @@ const CarouselRequestsPage: React.FC = () => {
       </Card>
 
       {/* Request Detail Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <Dialog open={viewDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          // Reset states when closing
+          setViewOriginalContent(false);
+          setSelectedRequest(null);
+        }
+        setViewDialogOpen(open);
+      }}>
+        <DialogContent 
+          className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto" 
+          onInteractOutside={(e) => {
+            // Prevent closing when interacting with file previews
+            if ((e.target as HTMLElement).closest('.file-preview-modal')) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={() => {
+            // Reset states when closing via escape key
+            setViewOriginalContent(false);
+            setSelectedRequest(null);
+          }}
+        >
           {selectedRequest && (
             <>
               <DialogHeader>
@@ -792,7 +932,7 @@ const CarouselRequestsPage: React.FC = () => {
                 </div>
                 
                 {/* Original Content Toggle */}
-                {selectedRequest.isModified && selectedRequest.originalContent && (
+                {selectedRequest.wasModified && selectedRequest.originalContent && (
                   <div className="flex flex-col sm:flex-row sm:items-center p-2 bg-amber-50 rounded border border-amber-200">
                     <div className="flex-1 mb-2 sm:mb-0">
                       <p className="text-amber-800 text-sm break-words">This request was modified by the user before resending</p>
@@ -824,7 +964,7 @@ const CarouselRequestsPage: React.FC = () => {
                     {selectedRequest.resendCount > 0 && (
                       <p className="mt-1 text-sm"><span className="font-medium">Resent:</span> {selectedRequest.resendCount} time{selectedRequest.resendCount > 1 ? 's' : ''}</p>
                     )}
-                    {selectedRequest.isModified && (
+                    {selectedRequest.wasModified && (
                       <p className="mt-1 text-amber-600 text-sm"><span className="font-medium">Note:</span> User modified this request before resending</p>
                     )}
                   </div>
@@ -1030,8 +1170,27 @@ const CarouselRequestsPage: React.FC = () => {
       </Dialog>
       
       {/* Upload Completed Carousel Modal */}
-      <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
-        <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <Dialog open={uploadModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          // Reset states when closing
+          setCompletionFiles([]);
+          setCompletionNote('');
+        }
+        setUploadModalOpen(open);
+      }}>
+        <DialogContent 
+          className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto"
+          onInteractOutside={(e) => {
+            if (uploadingCarousel) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            if (uploadingCarousel) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Upload Completed Carousel</DialogTitle>
             <DialogDescription>
