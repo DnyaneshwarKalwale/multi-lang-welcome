@@ -995,11 +995,11 @@ const CarouselRequestsPage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <h4 className="font-semibold mb-1">Description</h4>
+                  <h4 className="font-semibold mb-1">Additional Notes</h4>
                   <p className="bg-gray-50 p-3 rounded text-sm break-words">
                     {viewOriginalContent && selectedRequest.originalContent?.description
                       ? selectedRequest.originalContent.description 
-                      : (selectedRequest.description || "No description provided")}
+                      : (selectedRequest.description || "No additional notes provided")}
                   </p>
                 </div>
                 

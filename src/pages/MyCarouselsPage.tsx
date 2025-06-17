@@ -576,11 +576,9 @@ const MyCarouselsPage: React.FC = () => {
         
         // Add new files - handle as a regular form upload
         if (editedData.newFiles && editedData.newFiles.length > 0) {
-          // Cast to explicitly typed array of Files
-          const fileArray: File[] = editedData.newFiles as File[];
-          fileArray.forEach(file => {
-            // Ensure it's a valid File object
-            if (file instanceof File) {
+          editedData.newFiles.forEach(file => {
+            // Check if file is a valid File object by checking its properties
+            if (file && file.name && file.size && file.type) {
               formData.append('files', file);
             }
           });

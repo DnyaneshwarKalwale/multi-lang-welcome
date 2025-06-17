@@ -1474,6 +1474,7 @@ const RequestCarouselPage: React.FC = () => {
       // Now send the metadata and file URLs to our API
       const requestData = {
         title: form.getValues('title'),
+        description: additionalNotes || '',  // Add the additional notes as description
         youtubeUrl: selectedVideo?.url || form.getValues('youtubeUrl') || '',
         carouselType: 'professional',
         content: generatedContent || previewContent || '',
