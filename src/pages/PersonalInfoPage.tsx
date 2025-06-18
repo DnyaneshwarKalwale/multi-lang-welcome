@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Globe, Phone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SocialLoginData {
   firstName?: string;
@@ -16,6 +17,7 @@ interface SocialLoginData {
 
 export default function PersonalInfoPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { 
     firstName, setFirstName,
     lastName, setLastName,
@@ -68,14 +70,26 @@ export default function PersonalInfoPage() {
     getUserLocation();
   }, []);
 
+  // Effect to handle social login data
   useEffect(() => {
-    if (socialLoginData) {
+    // First try to get data from auth context
+    if (user) {
+      if (user.firstName) setFirstName(user.firstName);
+      if (user.lastName) setLastName(user.lastName);
+      if (user.email) setEmail(user.email);
+      // If user has linkedinId, they likely have a LinkedIn profile URL
+      if (user.linkedinId) {
+        setWebsite(`https://www.linkedin.com/in/${user.linkedinId}`);
+      }
+    }
+    // Fallback to socialLoginData if available
+    else if (socialLoginData) {
       if (socialLoginData.firstName) setFirstName(socialLoginData.firstName);
       if (socialLoginData.lastName) setLastName(socialLoginData.lastName);
       if (socialLoginData.email) setEmail(socialLoginData.email);
       if (socialLoginData.profileUrl) setWebsite(socialLoginData.profileUrl);
     }
-  }, [socialLoginData]);
+  }, [user, socialLoginData]);
   
   const validateForm = () => {
     let isValid = true;
@@ -165,7 +179,7 @@ export default function PersonalInfoPage() {
         </h1>
         
         <p className="text-center text-gray-600 mb-8">
-          We'll personalize your experience based on this information
+          {user?.authMethod ? `Welcome back! We've pre-filled some information from your ${user.authMethod === 'google' ? 'Google' : 'LinkedIn'} account` : "We'll personalize your experience based on this information"}
         </p>
         
         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
@@ -183,6 +197,7 @@ export default function PersonalInfoPage() {
                   onChange={(e) => setFirstName(e.target.value)}
                   className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.firstName ? 'border-red-500' : ''}`}
                   onKeyPress={handleKeyPress}
+                  readOnly={!!user?.firstName}
                 />
                 <User size={18} className="absolute left-3 top-3.5 text-gray-400" />
                 {errors.firstName && (
@@ -204,6 +219,7 @@ export default function PersonalInfoPage() {
                   onChange={(e) => setLastName(e.target.value)}
                   className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.lastName ? 'border-red-500' : ''}`}
                   onKeyPress={handleKeyPress}
+                  readOnly={!!user?.lastName}
                 />
                 <User size={18} className="absolute left-3 top-3.5 text-gray-400" />
                 {errors.lastName && (
@@ -226,6 +242,7 @@ export default function PersonalInfoPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.email ? 'border-red-500' : ''}`}
                 onKeyPress={handleKeyPress}
+                readOnly={!!user?.email}
               />
               <Mail size={18} className="absolute left-3 top-3.5 text-gray-400" />
               {errors.email && (
@@ -236,7 +253,7 @@ export default function PersonalInfoPage() {
           
           <div className="mb-6">
             <Label htmlFor="website" className="text-gray-700 mb-2 block">
-              Website URL 
+              Website URL {user?.linkedinId && <span className="text-xs text-gray-500">(LinkedIn Profile)</span>}
             </Label>
             <div className="relative">
               <Input
@@ -247,6 +264,7 @@ export default function PersonalInfoPage() {
                 onChange={(e) => setWebsite(e.target.value)}
                 className={`pl-10 h-12 bg-white border-gray-200 focus:border-primary focus:ring-primary shadow-sm ${errors.website ? 'border-red-500' : ''}`}
                 onKeyPress={handleKeyPress}
+                readOnly={!!user?.linkedinId}
               />
               <Globe size={18} className="absolute left-3 top-3.5 text-gray-400" />
               {errors.website && (

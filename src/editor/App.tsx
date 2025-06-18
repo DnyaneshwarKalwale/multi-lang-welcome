@@ -29,6 +29,7 @@ const EditorRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/editor" element={<Index />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

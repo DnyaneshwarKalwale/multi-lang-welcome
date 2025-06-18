@@ -1408,26 +1408,6 @@ const CreatePostPage: React.FC = () => {
         
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-1 text-red-500 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm"
-            onClick={() => {
-              if (window.confirm("Are you sure you want to clear your draft? This cannot be undone.")) {
-                // Clear all createPost related state
-                Object.keys(localStorage).forEach(key => {
-                  if (key.startsWith('state:createPost.')) {
-                    localStorage.removeItem(key);
-                  }
-                });
-                window.location.reload();
-              }
-            }}
-          >
-            <X size={16} />
-            <span className="hidden xs:inline">Clear Draft</span>
-          </Button>
-          
-          <Button 
             variant="outline" 
             size="sm" 
             className="gap-1 text-xs sm:text-sm"
@@ -1642,17 +1622,16 @@ const CreatePostPage: React.FC = () => {
       {/* Main layout with editor on left and preview on right */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Side - Post Editor */}
-        <div>
+        <div className="-mt-3">
           <Tabs defaultValue="text" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-1">
-              <TabsTrigger value="text">Text Post</TabsTrigger>
+            <TabsList className="-mb-3">
             </TabsList>
             
-            <TabsContent value="text" className="mt-4">
-              <Card>
-                <CardHeader className="px-4 py-3 sm:px-6 sm:py-4">
+            <TabsContent value="text" className="-mt-6">
+              <Card className="border-t-0">
+                <CardHeader className="px-4 py-2 sm:px-6 sm:py-2">
                   <CardTitle className="text-lg sm:text-xl">Create LinkedIn Post</CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Write your post content to share with your network
                   </CardDescription>
                 </CardHeader>

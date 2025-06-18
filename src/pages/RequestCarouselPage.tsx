@@ -2385,18 +2385,18 @@ const RequestCarouselPage: React.FC = () => {
 
       <div className="mb-4 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold">Request a Carousel</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+        <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base break-words max-w-[90vw] sm:max-w-none">
           Provide content from a YouTube video and we'll create a professional carousel for you
         </p>
       </div>
       
-      <div className="grid lg:grid-cols-2 gap-4 sm:gap-8 w-full overflow-hidden">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-8 w-full">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 w-full">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 w-full max-w-[95vw] lg:max-w-full mx-auto">
             <Card className="w-full">
                               <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
                   <CardTitle className="text-base sm:text-lg">Carousel Details</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
+                  <CardDescription className="text-xs sm:text-sm max-w-[90%] break-words whitespace-normal">
                     Provide information about the carousel you'd like us to create
                   </CardDescription>
                 </CardHeader>
@@ -2441,13 +2441,14 @@ const RequestCarouselPage: React.FC = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs sm:text-sm">Select a Saved Video</FormLabel>
-                              <div className="relative w-full">
+                              <div className="relative w-full max-w-[95vw] lg:max-w-full mx-auto">
                                 <Search className="absolute left-2 top-2 sm:top-2.5 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                 <Input
                                   placeholder="Search by title"
                                   className="pl-7 sm:pl-8 h-8 sm:h-10 text-xs sm:text-sm w-full"
                                   value={searchQuery}
                                   onChange={(e) => setSearchQuery(e.target.value)}
+                                  style={{ maxWidth: '100%' }}
                                 />
                               </div>
                               <FormDescription className="text-xs">
@@ -2467,22 +2468,22 @@ const RequestCarouselPage: React.FC = () => {
                           </div>
                         </div>
                       ) : currentVideos.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-4 w-full overflow-hidden">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-4 w-full max-w-[95vw] lg:max-w-full mx-auto">
                           {currentVideos.map((video) => (
                                                           <div 
                               key={video.id}
-                              className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md relative group w-full max-w-full ${
+                              className={`border rounded-lg cursor-pointer transition-all hover:shadow-md relative group w-full ${
                                 selectedVideo?.id === video.id ? "ring-2 ring-blue-500" : ""
                               }`}
                               onClick={() => handleVideoSelect(video)}
-                              style={{ maxWidth: '100%', minWidth: 0 }}
                             >
-                              <div className="relative w-full max-w-full overflow-hidden">
+                              <div className="relative w-full">
                                 <img
                                   src={video.thumbnailUrl}
                                   alt={video.title}
-                                  className="w-full aspect-video object-cover"
+                                  className="w-full aspect-video object-cover rounded-t-lg"
                                   loading="lazy"
+                                  style={{ maxWidth: '100%', height: 'auto' }}
                                 />
                                 <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/80 text-white text-[8px] sm:text-xs px-1 py-0.5 rounded">
                                   {video.duration}
@@ -2522,15 +2523,15 @@ const RequestCarouselPage: React.FC = () => {
                                 </div>
                               </div>
                               <div className="p-2 sm:p-3">
-                                <h4 className="font-medium text-xs sm:text-sm line-clamp-2">{video.title}</h4>
-                                <p className="text-xs text-muted-foreground mt-1 truncate">{video.channelName}</p>
+                                <h4 className="font-medium text-xs sm:text-sm line-clamp-2 break-words max-w-full">{video.title}</h4>
+                                <p className="text-xs text-muted-foreground mt-1 truncate max-w-[95%]">{video.channelName}</p>
                                 <div className="flex items-center gap-2 mt-1 sm:mt-2 text-xs text-muted-foreground">
-                                  <span className="truncate">{video.date}</span>
+                                  <span className="truncate max-w-[100px] sm:max-w-full">{video.date}</span>
                                 </div>
                                 
                                 {/* Transcript fetch button */}
                                 <div 
-                                  className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t flex justify-end flex-wrap" 
+                                  className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t flex justify-end flex-wrap w-full" 
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {isFetchingTranscript && fetchingVideoId === video.id ? (
@@ -2545,10 +2546,10 @@ const RequestCarouselPage: React.FC = () => {
                                         e.stopPropagation();
                                         handleFetchTranscript(video);
                                       }}
-                                      className="text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 py-0 w-full sm:w-auto"
+                                      className="text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2 py-0 w-full sm:w-auto max-w-[95%] mx-auto sm:mx-0"
                                     >
                                       <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 flex-shrink-0" />
-                                      <span className="truncate">Get Transcript</span>
+                                      <span className="truncate max-w-[80px] sm:max-w-none">Get Transcript</span>
                                     </Button>
                                   ) : (
                                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] sm:text-xs w-full text-center sm:w-auto py-0.5">
@@ -2579,20 +2580,21 @@ const RequestCarouselPage: React.FC = () => {
                       
                       {/* Pagination */}
                       {totalPages > 1 && (
-                        <div className="flex items-center justify-center mt-4 gap-1">
+                        <div className="w-full overflow-x-auto pb-2">
+                          <div className="flex items-center justify-center mt-4 gap-1 min-w-fit mx-auto">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => prevPage()}
                             disabled={currentPage === 1}
-                            className="h-8 px-2"
+                              className="h-7 sm:h-8 px-1.5 sm:px-2 text-xs whitespace-nowrap"
                           >
                             Previous
                           </Button>
                           <div className="flex items-center gap-1">
                             {(() => {
                               const pages = [];
-                              const maxVisible = 5;
+                                const maxVisible = window.innerWidth < 640 ? 3 : 5;
                               const halfVisible = Math.floor(maxVisible / 2);
                               
                               let startPage = Math.max(1, currentPage - halfVisible);
@@ -2611,14 +2613,14 @@ const RequestCarouselPage: React.FC = () => {
                                     variant={currentPage === 1 ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => goToPage(1)}
-                                    className="h-8 w-8 p-0 text-xs"
+                                      className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-xs"
                                   >
                                     1
                                   </Button>
                                 );
                                 if (startPage > 2) {
                                   pages.push(
-                                    <span key="start-ellipsis" className="px-1">
+                                      <span key="start-ellipsis" className="px-0.5 sm:px-1">
                                       ...
                                     </span>
                                   );
@@ -2633,7 +2635,7 @@ const RequestCarouselPage: React.FC = () => {
                                     variant={currentPage === i ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => goToPage(i)}
-                                    className="h-8 w-8 p-0 text-xs"
+                                      className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-xs"
                                   >
                                     {i}
                                   </Button>
@@ -2644,7 +2646,7 @@ const RequestCarouselPage: React.FC = () => {
                               if (endPage < totalPages) {
                                 if (endPage < totalPages - 1) {
                                   pages.push(
-                                    <span key="end-ellipsis" className="px-1">
+                                      <span key="end-ellipsis" className="px-0.5 sm:px-1">
                                       ...
                                     </span>
                                   );
@@ -2655,7 +2657,7 @@ const RequestCarouselPage: React.FC = () => {
                                     variant={currentPage === totalPages ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => goToPage(totalPages)}
-                                    className="h-8 w-8 p-0 text-xs"
+                                      className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-xs"
                                   >
                                     {totalPages}
                                   </Button>
@@ -2670,10 +2672,11 @@ const RequestCarouselPage: React.FC = () => {
                             size="sm"
                             onClick={() => nextPage()}
                             disabled={currentPage === totalPages}
-                            className="h-8 px-2"
+                              className="h-7 sm:h-8 px-1.5 sm:px-2 text-xs whitespace-nowrap"
                           >
                             Next
                           </Button>
+                          </div>
                         </div>
                       )}
                       

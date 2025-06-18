@@ -4,7 +4,7 @@ import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
   FileText, ArrowRight, PlusCircle, Twitter, ImageIcon, Folder,
-  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw
+  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ import { saveImageToGallery } from '@/utils/cloudinaryDirectUpload';
 import api from '@/services/api';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from "@/hooks/use-toast";
+import { tokenManager } from '@/services/api';
 
 // Twitter imports
 import { fetchUserTweets, groupThreads, saveSelectedTweets, TwitterConfig } from '@/utils/twitterApi';
@@ -765,7 +766,7 @@ const LinkedInCarousel: React.FC<{ post: LinkedInPost }> = ({ post }) => {
   );
 };
 
-const ScraperPage: React.FC = () => {
+const ScraperPage: React.FC = (): JSX.Element => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -815,21 +816,60 @@ const ScraperPage: React.FC = () => {
   const [savedPostsModalOpen, setSavedPostsModalOpen] = useState(false);
 
   // Load saved posts from localStorage
-  const loadSavedPosts = () => {
+  const loadSavedPosts = async () => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.warn('No auth token found');
+      return;
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`
+    };
+    
+    // Load saved Twitter posts
     try {
-      const savedTweets = JSON.parse(localStorage.getItem('savedTwitterPosts') || '[]');
-      const savedLinkedIn = JSON.parse(localStorage.getItem('savedLinkedInPosts') || '[]');
-      
-      setSavedTwitterPosts(savedTweets);
-      setSavedLinkedInPosts(savedLinkedIn);
+      const twitterResponse = await axios.get(`${apiBaseUrl}/twitter/saved`, { headers });
+      if (twitterResponse.data.success) {
+        setSavedTwitterPosts(twitterResponse.data.data || []);
+      } else {
+        console.warn('Failed to load saved Twitter posts:', twitterResponse.data.message);
+        setSavedTwitterPosts([]);
+      }
     } catch (error) {
-      console.error('Error loading saved posts:', error);
+      console.error('Error loading saved Twitter posts:', error);
+      if (error.response?.status === 401) {
+        toastError('Please log in to view saved posts');
+      }
+      setSavedTwitterPosts([]);
+    }
+    
+    // Load saved LinkedIn posts
+    try {
+      const linkedinResponse = await axios.get(`${apiBaseUrl}/linkedin/saved-posts`, { headers });
+      if (linkedinResponse.data.success) {
+        setSavedLinkedInPosts(linkedinResponse.data.data || []);
+      } else {
+        console.warn('Failed to load saved LinkedIn posts:', linkedinResponse.data.message);
+        setSavedLinkedInPosts([]);
+      }
+    } catch (error) {
+      console.error('Error loading saved LinkedIn posts:', error);
+      if (error.response?.status === 401) {
+        toastError('Please log in to view saved posts');
+      }
+      setSavedLinkedInPosts([]);
     }
   };
 
   // Load saved posts when component mounts
   useEffect(() => {
-    loadSavedPosts();
+    loadSavedPosts().catch(error => {
+      console.error('Error in loadSavedPosts:', error);
+      toastError('Failed to load saved posts');
+    });
   }, []);
 
   // Helper functions for toast
@@ -1397,6 +1437,14 @@ const ScraperPage: React.FC = () => {
       toastError('No tweets available to save');
       return;
     }
+
+    // Get token using tokenManager
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+    if (!token) {
+      toastError('Please log in to save tweets');
+      return;
+    }
     
     setIsLoading(true);
     
@@ -1409,28 +1457,59 @@ const ScraperPage: React.FC = () => {
       
       const tweetsToSave = allTweets.filter(tweet => 
         tweet && tweet.id && selectedTweets.has(tweet.id)
-      );
+      ).map(tweet => ({
+        ...tweet,
+        thread_id: tweet.thread_id || tweet.conversation_id,
+        thread_position: tweet.thread_position,
+        savedAt: new Date().toISOString(),
+        userId: user?.id || 'anonymous',
+        username: twitterResult.username,
+        profileImageUrl: twitterResult.profileImageUrl
+      }));
       
       if (tweetsToSave.length === 0) {
         toastError('No valid tweets found to save');
         return;
       }
       
-      // Use the saveSelectedTweets function from twitterApi
-      const success = await saveSelectedTweets(tweetsToSave, user?.email || 'anonymous');
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const response = await axios.post(`${apiBaseUrl}/twitter/save`, {
+        tweets: tweetsToSave,
+        username: twitterResult.username,
+        options: {
+          preserveExisting: true,
+          skipDuplicates: true,
+          preserveThreadOrder: true
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
-      if (success) {
-        toastSuccess(`Saved ${tweetsToSave.length} tweets successfully!`);
+      if (response.data.success) {
+        toastSuccess(`Saved ${response.data.count} tweets successfully!`);
+        if (response.data.skippedCount > 0) {
+          toast({
+            title: 'Note',
+            description: `${response.data.skippedCount} duplicate tweets were skipped.`
+          });
+        }
         setSelectedTweets(new Set());
         setSelectedThreads(new Set());
         // Refresh saved posts list
         loadSavedPosts();
       } else {
-        throw new Error('Failed to save tweets');
+        throw new Error(response.data.message || 'Failed to save tweets');
       }
     } catch (error) {
       console.error('Error saving tweets:', error);
-      toastError('Failed to save tweets. Please try again.');
+      if (error.response?.status === 401) {
+        toastError('Please log in to save tweets');
+      } else {
+        toastError(error.response?.data?.message || 'Failed to save tweets. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -1446,65 +1525,59 @@ const ScraperPage: React.FC = () => {
       toastError('No LinkedIn posts available to save');
       return;
     }
+
+    // Get token using tokenManager
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+    if (!token) {
+      toastError('Please log in to save posts');
+      return;
+    }
     
     setIsLoading(true);
     
     try {
-      const postsToSave = linkedinResult.posts.filter(post => 
-        selectedLinkedInPosts.has(post.id)
-      );
+      const selectedPosts = linkedinResult.posts.filter(post => selectedLinkedInPosts.has(post.id));
       
-      // Save to backend first
-      let backendSaveSuccess = false;
-      try {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-        const response = await axios.post(`${apiBaseUrl}/linkedin/save-scraped-posts`, {
-          posts: postsToSave,
-          profileData: linkedinResult.profileData,
-          userId: user?.id || 'anonymous'
-        });
+      // Prepare the request body according to the API's expected format
+      const requestData = {
+        posts: selectedPosts,
+        profileData: linkedinResult.profileData
+      };
 
-        if (response.data.success) {
-          backendSaveSuccess = true;
-          toastSuccess(`Saved ${response.data.count} LinkedIn posts to cloud!`);
-        } else {
-          console.warn("Backend save warning:", response.data.message);
-          toastError("Failed to save posts to cloud: " + response.data.message);
+      // Make a single API call to save all posts
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/linkedin/save-scraped-posts`, 
+        requestData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
-      } catch (backendError) {
-        console.error("Error saving LinkedIn posts to backend:", backendError);
-        toastError("Failed to save posts to cloud. Saving locally as backup.");
-      }
-      
-      // Save to localStorage as backup (even if backend save succeeds)
-      try {
-        const existingSavedPosts = JSON.parse(localStorage.getItem('savedLinkedInPosts') || '[]');
-        const newSavedPosts = [...existingSavedPosts, ...postsToSave.map(post => ({
-          ...post,
-          savedAt: new Date().toISOString(),
-          profileData: linkedinResult.profileData
-        }))];
-        
-        localStorage.setItem('savedLinkedInPosts', JSON.stringify(newSavedPosts));
-        
-        if (!backendSaveSuccess) {
-          toastSuccess(`Saved ${postsToSave.length} LinkedIn posts to local storage as backup`);
-        } else {
-          toastSuccess(`Posts saved successfully to cloud and local storage!`);
-        }
-      } catch (localStorageError) {
-        console.error("Error saving to localStorage:", localStorageError);
-        if (!backendSaveSuccess) {
-          toastError("Failed to save posts both to cloud and locally.");
-        }
-      }
-      
+      );
+
+      // Clear selection
       setSelectedLinkedInPosts(new Set());
-      // Refresh saved posts list
-      loadSavedPosts();
+      
+      // Show success message
+      if (response.data.success) {
+        const savedCount = response.data.count;
+        const skippedCount = response.data.skippedCount;
+        
+        if (savedCount > 0) {
+          toastSuccess(`Successfully saved ${savedCount} LinkedIn post${savedCount !== 1 ? 's' : ''}`);
+        }
+        if (skippedCount > 0) {
+          toast({
+            title: 'Note',
+            description: `${skippedCount} duplicate post${skippedCount !== 1 ? 's were' : ' was'} skipped.`
+          });
+        }
+      }
+      
     } catch (error) {
       console.error('Error saving LinkedIn posts:', error);
-      toastError('Failed to save LinkedIn posts. Please try again.');
+      toastError(error.response?.data?.message || 'Failed to save LinkedIn posts');
     } finally {
       setIsLoading(false);
     }
@@ -2406,8 +2479,8 @@ const ScraperPage: React.FC = () => {
                     <p className="text-gray-500 text-center py-8">No saved Twitter posts</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {savedTwitterPosts.map((tweet) => (
-                        <div key={tweet.id} className="w-full">
+                      {savedTwitterPosts.map((tweet, index) => (
+                        <div key={`${tweet.id}-${tweet.savedAt || index}`} className="w-full">
                           <TweetCard
                             tweet={tweet}
                             isSelected={false}
@@ -2424,57 +2497,73 @@ const ScraperPage: React.FC = () => {
                     <p className="text-gray-500 text-center py-8">No saved LinkedIn posts</p>
                   ) : (
                     <div className="masonry-container columns-1 md:columns-2 xl:columns-3 gap-6">
-                      {savedLinkedInPosts.map((post, index) => (
+                      {savedLinkedInPosts.map((post, index) => {
+                        // Normalize post data structure
+                        const postData = post.postData || post;
+                        return (
                         <Card 
-                          key={`saved-${post.id}-${index}`} 
-                          className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid"
+                            key={`saved-${postData.id}-${index}`} 
+                            className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid mb-6"
                         >
                           <CardHeader className="p-4 pb-3">
                             <div className="flex items-start gap-3">
                               <img 
-                                src={post.authorAvatar || 'https://via.placeholder.com/40'} 
-                                alt={post.author}
+                                  src={postData.authorAvatar || 'https://via.placeholder.com/40'} 
+                                  alt={postData.author}
                                 className="w-10 h-10 rounded-full object-cover" 
                               />
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm text-gray-900">{post.author}</h4>
-                                <p className="text-xs text-gray-600 line-clamp-2">{post.authorHeadline}</p>
+                                  <h4 className="font-semibold text-sm text-gray-900">{postData.author}</h4>
+                                  <p className="text-xs text-gray-600 line-clamp-2">{postData.authorHeadline}</p>
                                 <p className="text-xs text-gray-400 mt-1">
-                                  Saved • {new Date(post.savedAt).toLocaleDateString()}
+                                    Saved • {new Date(postData.savedAt || post.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
                           </CardHeader>
+                            
                           <CardContent className="p-4 pt-0">
-                            <div className="text-sm text-gray-800 leading-relaxed mb-3">
-                              {post.content.length > 250 ? (
+                              {/* Post Content */}
+                              <div className="space-y-4">
+                                {/* Text Content */}
+                                <div className="linkedin-post-content">
+                                  {(() => {
+                                    const [isExpanded, setIsExpanded] = React.useState(false);
+                                    const content = postData.content || '';
+                                    return content.length > 250 && !isExpanded ? (
                                 <>
                                   <p className="whitespace-pre-line break-words">
-                                    {post.content.substring(0, 250)}...
+                                          {content.substring(0, 250)}...
                                   </p>
-                                  <button className="text-blue-500 hover:text-blue-600 text-xs mt-1">
+                                        <button 
+                                          className="text-blue-500 hover:text-blue-600 text-xs mt-1"
+                                          onClick={() => setIsExpanded(true)}
+                                        >
                                     Show more
                                   </button>
                                 </>
                               ) : (
-                                <p className="whitespace-pre-line break-words">{post.content}</p>
-                              )}
+                                      <p className="whitespace-pre-line break-words">{content}</p>
+                                    );
+                                  })()}
                             </div>
                             
                             {/* Media Display */}
-                            {post.media && post.media.length > 0 && (
-                              <div className="mb-3">
-                                {post.media.length === 1 ? (
+                                {postData.media && postData.media.length > 0 && (
+                                  <div className="relative">
+                                    {postData.media.length === 1 ? (
+                                      <div className="rounded-lg overflow-hidden bg-gray-100">
                                   <img 
-                                    src={post.media[0].url} 
+                                          src={postData.media[0].url} 
                                     alt="Post media" 
-                                    className="w-full object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
-                                    style={{ height: 'auto', maxHeight: '300px' }}
-                                    onClick={() => window.open(post.media[0].url, '_blank')}
+                                          className="w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                                          style={{ height: 'auto', maxHeight: '400px' }}
+                                          onClick={() => window.open(postData.media[0].url, '_blank')}
                                   />
+                                      </div>
                                 ) : (
                                   <div className="grid grid-cols-2 gap-2">
-                                    {post.media.slice(0, 4).map((media: any, idx: number) => (
+                                        {postData.media.slice(0, 4).map((media: any, idx: number) => (
                                       <img 
                                         key={idx}
                                         src={media.url} 
@@ -2489,10 +2578,10 @@ const ScraperPage: React.FC = () => {
                             )}
                             
                             {/* Documents Display */}
-                            {post.documents && post.documents.length > 0 && (
-                              <div className="space-y-2">
-                                {post.documents.map((doc: any, idx: number) => (
-                                  <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                {postData.documents && postData.documents.length > 0 && (
+                                  <div className="space-y-3">
+                                    {postData.documents.map((doc: any, docIndex: number) => (
+                                      <div key={docIndex} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
                                     <div className="flex items-center gap-2">
                                       <FileText className="h-4 w-4 text-blue-600" />
                                       <span className="text-sm font-medium text-gray-900 truncate">{doc.title}</span>
@@ -2500,13 +2589,45 @@ const ScraperPage: React.FC = () => {
                                     <p className="text-xs text-gray-500 mt-1">
                                       {doc.fileType?.toUpperCase()} • {doc.totalPageCount} pages
                                     </p>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="mt-2 w-full"
+                                          onClick={() => openPdfViewer(doc.url, doc.title)}
+                                        >
+                                          <Eye className="h-4 w-4 mr-2" />
+                                          View Document
+                                        </Button>
                                   </div>
                                 ))}
                               </div>
                             )}
+                              </div>
                           </CardContent>
+                            
+                            <CardFooter className="p-4 pt-0">
+                              {/* Engagement Stats */}
+                              <div className="w-full space-y-3">
+                                <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2">
+                                  <div className="flex items-center gap-4">
+                                    <span className="flex items-center gap-1">
+                                      <span className="text-blue-600">👍</span>
+                                      <span className="text-red-500">❤️</span>
+                                      <span className="text-green-600">💡</span>
+                                      {postData.likes || 0}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span>{postData.comments || 0} comments</span>
+                                    <span>•</span>
+                                    <span>{postData.shares || 0} reposts</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardFooter>
                         </Card>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </TabsContent>

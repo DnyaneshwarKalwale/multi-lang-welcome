@@ -19,6 +19,7 @@ const queryClient = new QueryClient();
 
 // Lazy load all pages
 const Index = React.lazy(() => import('./pages/Index'));
+const EditorIndex = React.lazy(() => import('./editor/pages/Index'));
 const FeaturesPage = React.lazy(() => import('./pages/FeaturesPage'));
 const HowItWorksPage = React.lazy(() => import('./pages/HowItWorksPage'));
 const TestimonialsPage = React.lazy(() => import('./pages/TestimonialsPage'));
@@ -166,6 +167,13 @@ const AppRoutes = () => {
       
       {/* Protected onboarding routes */}
       <Route path="/onboarding/*" element={<OnboardingRouter />} />
+      
+      {/* Editor route */}
+      <Route path="/editor" element={
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <EditorIndex />
+        </React.Suspense>
+      } />
       
       {/* Protected dashboard routes */}
       <Route path="/dashboard" element={<ProtectedDashboardRoute />} />
