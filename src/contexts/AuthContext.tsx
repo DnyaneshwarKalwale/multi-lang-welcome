@@ -34,7 +34,7 @@ export interface AuthContextType {
   googleAuth: (userData: { name: string; googleId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  fetchUser: () => Promise<User | undefined>;
+  fetchUser: (forceRefresh?: boolean) => Promise<User | undefined>;
   updateUserProfile: (updates: Partial<User>) => void;
 }
 
@@ -47,8 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Optimized fetch user function
-  const fetchUser = async () => {
+  // Optimized fetch user function with refresh capability
+  const fetchUser = async (forceRefresh: boolean = false) => {
     const authMethod = localStorage.getItem('auth-method');
     const token = authMethod ? tokenManager.getToken(authMethod) : null;
     
@@ -58,16 +58,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      console.log('AuthContext - fetchUser - Fetching user data with token');
+      console.log('AuthContext - fetchUser - Fetching user data with token', { forceRefresh });
       const { user } = await authApi.getCurrentUser();
       
       // Always update user state when we get user data
       if (user) {
-        console.log('AuthContext - fetchUser - User data received', { id: user.id, email: user.email });
-        setUser(user);
+        console.log('AuthContext - fetchUser - User data received', { 
+          id: user.id, 
+          email: user.email,
+          linkedinConnected: user.linkedinConnected,
+          onboardingCompleted: user.onboardingCompleted 
+        });
+        
+        // Force update the user state to ensure all components get fresh data
+        setUser({ ...user });
+        
         // Make sure localStorage accurately reflects the user's onboarding status from server
         localStorage.setItem('onboardingCompleted', user.onboardingCompleted.toString());
         console.log(`Setting onboardingCompleted to ${user.onboardingCompleted}`);
+        
+        // If LinkedIn was just connected and onboarding is completed, ensure localStorage is updated
+        if (user.linkedinConnected && user.onboardingCompleted) {
+          localStorage.setItem('onboardingCompleted', 'true');
+        }
+        
         return user;
       } else {
         console.log('AuthContext - fetchUser - No user data returned from API');
@@ -199,7 +213,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUserProfile = (updates: Partial<User>) => {
     if (user) {
+      console.log('AuthContext - updateUserProfile - Updating user profile:', updates);
       setUser({ ...user, ...updates });
+      
+      // Update localStorage if onboarding status changes
+      if (updates.onboardingCompleted !== undefined) {
+        localStorage.setItem('onboardingCompleted', updates.onboardingCompleted.toString());
+      }
+      
+      // Update localStorage if LinkedIn connection status changes
+      if (updates.linkedinConnected !== undefined) {
+        localStorage.setItem('linkedinConnected', updates.linkedinConnected.toString());
+      }
     }
   };
 

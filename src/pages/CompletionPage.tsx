@@ -32,8 +32,8 @@ export default function CompletionPage() {
             return;
           }
 
-          // First mark onboarding as complete using PUT
-          await api.put('/onboarding/complete', {
+          // First mark onboarding as complete using POST (not PUT)
+          await api.post('/onboarding/complete', {
             workspaceType: workspaceType || 'personal',
             workspaceName: workspaceName || `${firstName}'s Workspace`,
             onboardingCompleted: true

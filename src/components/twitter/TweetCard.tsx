@@ -121,62 +121,80 @@ const TweetCard: React.FC<TweetCardProps> = ({ tweet, isSelected, onSelectToggle
     console.log(`Tweet ${tweet.id} expanded - showing available content`);
   };
 
-  // Get the display text for the tweet
-  const getDisplayText = () => {
+  // Get the displayed text for a tweet
+  const getDisplayText = (tweet: Tweet) => {
     // Check if we have a full version of this tweet
     const fullVersion = fullTweet;
     
-    // Determine the best text to use - prioritize full_text
+    // Determine the best text to use
     let textToUse = '';
     
     // Priority order for getting the best text content
     if (fullVersion?.full_text) {
-      // First choice: Use the full text from stored details
+      // First choice: Use the full text from fetched details if available
       textToUse = fullVersion.full_text;
-    } else if (tweet.full_text && tweet.full_text.length > 0) {
-      // Second choice: Use the tweet's own full_text property if available
+    } else if (tweet.full_text) {
+      // Second choice: Use the full_text property if available
       textToUse = tweet.full_text;
     } else {
       // Last resort: Use the regular text
-      textToUse = tweet.text || '';
+      textToUse = tweet.text;
     }
     
-    // Clean up the text - preserve important URLs but remove tracking links
+    // Clean up the text - but preserve important URLs
     let fullText = textToUse;
     
-    // Only remove t.co URLs that are at the end and are clearly tracking URLs
+    // Only remove t.co URLs that are at the end and are NOT short domain URLs
+    // Short domain URLs like bit.ly are important content and should be preserved
     fullText = fullText.replace(/\s*(https:\/\/t\.co\/\w{10,})\s*$/g, '');
     
-    // Clean up trailing ellipsis if there's no important URL
-    if (!/https?:\/\/(?:bit\.ly|tinyurl|goo\.gl|youtu\.be|linkedin\.com)\/\w+/.test(fullText)) {
+    // Keep short URLs which are likely bit.ly, tinyurl, etc.
+    // Don't remove trailing ellipsis if there's a short URL
+    if (!/https?:\/\/(?:bit\.ly|tinyurl|goo\.gl|t\.co)\/\w+/.test(fullText)) {
+      // Only then remove trailing ellipsis markers
       fullText = fullText.replace(/(\s*[…\.]{3,})$/g, '');
     }
     
-    console.log(`Tweet ${tweet.id} text: original=${tweet.text?.length || 0}, full_text=${tweet.full_text?.length || 0}, using=${fullText.length}, expanded=${showMore}`);
-
-    // If tweet is expanded, show the full text
+    // If tweet is expanded, show full text
     if (showMore) {
       return fullText;
     }
     
-    // For non-expanded tweets, check if we should show truncated version
-    const shouldTruncate = isTruncated || fullText.length > 280;
-    
-    if (shouldTruncate) {
-      // Create a cleaner truncation
-      const maxLength = Math.min(220, Math.floor(fullText.length * 0.7));
-      let truncatedText = fullText.substring(0, maxLength);
+    // If tweet is truncated and not expanded, show truncated version
+    if (isTruncated || fullText.length > 240) {
+      // Create a cleaner truncation that doesn't cut words or URLs
+      const truncatedLength = Math.min(220, fullText.length / 2);
+      let truncatedText = fullText.substring(0, truncatedLength);
+      
+      // Check if we're cutting in the middle of a URL
+      const urlRegex = /https?:\/\/[^\s]+/g;
+      const urls = fullText.match(urlRegex) || [];
+      
+      // If there are URLs, make sure we don't cut them
+      for (const url of urls) {
+        const urlIndex = fullText.indexOf(url);
+        // If URL would be cut in the middle, include the full URL or exclude it entirely
+        if (urlIndex < truncatedLength && urlIndex + url.length > truncatedLength) {
+          if (urlIndex + url.length < truncatedLength + 30) {
+            // If including the full URL doesn't add too much length, include it
+            truncatedText = fullText.substring(0, urlIndex + url.length);
+          } else {
+            // Otherwise cut before the URL
+            truncatedText = fullText.substring(0, urlIndex);
+          }
+        }
+      }
       
       // Try to end at a word boundary
       const lastSpaceIndex = truncatedText.lastIndexOf(' ');
-      if (lastSpaceIndex > maxLength * 0.8) {
+      if (lastSpaceIndex > truncatedLength * 0.8) { // Only adjust if we're not cutting off too much
         truncatedText = truncatedText.substring(0, lastSpaceIndex);
       }
       
-      return truncatedText.trim() + '...';
+      return truncatedText + '...';
     }
     
-    // Otherwise show the full text as is
+    // Otherwise show regular text
     return fullText;
   };
 
@@ -238,7 +256,7 @@ const TweetCard: React.FC<TweetCardProps> = ({ tweet, isSelected, onSelectToggle
           </div>
         ) : (
           <>
-                    {getDisplayText()}
+                    {getDisplayText(tweet)}
               
                     {/* Show more/less button */}
                     {(isTruncated || tweet.text.length > 240) && (

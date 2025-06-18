@@ -165,7 +165,6 @@ const PDFViewerModal: React.FC<{
                     className="w-[800px] h-[1000px] border border-gray-300 rounded shadow-lg bg-white"
                     title={documentTitle}
                     onLoad={(e) => {
-                      console.log('PDF loaded successfully');
                       // Check if iframe content loaded properly
                       const iframe = e.target as HTMLIFrameElement;
                       try {
@@ -180,12 +179,12 @@ const PDFViewerModal: React.FC<{
                               }
                             } catch (error) {
                               // Cross-origin error means it might be working, so don't show fallback
-                              console.log('Cross-origin access blocked, PDF might be loading correctly');
                             }
                           }, 2000);
                         }
                       } catch (error) {
-                        console.log('Error checking iframe content:', error);
+                        // Error checking iframe content, show fallback
+                        setShowFallback(true);
                       }
                     }}
                     onError={() => {
@@ -2907,7 +2906,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
               return (
                 <div className="columns-1 md:columns-2 gap-6">
                   {allContent.map((item) => (
-                    <div key={item.id} className="break-inside-avoid mb-6 w-full">
+                    <div key={'tweets' in item ? `thread-${item.id}` : `tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
                       {'tweets' in item ? (
                         // This is a thread
                         <TweetThread

@@ -60,7 +60,7 @@ interface DashboardData {
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, token } = useAuth();
+  const { user, token, fetchUser } = useAuth();
   
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
@@ -114,6 +114,30 @@ const DashboardPage: React.FC = () => {
   const DASHBOARD_CACHE_KEY = `dashboard_data_${user?.id || 'guest'}`;
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+  // Effect to handle initial auth check and LinkedIn status
+  useEffect(() => {
+    if (!user && !token) {
+      navigate('/');
+    }
+    
+    // Initialize LinkedIn connection status from localStorage or user data
+    const storedLinkedInStatus = localStorage.getItem('linkedinConnected');
+    const userLinkedInStatus = user?.linkedinConnected;
+    
+    console.log('Dashboard - Initial LinkedIn status check:', {
+      storedLinkedInStatus,
+      userLinkedInStatus,
+      userAuthMethod: user?.authMethod,
+      userId: user?.id
+    });
+    
+    if (storedLinkedInStatus === 'true' || userLinkedInStatus) {
+      console.log('Dashboard - Setting LinkedIn as connected on initial check');
+      setIsLinkedInConnected(true);
+      setShowLinkedInPrompt(false);
+    }
+  }, [user, token, navigate]);
+
   // Load LinkedIn profile data from extension if available
   useEffect(() => {
     // Check if extension API is available
@@ -165,37 +189,34 @@ const DashboardPage: React.FC = () => {
     const checkLinkedInConnection = async () => {
       // Check URL parameters for successful LinkedIn connection
       const urlParams = new URLSearchParams(window.location.search);
-      const linkedInConnected = urlParams.get('linkedin_connected');
+      const linkedInConnectedParam = urlParams.get('linkedin_connected') || urlParams.get('linkedin');
       
-      if (linkedInConnected === 'true') {
+      if (linkedInConnectedParam === 'true' || linkedInConnectedParam === 'connected') {
         // Clear the URL parameter
         window.history.replaceState({}, '', window.location.pathname);
         
         try {
-          // Refresh user data from backend
-          const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-          const token = localStorage.getItem('google-login-token') || localStorage.getItem('linkedin-login-token');
+          console.log('Dashboard - LinkedIn connection detected from URL params');
           
-          if (token) {
-            const response = await axios.get(`${baseApiUrl}/auth/me`, {
-              headers: { Authorization: `Bearer ${token}` }
+          // Force refresh user data from backend to get updated LinkedIn status
+          const updatedUser = await fetchUser(true);
+          
+          if (updatedUser) {
+            console.log('Dashboard - Updated user data:', { 
+              linkedinConnected: updatedUser.linkedinConnected,
+              authMethod: updatedUser.authMethod 
             });
             
-            if (response.data?.data) {
-              // Update user state with new data
-              if (user && typeof user === 'object') {
-                Object.assign(user, {
-                  ...user,
-                  linkedinConnected: true
-                });
-              }
+            // Update local states based on server data
+            if (updatedUser.linkedinConnected) {
               setIsLinkedInConnected(true);
               setShowLinkedInPrompt(false);
+              localStorage.setItem('linkedinConnected', 'true');
               
               // Show success toast
               toast.success('LinkedIn connected successfully!');
               
-              // Refresh LinkedIn data
+              // Refresh LinkedIn data to get the updated profile
               fetchLinkedInData();
             }
           }
@@ -204,15 +225,30 @@ const DashboardPage: React.FC = () => {
           toast.error('Failed to update LinkedIn connection status');
         }
       }
+      
+      // Also check localStorage for persisted LinkedIn connection status
+      const storedLinkedInStatus = localStorage.getItem('linkedinConnected');
+      console.log('Dashboard - Checking stored LinkedIn status:', {
+        storedLinkedInStatus,
+        userLinkedInConnected: user?.linkedinConnected,
+        userAuthMethod: user?.authMethod,
+        isLinkedInConnected
+      });
+      
+      if (storedLinkedInStatus === 'true' || user?.linkedinConnected) {
+        console.log('Dashboard - Setting LinkedIn as connected from localStorage or user data');
+        setIsLinkedInConnected(true);
+        setShowLinkedInPrompt(false);
+      }
     };
 
     checkLinkedInConnection();
-  }, [user, navigate]);
+  }, [user, navigate, fetchUser]);
 
   // Update the existing fetchLinkedInData function to handle connection status
   const fetchLinkedInData = async () => {
     setLoading({ profile: true });
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const token = localStorage.getItem('google-login-token') || localStorage.getItem('linkedin-login-token');
     
     if (!token) {
@@ -361,6 +397,28 @@ const DashboardPage: React.FC = () => {
     }
   }, [token]);
 
+  // Fetch LinkedIn data when user LinkedIn connection status changes
+  useEffect(() => {
+    if (user?.linkedinConnected && token) {
+      fetchLinkedInData();
+    }
+  }, [user?.linkedinConnected, token]);
+
+  // Update LinkedIn connection state when user data changes
+  useEffect(() => {
+    if (user) {
+      const isConnected = user.authMethod === 'linkedin' || user.linkedinConnected || !!user.linkedinId;
+      setIsLinkedInConnected(isConnected);
+      
+      // Hide the prompt if user is connected
+      if (isConnected) {
+        setShowLinkedInPrompt(false);
+      } else if (user.authMethod === 'google') {
+        setShowLinkedInPrompt(true);
+      }
+    }
+  }, [user]);
+
   // Calculate percentage changes
   const calculatePercentageChange = (current: number, lastMonth: number) => {
     if (lastMonth === 0) return 0;
@@ -369,6 +427,16 @@ const DashboardPage: React.FC = () => {
 
   const getUserInitials = () => {
     if (!user) return 'U';
+    
+    // Prioritize LinkedIn profile data if available and connected
+    if (user.linkedinConnected && linkedInProfile?.name) {
+      const nameParts = linkedInProfile.name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    
+    // Fall back to user data
     const firstName = user.firstName || '';
     const lastName = user.lastName || '';
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -376,9 +444,26 @@ const DashboardPage: React.FC = () => {
 
   const getUserFullName = () => {
     if (!user) return 'User';
+    
+    // Prioritize LinkedIn profile data if available and connected
+    if (user.linkedinConnected && linkedInProfile?.name) {
+      return linkedInProfile.name;
+    }
+    
+    // Fall back to user data
     const firstName = user.firstName || '';
     const lastName = user.lastName || '';
     return `${firstName} ${lastName}`.trim();
+  };
+
+  const getUserProfilePicture = () => {
+    // Prioritize LinkedIn profile picture if connected and available
+    if (user?.linkedinConnected && linkedInProfile?.profileImage) {
+      return linkedInProfile.profileImage;
+    }
+    
+    // Fall back to user's stored profile picture
+    return user?.profilePicture;
   };
 
   // Function to handle LinkedIn connection
@@ -396,7 +481,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLinkedInConnect = () => {
     // Get the backend URL from environment variable or fallback to production URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
     localStorage.setItem('redirectAfterAuth', '/dashboard');
@@ -449,7 +534,7 @@ const DashboardPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">
-              {getTimeGreeting()}, {user?.firstName || 'there'}! 👋
+              {getTimeGreeting()}, {user?.linkedinConnected && linkedInProfile?.name ? linkedInProfile.name.split(' ')[0] : user?.firstName || 'there'}! 👋
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               {new Date().toLocaleDateString('en-US', { 
@@ -462,17 +547,15 @@ const DashboardPage: React.FC = () => {
       
               <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-                  {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
-                    <AvatarImage src={linkedInProfile.profileImage} alt={linkedInProfile.name || user?.firstName} />
-                  ) : user?.profilePicture ? (
-                    <AvatarImage src={user.profilePicture} alt={getUserFullName()} />
+                  {getUserProfilePicture() ? (
+                    <AvatarImage src={getUserProfilePicture()} alt={getUserFullName()} />
                   ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-sm font-medium">{getUserInitials()}</AvatarFallback>
                   )}
                 </Avatar>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{getUserFullName()}</p>
-              {user?.authMethod === 'google' && !user?.linkedinConnected ? (
+              {(!user?.linkedinConnected && !isLinkedInConnected && localStorage.getItem('linkedinConnected') !== 'true' && user?.authMethod !== 'linkedin') ? (
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -484,12 +567,10 @@ const DashboardPage: React.FC = () => {
                 </Button>
               ) : (
                 <p className="text-xs text-gray-500 flex items-center gap-1 justify-end">
-                    {user?.authMethod === 'linkedin' ? (
-                    <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
-                  ) : user?.linkedinConnected ? (
-                  <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
+                    {(user?.authMethod === 'linkedin' || user?.linkedinConnected || isLinkedInConnected || localStorage.getItem('linkedinConnected') === 'true') ? (
+                      <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
                     ) : (
-                    <><User className="h-3 w-3" /> Google User</>
+                      <><User className="h-3 w-3" /> Google User</>
                     )}
                   </p>
               )}
@@ -684,7 +765,7 @@ const DashboardPage: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {user?.authMethod === 'google' && !user?.linkedinConnected ? (
+                {(!user?.linkedinConnected && !isLinkedInConnected && localStorage.getItem('linkedinConnected') !== 'true' && user?.authMethod !== 'linkedin') ? (
                   <div className="text-center py-6">
                     <Linkedin className="h-12 w-12 text-blue-600/20 mx-auto mb-3" />
                     <h3 className="text-sm font-medium mb-2">Connect Your LinkedIn Account</h3>
@@ -697,39 +778,51 @@ const DashboardPage: React.FC = () => {
                       Connect LinkedIn
                     </Button>
                   </div>
-                ) : (
+                ) : (user?.linkedinConnected || user?.authMethod === 'linkedin' || isLinkedInConnected || localStorage.getItem('linkedinConnected') === 'true') ? (
                   <>
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-12 w-12">
-                    {user?.authMethod === 'linkedin' && linkedInProfile?.profileImage ? (
-                      <AvatarImage src={linkedInProfile.profileImage} alt="Profile" />
+                    {getUserProfilePicture() ? (
+                      <AvatarImage src={getUserProfilePicture()} alt="Profile" />
                     ) : (
                       <AvatarFallback className="bg-blue-500 text-white font-semibold">{getUserInitials()}</AvatarFallback>
                     )}
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 truncate">
-                      {user?.authMethod === 'linkedin' && linkedInProfile?.name ? 
-                        linkedInProfile.name : 
-                        getUserFullName()}
+                      {getUserFullName()}
                     </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {linkedInProfile?.location || 'Content Creator'}
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <Linkedin className="h-3 w-3 text-blue-600" />
+                      <p className="text-xs text-green-600 font-medium">Connected</p>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-lg font-bold text-blue-600">{linkedInProfile?.connections || 0}</p>
+                    <p className="text-lg font-bold text-blue-600">{linkedInProfile?.connections || '0+'}</p>
                     <p className="text-xs text-gray-600">Connections</p>
                   </div>
                   <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-lg font-bold text-green-600">{linkedInProfile?.followers || 0}</p>
+                    <p className="text-lg font-bold text-green-600">{linkedInProfile?.followers || '0+'}</p>
                     <p className="text-xs text-gray-600">Followers</p>
                   </div>
                 </div>
                   </>
+                ) : (
+                  <div className="text-center py-6">
+                    <Linkedin className="h-12 w-12 text-blue-600/20 mx-auto mb-3" />
+                    <h3 className="text-sm font-medium mb-2">Connect Your LinkedIn Account</h3>
+                    <p className="text-xs text-gray-500 mb-4">Link your LinkedIn profile to publish content directly</p>
+                    <Button 
+                      onClick={handleLinkedInConnect}
+                      className="gap-2"
+                    >
+                      <Linkedin className="h-4 w-4" />
+                      Connect LinkedIn
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

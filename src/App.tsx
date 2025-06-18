@@ -95,23 +95,36 @@ function LoadingSpinner() {
       return <Navigate to="/" replace />;
     }
     
-    // Always prioritize localStorage value since it's set immediately at completion time
-    const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+    // Check both localStorage and user object for onboarding completion
+    const localOnboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+    const userOnboardingCompleted = user?.onboardingCompleted;
     
-    if (!onboardingCompleted) {
-      // If we have a user object and it says onboarding is completed, update localStorage
-      if (user && user.onboardingCompleted) {
-        localStorage.setItem('onboardingCompleted', 'true');
-        return <Navigate to="/dashboard/home" replace />;
-      }
-      
-      // Otherwise redirect to onboarding
+    // If user object says onboarding is completed, trust that and update localStorage
+    if (user && userOnboardingCompleted && !localOnboardingCompleted) {
+      console.log('ProtectedDashboardRoute - User has completed onboarding in database, updating localStorage');
+      localStorage.setItem('onboardingCompleted', 'true');
+      return <Navigate to="/dashboard/home" replace />;
+    }
+    
+    // If user hasn't completed onboarding according to both sources, redirect to onboarding
+    if (!localOnboardingCompleted && user && !userOnboardingCompleted) {
+      console.log('ProtectedDashboardRoute - User needs to complete onboarding');
       const savedStep = localStorage.getItem('onboardingStep') || 'welcome';
       return <Navigate to={`/onboarding/${savedStep}`} replace />;
     }
     
-    // User is authenticated and has completed onboarding, show dashboard
-    return <Navigate to="/dashboard/home" replace />;
+    // If we have user data and they've completed onboarding, or localStorage says completed, go to dashboard
+    if ((user && userOnboardingCompleted) || localOnboardingCompleted) {
+      return <Navigate to="/dashboard/home" replace />;
+    }
+    
+    // Default case - if we're still loading user data, show loading
+    if (loading || !user) {
+      return <LoadingSpinner />;
+    }
+    
+    // Fallback - redirect to onboarding
+    return <Navigate to="/onboarding/welcome" replace />;
   }
 
 // The AppRoutes component without BrowserRouter wrapper

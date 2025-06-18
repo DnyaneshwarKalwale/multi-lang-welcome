@@ -4,7 +4,7 @@ interface LoginPageProps {}
 
 const LoginPage: React.FC<LoginPageProps> = () => {
   const handleGoogleLogin = () => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const loginUrl = baseUrl.endsWith('/api')
       ? `${baseUrl}/auth/google`
       : `${baseUrl}/api/auth/google`;
@@ -12,7 +12,7 @@ const LoginPage: React.FC<LoginPageProps> = () => {
   };
 
   const handleLinkedInLogin = () => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const loginUrl = baseUrl.endsWith('/api')
       ? `${baseUrl}/auth/linkedin`
       : `${baseUrl}/api/auth/linkedin`;
@@ -20,7 +20,7 @@ const LoginPage: React.FC<LoginPageProps> = () => {
   };
 
   const handleLinkedInDirectLogin = () => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const loginUrl = baseUrl.endsWith('/api')
       ? `${baseUrl}/auth/linkedin-direct`
       : `${baseUrl}/api/auth/linkedin-direct`;
