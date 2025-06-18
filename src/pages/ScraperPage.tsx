@@ -816,8 +816,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
 
   // Load saved posts from localStorage
   const loadSavedPosts = async () => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-    const token = localStorage.getItem('token');
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    
+    // Get token using tokenManager (same as save function)
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
     
     if (!token) {
       console.warn('No auth token found');
@@ -827,6 +830,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
     const headers = {
       'Authorization': `Bearer ${token}`
     };
+    
+    console.log('Loading saved posts with API URL:', apiBaseUrl);
     
     // Load saved Twitter posts
     try {
@@ -850,12 +855,14 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const linkedinResponse = await axios.get(`${apiBaseUrl}/linkedin/saved-posts`, { headers });
       if (linkedinResponse.data.success) {
         setSavedLinkedInPosts(linkedinResponse.data.data || []);
+        console.log('Loaded LinkedIn posts:', linkedinResponse.data.data?.length || 0);
       } else {
         console.warn('Failed to load saved LinkedIn posts:', linkedinResponse.data.message);
         setSavedLinkedInPosts([]);
       }
     } catch (error) {
       console.error('Error loading saved LinkedIn posts:', error);
+      console.error('LinkedIn posts error response:', error.response?.data);
       if (error.response?.status === 401) {
         toastError('Please log in to view saved posts');
       }
@@ -1533,6 +1540,9 @@ const ScraperPage: React.FC = (): JSX.Element => {
       return;
     }
     
+    console.log('Saving LinkedIn posts with auth method:', authMethod);
+    console.log('Selected posts count:', selectedLinkedInPosts.size);
+    
     setIsLoading(true);
     
     try {
@@ -1544,9 +1554,15 @@ const ScraperPage: React.FC = (): JSX.Element => {
         profileData: linkedinResult.profileData
       };
 
+      console.log('Sending request to backend:', {
+        url: `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/api/linkedin/save-scraped-posts`,
+        postsCount: selectedPosts.length,
+        profileData: linkedinResult.profileData
+      });
+
       // Make a single API call to save all posts
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/linkedin/save-scraped-posts`, 
+        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/linkedin/save-scraped-posts`, 
         requestData,
         {
           headers: {
@@ -1555,6 +1571,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
         }
       );
 
+      console.log('Backend response:', response.data);
+
       // Clear selection
       setSelectedLinkedInPosts(new Set());
       
@@ -1562,6 +1580,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
       if (response.data.success) {
         const savedCount = response.data.count;
         const skippedCount = response.data.skippedCount;
+        
+        console.log(`Successfully saved ${savedCount} posts, skipped ${skippedCount}`);
         
         if (savedCount > 0) {
           toastSuccess(`Successfully saved ${savedCount} LinkedIn post${savedCount !== 1 ? 's' : ''}`);
@@ -1572,10 +1592,16 @@ const ScraperPage: React.FC = (): JSX.Element => {
             description: `${skippedCount} duplicate post${skippedCount !== 1 ? 's were' : ' was'} skipped.`
           });
         }
+        
+        // Reload saved posts to refresh the list
+        console.log('Reloading saved posts...');
+        await loadSavedPosts();
+        console.log('Saved posts reloaded');
       }
       
     } catch (error) {
       console.error('Error saving LinkedIn posts:', error);
+      console.error('Error response:', error.response?.data);
       toastError(error.response?.data?.message || 'Failed to save LinkedIn posts');
     } finally {
       setIsLoading(false);
