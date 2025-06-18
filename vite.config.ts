@@ -16,7 +16,7 @@ export default defineConfig({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://api.brandout.ai',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
