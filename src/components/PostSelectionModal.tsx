@@ -8,6 +8,7 @@ import TweetCard from '@/components/twitter/TweetCard';
 import TweetThread from '@/components/twitter/TweetThread';
 import { Tweet, Thread } from '@/utils/twitterTypes';
 import { tokenManager } from '@/services/api';
+import { groupThreads } from '@/utils/twitterApi';
 import axios from 'axios';
 
 // LinkedIn post content component
@@ -150,54 +151,94 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
 
   const loadSavedPosts = async () => {
     setIsLoading(true);
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    
+    // Get token using tokenManager (same as save function)
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+    
+    if (!token) {
+      console.warn('No auth token found');
+      setIsLoading(false);
+      return;
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`
+    };
+    
+    console.log('Loading saved posts with API URL:', apiBaseUrl);
+    
+    // Load saved Twitter posts
     try {
-      const authMethod = localStorage.getItem('auth-method');
-      const token = authMethod ? tokenManager.getToken(authMethod) : null;
-      
-      if (!token) {
-        console.warn('No auth token found for loading posts');
-        setIsLoading(false);
-        return;
-      }
-
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-      const headers = { 'Authorization': `Bearer ${token}` };
-
-      // Load Twitter posts
-      try {
-        const twitterApiUrl = baseUrl.endsWith('/api') 
-          ? `${baseUrl}/twitter/saved`
-          : `${baseUrl}/api/twitter/saved`;
-        const twitterResponse = await axios.get(twitterApiUrl, { headers });
+      const twitterApiUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/twitter/saved`
+        : `${apiBaseUrl}/api/twitter/saved`;
+      const twitterResponse = await axios.get(twitterApiUrl, { headers });
+      if (twitterResponse.data.success) {
+        const rawTweets = twitterResponse.data.data || [];
         
-        if (twitterResponse.data && twitterResponse.data.success) {
-          const tweets = twitterResponse.data.tweets || [];
-          const threads = twitterResponse.data.threads || [];
-          setSavedTwitterPosts(tweets);
-          setSavedTwitterThreads(threads);
-        }
-      } catch (twitterError) {
-        console.error('Error loading Twitter posts:', twitterError);
-      }
-
-      // Load LinkedIn posts
-      try {
-        const linkedinApiUrl = baseUrl.endsWith('/api') 
-          ? `${baseUrl}/linkedin/saved`
-          : `${baseUrl}/api/linkedin/saved`;
-        const linkedinResponse = await axios.get(linkedinApiUrl, { headers });
+        // Group tweets into threads and standalone tweets (same logic as scraper page)
+        const groupedData = groupThreads(rawTweets);
+        const standaloneTweets: Tweet[] = [];
+        const threads: Thread[] = [];
         
-        if (linkedinResponse.data && linkedinResponse.data.success) {
-          setSavedLinkedInPosts(linkedinResponse.data.posts || []);
-        }
-      } catch (linkedinError) {
-        console.error('Error loading LinkedIn posts:', linkedinError);
+        groupedData.forEach(item => {
+          if ('tweets' in item) {
+            // This is a thread
+            threads.push(item);
+          } else {
+            // This is a standalone tweet
+            standaloneTweets.push(item);
+          }
+        });
+        
+        setSavedTwitterPosts(standaloneTweets);
+        setSavedTwitterThreads(threads);
+        console.log('Loaded Twitter posts:', standaloneTweets.length, 'tweets and', threads.length, 'threads');
+      } else {
+        console.warn('Failed to load saved Twitter posts:', twitterResponse.data.message);
+        setSavedTwitterPosts([]);
+        setSavedTwitterThreads([]);
       }
     } catch (error) {
-      console.error('Error loading saved posts:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading saved Twitter posts:', error);
+      if (error.response?.status === 401) {
+        toast({
+          description: 'Please log in to view saved posts',
+          variant: "destructive",
+        });
+      }
+      setSavedTwitterPosts([]);
+      setSavedTwitterThreads([]);
     }
+    
+    // Load saved LinkedIn posts
+    try {
+      const linkedinApiUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/linkedin/saved-posts`
+        : `${apiBaseUrl}/api/linkedin/saved-posts`;
+      const linkedinResponse = await axios.get(linkedinApiUrl, { headers });
+      if (linkedinResponse.data.success) {
+        setSavedLinkedInPosts(linkedinResponse.data.data || []);
+        console.log('Loaded LinkedIn posts:', linkedinResponse.data.data?.length || 0);
+      } else {
+        console.warn('Failed to load saved LinkedIn posts:', linkedinResponse.data.message);
+        setSavedLinkedInPosts([]);
+      }
+    } catch (error) {
+      console.error('Error loading saved LinkedIn posts:', error);
+      console.error('LinkedIn posts error response:', error.response?.data);
+      if (error.response?.status === 401) {
+        toast({
+          description: 'Please log in to view saved posts',
+          variant: "destructive",
+        });
+      }
+      setSavedLinkedInPosts([]);
+    }
+    
+    setIsLoading(false);
   };
 
   const handleDeleteTwitterPost = async (tweetId: string) => {
@@ -332,6 +373,51 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     setViewMode('folders');
   };
 
+  // Handle applying selected posts
+  const handleApplySelection = () => {
+    const selectedContent: string[] = [];
+    
+    // Get selected Twitter content
+    const allTwitterContent = getPostsFromSelectedUsers().twitter;
+    allTwitterContent.forEach(item => {
+      const itemId = 'tweets' in item ? item.id : item.id;
+      if (selectedPosts.twitter.has(itemId)) {
+        if ('tweets' in item) {
+          // This is a thread
+          const threadContent = item.tweets.map(tweet => tweet.text || tweet.full_text).join('\n\n');
+          selectedContent.push(threadContent);
+        } else {
+          // This is a standalone tweet
+          selectedContent.push(item.text || item.full_text || '');
+        }
+      }
+    });
+    
+    // Get selected LinkedIn content
+    const allLinkedInContent = getPostsFromSelectedUsers().linkedin;
+    allLinkedInContent.forEach(post => {
+      const postData = post.postData || post;
+      const postId = postData.id;
+      if (selectedPosts.linkedin.has(postId)) {
+        selectedContent.push(postData.content || '');
+      }
+    });
+    
+    // Join all content with separators
+    const finalContent = selectedContent.join('\n\n---\n\n');
+    
+    // Call the callback with the selected content
+    onApplySelection(finalContent);
+    
+    // Close the modal
+    onClose();
+    
+    toast({
+      title: "Posts Applied",
+      description: `${selectedContent.length} posts selected for style analysis.`,
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
@@ -378,7 +464,13 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
         
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {(savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 && savedTwitterThreads.length === 0) ? (
+          {isLoading ? (
+            <div className="text-center py-16 text-gray-500">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold mb-2">Loading saved posts...</h3>
+              <p>Please wait while we fetch your saved content.</p>
+            </div>
+          ) : (savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 && savedTwitterThreads.length === 0) ? (
             <div className="text-center py-16 text-gray-500">
               <Folder className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
@@ -564,41 +656,42 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                           return dateB.getTime() - dateA.getTime();
                         });
                         
-                        return allContent.map((item, index) => (
-                          <div key={'tweets' in item ? `filtered-thread-${item.id}` : `filtered-tweet-${item.id}`} className="break-inside-avoid mb-6 w-full relative">
-                            {'tweets' in item ? (
-                              // This is a thread
-                              <div className="relative">
-                                <TweetThread thread={item} />
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    item.tweets.forEach(tweet => handleDeleteTwitterPost(tweet.id));
-                                  }}
-                                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              // This is a standalone tweet
-                              <div className="relative">
-                                <TweetCard tweet={item} />
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    handleDeleteTwitterPost(item.id);
-                                  }}
-                                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ));
+                        return allContent.map((item, index) => {
+                          const itemId = 'tweets' in item ? item.id : item.id;
+                          const isSelected = selectedPosts.twitter.has(itemId);
+                          
+                          return (
+                            <div 
+                              key={'tweets' in item ? `filtered-thread-${item.id}` : `filtered-tweet-${item.id}`} 
+                              className={`break-inside-avoid mb-6 w-full relative cursor-pointer transition-all ${
+                                isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => togglePostSelection('twitter', itemId)}
+                            >
+                              {'tweets' in item ? (
+                                // This is a thread
+                                <div className="relative">
+                                  <TweetThread thread={item} />
+                                  {isSelected && (
+                                    <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                      <div className="h-4 w-4 text-white">✓</div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                // This is a standalone tweet
+                                <div className="relative">
+                                  <TweetCard tweet={item} />
+                                  {isSelected && (
+                                    <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                      <div className="h-4 w-4 text-white">✓</div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
                       })()}
                     </div>
                   )}
@@ -613,21 +706,22 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                     <div className="masonry-container columns-1 md:columns-2 xl:columns-3 gap-6">
                       {getPostsFromSelectedUsers().linkedin.map((post, index) => {
                         const postData = post.postData || post;
+                        const postId = postData.id;
+                        const isSelected = selectedPosts.linkedin.has(postId);
+                        
                         return (
                           <Card 
                             key={`filtered-${postData.id}-${index}`} 
-                            className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid mb-6 relative"
+                            className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid mb-6 relative cursor-pointer ${
+                              isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                            }`}
+                            onClick={() => togglePostSelection('linkedin', postId)}
                           >
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                handleDeleteLinkedInPost(post.mongoId || post._id || post.id);
-                              }}
-                              className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100 z-10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isSelected && (
+                              <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center z-10">
+                                <div className="h-4 w-4 text-white">✓</div>
+                              </div>
+                            )}
                             
                             <CardHeader className="p-4 pb-3">
                               <div className="flex items-start gap-3">
@@ -691,12 +785,34 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                   )}
                 </TabsContent>
               </Tabs>
-            </>
-          )}
+                          </>
+            )}
         </div>
+        
+        {/* Footer with Apply button when in post selection mode */}
+        {viewMode === 'posts' && !isLoading && (
+          <div className="border-t p-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {selectedPosts.twitter.size + selectedPosts.linkedin.size} posts selected
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleApplySelection}
+                  disabled={selectedPosts.twitter.size === 0 && selectedPosts.linkedin.size === 0}
+                >
+                  Apply Selection
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-};
+  };
 
 export default PostSelectionModal; 
