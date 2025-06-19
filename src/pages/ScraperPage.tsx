@@ -1253,12 +1253,18 @@ const ScraperPage: React.FC = (): JSX.Element => {
     
     try {
       // Use the backend API instead of frontend API calls
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/user/${username}`
         : `${baseUrl}/api/twitter/user/${username}`;
       
-      const response = await axios.get(apiUrl);
+      const response = await axios.get(apiUrl, {
+        timeout: 60000, // 60 second timeout for Twitter scraping
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
     
     if (response.data && response.data.success) {
         const tweets: Tweet[] = response.data.data;
@@ -1306,7 +1312,18 @@ const ScraperPage: React.FC = (): JSX.Element => {
       }
     } catch (error) {
       console.error('Error fetching tweets:', error);
-      toastError('Failed to fetch tweets. Please try again.');
+      
+      if (error.code === 'ERR_NETWORK') {
+        toastError('Network error. Please check your connection and try again.');
+      } else if (error.response?.status === 404) {
+        toastError(`Twitter user @${username} not found. Please check the username.`);
+      } else if (error.response?.status === 524) {
+        toastError('Server timeout. The request is taking too long. Please try again.');
+      } else if (error.response?.status >= 500) {
+        toastError('Server error. Please try again in a few moments.');
+      } else {
+        toastError(`Failed to fetch tweets: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      }
     }
   };
 
@@ -2923,6 +2940,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
                   }
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isLoading && inputUrl && !(activeTab === 'linkedin' && isScrapingLinkedIn)) {
+                      e.preventDefault();
+                      handleScrape();
+                    }
+                  }}
                   className="w-full"
                 />
               </div>
