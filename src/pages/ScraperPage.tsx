@@ -2939,17 +2939,18 @@ const ScraperPage: React.FC = (): JSX.Element => {
               </div>
             ) : (
               // Post Selection View - showing posts from selected users
-              <div className="mb-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setViewMode('folders')}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Folders
-                </Button>
-              </div>
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
+              <>
+                <div className="mb-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setViewMode('folders')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Folders
+                  </Button>
+                </div>
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="twitter" className="flex items-center gap-2">
                     <Twitter className="h-4 w-4" />
@@ -3122,7 +3123,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
                     </div>
                   )}
                 </TabsContent>
-              </Tabs>
+                </Tabs>
+              </>
             )}
 
 
