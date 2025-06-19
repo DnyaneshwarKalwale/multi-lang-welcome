@@ -1084,7 +1084,10 @@ const ScraperPage: React.FC = (): JSX.Element => {
       
       const response = await axios.post(`${apiBaseUrl}/linkedin/scrape-profile`, {
         username: username
-      }, { headers });
+      }, { 
+        headers,
+        timeout: 90000 // 90 second timeout for LinkedIn scraping (it can take longer)
+      });
 
       if (response.data.success) {
         setLinkedinResult(response.data);
