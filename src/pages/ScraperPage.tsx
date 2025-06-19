@@ -2591,61 +2591,160 @@ const ScraperPage: React.FC = (): JSX.Element => {
     savedTwitterThreads: Thread[];
     savedLinkedInPosts: any[];
   }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
+    const [searchQuery, setSearchQuery] = React.useState('');
+    
     if (!isOpen) return null;
+
+    // Filter functions
+    const filterTwitterContent = (content: Tweet | Thread) => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      
+      if ('tweets' in content) {
+        // This is a thread
+        return content.tweets.some(tweet => 
+          tweet.author?.username?.toLowerCase().includes(query) ||
+          tweet.author?.name?.toLowerCase().includes(query) ||
+          tweet.text?.toLowerCase().includes(query)
+        );
+      } else {
+        // This is a single tweet
+        return content.author?.username?.toLowerCase().includes(query) ||
+               content.author?.name?.toLowerCase().includes(query) ||
+               content.text?.toLowerCase().includes(query);
+      }
+    };
+
+    const filterLinkedInPosts = (post: any) => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      const postData = post.postData || post;
+      
+      return postData.author?.toLowerCase().includes(query) ||
+             postData.authorHeadline?.toLowerCase().includes(query) ||
+             postData.content?.toLowerCase().includes(query);
+    };
+
+    // Apply filters
+    const filteredTwitterPosts = savedTwitterPosts.filter(filterTwitterContent);
+    const filteredTwitterThreads = savedTwitterThreads.filter(filterTwitterContent);
+    const filteredLinkedInPosts = savedLinkedInPosts.filter(filterLinkedInPosts);
 
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <Folder className="h-6 w-6 text-blue-600" />
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
-                <p className="text-sm text-gray-500">
-                  {savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts
-                </p>
+          <div className="p-6 border-b border-gray-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Folder className="h-6 w-6 text-blue-600" />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
+                  <p className="text-sm text-gray-500">
+                    {searchQuery ? 
+                      `${filteredTwitterPosts.length + filteredTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + filteredLinkedInPosts.length} filtered / ${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total` :
+                      `${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts`
+                    }
+                  </p>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="p-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="p-2"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search by username, name, or content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('');
+                  }
+                }}
+                className="pl-10 w-full"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
           
           {/* Content */}
           <div className="flex-1 overflow-auto p-6">
-            {savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 ? (
+            {(searchQuery ? 
+              (filteredTwitterPosts.length === 0 && filteredLinkedInPosts.length === 0 && filteredTwitterThreads.length === 0) :
+              (savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 && savedTwitterThreads.length === 0)
+            ) ? (
               <div className="text-center py-16 text-gray-500">
                 <Folder className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
-                <p>Start by scraping and saving some content!</p>
+                <h3 className="text-lg font-semibold mb-2">
+                  {searchQuery ? 'No posts match your search' : 'No saved posts yet'}
+                </h3>
+                <p>
+                  {searchQuery ? 'Try adjusting your search terms or clear the search to see all posts.' : 'Start by scraping and saving some content!'}
+                </p>
+                {searchQuery && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setSearchQuery('')}
+                    className="mt-4"
+                  >
+                    Clear Search
+                  </Button>
+                )}
               </div>
             ) : (
               <Tabs defaultValue="twitter" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="twitter" className="flex items-center gap-2">
                     <Twitter className="h-4 w-4" />
-                    Twitter ({savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)})
+                    Twitter ({filteredTwitterPosts.length + filteredTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)})
                   </TabsTrigger>
                   <TabsTrigger value="linkedin" className="flex items-center gap-2">
                     <Linkedin className="h-4 w-4" />
-                    LinkedIn ({savedLinkedInPosts.length})
+                    LinkedIn ({filteredLinkedInPosts.length})
                   </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="twitter">
-                  {savedTwitterPosts.length === 0 && savedTwitterThreads.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No saved Twitter posts</p>
+                  {filteredTwitterPosts.length === 0 && filteredTwitterThreads.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>{searchQuery ? 'No Twitter posts match your search' : 'No saved Twitter posts'}</p>
+                      {searchQuery && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setSearchQuery('')}
+                          className="mt-2"
+                          size="sm"
+                        >
+                          Clear Search
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="columns-1 md:columns-2 gap-6">
                       {(() => {
                         // Combine and sort tweets and threads chronologically (same as scraper page)
-                        const allContent: (Tweet | Thread)[] = [...savedTwitterPosts, ...savedTwitterThreads];
+                        const allContent: (Tweet | Thread)[] = [...filteredTwitterPosts, ...filteredTwitterThreads];
                         
                         // Sort by date (newest first)
                         allContent.sort((a, b) => {
@@ -2700,11 +2799,23 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 </TabsContent>
                 
                 <TabsContent value="linkedin">
-                  {savedLinkedInPosts.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No saved LinkedIn posts</p>
+                  {filteredLinkedInPosts.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>{searchQuery ? 'No LinkedIn posts match your search' : 'No saved LinkedIn posts'}</p>
+                      {searchQuery && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setSearchQuery('')}
+                          className="mt-2"
+                          size="sm"
+                        >
+                          Clear Search
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="masonry-container columns-1 md:columns-2 xl:columns-3 gap-6">
-                      {savedLinkedInPosts.map((post, index) => {
+                      {filteredLinkedInPosts.map((post, index) => {
                         // Normalize post data structure
                         const postData = post.postData || post;
                         return (
@@ -3775,6 +3886,38 @@ const ScraperPage: React.FC = (): JSX.Element => {
         </div>
       )}
       
+      {/* Floating View Saved Posts Button */}
+      {(savedTwitterPosts.length > 0 || savedLinkedInPosts.length > 0 || savedTwitterThreads.length > 0) && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <Button
+            onClick={() => setSavedPostsModalOpen(true)}
+            className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-all duration-200 bg-blue-600 hover:bg-blue-700 group"
+            size="lg"
+            title={`View ${savedTwitterPosts.length + savedLinkedInPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)} saved posts`}
+          >
+            <div className="relative">
+              <Folder className="h-6 w-6 text-white" />
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center text-[10px] font-bold">
+                {savedTwitterPosts.length + savedLinkedInPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)}
+              </span>
+            </div>
+          </Button>
+          {/* Tooltip */}
+          <div className="absolute bottom-16 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+            View Saved Posts
+          </div>
+        </div>
+      )}
+
+      {/* Saved Posts Modal */}
+      <SavedPostsModal
+        isOpen={savedPostsModalOpen}
+        onClose={() => setSavedPostsModalOpen(false)}
+        savedTwitterPosts={savedTwitterPosts}
+        savedTwitterThreads={savedTwitterThreads}
+        savedLinkedInPosts={savedLinkedInPosts}
+      />
+
       {/* PDF Viewer Modal */}
       <PDFViewerModal
         isOpen={pdfViewerState.isOpen}
