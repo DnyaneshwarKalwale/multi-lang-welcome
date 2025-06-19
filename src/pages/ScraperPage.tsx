@@ -3113,60 +3113,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
               </Tabs>
             )}
 
-            {/* Action Buttons for Folder View */}
-            {viewMode === 'folders' && (selectedUsers.twitter.size > 0 || selectedUsers.linkedin.size > 0) && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Selected: {selectedUsers.twitter.size + selectedUsers.linkedin.size} users
-          </div>
-                <Button 
-                  onClick={proceedToPostSelection}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  View Posts from Selected Users
-                </Button>
-              </div>
-            )}
 
-            {/* Action Buttons for Posts View */}
-            {viewMode === 'posts' && (selectedPosts.twitter.size > 0 || selectedPosts.linkedin.size > 0) && (
-              <div className="mt-6 p-4 bg-green-50 rounded-lg flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Selected: {selectedPosts.twitter.size + selectedPosts.linkedin.size} individual posts
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedPosts({ twitter: new Set(), linkedin: new Set() });
-                    }}
-                  >
-                    Clear Selection
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      // Create a filtered view showing only selected posts
-                      const selectedTwitterPosts = savedTwitterPosts.filter(post => selectedPosts.twitter.has(post.id));
-                      const selectedTwitterThreads = savedTwitterThreads.filter(thread => selectedPosts.twitter.has(thread.id));
-                      const selectedLinkedInPosts = savedLinkedInPosts.filter(post => selectedPosts.linkedin.has(post.mongoId || post._id || post.id));
-                      
-                      console.log('Selected posts:', {
-                        twitter: selectedTwitterPosts.length + selectedTwitterThreads.length,
-                        linkedin: selectedLinkedInPosts.length
-                      });
-                      
-                      toast({
-                        title: "Selected Posts",
-                        description: `Viewing ${selectedPosts.twitter.size + selectedPosts.linkedin.size} selected posts`,
-                      });
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    View Selected Posts Only
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
