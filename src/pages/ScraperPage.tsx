@@ -1408,18 +1408,24 @@ const ScraperPage: React.FC = (): JSX.Element => {
         return;
       }
 
-      // For LinkedIn posts, we need to find the _id from our savedLinkedInPosts array
-      // The postId passed might be the post URL or post ID, we need the MongoDB _id
-      const savedPost = savedLinkedInPosts.find(post => 
-        post.id === postId || post._id === postId || post.url === postId
-      );
+      // The postId should be the MongoDB _id from the saved post
+      // If it's not, try to find the correct _id from savedLinkedInPosts
+      let mongoId = postId;
       
-      if (!savedPost) {
-        toastError('Post not found in saved posts');
-        return;
+      // Check if postId looks like a MongoDB ObjectId (24 hex characters)
+      if (!/^[a-f\d]{24}$/i.test(postId)) {
+        // It's not a MongoDB ObjectId, find it in the saved posts array
+        const savedPost = savedLinkedInPosts.find(post => 
+          post.id === postId || post.url === postId || post.mongoId === postId
+        );
+        
+        if (!savedPost) {
+          toastError('Post not found in saved posts');
+          return;
+        }
+        
+        mongoId = savedPost.mongoId || savedPost._id;
       }
-
-      const mongoId = savedPost._id || savedPost.id;
 
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
@@ -2668,7 +2674,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                             variant="destructive"
                             size="sm"
                             onClick={() => {
-                              handleDeleteLinkedInPost(post._id || post.id);
+                              handleDeleteLinkedInPost(post.mongoId || post._id || post.id);
                             }}
                             className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100 z-10"
                           >
