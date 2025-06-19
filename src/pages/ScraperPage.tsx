@@ -1102,7 +1102,18 @@ const ScraperPage: React.FC = (): JSX.Element => {
       }
     } catch (error: any) {
       console.error('LinkedIn scraping error:', error);
-      toastError(error.response?.data?.message || 'Failed to scrape LinkedIn profile');
+      
+      if (error.code === 'ERR_NETWORK') {
+        toastError('Network error. Please check your connection and try again.');
+      } else if (error.response?.status === 404) {
+        toastError(`LinkedIn profile '${username}' not found. Please check the username.`);
+      } else if (error.response?.status === 524 || error.code === 'ECONNABORTED') {
+        toastError('Server timeout. LinkedIn scraping is taking too long. Please try again.');
+      } else if (error.response?.status >= 500) {
+        toastError('Server error. Please try again in a few moments.');
+      } else {
+        toastError(error.response?.data?.message || 'Failed to scrape LinkedIn profile');
+      }
     } finally {
       setIsScrapingLinkedIn(false);
     }
@@ -1150,6 +1161,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
     try {
       const response = await api.post('/youtube/channel', {
         channelName: channelIdentifier
+      }, {
+        timeout: 60000 // 60 second timeout for YouTube channel scraping
       });
       
       if (response.data && response.data.success) {
