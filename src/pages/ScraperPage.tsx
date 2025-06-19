@@ -2672,9 +2672,10 @@ const ScraperPage: React.FC = (): JSX.Element => {
     savedTwitterThreads: Thread[];
     savedLinkedInPosts: any[];
   }> = ({ isOpen, onClose }) => {
+    // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     const [searchQuery, setSearchQuery] = useState('');
     
-    // Filter functions
+    // Filter functions - always compute these even if modal is closed
     const filteredTwitterPosts = savedTwitterPosts.filter(post => 
       !searchQuery.trim() || 
       post.author?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -2697,6 +2698,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
       post.content?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
+    // Early return AFTER all hooks
     if (!isOpen) return null;
 
     return (
@@ -2710,7 +2712,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
                   <p className="text-sm text-gray-500">
-                    {savedPostsSearchQuery ? 
+                    {searchQuery ? 
                       `${filteredTwitterPosts.length + filteredTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + filteredLinkedInPosts.length} filtered / ${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total` :
                       `${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts`
                     }
