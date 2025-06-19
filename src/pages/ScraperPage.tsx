@@ -4,7 +4,7 @@ import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
   FileText, ArrowRight, ArrowLeft, PlusCircle, Twitter, ImageIcon, Folder,
-  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye, Trash2, ChevronRight
+  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye, Trash2, ChevronRight, Check
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -2935,39 +2935,71 @@ const ScraperPage: React.FC = (): JSX.Element => {
                               <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
                                 {posts.map((post, index) => {
                                   const postId = (post as any).id || (post as any).tweet_id || index.toString();
-                                  const isThread = 'tweets' in post;
-                                  const content = isThread 
-                                    ? (post as any).tweets[0]?.text || (post as any).tweets[0]?.full_text || 'Thread'
-                                    : (post as any).text || (post as any).full_text || 'No content';
+                                  const isThread = Array.isArray((post as any).tweets) && (post as any).tweets.length > 0;
+                                  
+                                  // Get the actual tweet content properly
+                                  let content = '';
+                                  if (isThread) {
+                                    content = (post as any).tweets[0]?.text || (post as any).tweets[0]?.full_text || 'Thread content';
+                                  } else {
+                                    content = (post as any).text || (post as any).full_text || (post as any).content || 'Tweet content';
+                                  }
                                   
                                   return (
                                     <div 
                                       key={postId}
-                                      className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
+                                      className={`border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
                                         selectedPosts.twitter.has(postId) || selectedUsers.twitter.has(username)
-                                          ? 'ring-1 ring-blue-400 bg-blue-25' 
+                                          ? 'ring-1 ring-blue-400 bg-blue-50' 
                                           : 'hover:bg-gray-50'
                                       }`}
                                       onClick={() => togglePostSelection('twitter', postId)}
                                     >
-                                      <div className="flex items-start gap-2">
-                                        <div className="flex-shrink-0 mt-1">
-                                          {selectedPosts.twitter.has(postId) || selectedUsers.twitter.has(username) ? (
-                                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                              <div className="h-2 w-2 text-white text-xs">✓</div>
+                                      <div className="p-3">
+                                        <div className="flex items-start gap-3">
+                                          <div className="flex-shrink-0 mt-1">
+                                            {selectedPosts.twitter.has(postId) || selectedUsers.twitter.has(username) ? (
+                                              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <Check className="h-2 w-2 text-white" />
+                                              </div>
+                                            ) : (
+                                              <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
+                                            )}
+                                          </div>
+                                          
+                                          {/* Twitter Post Card */}
+                                          <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg p-3">
+                                            <div className="flex items-start gap-2">
+                                              <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                                                <span className="text-white text-xs font-bold">𝕏</span>
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                  <span className="font-medium text-sm text-gray-900">@{username}</span>
+                                                  {isThread && (
+                                                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                                                      Thread
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4 mb-2">
+                                                  {content}
+                                                </p>
+                                                {isThread && (post as any).tweets.length > 1 && (
+                                                  <p className="text-xs text-gray-500">
+                                                    +{(post as any).tweets.length - 1} more tweets in this thread
+                                                  </p>
+                                                )}
+                                                {(post as any).public_metrics && (
+                                                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                                    <span>💬 {(post as any).public_metrics.reply_count || 0}</span>
+                                                    <span>🔄 {(post as any).public_metrics.retweet_count || 0}</span>
+                                                    <span>❤️ {(post as any).public_metrics.like_count || 0}</span>
+                                                  </div>
+                                                )}
+                                              </div>
                                             </div>
-                                          ) : (
-                                            <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
-                                          )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-xs text-gray-800 line-clamp-2">
-                                            {isThread && <span className="text-blue-600 font-medium">Thread: </span>}
-                                            {content}
-                                          </p>
-                                          <p className="text-xs text-gray-500 mt-1">
-                                            {isThread ? `${(post as any).tweets.length} tweets` : 'Single tweet'}
-                                          </p>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -3040,35 +3072,66 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                 {posts.map((post, index) => {
                                   const postData = post.postData || post;
                                   const postId = postData.id || post._id || post.mongoId || index.toString();
-                                  const content = postData.content || 'No content';
+                                  const content = postData.content || postData.text || post.content || 'LinkedIn post content';
+                                  const authorDisplayName = postData.author || post.author?.name || authorName;
+                                  const postDate = postData.savedAt || post.createdAt || post.savedAt;
                                   
                                   return (
                                     <div 
                                       key={postId}
-                                      className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
+                                      className={`border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
                                         selectedPosts.linkedin.has(postId) || selectedUsers.linkedin.has(authorName)
-                                          ? 'ring-1 ring-blue-400 bg-blue-25' 
+                                          ? 'ring-1 ring-blue-400 bg-blue-50' 
                                           : 'hover:bg-gray-50'
                                       }`}
                                       onClick={() => togglePostSelection('linkedin', postId)}
                                     >
-                                      <div className="flex items-start gap-2">
-                                        <div className="flex-shrink-0 mt-1">
-                                          {selectedPosts.linkedin.has(postId) || selectedUsers.linkedin.has(authorName) ? (
-                                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                              <div className="h-2 w-2 text-white text-xs">✓</div>
+                                      <div className="p-3">
+                                        <div className="flex items-start gap-3">
+                                          <div className="flex-shrink-0 mt-1">
+                                            {selectedPosts.linkedin.has(postId) || selectedUsers.linkedin.has(authorName) ? (
+                                              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <Check className="h-2 w-2 text-white" />
+                                              </div>
+                                            ) : (
+                                              <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
+                                            )}
+                                          </div>
+                                          
+                                          {/* LinkedIn Post Card */}
+                                          <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg p-3">
+                                            <div className="flex items-start gap-2">
+                                              <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center flex-shrink-0">
+                                                <span className="text-white text-xs font-bold">in</span>
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                  <span className="font-medium text-sm text-gray-900">{authorDisplayName}</span>
+                                                  <span className="text-xs text-gray-500">•</span>
+                                                  <span className="text-xs text-gray-500">
+                                                    {postDate ? new Date(postDate).toLocaleDateString() : 'Recently'}
+                                                  </span>
+                                                </div>
+                                                <p className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-4 mb-2">
+                                                  {content}
+                                                </p>
+                                                {postData.media && postData.media.length > 0 && (
+                                                  <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-xs text-gray-500">
+                                                      📎 {postData.media.length} attachment{postData.media.length > 1 ? 's' : ''}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                                {postData.reactions && (
+                                                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                                    <span>👍 {postData.likes || postData.reactions || 0}</span>
+                                                    <span>💬 {postData.comments || 0}</span>
+                                                    <span>🔄 {postData.shares || 0}</span>
+                                                  </div>
+                                                )}
+                                              </div>
                                             </div>
-                                          ) : (
-                                            <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
-                                          )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-xs text-gray-800 line-clamp-2">
-                                            {content}
-                                          </p>
-                                          <p className="text-xs text-gray-500 mt-1">
-                                            {postData.author} • {new Date(postData.savedAt || post.createdAt || Date.now()).toLocaleDateString()}
-                                          </p>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
