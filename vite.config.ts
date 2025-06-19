@@ -34,10 +34,10 @@ export default defineConfig({
     // Exclude Git files from being watched
     watch: {
       ignored: [
-        '**/.git/**',
         '**/node_modules/**',
         '**/.DS_Store',
-        '**/Thumbs.db'
+        '**/Thumbs.db',
+        '.git'
       ]
     }
   },
@@ -50,16 +50,12 @@ export default defineConfig({
           'utils-vendor': ['axios', 'date-fns', 'framer-motion'],
         },
       },
-      // Exclude Git files from bundling
-      external: (id: string) => {
-        return id.includes('.git') || id.includes('/.git/');
-      }
     },
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'axios'],
-    exclude: ['.git/**', '**/.git/**', '.gitignore', '.git'],
+    exclude: ['.gitignore'],
   },
   define: {
     global: 'globalThis',
