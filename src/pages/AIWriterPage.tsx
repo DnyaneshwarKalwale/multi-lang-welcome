@@ -149,7 +149,7 @@ const AIWriterPage: React.FC = () => {
     
     try {
       // Fix the API URL to avoid duplicate "/api/"
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/generate-content` 
         : `${baseUrl}/api/generate-content`;
@@ -192,7 +192,7 @@ const AIWriterPage: React.FC = () => {
     
     try {
       // Fix the API URL to avoid duplicate "/api/"
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/generate-image` 
         : `${baseUrl}/api/generate-image`;

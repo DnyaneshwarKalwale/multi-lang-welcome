@@ -151,7 +151,7 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
 
   const loadSavedPosts = async () => {
     setIsLoading(true);
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
     
     // Get token using tokenManager (same as save function)
     const authMethod = localStorage.getItem('auth-method');

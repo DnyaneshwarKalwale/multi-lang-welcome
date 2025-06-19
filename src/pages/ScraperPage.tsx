@@ -838,7 +838,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
 
   // Load saved posts from localStorage
   const loadSavedPosts = async () => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
     
     // Get token using tokenManager (same as save function)
     const authMethod = localStorage.getItem('auth-method');
@@ -1109,7 +1109,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     setSelectedLinkedInPosts(new Set());
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const token = localStorage.getItem('token');
       
       // Prepare headers - include auth if available, but don't require it
@@ -1324,7 +1324,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     
     try {
       // Use the backend API instead of frontend API calls
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/user/${username}`
         : `${baseUrl}/api/twitter/user/${username}`;
@@ -1462,7 +1462,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         return;
       }
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/${tweetId}`
         : `${baseUrl}/api/twitter/${tweetId}`;
@@ -1516,7 +1516,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         mongoId = savedPost.mongoId || savedPost._id;
       }
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/saved-posts/${mongoId}`
         : `${baseUrl}/api/saved-posts/${mongoId}`;
@@ -1568,7 +1568,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         }
       };
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/linkedin/save-scraped-posts`
         : `${baseUrl}/api/linkedin/save-scraped-posts`;
@@ -1632,7 +1632,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         return;
       }
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/save`
         : `${baseUrl}/api/twitter/save`;
@@ -1717,7 +1717,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         return;
       }
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/save`
         : `${baseUrl}/api/twitter/save`;
@@ -1798,12 +1798,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
       };
 
       console.log('Sending request to backend:', {
-        url: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/linkedin/save-scraped-posts`,
+        url: `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/api/linkedin/save-scraped-posts`,
         postsCount: selectedPosts.length,
         profileData: linkedinResult.profileData
       });
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/linkedin/save-scraped-posts`
         : `${baseUrl}/api/linkedin/save-scraped-posts`;

@@ -124,7 +124,7 @@ const ContentPage: React.FC = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/content`,
+          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/content`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -278,7 +278,7 @@ const ContentPage: React.FC = () => {
   const handleDeleteContent = async (contentId: string) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/content/${contentId}`,
+        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/content/${contentId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("admin-token")}`
