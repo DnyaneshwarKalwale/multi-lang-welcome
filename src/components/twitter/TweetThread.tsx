@@ -1,24 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Tweet, Thread } from '@/utils/twitterTypes';
-import { Checkbox } from '@/components/ui/checkbox';
 import MediaDisplay from './MediaDisplay';
-import { MessageSquare, Heart, RefreshCw, Share, ChevronDown, ChevronUp, CheckSquare, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Heart, RefreshCw, Share, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface TweetThreadProps {
   thread: Thread;
-  selectedTweets: Set<string>;
-  onSelectToggle: (tweet: Tweet) => void;
-  onSelectThread: (thread: Thread, select: boolean) => void;
 }
 
-const TweetThread: React.FC<TweetThreadProps> = ({ 
-  thread, 
-  selectedTweets = new Set(), 
-  onSelectToggle = () => {}, 
-  onSelectThread = () => {}
-}) => {
+const TweetThread: React.FC<TweetThreadProps> = ({ thread }) => {
   const [expanded, setExpanded] = useState(true);
   const [visibleTweets, setVisibleTweets] = useState<Tweet[]>(thread.tweets);
   const [expandedTweets, setExpandedTweets] = useState<Set<string>>(new Set());
@@ -81,13 +72,7 @@ const TweetThread: React.FC<TweetThreadProps> = ({
     }
   };
 
-  // Check if all tweets in the thread are selected
-  const allTweetsSelected = thread.tweets.every(tweet => selectedTweets.has(tweet.id));
-  const someTweetsSelected = thread.tweets.some(tweet => selectedTweets.has(tweet.id));
 
-  const handleSelectThread = () => {
-    onSelectThread(thread, !allTweetsSelected);
-  };
   
   // Get the first tweet's author info for display
   const firstTweet = thread.tweets[0];
@@ -284,19 +269,7 @@ const TweetThread: React.FC<TweetThreadProps> = ({
           </div>
         </div>
         
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              checked={allTweetsSelected}
-              onCheckedChange={() => handleSelectThread()}
-              className="h-4 w-4"
-            />
-          <button 
-            onClick={handleSelectThread}
-              className="text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors"
-          >
-              <CheckSquare className="h-3 w-3" />
-          </button>
-          </div>
+
         </div>
       </div>
       
@@ -344,13 +317,7 @@ const TweetThread: React.FC<TweetThreadProps> = ({
                       <span className="text-gray-500 text-xs">{formatDate(tweet.created_at)}</span>
             </div>
             
-                    <div className="flex items-center space-x-1 flex-shrink-0">
-              <Checkbox 
-                checked={selectedTweets.has(tweet.id)}
-                onCheckedChange={() => onSelectToggle(tweet)}
-                        className="h-3 w-3"
-              />
-                    </div>
+
             </div>
             
                   {/* Tweet Text - Compact */}

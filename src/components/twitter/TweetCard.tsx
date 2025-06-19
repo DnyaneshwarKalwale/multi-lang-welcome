@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Tweet } from '@/utils/twitterTypes';
-import { Checkbox } from '@/components/ui/checkbox';
 import { MessageSquare, Heart, RefreshCw, Share, ChevronDown, ChevronUp, Loader2, MoreHorizontal } from 'lucide-react';
 import MediaDisplay from './MediaDisplay';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -9,11 +8,9 @@ import { toast } from 'sonner';
 
 interface TweetCardProps {
   tweet: Tweet;
-  isSelected: boolean;
-  onSelectToggle: (tweet: Tweet) => void;
 }
 
-const TweetCard: React.FC<TweetCardProps> = ({ tweet, isSelected, onSelectToggle }) => {
+const TweetCard: React.FC<TweetCardProps> = ({ tweet }) => {
   const [isLoadingFullTweet, setIsLoadingFullTweet] = useState(false);
   const [fullTweet, setFullTweet] = useState<Tweet | null>(null);
   const [showMore, setShowMore] = useState(false);
@@ -237,13 +234,7 @@ const TweetCard: React.FC<TweetCardProps> = ({ tweet, isSelected, onSelectToggle
                 )}
               </div>
               
-              <div className="flex items-center space-x-1 flex-shrink-0">
-        <Checkbox 
-          checked={isSelected}
-          onCheckedChange={() => onSelectToggle(tweet)}
-                  className="h-4 w-4"
-        />
-              </div>
+
       </div>
       
             {/* Tweet Text */}

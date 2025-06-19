@@ -1563,7 +1563,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     // Only auto-save if user is logged in
     const authMethod = localStorage.getItem('auth-method');
     const token = authMethod ? tokenManager.getToken(authMethod) : null;
-    if (!token || !user?.id) {
+    if (!token) {
       console.log('Skipping auto-save: User not logged in');
       return;
     }
@@ -1582,7 +1582,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
         thread_id: tweet.thread_id || tweet.conversation_id,
         thread_position: tweet.thread_position,
         savedAt: new Date().toISOString(),
-        userId: user.id,
         username: twitterResult.username,
         profileImageUrl: twitterResult.profileImageUrl
       }));
@@ -1667,7 +1666,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         thread_id: tweet.thread_id || tweet.conversation_id,
         thread_position: tweet.thread_position,
         savedAt: new Date().toISOString(),
-        userId: user?.id || 'anonymous',
+
         username: twitterResult.username,
         profileImageUrl: twitterResult.profileImageUrl
       }));
@@ -2662,9 +2661,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
                               <div className="relative">
                                 <TweetThread
                                   thread={item}
-                                  selectedTweets={new Set()}
-                                  onSelectToggle={() => {}}
-                                  onSelectThread={() => {}}
                                 />
                                 <Button
                                   variant="destructive"
@@ -2683,8 +2679,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
                               <div className="relative">
                                 <TweetCard
                                   tweet={item}
-                                  isSelected={false}
-                                  onSelectToggle={() => {}}
                                 />
                                 <Button
                                   variant="destructive"
@@ -2895,14 +2889,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
           Extract content from YouTube channels to repurpose for LinkedIn
         </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setSavedPostsModalOpen(true)}
-          className="gap-2 whitespace-nowrap"
-        >
-          <Folder className="h-4 w-4" />
-          View Saved Posts ({savedTwitterPosts.length + savedLinkedInPosts.length})
-        </Button>
+
       </div>
 
       {/* Saved Posts Modal */}
@@ -3029,17 +3016,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSavedPostsModalOpen(true)}
-                className="gap-2 bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
-              >
-                <Folder className="h-3 w-3" />
-                View Saved Posts
-              </Button>
-            </div>
           </div>
           
           {/* Category Filter */}
@@ -3105,16 +3081,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
                               // This is a thread
                               <TweetThread
                                 thread={item}
-                                selectedTweets={new Set()}
-                                onSelectToggle={() => {}}
-                                onSelectThread={() => {}}
                               />
                             ) : (
                               // This is a standalone tweet
                               <TweetCard
                                 tweet={item}
-                                isSelected={false}
-                                onSelectToggle={() => {}}
                               />
                             )}
                           </div>
@@ -3286,15 +3257,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSavedPostsModalOpen(true)}
-                    className="gap-2 bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
-                  >
-                    <Folder className="h-3 w-3" />
-                    View Saved Posts
-                  </Button>
+
                 </div>
               </div>
             </CardContent>
