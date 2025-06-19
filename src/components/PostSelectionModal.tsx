@@ -108,13 +108,21 @@ interface PostSelectionModalProps {
   onClose: () => void;
   onApplySelection: (selectedContent: string) => void;
   selectedPostsCount: number;
+  selectedVideo?: {
+    id: string;
+    title: string;
+    transcript?: string;
+  };
+  onGenerateContent?: (selectedPosts: string, transcript: string, videoTitle: string) => void;
 }
 
 const PostSelectionModal: React.FC<PostSelectionModalProps> = ({ 
   isOpen, 
   onClose, 
   onApplySelection, 
-  selectedPostsCount 
+  selectedPostsCount,
+  selectedVideo,
+  onGenerateContent
 }) => {
   const { toast } = useToast();
   
@@ -373,7 +381,83 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     setViewMode('folders');
   };
 
-  // Handle applying selected posts
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+
+  const handleGenerateContent = async () => {
+    if (!selectedVideo?.transcript) {
+      toast({
+        title: "No transcript available",
+        description: "Please select a video with a transcript to generate content.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedContent: string[] = [];
+    
+    // Get selected Twitter content
+    const allTwitterContent = getPostsFromSelectedUsers().twitter;
+    allTwitterContent.forEach(item => {
+      const itemId = 'tweets' in item ? item.id : item.id;
+      if (selectedPosts.twitter.has(itemId)) {
+        if ('tweets' in item) {
+          // This is a thread
+          const threadContent = item.tweets.map(tweet => tweet.text || tweet.full_text).join('\n\n');
+          selectedContent.push(threadContent);
+        } else {
+          // This is a standalone tweet
+          selectedContent.push(item.text || item.full_text || '');
+        }
+      }
+    });
+    
+    // Get selected LinkedIn content
+    const allLinkedInContent = getPostsFromSelectedUsers().linkedin;
+    allLinkedInContent.forEach(post => {
+      const postData = post.postData || post;
+      const postId = postData.id;
+      if (selectedPosts.linkedin.has(postId)) {
+        selectedContent.push(postData.content || '');
+      }
+    });
+
+    if (selectedContent.length === 0) {
+      toast({
+        title: "No posts selected",
+        description: "Please select some posts to use as style reference.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedPostsText = selectedContent.join('\n\n---\n\n');
+    
+    setIsGeneratingContent(true);
+    
+    try {
+      if (onGenerateContent) {
+        await onGenerateContent(selectedPostsText, selectedVideo.transcript, selectedVideo.title);
+      }
+      
+      // Close the modal after successful generation
+      onClose();
+      
+      toast({
+        title: "Content Generated",
+        description: `AI carousel content created using ${selectedContent.length} posts as style reference.`,
+      });
+    } catch (error) {
+      console.error('Error generating content:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingContent(false);
+    }
+  };
+
   const handleApplySelection = () => {
     const selectedContent: string[] = [];
     
@@ -482,6 +566,17 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
               <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
                 <h4 className="font-medium mb-2">Select Users:</h4>
                 <p>Choose users whose posts you want to work with. You can select multiple users from both platforms.</p>
+                {selectedVideo?.transcript && onGenerateContent && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                      <span className="font-medium text-blue-800">AI Content Generation Available</span>
+                    </div>
+                    <p className="text-blue-700 text-xs">
+                      With a video transcript selected, you can generate AI carousel content using your selected posts as writing style reference.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
@@ -801,11 +896,31 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                   Cancel
                 </Button>
                 <Button 
+                  variant="outline"
                   onClick={handleApplySelection}
                   disabled={selectedPosts.twitter.size === 0 && selectedPosts.linkedin.size === 0}
                 >
                   Apply Selection
                 </Button>
+                {selectedVideo?.transcript && onGenerateContent && (
+                  <Button 
+                    onClick={handleGenerateContent}
+                    disabled={selectedPosts.twitter.size === 0 && selectedPosts.linkedin.size === 0 || isGeneratingContent}
+                    className="flex items-center gap-2"
+                  >
+                    {isGeneratingContent ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        Generate AI Content
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </div>

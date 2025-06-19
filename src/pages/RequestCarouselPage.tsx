@@ -342,6 +342,8 @@ const RequestCarouselPage: React.FC = () => {
   // Add state for saved content
   const [savedContents, setSavedContents] = useState<SavedContent[]>([]);
   const [showSavedContents, setShowSavedContents] = useState(false);
+  const [contentFilter, setContentFilter] = useState<'all' | 'carousel' | 'text-post'>('all');
+  const [contentSearchQuery, setContentSearchQuery] = useState('');
 
   // Add state for editing
   const [isEditing, setIsEditing] = useState(false);
@@ -365,8 +367,7 @@ const RequestCarouselPage: React.FC = () => {
   const [showPostSelectionModal, setShowPostSelectionModal] = useState(false);
   const [selectedPostsCount, setSelectedPostsCount] = useState(0);
 
-  // Add a missing state variable for saving content:
-  const [isSavingContent, setIsSavingContent] = useState(false);
+  // Note: Content is now auto-saved when generated, no manual save needed
 
   // Update userLimit state to remove 'free' terminology and use correct trial limits
   const [userLimit, setUserLimit] = useState<UserLimit>({ 
@@ -1248,6 +1249,7 @@ const RequestCarouselPage: React.FC = () => {
         transcript: selectedVideo.transcript,
         videoId: selectedVideo.id,
         videoTitle: selectedVideo.title,
+        userId: user?.id || 'anonymous', // Pass userId for auto-saving
         writingStyleSamples: attachedLinkedInPost || undefined // Include writing style samples if available
       });
 
@@ -1265,8 +1267,8 @@ const RequestCarouselPage: React.FC = () => {
       setPreviewType(type); // Set the correct preview type based on selection
         
         toast({
-        title: "Content generated",
-        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been generated for your selected video`,
+        title: "Content generated & auto-saved",
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been generated and automatically saved`,
       });
       
       // Increment user count after successful generation
@@ -2004,102 +2006,7 @@ const RequestCarouselPage: React.FC = () => {
     setIsEditing(!isEditing);
   };
 
-  // Update function to save content to backend and localStorage
-  const saveContent = async () => {
-    if (!generatedContent && !previewContent) {
-      toast({
-        title: "No content to save",
-        description: "Please generate content before saving",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsSavingContent(true);
-    
-    try {
-      const content = generatedContent || previewContent;
-      const contentId = uuidv4();
-      const contentTitle = selectedVideo?.title || 'Generated Content';
-      
-      // Create data object for storage with proper typing
-      const contentData: SavedContent = {
-        id: contentId,
-        title: contentTitle,
-        content: content,
-        type: selectedContentType as 'text-post' | 'carousel',
-        createdAt: new Date().toISOString()
-      };
-      
-      if (selectedVideo) {
-        contentData.videoId = selectedVideo.id;
-        contentData.videoTitle = selectedVideo.title;
-      }
-      
-      // Save to backend API first
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-      const apiUrl = baseUrl.endsWith('/api')
-        ? `${baseUrl}/carousel-contents`
-        : `${baseUrl}/api/carousel-contents`;
-      
-      const userId = user?.id || 'anonymous';
-      
-      const response = await axios.post(apiUrl, {
-        content: contentData,
-        userId: userId
-      });
-
-      if (!response.data.success) {
-        throw new Error('Failed to save content to backend');
-      }
-      
-      // After successful backend save, update localStorage
-      localStorage.setItem('ai_generated_content', content);
-      localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
-      if (selectedVideo) {
-        localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
-      }
-      
-      // Update the local savedContents list
-      await loadSavedContents();
-      
-      toast({
-        title: "Content saved successfully",
-        description: "Your content has been saved to the cloud",
-      });
-      
-      setIsSavingContent(false);
-      setShowContentGenerator(false);
-      
-    } catch (error) {
-      console.error('Error saving content:', error);
-      
-      // If backend save fails, try to save to localStorage as backup
-      try {
-        const content = generatedContent || previewContent;
-        localStorage.setItem('ai_generated_content', content);
-        localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
-        if (selectedVideo) {
-          localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
-        }
-        
-      toast({
-          title: "Content saved locally",
-          description: "Could not save to cloud, but content is saved on your device",
-          variant: "default"
-        });
-      } catch (localStorageError) {
-        console.error('Error saving to localStorage:', localStorageError);
-        toast({
-          title: "Failed to save content",
-          description: "Please try again or check your connection",
-        variant: "destructive"
-      });
-      }
-    } finally {
-      setIsSavingContent(false);
-    }
-  };
+  // Note: Content is now auto-saved when generated, saveContent function removed
 
   // Add function to load saved contents from both backend and localStorage
   const loadSavedContents = async () => {
@@ -2313,64 +2220,96 @@ const RequestCarouselPage: React.FC = () => {
     setUploadedFiles(newFiles);
   };
 
-  // Add a function to save generated content to both localStorage and backend
-  const saveGeneratedContent = async (content: string, videoId?: string) => {
-    try {
-      // Save to localStorage for quick retrieval
-      localStorage.setItem('ai_generated_content', content);
-      localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
-      if (videoId) {
-        localStorage.setItem('ai_generated_content_videoId', videoId);
-      }
-      
-      // Also save to the backend if possible
-      const contentId = uuidv4();
-      const contentData: {
-        id: string;
-        title: string;
-        content: string;
-        type: string;
-        videoId?: string;
-        videoTitle?: string;
-        createdAt: string;
-      } = {
-        id: contentId,
-        title: selectedVideo?.title || 'Generated Content',
-        content: content,
-        type: 'carousel',
-        videoId: selectedVideo?.id,
-        videoTitle: selectedVideo?.title,
-        createdAt: new Date().toISOString()
-      };
-      
-      // Save to backend API
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-      const apiUrl = baseUrl.endsWith('/api')
-        ? `${baseUrl}/carousel-contents`
-        : `${baseUrl}/api/carousel-contents`;
-      
-      const userId = localStorage.getItem('userId') || user?.id;
-      
-      await axios.post(apiUrl, {
-        content: contentData,
-        userId: userId || 'anonymous'
-      });
-      
-      console.log('Content saved to backend:', contentId);
-      
-      // Update the local savedContents list
-      await loadSavedContents();
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving generated content:', error);
-      return false;
-    }
-  };
+  // Note: Content auto-saving is now handled in the backend API
 
   // Add a function to handle subscription navigation
   const handleSubscribe = () => {
     navigate("/settings/billing");
+  };
+
+  // Handle AI content generation from selected posts
+  const handleGenerateContentFromPosts = async (selectedPosts: string, transcript: string, videoTitle: string) => {
+    if (!userLimit) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to verify your usage limits. Please try again later.",
+      });
+      return;
+    }
+    
+    if (userLimit.count >= userLimit.limit) {
+      toast({
+        variant: "destructive",
+        title: "Limit Reached",
+        description: "You have reached your content generation limit. Please contact support to increase your limit.",
+      });
+      return;
+    }
+
+    setIsGeneratingContent(true);
+    
+    try {
+      // Call the backend API to generate content with writing style samples
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/generate-content`
+        : `${baseUrl}/api/generate-content`;
+
+      const response = await axios.post(apiUrl, {
+        type: 'carousel', // Always generate carousel content
+        transcript: transcript,
+        videoId: selectedVideo?.id,
+        videoTitle: videoTitle,
+        userId: user?.id || 'anonymous', // Pass userId for auto-saving
+        writingStyleSamples: selectedPosts // Use selected posts as writing style samples
+      });
+
+      if (!response.data.success || !response.data.content) {
+        throw new Error('Failed to generate content');
+      }
+
+      const generatedContent = response.data.content;
+      
+      // Update UI state
+      setGeneratedContent(generatedContent);
+      setShowContentGenerator(true);
+      setSelectedContentType('carousel');
+      setPreviewContent(generatedContent);
+      setPreviewType('carousel');
+        
+              toast({
+        title: "AI Content Generated & Auto-Saved",
+        description: `Carousel content created using your selected posts as style reference and automatically saved.`,
+      });
+      
+      // Increment user count after successful generation
+      const token = tokenManager.getToken();
+      await axios.post(
+        `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Update local state
+      setUserLimit(prev => prev ? {
+        ...prev,
+        count: prev.count + 1
+      } : null);
+    } catch (error) {
+      console.error("Error generating content:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingContent(false);
+    }
   };
 
     return (
@@ -3199,15 +3138,6 @@ const RequestCarouselPage: React.FC = () => {
             </Button>
             <div className="flex gap-2">
               <Button 
-                variant="secondary" 
-                onClick={saveContent}
-                disabled={isGeneratingContent || !generatedContent}
-                className="flex items-center gap-1"
-              >
-                <Save className="h-4 w-4" />
-                Save
-              </Button>
-              <Button 
                 variant="default" 
                 disabled={isGeneratingContent || !generatedContent} 
                 onClick={() => {
@@ -3232,40 +3162,150 @@ const RequestCarouselPage: React.FC = () => {
         onClose={() => setShowPostSelectionModal(false)}
         onApplySelection={applySelectedPosts}
         selectedPostsCount={selectedPostsCount}
+        selectedVideo={selectedVideo}
+        onGenerateContent={handleGenerateContentFromPosts}
       />
 
       {/* Add modal to show saved contents */}
       {showSavedContents && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] flex flex-col shadow-xl">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[85vh] flex flex-col shadow-xl">
             <div className="p-4 border-b bg-blue-50 flex items-center justify-between rounded-t-lg">
-              <h3 className="text-lg font-medium text-blue-800 flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Folder className="h-5 w-5 text-blue-600" />
-                Saved Content
-              </h3>
+                <div>
+                  <h3 className="text-lg font-medium text-blue-800">Saved Content</h3>
+                  <p className="text-xs text-blue-600">
+                    {savedContents.length} total • 
+                    {savedContents.filter(c => c.type === 'carousel').length} carousels • 
+                    {savedContents.filter(c => c.type === 'text-post').length} text posts
+                  </p>
+                </div>
+              </div>
               <Button variant="ghost" size="sm" onClick={() => setShowSavedContents(false)}>
                 ✕
               </Button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
-              {savedContents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Folder className="h-16 w-16 text-blue-200 mb-4" />
-                  <p className="text-blue-800 font-medium">No saved content yet</p>
-                  <p className="text-sm text-blue-600 mt-1">Generate and save content to access it anytime</p>
+            {/* Filter Tabs and Search */}
+            <div className="border-b bg-gray-50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2 gap-2">
+                <div className="flex">
+                  <Button
+                    variant={contentFilter === 'all' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setContentFilter('all')}
+                    className="mr-2"
+                  >
+                    All ({savedContents.length})
+                  </Button>
+                  <Button
+                    variant={contentFilter === 'carousel' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setContentFilter('carousel')}
+                    className="mr-2 flex items-center gap-1"
+                  >
+                    <FileSpreadsheet className="h-3 w-3" />
+                    Carousels ({savedContents.filter(c => c.type === 'carousel').length})
+                  </Button>
+                  <Button
+                    variant={contentFilter === 'text-post' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setContentFilter('text-post')}
+                    className="flex items-center gap-1"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    Text Posts ({savedContents.filter(c => c.type === 'text-post').length})
+                  </Button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {savedContents.map((content) => (
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search content..."
+                    value={contentSearchQuery}
+                    onChange={(e) => setContentSearchQuery(e.target.value)}
+                    className="pl-8 h-9 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {(() => {
+                let filteredContents = contentFilter === 'all' 
+                  ? savedContents 
+                  : savedContents.filter(content => content.type === contentFilter);
+                
+                // Apply search filter
+                if (contentSearchQuery.trim()) {
+                  filteredContents = filteredContents.filter(content => 
+                    content.title.toLowerCase().includes(contentSearchQuery.toLowerCase()) ||
+                    content.content.toLowerCase().includes(contentSearchQuery.toLowerCase()) ||
+                    (content.videoTitle && content.videoTitle.toLowerCase().includes(contentSearchQuery.toLowerCase()))
+                  );
+                }
+                
+                                  return filteredContents.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      {contentSearchQuery.trim() ? (
+                        <SearchX className="h-16 w-16 text-blue-200 mb-4" />
+                      ) : (
+                        <Folder className="h-16 w-16 text-blue-200 mb-4" />
+                      )}
+                      <p className="text-blue-800 font-medium">
+                        {savedContents.length === 0 
+                          ? "No saved content yet" 
+                          : contentSearchQuery.trim()
+                            ? `No content found for "${contentSearchQuery}"`
+                            : `No ${contentFilter === 'carousel' ? 'carousel' : contentFilter === 'text-post' ? 'text post' : ''} content found`
+                        }
+                      </p>
+                      <p className="text-sm text-blue-600 mt-1">
+                        {savedContents.length === 0 
+                          ? "Generate and save content to access it anytime"
+                          : contentSearchQuery.trim()
+                            ? "Try a different search term or clear the search"
+                            : `Try generating some ${contentFilter === 'carousel' ? 'carousel' : 'text post'} content`
+                        }
+                      </p>
+                      {contentSearchQuery.trim() && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setContentSearchQuery('')}
+                          className="mt-3"
+                        >
+                          Clear Search
+                        </Button>
+                      )}
+                    </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredContents.map((content) => (
                     <div key={content.id} className="border rounded-lg overflow-hidden border-blue-100 hover:shadow-md transition-shadow">
                       <div className="p-3 bg-blue-50 flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-blue-900">{content.title}</h4>
-                          <p className="text-xs text-blue-700">
-                            {content.videoTitle && `From: ${content.videoTitle} • `}
-                            {new Date(content.createdAt).toLocaleDateString()}
-                          </p>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            {/* Content Type Icon */}
+                            {content.type === 'carousel' ? (
+                              <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                                <FileSpreadsheet className="h-3 w-3" />
+                                Carousel
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                                <MessageSquare className="h-3 w-3" />
+                                Text Post
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-blue-900">{content.title}</h4>
+                            <p className="text-xs text-blue-700">
+                              {content.videoTitle && `From: ${content.videoTitle} • `}
+                              {new Date(content.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex gap-2">
                           <Button 
@@ -3279,8 +3319,47 @@ const RequestCarouselPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="p-3 bg-white">
-                        <div className="max-h-40 overflow-y-auto mb-3">
-                          <p className="text-sm whitespace-pre-line line-clamp-6 text-gray-800">{content.content}</p>
+                        {/* Content Preview */}
+                        <div className="mb-3">
+                          {content.type === 'carousel' ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                                <FileSpreadsheet className="h-3 w-3" />
+                                <span>{getCarouselSlideCount(content.content)} slides</span>
+                              </div>
+                              <div className="max-h-40 overflow-y-auto">
+                                <div className="space-y-3">
+                                  {getCarouselSlides(content.content).slice(0, 3).map((slide, index) => (
+                                    <div key={index} className="bg-gray-50 rounded-lg p-3 border-l-4 border-purple-400">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-medium text-purple-600">Slide {index + 1}</span>
+                                      </div>
+                                      <p className="text-sm text-gray-700 line-clamp-2">{slide}</p>
+                                    </div>
+                                  ))}
+                                  {getCarouselSlides(content.content).length > 3 && (
+                                    <div className="text-center py-2">
+                                      <span className="text-xs text-gray-500">
+                                        +{getCarouselSlides(content.content).length - 3} more slides
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                                <MessageSquare className="h-3 w-3" />
+                                <span>Text Post</span>
+                              </div>
+                              <div className="max-h-40 overflow-y-auto">
+                                <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-green-400">
+                                  <p className="text-sm whitespace-pre-line line-clamp-6 text-gray-700">{content.content}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div className="flex justify-end gap-2 border-t pt-3">
                           <Button 
@@ -3311,7 +3390,8 @@ const RequestCarouselPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              )}
+              );
+              })()}
             </div>
           </div>
         </div>
