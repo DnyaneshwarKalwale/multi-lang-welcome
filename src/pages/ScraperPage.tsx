@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Linkedin, Globe, Youtube, Copy, 
@@ -2604,67 +2604,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     };
   }, []);
 
-  // Modal state for saved posts
-  const [savedPostsSearchQuery, setSavedPostsSearchQuery] = useState('');
-
-  // Simple filter functions for saved posts (moved outside modal to avoid hook issues)
-  const filterSavedContent = (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      return {
-        filteredTwitterPosts: savedTwitterPosts,
-        filteredTwitterThreads: savedTwitterThreads,
-        filteredLinkedInPosts: savedLinkedInPosts
-      };
-    }
-
-    const query = searchQuery.toLowerCase();
-    
-    const filteredTwitterPosts = savedTwitterPosts.filter((content: Tweet | Thread) => {
-      if ('tweets' in content) {
-        // This is a thread
-        return content.tweets.some(tweet => 
-          tweet.author?.username?.toLowerCase().includes(query) ||
-          tweet.author?.name?.toLowerCase().includes(query) ||
-          tweet.text?.toLowerCase().includes(query)
-        );
-      } else {
-        // This is a single tweet
-        return content.author?.username?.toLowerCase().includes(query) ||
-               content.author?.name?.toLowerCase().includes(query) ||
-               content.text?.toLowerCase().includes(query);
-      }
-    });
-
-    const filteredTwitterThreads = savedTwitterThreads.filter((content: Tweet | Thread) => {
-      if ('tweets' in content) {
-        // This is a thread
-        return content.tweets.some(tweet => 
-          tweet.author?.username?.toLowerCase().includes(query) ||
-          tweet.author?.name?.toLowerCase().includes(query) ||
-          tweet.text?.toLowerCase().includes(query)
-        );
-      } else {
-        // This is a single tweet
-        return content.author?.username?.toLowerCase().includes(query) ||
-               content.author?.name?.toLowerCase().includes(query) ||
-               content.text?.toLowerCase().includes(query);
-      }
-    });
-
-    const filteredLinkedInPosts = savedLinkedInPosts.filter((post: any) => {
-      const postData = post.postData || post;
-      return postData.author?.toLowerCase().includes(query) ||
-             postData.authorHeadline?.toLowerCase().includes(query) ||
-             postData.content?.toLowerCase().includes(query);
-    });
-
-    return { filteredTwitterPosts, filteredTwitterThreads, filteredLinkedInPosts };
-  };
-
-  // Get filtered results
-  const { filteredTwitterPosts, filteredTwitterThreads, filteredLinkedInPosts } = filterSavedContent(savedPostsSearchQuery);
-
-  // Saved Posts Modal Component - Simplified to avoid hook issues
+  // Saved Posts Modal Component
   const SavedPostsModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
@@ -2672,32 +2612,47 @@ const ScraperPage: React.FC = (): JSX.Element => {
     savedTwitterThreads: Thread[];
     savedLinkedInPosts: any[];
   }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    
+    const [searchQuery, setSearchQuery] = React.useState('');
+
+    // Filter functions
+    const filterTwitterContent = (content: Tweet | Thread) => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      
+      if ('tweets' in content) {
+        // This is a thread
+        return content.tweets.some(tweet => 
+          tweet.author?.username?.toLowerCase().includes(query) ||
+          tweet.author?.name?.toLowerCase().includes(query) ||
+          tweet.text?.toLowerCase().includes(query)
+        );
+      } else {
+        // This is a single tweet
+        return content.author?.username?.toLowerCase().includes(query) ||
+               content.author?.name?.toLowerCase().includes(query) ||
+               content.text?.toLowerCase().includes(query);
+      }
+    };
+
+    const filterLinkedInPosts = (post: any) => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      const postData = post.postData || post;
+      
+      return postData.author?.toLowerCase().includes(query) ||
+             postData.authorHeadline?.toLowerCase().includes(query) ||
+             postData.content?.toLowerCase().includes(query);
+    };
+
+    // Apply filters
+    const filteredTwitterPosts = savedTwitterPosts.filter(filterTwitterContent);
+    const filteredTwitterThreads = savedTwitterThreads.filter(filterTwitterContent);
+    const filteredLinkedInPosts = savedLinkedInPosts.filter(filterLinkedInPosts);
+
+    // Conditional return after all hooks are declared
     if (!isOpen) return null;
-    
-    // Filter posts based on search
-    const filteredTwitterPosts = savedTwitterPosts.filter(post => 
-      !searchQuery.trim() || 
-      post.author?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.text?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    const filteredTwitterThreads = savedTwitterThreads.filter(thread =>
-      !searchQuery.trim() ||
-      thread.tweets.some(tweet => 
-        tweet.author?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tweet.author?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tweet.text?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-    
-    const filteredLinkedInPosts = savedLinkedInPosts.filter(post =>
-      !searchQuery.trim() ||
-      post.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
 
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
