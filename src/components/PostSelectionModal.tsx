@@ -564,15 +564,6 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
           ) : viewMode === 'folders' ? (
             // User Folder View
             <div className="space-y-6">
-              <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
-                <h4 className="font-medium mb-2">How to Select Posts:</h4>
-                <div className="space-y-2">
-                  <p><strong>• Click the circle</strong> to select ALL posts from a user (entire folder)</p>
-                  <p><strong>• Click the folder name</strong> to browse and select individual posts</p>
-                  <p>Selected posts will be used as writing style reference for AI content generation.</p>
-                </div>
-              </div>
-
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="twitter" className="flex items-center gap-2">

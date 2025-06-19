@@ -1724,15 +1724,21 @@ const RequestCarouselPage: React.FC = () => {
   const getCarouselSlides = (content: string | null | undefined) => {
     if (!content) return [];
     
-    // First, split by various separators to get individual slides
-    let rawSlides = content.split(/---+|\n\n/).filter(s => s.trim());
+    // First, split by double newlines (primary separator)
+    let rawSlides = content.split(/\n\n+/).filter(s => s.trim());
     
-    // If no double newlines or separators, try single newlines for fallback
+    // If no double newlines, try other separators
+    if (rawSlides.length <= 1) {
+      // Try separators like --- or ===
+      rawSlides = content.split(/---+|===+/).filter(s => s.trim());
+    }
+    
+    // If still no separation, try single newlines as last resort
     if (rawSlides.length <= 1) {
       rawSlides = content.split('\n').filter(s => s.trim());
     }
     
-    // Now process slides to clean all formatting
+    // Process slides to clean formatting while preserving content structure
     const processedSlides = [];
     for (let i = 0; i < rawSlides.length; i++) {
       let current = rawSlides[i].trim();
@@ -1742,20 +1748,27 @@ const RequestCarouselPage: React.FC = () => {
         continue;
       }
       
-      // Remove "Slide X" prefixes and headers
-      current = current.replace(/^\*\*Slide\s*\d+[^*]*\*\*\s*/i, '').trim();
+      // Remove slide number prefixes but keep the content
+      current = current.replace(/^\*\*Slide\s*\d+[:\s]*\*\*\s*/i, '').trim();
       current = current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+      current = current.replace(/^\d+\.\s*/, '').trim(); // Remove numbered list format
       
-      // Remove horizontal separators
+      // Remove horizontal separators that might be standalone
       current = current.replace(/^---+$/gm, '').trim();
+      current = current.replace(/^===+$/gm, '').trim();
       
-      // Remove empty lines and clean up
-      current = current.replace(/\n\s*\n/g, '\n').trim();
+      // Clean up multiple newlines but preserve intentional line breaks
+      current = current.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
       
-      // Only add non-empty slides
-      if (current && current.length > 0) {
+      // Only add non-empty slides with meaningful content
+      if (current && current.length > 5) { // At least 5 characters to avoid empty or minimal slides
         processedSlides.push(current);
       }
+    }
+    
+    // If we got no slides, try to create at least one from the original content
+    if (processedSlides.length === 0 && content.trim()) {
+      processedSlides.push(content.trim());
     }
     
     return processedSlides;
