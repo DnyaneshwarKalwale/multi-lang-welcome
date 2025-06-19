@@ -4,7 +4,7 @@ import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
   FileText, ArrowRight, ArrowLeft, PlusCircle, Twitter, ImageIcon, Folder,
-  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye, Trash2
+  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye, Trash2, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -2629,6 +2629,13 @@ const ScraperPage: React.FC = (): JSX.Element => {
       linkedin: new Set()
     });
     const [activeTab, setActiveTab] = useState<'twitter' | 'linkedin'>('twitter');
+    const [openFolders, setOpenFolders] = useState<{
+      twitter: Set<string>;
+      linkedin: Set<string>;
+    }>({
+      twitter: new Set(),
+      linkedin: new Set()
+    });
 
     if (!isOpen) return null;
 
@@ -2674,10 +2681,70 @@ const ScraperPage: React.FC = (): JSX.Element => {
     };
 
     // Toggle user selection
+    // Function to toggle entire user folder selection (circle icon)
     const toggleUserSelection = (platform: 'twitter' | 'linkedin', username: string) => {
       setSelectedUsers(prev => {
         const newSelection = { ...prev };
         const currentSet = new Set(newSelection[platform]);
+        
+        if (currentSet.has(username)) {
+          // User is being deselected - remove all their posts from selection
+          currentSet.delete(username);
+          
+          // Remove all posts from this user
+          setSelectedPosts(prevPosts => {
+            const newPosts = { ...prevPosts };
+            const userPosts = platform === 'twitter' 
+              ? organizeTwitterByUser().get(username) || []
+              : organizeLinkedInByUser().get(username) || [];
+            
+            userPosts.forEach(post => {
+              const postId = platform === 'twitter' 
+                ? (post as any).id || (post as any).tweet_id
+                : (post as any).id || (post as any)._id || (post as any).mongoId;
+              
+              if (postId) {
+                newPosts[platform].delete(postId);
+              }
+            });
+            
+            return newPosts;
+          });
+        } else {
+          // User is being selected - auto-select all their posts
+          currentSet.add(username);
+          
+          // Auto-select all posts from this user
+          setSelectedPosts(prevPosts => {
+            const newPosts = { ...prevPosts };
+            const userPosts = platform === 'twitter' 
+              ? organizeTwitterByUser().get(username) || []
+              : organizeLinkedInByUser().get(username) || [];
+            
+            userPosts.forEach(post => {
+              const postId = platform === 'twitter' 
+                ? (post as any).id || (post as any).tweet_id
+                : (post as any).id || (post as any)._id || (post as any).mongoId;
+              
+              if (postId) {
+                newPosts[platform].add(postId);
+              }
+            });
+            
+            return newPosts;
+          });
+        }
+        
+        newSelection[platform] = currentSet;
+        return newSelection;
+      });
+    };
+
+    // Function to toggle folder open/close (folder name click)
+    const toggleFolderOpen = (platform: 'twitter' | 'linkedin', username: string) => {
+      setOpenFolders(prev => {
+        const newFolders = { ...prev };
+        const currentSet = new Set(newFolders[platform]);
         
         if (currentSet.has(username)) {
           currentSet.delete(username);
@@ -2685,8 +2752,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
           currentSet.add(username);
         }
         
-        newSelection[platform] = currentSet;
-        return newSelection;
+        newFolders[platform] = currentSet;
+        return newFolders;
       });
     };
 
@@ -2732,20 +2799,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
     };
 
     // Proceed to post selection view
-    const proceedToPostSelection = () => {
-      if (selectedUsers.twitter.size === 0 && selectedUsers.linkedin.size === 0) {
-        toast({
-          title: "No users selected",
-          description: "Please select at least one user to view their posts",
-        });
-        return;
-      }
-      setViewMode('posts');
-    };
-
-    // Go back to user selection
-    const backToUserSelection = () => {
-      setViewMode('folders');
+    // Clear all selections and close all folders
+    const clearAllSelections = () => {
+      setSelectedUsers({ twitter: new Set(), linkedin: new Set() });
+      setSelectedPosts({ twitter: new Set(), linkedin: new Set() });
+      setOpenFolders({ twitter: new Set(), linkedin: new Set() });
     };
 
     return (
@@ -2754,40 +2812,39 @@ const ScraperPage: React.FC = (): JSX.Element => {
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Folder className="h-6 w-6 text-blue-600" />
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {viewMode === 'folders' ? 'Saved Posts - By User' : 'Posts from Selected Users'}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {viewMode === 'folders' 
-                      ? `${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts`
-                      : `${selectedUsers.twitter.size + selectedUsers.linkedin.size} users selected`
-                    }
-                  </p>
-                </div>
+            <div className="flex items-center gap-3">
+              <Folder className="h-6 w-6 text-blue-600" />
+              <div>
+                  <h2 className="text-xl font-bold text-gray-900">Saved Posts - By User</h2>
+                <p className="text-sm text-gray-500">
+                    {savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts
+                    {(selectedUsers.twitter.size + selectedUsers.linkedin.size > 0) && (
+                      <span className="ml-2 text-blue-600">
+                        • {selectedPosts.twitter.size + selectedPosts.linkedin.size} posts selected from {selectedUsers.twitter.size + selectedUsers.linkedin.size} users
+                      </span>
+                    )}
+                </p>
               </div>
+            </div>
               <div className="flex items-center gap-2">
-                {viewMode === 'posts' && (
+                {(selectedUsers.twitter.size + selectedUsers.linkedin.size > 0) && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={backToUserSelection}
+                    onClick={clearAllSelections}
                     className="flex items-center gap-2"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Users
+                    Clear All
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onClose}
-                  className="p-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="p-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
               </div>
             </div>
           </div>
@@ -2800,303 +2857,231 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
                 <p>Start by scraping and saving some content!</p>
               </div>
-            ) : viewMode === 'folders' ? (
-              // User Folder View
+            ) : (
+              // User Folder View - simplified to only show folders
               <div className="space-y-6">
                 <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
                   <h4 className="font-medium mb-2">Select Users:</h4>
-                  <p>Choose users whose posts you want to work with. You can select multiple users from both platforms.</p>
+                  <p>Click on user folders to automatically select all their posts. You can select multiple users from both platforms.</p>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="twitter" className="flex items-center gap-2">
-                      <Twitter className="h-4 w-4" />
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="twitter" className="flex items-center gap-2">
+                    <Twitter className="h-4 w-4" />
                       Twitter Users ({organizeTwitterByUser().size})
-                    </TabsTrigger>
-                    <TabsTrigger value="linkedin" className="flex items-center gap-2">
-                      <Linkedin className="h-4 w-4" />
+                  </TabsTrigger>
+                  <TabsTrigger value="linkedin" className="flex items-center gap-2">
+                    <Linkedin className="h-4 w-4" />
                       LinkedIn Users ({organizeLinkedInByUser().size})
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="twitter">
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="twitter">
                     {organizeTwitterByUser().size === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <p>No saved Twitter posts</p>
-                      </div>
+                        </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Array.from(organizeTwitterByUser().entries()).map(([username, posts]) => (
-                          <Card 
-                            key={username}
-                            className={`cursor-pointer transition-all hover:shadow-md ${
-                              selectedUsers.twitter.has(username) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
-                            }`}
-                            onClick={() => toggleUserSelection('twitter', username)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
-                                  {selectedUsers.twitter.has(username) ? (
-                                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                      <div className="h-3 w-3 text-white">✓</div>
-                                    </div>
-                                  ) : (
-                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <Folder className="h-4 w-4 text-gray-500" />
-                                    <p className="font-medium text-sm truncate">@{username}</p>
+                                                {Array.from(organizeTwitterByUser().entries()).map(([username, posts]) => (
+                          <div key={username} className="space-y-2">
+                            <Card 
+                              className={`transition-all hover:shadow-md ${
+                                selectedUsers.twitter.has(username) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div 
+                                    className="flex-shrink-0 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleUserSelection('twitter', username);
+                                    }}
+                                  >
+                                    {selectedUsers.twitter.has(username) ? (
+                                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <div className="h-3 w-3 text-white">✓</div>
+                                      </div>
+                                    ) : (
+                                      <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
+                                    )}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {posts.length} post{posts.length !== 1 ? 's' : ''}
-                                  </p>
+                                  <div 
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                    onClick={() => toggleFolderOpen('twitter', username)}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Folder className={`h-4 w-4 ${openFolders.twitter.has(username) ? 'text-blue-500' : 'text-gray-500'}`} />
+                                      <p className="font-medium text-sm truncate">@{username}</p>
+                                      <div className={`ml-auto transition-transform ${openFolders.twitter.has(username) ? 'rotate-90' : ''}`}>
+                                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {posts.length} post{posts.length !== 1 ? 's' : ''}
+                                      {selectedUsers.twitter.has(username) && (
+                                        <span className="ml-2 text-blue-600 font-medium">(All selected)</span>
+                                      )}
+                                    </p>
+                                  </div>
                                 </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Individual posts when folder is open */}
+                            {openFolders.twitter.has(username) && (
+                              <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
+                                {posts.map((post, index) => {
+                                  const postId = (post as any).id || (post as any).tweet_id || index.toString();
+                                  const isThread = 'tweets' in post;
+                                  const content = isThread 
+                                    ? (post as any).tweets[0]?.text || (post as any).tweets[0]?.full_text || 'Thread'
+                                    : (post as any).text || (post as any).full_text || 'No content';
+                                  
+                                  return (
+                                    <div 
+                                      key={postId}
+                                      className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
+                                        selectedPosts.twitter.has(postId) || selectedUsers.twitter.has(username)
+                                          ? 'ring-1 ring-blue-400 bg-blue-25' 
+                                          : 'hover:bg-gray-50'
+                                      }`}
+                                      onClick={() => togglePostSelection('twitter', postId)}
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <div className="flex-shrink-0 mt-1">
+                                          {selectedPosts.twitter.has(postId) || selectedUsers.twitter.has(username) ? (
+                                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                              <div className="h-2 w-2 text-white text-xs">✓</div>
+                                            </div>
+                                          ) : (
+                                            <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs text-gray-800 line-clamp-2">
+                                            {isThread && <span className="text-blue-600 font-medium">Thread: </span>}
+                                            {content}
+                                          </p>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {isThread ? `${(post as any).tweets.length} tweets` : 'Single tweet'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            </CardContent>
-                          </Card>
+                            )}
+                          </div>
                         ))}
-                      </div>
-                    )}
+                              </div>
+                            )}
                   </TabsContent>
 
                   <TabsContent value="linkedin">
                     {organizeLinkedInByUser().size === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <p>No saved LinkedIn posts</p>
-                      </div>
+                                  </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Array.from(organizeLinkedInByUser().entries()).map(([authorName, posts]) => (
-                          <Card 
-                            key={authorName}
-                            className={`cursor-pointer transition-all hover:shadow-md ${
-                              selectedUsers.linkedin.has(authorName) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
-                            }`}
-                            onClick={() => toggleUserSelection('linkedin', authorName)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
-                                  {selectedUsers.linkedin.has(authorName) ? (
-                                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                      <div className="h-3 w-3 text-white">✓</div>
-                                    </div>
-                                  ) : (
-                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <Folder className="h-4 w-4 text-gray-500" />
-                                    <p className="font-medium text-sm truncate">{authorName}</p>
+                                                {Array.from(organizeLinkedInByUser().entries()).map(([authorName, posts]) => (
+                          <div key={authorName} className="space-y-2">
+                            <Card 
+                              className={`transition-all hover:shadow-md ${
+                                selectedUsers.linkedin.has(authorName) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div 
+                                    className="flex-shrink-0 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleUserSelection('linkedin', authorName);
+                                    }}
+                                  >
+                                    {selectedUsers.linkedin.has(authorName) ? (
+                                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <div className="h-3 w-3 text-white">✓</div>
+                                      </div>
+                                    ) : (
+                                      <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
+                                    )}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {posts.length} post{posts.length !== 1 ? 's' : ''}
-                                  </p>
+                                  <div 
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                    onClick={() => toggleFolderOpen('linkedin', authorName)}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Folder className={`h-4 w-4 ${openFolders.linkedin.has(authorName) ? 'text-blue-500' : 'text-gray-500'}`} />
+                                      <p className="font-medium text-sm truncate">{authorName}</p>
+                                      <div className={`ml-auto transition-transform ${openFolders.linkedin.has(authorName) ? 'rotate-90' : ''}`}>
+                                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                                      </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {posts.length} post{posts.length !== 1 ? 's' : ''}
+                                      {selectedUsers.linkedin.has(authorName) && (
+                                        <span className="ml-2 text-blue-600 font-medium">(All selected)</span>
+                                      )}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </div>
-            ) : (
-              // Post Selection View - showing posts from selected users
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="twitter" className="flex items-center gap-2">
-                    <Twitter className="h-4 w-4" />
-                    Twitter Posts ({getPostsFromSelectedUsers().twitter.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="linkedin" className="flex items-center gap-2">
-                    <Linkedin className="h-4 w-4" />
-                    LinkedIn Posts ({getPostsFromSelectedUsers().linkedin.length})
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="twitter">
-                  {getPostsFromSelectedUsers().twitter.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No posts from selected Twitter users</p>
-                    </div>
-                  ) : (
-                    <div className="columns-1 md:columns-2 gap-6">
-                      {(() => {
-                        const allContent = getPostsFromSelectedUsers().twitter;
-                        
-                        // Sort by date (newest first)
-                        allContent.sort((a, b) => {
-                          const dateA = new Date('tweets' in a ? a.tweets[0]?.created_at || a.created_at : a.created_at || '');
-                          const dateB = new Date('tweets' in b ? b.tweets[0]?.created_at || b.created_at : b.created_at || '');
-                          return dateB.getTime() - dateA.getTime();
-                        });
-                        
-                        return allContent.map((item, index) => (
-                          <div key={'tweets' in item ? `filtered-thread-${item.id}` : `filtered-tweet-${item.id}`} className="break-inside-avoid mb-6 w-full relative">
-                            {'tweets' in item ? (
-                              // This is a thread
-                              <div className="relative">
-                                <TweetThread thread={item} />
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    item.tweets.forEach(tweet => handleDeleteTwitterPost(tweet.id));
-                                  }}
-                                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              // This is a standalone tweet
-                              <div className="relative">
-                                <TweetCard tweet={item} />
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    handleDeleteTwitterPost(item.id);
-                                  }}
-                                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Individual posts when folder is open */}
+                            {openFolders.linkedin.has(authorName) && (
+                              <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
+                                {posts.map((post, index) => {
+                                  const postData = post.postData || post;
+                                  const postId = postData.id || post._id || post.mongoId || index.toString();
+                                  const content = postData.content || 'No content';
+                                  
+                                  return (
+                                    <div 
+                                      key={postId}
+                                      className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
+                                        selectedPosts.linkedin.has(postId) || selectedUsers.linkedin.has(authorName)
+                                          ? 'ring-1 ring-blue-400 bg-blue-25' 
+                                          : 'hover:bg-gray-50'
+                                      }`}
+                                      onClick={() => togglePostSelection('linkedin', postId)}
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <div className="flex-shrink-0 mt-1">
+                                          {selectedPosts.linkedin.has(postId) || selectedUsers.linkedin.has(authorName) ? (
+                                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                              <div className="h-2 w-2 text-white text-xs">✓</div>
+                                            </div>
+                                          ) : (
+                                            <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs text-gray-800 line-clamp-2">
+                                            {content}
+                                          </p>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {postData.author} • {new Date(postData.savedAt || post.createdAt || Date.now()).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
-                        ));
-                      })()}
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="linkedin">
-                  {getPostsFromSelectedUsers().linkedin.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No posts from selected LinkedIn users</p>
-                    </div>
-                  ) : (
-                    <div className="masonry-container columns-1 md:columns-2 xl:columns-3 gap-6">
-                      {getPostsFromSelectedUsers().linkedin.map((post, index) => {
-                        const postData = post.postData || post;
-                        return (
-                          <Card 
-                            key={`filtered-${postData.id}-${index}`} 
-                            className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid mb-6 relative"
-                          >
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                handleDeleteLinkedInPost(post.mongoId || post._id || post.id);
-                              }}
-                              className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100 z-10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                            
-                            <CardHeader className="p-4 pb-3">
-                              <div className="flex items-start gap-3">
-                                <img 
-                                  src={postData.authorAvatar || 'https://via.placeholder.com/40'} 
-                                  alt={postData.author}
-                                  className="w-10 h-10 rounded-full object-cover" 
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-sm text-gray-900">{postData.author}</h4>
-                                  <p className="text-xs text-gray-600 line-clamp-2">{postData.authorHeadline}</p>
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    Saved • {new Date(postData.savedAt || post.createdAt).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardHeader>
-                              
-                            <CardContent className="p-4 pt-0">
-                              <div className="space-y-4">
-                                <div className="linkedin-post-content">
-                                  {(() => {
-                                    const [isExpanded, setIsExpanded] = React.useState(false);
-                                    const content = postData.content || '';
-                                    return content.length > 250 && !isExpanded ? (
-                                      <>
-                                        <p className="whitespace-pre-line break-words">
-                                          {content.substring(0, 250)}...
-                                        </p>
-                                        <button 
-                                          className="text-blue-500 hover:text-blue-600 text-xs mt-1"
-                                          onClick={() => setIsExpanded(true)}
-                                        >
-                                          Show more
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <p className="whitespace-pre-line break-words">{content}</p>
-                                    );
-                                  })()}
-                                </div>
-                                
-                                {postData.media && postData.media.length > 0 && (
-                                  <div className="relative">
-                                    {postData.media.length === 1 ? (
-                                      <div className="rounded-lg overflow-hidden bg-gray-100">
-                                        <img 
-                                          src={postData.media[0].url} 
-                                          alt="Post media" 
-                                          className="w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
-                                          style={{ height: 'auto', maxHeight: '400px' }}
-                                          onClick={() => window.open(postData.media[0].url, '_blank')}
-                                        />
-                                      </div>
-                                    ) : (
-                                      <LinkedInCarousel post={postData} />
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {postData.documents && postData.documents.length > 0 && (
-                                  <div className="space-y-3">
-                                    {postData.documents.map((doc: any, docIndex: number) => (
-                                      <LinkedInDocumentCarousel 
-                                        key={docIndex} 
-                                        document={doc} 
-                                        postId={postData.id}
-                                        onOpenPdf={openPdfViewer}
-                                      />
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                        ))}
                     </div>
                   )}
                 </TabsContent>
               </Tabs>
-            )}
-
-            {/* Action Buttons for Folder View */}
-            {viewMode === 'folders' && (selectedUsers.twitter.size > 0 || selectedUsers.linkedin.size > 0) && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Selected: {selectedUsers.twitter.size + selectedUsers.linkedin.size} users
-                </div>
-                <Button 
-                  onClick={proceedToPostSelection}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  View Posts from Selected Users
-                </Button>
               </div>
             )}
           </div>
