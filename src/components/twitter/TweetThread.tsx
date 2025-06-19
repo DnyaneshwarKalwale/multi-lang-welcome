@@ -46,11 +46,11 @@ const TweetThread: React.FC<TweetThreadProps> = ({
       if (tweet.full_text && tweet.full_text.length > tweet.text.length + 20) {
         setFullTweets(prev => new Map(prev).set(tweet.id, tweet));
             
-        // Automatically expand preloaded tweets in threads for better readability
+            // Automatically expand preloaded tweets in threads for better readability
         if (!expandedTweets.has(tweet.id)) {
-          setExpandedTweets(prev => new Set(prev).add(tweet.id));
-        }
-      }
+              setExpandedTweets(prev => new Set(prev).add(tweet.id));
+            }
+          }
     });
   }, [thread.tweets]);
   

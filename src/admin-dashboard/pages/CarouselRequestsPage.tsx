@@ -470,7 +470,7 @@ const CarouselRequestsPage: React.FC = () => {
   // Add function to get download URL
   const getDownloadUrl = (file: CarouselFile) => {
     const url = file.url || '';
-    
+
     // For Cloudinary URLs, modify the URL to force download
     if (url.includes('cloudinary.com')) {
       // Add fl_attachment flag to force download
@@ -731,8 +731,8 @@ const CarouselRequestsPage: React.FC = () => {
             
             if (!response.ok) {
               throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${responseText}`);
-            }
-            
+      }
+      
             try {
               const data = JSON.parse(responseText);
               if (data.secure_url) {
