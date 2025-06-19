@@ -998,19 +998,35 @@ const ScraperPage: React.FC = (): JSX.Element => {
     }
   }, [activeTab, lastSearchedChannel, inputUrl]);
 
-  // Update input URL on mount if we have a last searched LinkedIn profile
-  useEffect(() => {
-    if (activeTab === 'linkedin' && lastSearchedLinkedInProfile && !inputUrl) {
-      setInputUrl(lastSearchedLinkedInProfile);
-    }
-  }, [activeTab, lastSearchedLinkedInProfile, inputUrl]);
+  // Don't auto-fill LinkedIn and Twitter inputs - let user start fresh each time
+  // This was causing persistent search behavior that user didn't want
 
-  // Update input URL on mount if we have a last searched Twitter user
+  // Clear input URL when switching to LinkedIn or Twitter tabs
   useEffect(() => {
-    if (activeTab === 'twitter' && lastSearchedTwitterUser && !inputUrl) {
-      setInputUrl(lastSearchedTwitterUser.startsWith('@') ? lastSearchedTwitterUser : `@${lastSearchedTwitterUser}`);
+    if (activeTab === 'linkedin' || activeTab === 'twitter') {
+      setInputUrl('');
     }
-  }, [activeTab, lastSearchedTwitterUser, inputUrl]);
+  }, [activeTab]);
+
+  // Cleanup function to clear LinkedIn and Twitter search persistence
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Clear LinkedIn and Twitter search persistence when navigating away
+      localStorage.removeItem('lastSearchedLinkedInProfile');
+      localStorage.removeItem('lastSearchedTwitterUser');
+    };
+
+    // Add event listener for page unload
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also clear when component unmounts
+      localStorage.removeItem('lastSearchedLinkedInProfile');
+      localStorage.removeItem('lastSearchedTwitterUser');
+    };
+  }, []);
 
   // Handle clearing YouTube results when needed
   const clearYoutubeResults = () => {
@@ -1024,6 +1040,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
   const clearLinkedInResults = () => {
     setLinkedinResult(null);
     setLastSearchedLinkedInProfile('');
+    setInputUrl(''); // Also clear the input
     localStorage.removeItem('linkedinResult');
     localStorage.removeItem('lastSearchedLinkedInProfile');
   };
@@ -1034,6 +1051,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     setLastSearchedTwitterUser('');
     setSelectedTweets(new Set());
     setSelectedThreads(new Set());
+    setInputUrl(''); // Also clear the input
     localStorage.removeItem('twitterResult');
     localStorage.removeItem('lastSearchedTwitterUser');
   };
@@ -1095,7 +1113,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
 
       if (response.data.success) {
         setLinkedinResult(response.data);
-        setLastSearchedLinkedInProfile(username);
+        // Don't save to localStorage to prevent persistence
+        // setLastSearchedLinkedInProfile(username);
         
         toastSuccess(`Successfully scraped ${response.data.totalPosts} posts from ${username}`);
         
@@ -1332,7 +1351,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
         
         setTwitterResult(twitterResult);
         setTwitterThreads(threads);
-        setLastSearchedTwitterUser(username);
+        // Don't save to localStorage to prevent persistence
+        // setLastSearchedTwitterUser(username);
       
         toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
         
@@ -2594,10 +2614,9 @@ const ScraperPage: React.FC = (): JSX.Element => {
   }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
     const [searchQuery, setSearchQuery] = React.useState('');
     
-    if (!isOpen) return null;
-
-    // Filter functions
-    const filterTwitterContent = (content: Tweet | Thread) => {
+    // All hooks must be called before any early returns
+    // Filter functions moved inside component but after all hooks
+    const filterTwitterContent = React.useCallback((content: Tweet | Thread) => {
       if (!searchQuery.trim()) return true;
       
       const query = searchQuery.toLowerCase();
@@ -2615,9 +2634,9 @@ const ScraperPage: React.FC = (): JSX.Element => {
                content.author?.name?.toLowerCase().includes(query) ||
                content.text?.toLowerCase().includes(query);
       }
-    };
+    }, [searchQuery]);
 
-    const filterLinkedInPosts = (post: any) => {
+    const filterLinkedInPosts = React.useCallback((post: any) => {
       if (!searchQuery.trim()) return true;
       
       const query = searchQuery.toLowerCase();
@@ -2626,12 +2645,26 @@ const ScraperPage: React.FC = (): JSX.Element => {
       return postData.author?.toLowerCase().includes(query) ||
              postData.authorHeadline?.toLowerCase().includes(query) ||
              postData.content?.toLowerCase().includes(query);
-    };
+    }, [searchQuery]);
 
     // Apply filters
-    const filteredTwitterPosts = savedTwitterPosts.filter(filterTwitterContent);
-    const filteredTwitterThreads = savedTwitterThreads.filter(filterTwitterContent);
-    const filteredLinkedInPosts = savedLinkedInPosts.filter(filterLinkedInPosts);
+    const filteredTwitterPosts = React.useMemo(() => 
+      savedTwitterPosts.filter(filterTwitterContent), 
+      [savedTwitterPosts, filterTwitterContent]
+    );
+    
+    const filteredTwitterThreads = React.useMemo(() => 
+      savedTwitterThreads.filter(filterTwitterContent), 
+      [savedTwitterThreads, filterTwitterContent]
+    );
+    
+    const filteredLinkedInPosts = React.useMemo(() => 
+      savedLinkedInPosts.filter(filterLinkedInPosts), 
+      [savedLinkedInPosts, filterLinkedInPosts]
+    );
+    
+    // Early return AFTER all hooks are called
+    if (!isOpen) return null;
 
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
