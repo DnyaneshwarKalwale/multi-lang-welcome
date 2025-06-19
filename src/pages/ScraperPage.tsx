@@ -2854,11 +2854,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                 <div 
                                   className="flex-1 min-w-0 cursor-pointer"
                                   onClick={() => {
+                                    // Directly show posts for this user without requiring selection
+                                    setViewMode('posts');
                                     setSelectedUsers(prev => ({
                                       ...prev,
                                       twitter: new Set([username])
                                     }));
-                                    proceedToPostSelection();
                                   }}
                                 >
                                   <div className="flex items-center gap-2">
@@ -2911,11 +2912,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                 <div 
                                   className="flex-1 min-w-0 cursor-pointer"
                                   onClick={() => {
+                                    // Directly show posts for this user without requiring selection
+                                    setViewMode('posts');
                                     setSelectedUsers(prev => ({
                                       ...prev,
                                       linkedin: new Set([authorName])
                                     }));
-                                    proceedToPostSelection();
                                   }}
                                 >
                                   <div className="flex items-center gap-2">
@@ -2937,6 +2939,16 @@ const ScraperPage: React.FC = (): JSX.Element => {
               </div>
             ) : (
               // Post Selection View - showing posts from selected users
+              <div className="mb-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setViewMode('folders')}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Folders
+                </Button>
+              </div>
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="twitter" className="flex items-center gap-2">
