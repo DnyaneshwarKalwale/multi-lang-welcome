@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import api, { tokenManager } from '@/services/api';
 import TweetCard from "@/components/twitter/TweetCard";
 import TweetThread from "@/components/twitter/TweetThread";
+import { Tweet as TwitterTweet, Thread as TwitterThread } from '@/utils/twitterTypes';
 // import { tokenManager as tokenManagerUtils } from '../utils/tokenManager';
 
 // Model options with fallbacks
@@ -127,46 +128,7 @@ interface SavedContent {
   createdAt: string;
 }
 
-// Tweet and Thread interfaces from ScraperPage
-interface Tweet {
-  id: string;
-  text: string;
-  full_text?: string;
-  created_at: string;
-  public_metrics: {
-    retweet_count: number;
-    reply_count: number;
-    like_count: number;
-    quote_count: number;
-  };
-  author: {
-    id: string;
-    name: string;
-    username: string;
-    profile_image_url: string;
-  };
-  media?: {
-    media_key: string;
-    type: string;
-    url: string;
-    preview_image_url?: string;
-    alt_text?: string;
-    width?: number;
-    height?: number;
-  }[];
-}
 
-interface Thread {
-  id: string;
-  tweets: Tweet[];
-  author?: {
-    id: string;
-    name: string;
-    username: string;
-    profile_image_url: string;
-  };
-  created_at?: string;
-}
 
 // Function to generate dummy transcript based on video ID
 const generateDummyTranscript = (videoId: string): string[] => {
@@ -3706,9 +3668,9 @@ const RequestCarouselPage: React.FC = () => {
                                         
                                         {/* Check if it's a thread or single tweet */}
                                         {'tweets' in post ? (
-                                          <TweetThread thread={post as Thread} />
+                                          <TweetThread thread={post as TwitterThread} />
                                         ) : (
-                                          <TweetCard tweet={post as Tweet} />
+                                          <TweetCard tweet={post as TwitterTweet} />
                                         )}
                                       </div>
                                     </div>
