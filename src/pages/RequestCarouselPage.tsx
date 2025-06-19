@@ -233,8 +233,11 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   
   console.log("Preparing carousel content for editor:", content);
   
+  // First, remove any markdown separators
+  let cleanContent = content.replace(/^---+$/gm, '').trim();
+  
   // Process the content to remove standalone "Slide X" slides and clean slide content
-  const rawSlides = content.split('\n\n').filter(s => s.trim());
+  const rawSlides = cleanContent.split('\n\n').filter(s => s.trim());
   const textSlides = [];
   
   for (let i = 0; i < rawSlides.length; i++) {
@@ -245,8 +248,17 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
       continue;
     }
     
-    // Remove "Slide X:" prefix if it exists
-    textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+    // Remove various slide number formats
+    let cleanedSlide = current
+      .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
+      .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
+      .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
+      .trim();
+    
+    // Only add non-empty slides
+    if (cleanedSlide) {
+      textSlides.push(cleanedSlide);
+    }
   }
   
   console.log("Created text slides:", textSlides.length);
@@ -1937,28 +1949,40 @@ const RequestCarouselPage: React.FC = () => {
   // Add the missing functions after the state variables
 
   // Add safety checks in the carousel preview section
-  const getCarouselSlides = (content: string | null | undefined) => {
-    if (!content) return [];
+const getCarouselSlides = (content: string | null | undefined) => {
+  if (!content) return [];
+  
+  // First, remove any markdown separators
+  let cleanContent = content.replace(/^---+$/gm, '').trim();
+  
+  // Split by double newlines to get individual slides
+  const rawSlides = cleanContent.split('\n\n').filter(s => s.trim());
+  
+  // Now process slides to remove "Slide X" prefix slides and clean remaining slide content
+  const processedSlides = [];
+  for (let i = 0; i < rawSlides.length; i++) {
+    const current = rawSlides[i].trim();
     
-    // First, split by double newlines to get individual slides
-    const rawSlides = content.split('\n\n').filter(s => s.trim());
-    
-    // Now process slides to remove "Slide X" prefix slides and clean remaining slide content
-    const processedSlides = [];
-    for (let i = 0; i < rawSlides.length; i++) {
-      const current = rawSlides[i].trim();
-      
-      // Skip slides that only contain "Slide X" and nothing else
-      if (/^Slide\s*\d+\s*$/.test(current)) {
-        continue;
-      }
-      
-      // Remove "Slide X:" prefix if it exists
-      processedSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+    // Skip slides that only contain "Slide X" and nothing else
+    if (/^Slide\s*\d+\s*$/.test(current)) {
+      continue;
     }
     
-    return processedSlides;
-  };
+    // Remove various slide number formats
+    let cleanedSlide = current
+      .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
+      .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
+      .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
+      .trim();
+    
+    // Only add non-empty slides
+    if (cleanedSlide) {
+      processedSlides.push(cleanedSlide);
+    }
+  }
+  
+  return processedSlides;
+};
 
   const getCarouselSlideCount = (content: string | null | undefined) => {
     const slides = getCarouselSlides(content);
@@ -1992,7 +2016,10 @@ const RequestCarouselPage: React.FC = () => {
       // Create a mutable copy of the content to process
       let contentToProcess = previewContent;
       
-      // First check if we have content with at least newlines
+      // First, remove any markdown separators
+      contentToProcess = contentToProcess.replace(/^---+$/gm, '').trim();
+      
+      // Check if we have content with at least newlines
       if (!contentToProcess.includes('\n\n')) {
         // Try adding double newlines if it has single newlines
         if (contentToProcess.includes('\n')) {
@@ -2019,8 +2046,17 @@ const RequestCarouselPage: React.FC = () => {
           continue;
         }
         
-        // Remove "Slide X:" prefix if it exists
-        textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+        // Remove various slide number formats
+        let cleanedSlide = current
+          .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
+          .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
+          .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
+          .trim();
+        
+        // Only add non-empty slides
+        if (cleanedSlide) {
+          textSlides.push(cleanedSlide);
+        }
       }
       
       console.log("Processed slides for editor:", textSlides.length, textSlides);
@@ -2188,10 +2224,19 @@ const RequestCarouselPage: React.FC = () => {
 
   // Handle content edit
   const handleContentEdit = (newContent: string) => {
-    // Clean up slide numbers from the content
-    const cleanContent = newContent
+    // Clean up slide numbers and separators from the content
+    let cleanContent = newContent.replace(/^---+$/gm, '').trim();
+    
+    cleanContent = cleanContent
       .split('\n\n')
-      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+      .map(slide => {
+        return slide
+          .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
+          .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
+          .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
+          .trim();
+      })
+      .filter(slide => slide) // Remove empty slides
       .join('\n\n');
     
     setEditableContent(cleanContent);
@@ -2206,10 +2251,19 @@ const RequestCarouselPage: React.FC = () => {
     } else {
       // Exiting edit mode - save edited content
       if (previewType === 'carousel') {
-        // Process the content to remove "Slide X:" prefixes from each slide
-        const cleanContent = editableContent
+        // Process the content to remove slide numbers and separators
+        let cleanContent = editableContent.replace(/^---+$/gm, '').trim();
+        
+        cleanContent = cleanContent
           .split('\n\n')
-          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+          .map(slide => {
+            return slide
+              .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
+              .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
+              .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
+              .trim();
+          })
+          .filter(slide => slide) // Remove empty slides
           .join('\n\n');
         
         setGeneratedContent(cleanContent);
