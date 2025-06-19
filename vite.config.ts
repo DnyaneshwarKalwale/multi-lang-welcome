@@ -14,6 +14,16 @@ export default defineConfig({
   },
   server: {
     port: 8080,
+    host: true, // Allow external hosts
+    allowedHosts: [
+      'app.brandout.ai',
+      'localhost',
+      '127.0.0.1',
+      '.brandout.ai' // Allow all subdomains of brandout.ai
+    ],
+    hmr: {
+      overlay: true,
+    },
     proxy: {
       '/api': {
         target: 'https://api.brandout.ai',
@@ -21,6 +31,15 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+    // Exclude Git files from being watched
+    watch: {
+      ignored: [
+        '**/.git/**',
+        '**/node_modules/**',
+        '**/.DS_Store',
+        '**/Thumbs.db'
+      ]
+    }
   },
   build: {
     rollupOptions: {
@@ -31,10 +50,18 @@ export default defineConfig({
           'utils-vendor': ['axios', 'date-fns', 'framer-motion'],
         },
       },
+      // Exclude Git files from bundling
+      external: (id: string) => {
+        return id.includes('.git') || id.includes('/.git/');
+      }
     },
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'axios'],
+    exclude: ['.git/**', '**/.git/**', '.gitignore', '.git'],
+  },
+  define: {
+    global: 'globalThis',
   },
 });
