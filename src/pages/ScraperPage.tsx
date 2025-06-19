@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Linkedin, Globe, Youtube, Copy, 
@@ -2604,23 +2604,22 @@ const ScraperPage: React.FC = (): JSX.Element => {
     };
   }, []);
 
-  // Saved Posts Modal Component
-  const SavedPostsModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    savedTwitterPosts: Tweet[];
-    savedTwitterThreads: Thread[];
-    savedLinkedInPosts: any[];
-  }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
-    const [searchQuery, setSearchQuery] = React.useState('');
+  // Modal state for saved posts
+  const [savedPostsSearchQuery, setSavedPostsSearchQuery] = useState('');
+
+  // Simple filter functions for saved posts (moved outside modal to avoid hook issues)
+  const filterSavedContent = (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      return {
+        filteredTwitterPosts: savedTwitterPosts,
+        filteredTwitterThreads: savedTwitterThreads,
+        filteredLinkedInPosts: savedLinkedInPosts
+      };
+    }
+
+    const query = searchQuery.toLowerCase();
     
-    // All hooks must be called before any early returns
-    // Filter functions moved inside component but after all hooks
-    const filterTwitterContent = React.useCallback((content: Tweet | Thread) => {
-      if (!searchQuery.trim()) return true;
-      
-      const query = searchQuery.toLowerCase();
-      
+    const filteredTwitterPosts = savedTwitterPosts.filter((content: Tweet | Thread) => {
       if ('tweets' in content) {
         // This is a thread
         return content.tweets.some(tweet => 
@@ -2634,36 +2633,70 @@ const ScraperPage: React.FC = (): JSX.Element => {
                content.author?.name?.toLowerCase().includes(query) ||
                content.text?.toLowerCase().includes(query);
       }
-    }, [searchQuery]);
+    });
 
-    const filterLinkedInPosts = React.useCallback((post: any) => {
-      if (!searchQuery.trim()) return true;
-      
-      const query = searchQuery.toLowerCase();
+    const filteredTwitterThreads = savedTwitterThreads.filter((content: Tweet | Thread) => {
+      if ('tweets' in content) {
+        // This is a thread
+        return content.tweets.some(tweet => 
+          tweet.author?.username?.toLowerCase().includes(query) ||
+          tweet.author?.name?.toLowerCase().includes(query) ||
+          tweet.text?.toLowerCase().includes(query)
+        );
+      } else {
+        // This is a single tweet
+        return content.author?.username?.toLowerCase().includes(query) ||
+               content.author?.name?.toLowerCase().includes(query) ||
+               content.text?.toLowerCase().includes(query);
+      }
+    });
+
+    const filteredLinkedInPosts = savedLinkedInPosts.filter((post: any) => {
       const postData = post.postData || post;
-      
       return postData.author?.toLowerCase().includes(query) ||
              postData.authorHeadline?.toLowerCase().includes(query) ||
              postData.content?.toLowerCase().includes(query);
-    }, [searchQuery]);
+    });
 
-    // Apply filters
-    const filteredTwitterPosts = React.useMemo(() => 
-      savedTwitterPosts.filter(filterTwitterContent), 
-      [savedTwitterPosts, filterTwitterContent]
+    return { filteredTwitterPosts, filteredTwitterThreads, filteredLinkedInPosts };
+  };
+
+  // Get filtered results
+  const { filteredTwitterPosts, filteredTwitterThreads, filteredLinkedInPosts } = filterSavedContent(savedPostsSearchQuery);
+
+  // Saved Posts Modal Component - Simplified to avoid hook issues
+  const SavedPostsModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    savedTwitterPosts: Tweet[];
+    savedTwitterThreads: Thread[];
+    savedLinkedInPosts: any[];
+  }> = ({ isOpen, onClose }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    
+    // Filter functions
+    const filteredTwitterPosts = savedTwitterPosts.filter(post => 
+      !searchQuery.trim() || 
+      post.author?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.author?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.text?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    const filteredTwitterThreads = React.useMemo(() => 
-      savedTwitterThreads.filter(filterTwitterContent), 
-      [savedTwitterThreads, filterTwitterContent]
+    const filteredTwitterThreads = savedTwitterThreads.filter(thread =>
+      !searchQuery.trim() ||
+      thread.tweets.some(tweet => 
+        tweet.author?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tweet.author?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tweet.text?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     );
     
-    const filteredLinkedInPosts = React.useMemo(() => 
-      savedLinkedInPosts.filter(filterLinkedInPosts), 
-      [savedLinkedInPosts, filterLinkedInPosts]
+    const filteredLinkedInPosts = savedLinkedInPosts.filter(post =>
+      !searchQuery.trim() ||
+      post.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    // Early return AFTER all hooks are called
     if (!isOpen) return null;
 
     return (
@@ -2677,7 +2710,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
                   <p className="text-sm text-gray-500">
-                    {searchQuery ? 
+                    {savedPostsSearchQuery ? 
                       `${filteredTwitterPosts.length + filteredTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + filteredLinkedInPosts.length} filtered / ${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total` :
                       `${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts`
                     }
