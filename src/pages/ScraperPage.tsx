@@ -1408,18 +1408,28 @@ const ScraperPage: React.FC = (): JSX.Element => {
         return;
       }
 
+      // For LinkedIn posts, we need to find the _id from our savedLinkedInPosts array
+      // The postId passed might be the post URL or post ID, we need the MongoDB _id
+      const savedPost = savedLinkedInPosts.find(post => 
+        post.id === postId || post._id === postId || post.url === postId
+      );
+      
+      if (!savedPost) {
+        toastError('Post not found in saved posts');
+        return;
+      }
+
+      const mongoId = savedPost._id || savedPost.id;
+
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
-        ? `${baseUrl}/saved-posts/${postId}`
-        : `${baseUrl}/api/saved-posts/${postId}`;
+        ? `${baseUrl}/saved-posts/${mongoId}`
+        : `${baseUrl}/api/saved-posts/${mongoId}`;
 
       const response = await axios.delete(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        data: {
-          userId: user.id
         }
       });
 
@@ -2606,10 +2616,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => {
-                                    if (window.confirm('Delete this thread? This will remove all tweets in this thread.')) {
-                                      // Delete all tweets in the thread
-                                      item.tweets.forEach(tweet => handleDeleteTwitterPost(tweet.id));
-                                    }
+                                    // Delete all tweets in the thread
+                                    item.tweets.forEach(tweet => handleDeleteTwitterPost(tweet.id));
                                   }}
                                   className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
                                 >
@@ -2628,9 +2636,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => {
-                                    if (window.confirm('Delete this tweet?')) {
-                                      handleDeleteTwitterPost(item.id);
-                                    }
+                                    handleDeleteTwitterPost(item.id);
                                   }}
                                   className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
                                 >
@@ -2662,9 +2668,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                             variant="destructive"
                             size="sm"
                             onClick={() => {
-                              if (window.confirm('Delete this LinkedIn post?')) {
-                                handleDeleteLinkedInPost(post._id || post.id);
-                              }
+                              handleDeleteLinkedInPost(post._id || post.id);
                             }}
                             className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100 z-10"
                           >

@@ -102,10 +102,10 @@ function LoadingSpinner() {
     // If user object says onboarding is completed, trust that and update localStorage
     if (user && userOnboardingCompleted && !localOnboardingCompleted) {
       console.log('ProtectedDashboardRoute - User has completed onboarding in database, updating localStorage');
-      localStorage.setItem('onboardingCompleted', 'true');
-      return <Navigate to="/dashboard/home" replace />;
-    }
-    
+        localStorage.setItem('onboardingCompleted', 'true');
+        return <Navigate to="/dashboard/home" replace />;
+      }
+      
     // If user hasn't completed onboarding according to both sources, redirect to onboarding
     if (!localOnboardingCompleted && user && !userOnboardingCompleted) {
       console.log('ProtectedDashboardRoute - User needs to complete onboarding');
@@ -115,7 +115,7 @@ function LoadingSpinner() {
     
     // If we have user data and they've completed onboarding, or localStorage says completed, go to dashboard
     if ((user && userOnboardingCompleted) || localOnboardingCompleted) {
-      return <Navigate to="/dashboard/home" replace />;
+    return <Navigate to="/dashboard/home" replace />;
     }
     
     // Default case - if we're still loading user data, show loading
