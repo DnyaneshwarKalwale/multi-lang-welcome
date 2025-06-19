@@ -46,6 +46,27 @@ import TweetCard from '@/components/twitter/TweetCard';
 import TweetThread from '@/components/twitter/TweetThread';
 import TweetCategories from '@/components/twitter/TweetCategories';
 
+// LinkedIn Post Content Component (to fix hooks issue)
+const LinkedInPostContent: React.FC<{ content: string }> = ({ content }) => {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  
+  return content.length > 250 && !isExpanded ? (
+    <>
+      <p className="whitespace-pre-line break-words">
+        {content.substring(0, 250)}...
+      </p>
+      <button 
+        className="text-blue-500 hover:text-blue-600 text-xs mt-1"
+        onClick={() => setIsExpanded(true)}
+      >
+        Show more
+      </button>
+    </>
+  ) : (
+    <p className="whitespace-pre-line break-words">{content}</p>
+  );
+};
+
 // PDF Viewer Modal Component
 const PDFViewerModal: React.FC<{ 
   isOpen: boolean; 
@@ -2856,6 +2877,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   onClick={() => {
                                     // Directly show posts for this user without requiring selection
                                     setViewMode('posts');
+                                    setActiveTab('twitter'); // Set to Twitter tab
                                     setSelectedUsers(prev => ({
                                       ...prev,
                                       twitter: new Set([username])
@@ -3064,26 +3086,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
                           <CardContent className="p-4 pt-0">
                               <div className="space-y-4">
                                 <div className="linkedin-post-content">
-                                  {(() => {
-                                    const [isExpanded, setIsExpanded] = React.useState(false);
-                                    const content = postData.content || '';
-                                    return content.length > 250 && !isExpanded ? (
-                                <>
-                                  <p className="whitespace-pre-line break-words">
-                                          {content.substring(0, 250)}...
-                                  </p>
-                                        <button 
-                                          className="text-blue-500 hover:text-blue-600 text-xs mt-1"
-                                          onClick={() => setIsExpanded(true)}
-                                        >
-                                    Show more
-                                  </button>
-                                </>
-                              ) : (
-                                      <p className="whitespace-pre-line break-words">{content}</p>
-                                    );
-                                  })()}
-                            </div>
+                                  <LinkedInPostContent content={postData.content || ''} />
+                                </div>
                             
                                 {postData.media && postData.media.length > 0 && (
                                   <div className="relative">
@@ -3123,7 +3127,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                     </div>
                   )}
                 </TabsContent>
-                </Tabs>
+              </Tabs>
               </>
             )}
 
