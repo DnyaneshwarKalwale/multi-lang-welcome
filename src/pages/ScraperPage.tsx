@@ -1164,6 +1164,9 @@ const ScraperPage: React.FC = (): JSX.Element => {
         saveLinkedInResultToStorage(response.data);
         
         toastSuccess(`Successfully scraped ${response.data.totalPosts} posts from ${username}`);
+        
+        // Auto-save all LinkedIn posts immediately after scraping
+        await autoSaveAllLinkedInPosts(response.data);
       } else {
         toastError(response.data.message || 'Failed to scrape LinkedIn profile');
       }
@@ -1370,7 +1373,10 @@ const ScraperPage: React.FC = (): JSX.Element => {
         // Save to localStorage for persistence
         saveTwitterResultToStorage(twitterResult);
       
-      toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+        toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+        
+        // Auto-save all tweets immediately after scraping
+        await autoSaveAllTweets(twitterResult, tweets);
     } else {
       throw new Error(response.data?.message || 'Failed to fetch tweets');
       }
@@ -1433,6 +1439,138 @@ const ScraperPage: React.FC = (): JSX.Element => {
     setSelectedLinkedInPosts(newSelection);
   };
 
+  // Auto-save function to save all LinkedIn posts after scraping
+  const autoSaveAllLinkedInPosts = async (linkedinResult: LinkedInResult) => {
+    // Only auto-save if user is logged in
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+    if (!token || !user?.id) {
+      console.log('Skipping LinkedIn auto-save: User not logged in');
+      return;
+    }
+
+    try {
+      console.log(`Auto-saving ${linkedinResult.posts.length} LinkedIn posts from ${linkedinResult.profileData.username}...`);
+      
+      if (linkedinResult.posts.length === 0) {
+        console.log('No LinkedIn posts to auto-save');
+        return;
+      }
+
+      // Prepare the request data
+      const requestData = {
+        posts: linkedinResult.posts,
+        profileData: linkedinResult.profileData,
+        options: {
+          autoSave: true // Flag to indicate this is an auto-save
+        }
+      };
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/linkedin/save-scraped-posts`
+        : `${baseUrl}/api/linkedin/save-scraped-posts`;
+      
+      const response = await axios.post(apiUrl, requestData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.success) {
+        console.log(`Auto-saved ${response.data.count} LinkedIn posts successfully!`);
+        
+        // Show a subtle notification for auto-save
+        toast({
+          title: 'Auto-saved',
+          description: `${response.data.count} LinkedIn posts auto-saved to your collection`,
+          duration: 3000,
+        });
+        
+        // Refresh saved posts list
+        loadSavedPosts();
+      }
+    } catch (error) {
+      console.error('Error auto-saving LinkedIn posts:', error);
+      // Don't show error toast for auto-save failures to avoid interrupting user experience
+    }
+  };
+
+  // Auto-save function to save all tweets after scraping
+  const autoSaveAllTweets = async (twitterResult: TwitterResult, tweets: Tweet[]) => {
+    // Only auto-save if user is logged in
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+    if (!token || !user?.id) {
+      console.log('Skipping auto-save: User not logged in');
+      return;
+    }
+
+    try {
+      console.log(`Auto-saving ${tweets.length} tweets from @${twitterResult.username}...`);
+      
+      // Prepare all tweets for saving (both standalone and thread tweets)
+      const allTweets = [
+        ...(Array.isArray(twitterResult.tweets) ? twitterResult.tweets : []),
+        ...(Array.isArray(twitterResult.threads) ? twitterResult.threads.flatMap(thread => thread.tweets || []) : [])
+      ];
+      
+      const tweetsToSave = allTweets.map(tweet => ({
+        ...tweet,
+        thread_id: tweet.thread_id || tweet.conversation_id,
+        thread_position: tweet.thread_position,
+        savedAt: new Date().toISOString(),
+        userId: user.id,
+        username: twitterResult.username,
+        profileImageUrl: twitterResult.profileImageUrl
+      }));
+
+      if (tweetsToSave.length === 0) {
+        console.log('No tweets to auto-save');
+        return;
+      }
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/twitter/save`
+        : `${baseUrl}/api/twitter/save`;
+      
+      const response = await axios.post(apiUrl, {
+        tweets: tweetsToSave,
+        username: twitterResult.username,
+        options: {
+          preserveExisting: true,
+          skipDuplicates: true,
+          preserveThreadOrder: true,
+          autoSave: true // Flag to indicate this is an auto-save
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.success) {
+        console.log(`Auto-saved ${response.data.count} tweets successfully!`);
+        
+        // Show a subtle notification for auto-save
+        toast({
+          title: 'Auto-saved',
+          description: `${response.data.count} tweets auto-saved to your collection`,
+          duration: 3000,
+        });
+        
+        // Refresh saved posts list
+        loadSavedPosts();
+      }
+    } catch (error) {
+      console.error('Error auto-saving tweets:', error);
+      // Don't show error toast for auto-save failures to avoid interrupting user experience
+    }
+  };
+
   const handleSaveSelectedTweets = async () => {
     if (selectedTweets.size === 0) {
       toastError('Please select at least one tweet to save');
@@ -1478,8 +1616,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
         return;
       }
       
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
-      const response = await axios.post(`${apiBaseUrl}/twitter/save`, {
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/twitter/save`
+        : `${baseUrl}/api/twitter/save`;
+      const response = await axios.post(apiUrl, {
         tweets: tweetsToSave,
         username: twitterResult.username,
         options: {
