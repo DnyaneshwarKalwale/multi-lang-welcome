@@ -1070,7 +1070,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     setSelectedLinkedInPosts(new Set());
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://backend-scripe.onrender.com/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const token = localStorage.getItem('token');
       
       // Prepare headers - include auth if available, but don't require it
@@ -1082,7 +1082,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await axios.post(`${apiBaseUrl}/linkedin/scrape-profile`, {
+      const apiUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/linkedin/scrape-profile`
+        : `${apiBaseUrl}/api/linkedin/scrape-profile`;
+        
+      const response = await axios.post(apiUrl, {
         username: username
       }, { 
         headers,
@@ -1187,9 +1191,20 @@ const ScraperPage: React.FC = (): JSX.Element => {
       } else {
         throw new Error(response.data?.message || 'Failed to fetch channel videos');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching YouTube channel:', error);
-      toastError('Failed to fetch channel videos. Please try again.');
+      
+      if (error.code === 'ERR_NETWORK') {
+        toastError('Network error. Please check your connection and try again.');
+      } else if (error.response?.status === 404) {
+        toastError(`YouTube channel '${channelIdentifier}' not found. Please check the channel name or URL.`);
+      } else if (error.response?.status === 524 || error.code === 'ECONNABORTED') {
+        toastError('Server timeout. Channel scraping is taking too long. Please try again.');
+      } else if (error.response?.status >= 500) {
+        toastError('Server error. Please try again in a few moments.');
+      } else {
+        toastError(error.response?.data?.message || 'Failed to fetch channel videos. Please try again.');
+      }
     } finally {
       setIsFetchingChannel(false);
     }
