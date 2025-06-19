@@ -4,7 +4,7 @@ import {
   Search, Linkedin, Globe, Youtube, Copy, 
   Lightbulb, MessageSquare, Save, Loader2,
   FileText, ArrowRight, PlusCircle, Twitter, ImageIcon, Folder,
-  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye
+  X, Download, ZoomIn, ZoomOut, RotateCw, RefreshCw, Eye, Trash2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -947,16 +947,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
     }
   };
 
-  // Save LinkedIn results to localStorage
-  const saveLinkedInResultToStorage = (linkedinResult: LinkedInResult) => {
-    try {
-      localStorage.setItem('linkedinResult', JSON.stringify(linkedinResult));
-      localStorage.setItem('lastSearchedLinkedInProfile', linkedinResult.profileData.username);
-    } catch (error) {
-      console.error('Error saving LinkedIn result to localStorage:', error);
-    }
-  };
-
   // Load YouTube channel results from localStorage
   const loadYoutubeChannelFromStorage = () => {
     try {
@@ -975,94 +965,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     }
   };
 
-  // Load LinkedIn results from localStorage
-  const loadLinkedInResultFromStorage = () => {
-    try {
-      const savedLinkedInResult = localStorage.getItem('linkedinResult');
-      const lastLinkedInProfile = localStorage.getItem('lastSearchedLinkedInProfile');
-      
-      if (savedLinkedInResult) {
-        setLinkedinResult(JSON.parse(savedLinkedInResult));
-      }
-      
-      if (lastLinkedInProfile && !inputUrl) {
-        setInputUrl(lastLinkedInProfile);
-      }
-    } catch (error) {
-      console.error('Error loading LinkedIn result from localStorage:', error);
-    }
-  };
 
-  // Save Twitter results to localStorage
-  const saveTwitterResultToStorage = (twitterResult: TwitterResult) => {
-    try {
-      // Validate the data structure before saving
-      const validatedResult = {
-        tweets: Array.isArray(twitterResult.tweets) ? twitterResult.tweets : [],
-        threads: Array.isArray(twitterResult.threads) ? twitterResult.threads : [],
-        username: twitterResult.username || '',
-        profileImageUrl: twitterResult.profileImageUrl || '',
-        totalCount: typeof twitterResult.totalCount === 'number' ? twitterResult.totalCount : 0,
-        categories: twitterResult.categories || {
-          all: 0,
-          normal: 0,
-          thread: 0,
-          long: 0
-        }
-      };
-
-      localStorage.setItem('twitterResult', JSON.stringify(validatedResult));
-      localStorage.setItem('lastSearchedTwitterUser', validatedResult.username);
-    } catch (error) {
-      console.error('Error saving Twitter result to localStorage:', error);
-    }
-  };
-
-  // Load Twitter results from localStorage
-  const loadTwitterResultFromStorage = () => {
-    try {
-      const savedTwitterResult = localStorage.getItem('twitterResult');
-      const lastTwitterUser = localStorage.getItem('lastSearchedTwitterUser');
-      
-      if (savedTwitterResult) {
-        const twitterData = JSON.parse(savedTwitterResult);
-        
-        // Validate and fix the data structure
-        if (twitterData && typeof twitterData === 'object') {
-          // Ensure required properties exist with proper defaults
-          const validTwitterResult: TwitterResult = {
-            tweets: Array.isArray(twitterData.tweets) ? twitterData.tweets : [],
-            threads: Array.isArray(twitterData.threads) ? twitterData.threads : [],
-            username: twitterData.username || '',
-            profileImageUrl: twitterData.profileImageUrl || '',
-            totalCount: typeof twitterData.totalCount === 'number' ? twitterData.totalCount : (twitterData.tweets?.length || 0),
-            categories: twitterData.categories || {
-              all: twitterData.totalCount || twitterData.tweets?.length || 0,
-              normal: 0,
-              thread: 0,
-              long: 0
-            }
-          };
-          
-          setTwitterResult(validTwitterResult);
-          setTwitterThreads(validTwitterResult.threads);
-          console.log(`Loaded ${validTwitterResult.totalCount} tweets from cache for @${validTwitterResult.username}`);
-        } else {
-          console.warn('Invalid Twitter data structure, clearing cache');
-          localStorage.removeItem('twitterResult');
-        }
-      }
-      
-      if (lastTwitterUser) {
-        setLastSearchedTwitterUser(lastTwitterUser);
-      }
-    } catch (error) {
-      console.error('Error loading Twitter result from localStorage:', error);
-      // Clear corrupted data
-      localStorage.removeItem('twitterResult');
-      localStorage.removeItem('lastSearchedTwitterUser');
-    }
-  };
 
   // Clear previous channel results when searching for a new channel
   useEffect(() => {
@@ -1186,9 +1089,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
       if (response.data.success) {
         setLinkedinResult(response.data);
         setLastSearchedLinkedInProfile(username);
-        
-        // Save to localStorage for persistence
-        saveLinkedInResultToStorage(response.data);
         
         toastSuccess(`Successfully scraped ${response.data.totalPosts} posts from ${username}`);
         
@@ -1396,9 +1296,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
         setTwitterResult(twitterResult);
         setTwitterThreads(threads);
         setLastSearchedTwitterUser(username);
-        
-        // Save to localStorage for persistence
-        saveTwitterResultToStorage(twitterResult);
       
         toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
         
@@ -1464,6 +1361,79 @@ const ScraperPage: React.FC = (): JSX.Element => {
     }
     
     setSelectedLinkedInPosts(newSelection);
+  };
+
+  // Delete individual Twitter post
+  const handleDeleteTwitterPost = async (tweetId: string) => {
+    try {
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
+      if (!token) {
+        toastError('Please log in to delete posts');
+        return;
+      }
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/twitter/${tweetId}`
+        : `${baseUrl}/api/twitter/${tweetId}`;
+
+      const response = await axios.delete(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        toastSuccess('Tweet deleted successfully');
+        // Refresh saved posts to update the UI
+        loadSavedPosts();
+      } else {
+        toastError(response.data.message || 'Failed to delete tweet');
+      }
+    } catch (error) {
+      console.error('Error deleting tweet:', error);
+      toastError(error.response?.data?.message || 'Failed to delete tweet');
+    }
+  };
+
+  // Delete individual LinkedIn post
+  const handleDeleteLinkedInPost = async (postId: string) => {
+    try {
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
+      if (!token || !user?.id) {
+        toastError('Please log in to delete posts');
+        return;
+      }
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/saved-posts/${postId}`
+        : `${baseUrl}/api/saved-posts/${postId}`;
+
+      const response = await axios.delete(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
+          userId: user.id
+        }
+      });
+
+      if (response.data.success) {
+        toastSuccess('LinkedIn post deleted successfully');
+        // Refresh saved posts to update the UI
+        loadSavedPosts();
+      } else {
+        toastError(response.data.message || 'Failed to delete LinkedIn post');
+      }
+    } catch (error) {
+      console.error('Error deleting LinkedIn post:', error);
+      toastError(error.response?.data?.message || 'Failed to delete LinkedIn post');
+    }
   };
 
   // Auto-save function to save all LinkedIn posts after scraping
@@ -2223,19 +2193,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     }
   }, [activeTab]);
 
-  // Load LinkedIn results on component mount
-  useEffect(() => {
-    if (activeTab === 'linkedin') {
-      loadLinkedInResultFromStorage();
-    }
-  }, [activeTab]);
 
-  // Load Twitter results on component mount
-  useEffect(() => {
-    if (activeTab === 'twitter') {
-      loadTwitterResultFromStorage();
-    }
-  }, [activeTab]);
 
   // Clear other results when switching tabs but preserve YouTube and LinkedIn data
   useEffect(() => {
@@ -2290,53 +2248,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
       if (lastChannel) {
         setLastSearchedChannel(lastChannel);
       }
-      
-      // Load saved LinkedIn results from localStorage
-      const savedLinkedIn = localStorage.getItem('linkedinResult');
-      const lastLinkedInProfile = localStorage.getItem('lastSearchedLinkedInProfile');
-      if (savedLinkedIn) {
-        const linkedInData = JSON.parse(savedLinkedIn);
-        setLinkedinResult(linkedInData);
-        console.log(`Loaded ${linkedInData.totalPosts} LinkedIn posts from cache for ${linkedInData.profileData.name}`);
-      }
-      if (lastLinkedInProfile) {
-        setLastSearchedLinkedInProfile(lastLinkedInProfile);
-      }
-
-      // Load saved Twitter results from localStorage
-      const savedTwitterResult = localStorage.getItem('twitterResult');
-      const lastTwitterUser = localStorage.getItem('lastSearchedTwitterUser');
-      if (savedTwitterResult) {
-        const twitterData = JSON.parse(savedTwitterResult);
-        
-        // Validate and fix the data structure
-        if (twitterData && typeof twitterData === 'object') {
-          // Ensure required properties exist with proper defaults
-          const validTwitterResult: TwitterResult = {
-            tweets: Array.isArray(twitterData.tweets) ? twitterData.tweets : [],
-            threads: Array.isArray(twitterData.threads) ? twitterData.threads : [],
-            username: twitterData.username || '',
-            profileImageUrl: twitterData.profileImageUrl || '',
-            totalCount: typeof twitterData.totalCount === 'number' ? twitterData.totalCount : (twitterData.tweets?.length || 0),
-            categories: twitterData.categories || {
-              all: twitterData.totalCount || twitterData.tweets?.length || 0,
-              normal: 0,
-              thread: 0,
-              long: 0
-            }
-          };
-          
-          setTwitterResult(validTwitterResult);
-          setTwitterThreads(validTwitterResult.threads);
-          console.log(`Loaded ${validTwitterResult.totalCount} tweets from cache for @${validTwitterResult.username}`);
-        } else {
-          console.warn('Invalid Twitter data structure, clearing cache');
-          localStorage.removeItem('twitterResult');
-        }
-      }
-      if (lastTwitterUser) {
-        setLastSearchedTwitterUser(lastTwitterUser);
-      }
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
     }
@@ -2348,12 +2259,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
       // Make sure all important state is saved to localStorage before page unload
       if (youtubeChannelResult) {
         saveYoutubeChannelToStorage(youtubeChannelResult);
-      }
-      if (linkedinResult) {
-        saveLinkedInResultToStorage(linkedinResult);
-      }
-      if (twitterResult) {
-        saveTwitterResultToStorage(twitterResult);
       }
     };
 
@@ -2687,22 +2592,51 @@ const ScraperPage: React.FC = (): JSX.Element => {
                         });
                         
                         return allContent.map((item, index) => (
-                          <div key={'tweets' in item ? `saved-thread-${item.id}` : `saved-tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
+                          <div key={'tweets' in item ? `saved-thread-${item.id}` : `saved-tweet-${item.id}`} className="break-inside-avoid mb-6 w-full relative">
                             {'tweets' in item ? (
                               // This is a thread
-                              <TweetThread
-                                thread={item}
-                                selectedTweets={new Set()}
-                                onSelectToggle={() => {}}
-                                onSelectThread={() => {}}
-                              />
+                              <div className="relative">
+                                <TweetThread
+                                  thread={item}
+                                  selectedTweets={new Set()}
+                                  onSelectToggle={() => {}}
+                                  onSelectThread={() => {}}
+                                />
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm('Delete this thread? This will remove all tweets in this thread.')) {
+                                      // Delete all tweets in the thread
+                                      item.tweets.forEach(tweet => handleDeleteTwitterPost(tweet.id));
+                                    }
+                                  }}
+                                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             ) : (
                               // This is a standalone tweet
-                              <TweetCard
-                                tweet={item}
-                                isSelected={false}
-                                onSelectToggle={() => {}}
-                              />
+                              <div className="relative">
+                                <TweetCard
+                                  tweet={item}
+                                  isSelected={false}
+                                  onSelectToggle={() => {}}
+                                />
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm('Delete this tweet?')) {
+                                      handleDeleteTwitterPost(item.id);
+                                    }
+                                  }}
+                                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             )}
                           </div>
                         ));
@@ -2722,8 +2656,21 @@ const ScraperPage: React.FC = (): JSX.Element => {
                         return (
                         <Card 
                             key={`saved-${postData.id}-${index}`} 
-                            className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid mb-6"
+                            className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid mb-6 relative"
                         >
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (window.confirm('Delete this LinkedIn post?')) {
+                                handleDeleteLinkedInPost(post._id || post.id);
+                              }
+                            }}
+                            className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100 z-10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          
                           <CardHeader className="p-4 pb-3">
                             <div className="flex items-start gap-3">
                               <img 
@@ -3022,49 +2969,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const allTweetIds = new Set([
-                    ...(Array.isArray(twitterResult.tweets) ? twitterResult.tweets.map(t => t.id) : []),
-                    ...(Array.isArray(twitterResult.threads) ? twitterResult.threads.flatMap(thread => (thread.tweets || []).map(t => t.id)) : [])
-                  ]);
-                  setSelectedTweets(allTweetIds);
-                  setSelectedThreads(new Set((twitterResult.threads || []).map(t => t.id)));
-                }}
-                disabled={isLoading}
-                className="bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
+                onClick={() => setSavedPostsModalOpen(true)}
+                className="gap-2 bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
               >
-                Select All
-              </Button>
-              <Button
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  setSelectedTweets(new Set());
-                  setSelectedThreads(new Set());
-                }}
-                disabled={isLoading || selectedTweets.size === 0}
-                className="bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
-              >
-                Clear Selection
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleSaveSelectedTweets}
-                disabled={isLoading || selectedTweets.size === 0}
-                className="gap-2 bg-blue-600 hover:bg-blue-700 text-xs whitespace-nowrap"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-3 w-3" />
-                    Save ({selectedTweets.size})
-                  </>
-                )}
+                <Folder className="h-3 w-3" />
+                View Saved Posts
               </Button>
             </div>
           </div>
@@ -3127,24 +3036,24 @@ const ScraperPage: React.FC = (): JSX.Element => {
               return (
                 <div className="columns-1 md:columns-2 gap-6">
                   {allContent.map((item) => (
-                    <div key={'tweets' in item ? `thread-${item.id}` : `tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
-                      {'tweets' in item ? (
-                        // This is a thread
-                        <TweetThread
-                          thread={item}
-                          selectedTweets={selectedTweets}
-                          onSelectToggle={handleToggleTweetSelection}
-                          onSelectThread={handleToggleThreadSelection}
-                        />
-                      ) : (
-                        // This is a standalone tweet
-                        <TweetCard
-                          tweet={item}
-                          isSelected={selectedTweets.has(item.id)}
-                          onSelectToggle={handleToggleTweetSelection}
-                        />
-                      )}
-                    </div>
+                                              <div key={'tweets' in item ? `thread-${item.id}` : `tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
+                            {'tweets' in item ? (
+                              // This is a thread
+                              <TweetThread
+                                thread={item}
+                                selectedTweets={new Set()}
+                                onSelectToggle={() => {}}
+                                onSelectThread={() => {}}
+                              />
+                            ) : (
+                              // This is a standalone tweet
+                              <TweetCard
+                                tweet={item}
+                                isSelected={false}
+                                onSelectToggle={() => {}}
+                              />
+                            )}
+                          </div>
                   ))}
                 </div>
               );
@@ -3316,39 +3225,11 @@ const ScraperPage: React.FC = (): JSX.Element => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedLinkedInPosts(new Set(linkedinResult.posts.map(p => p.id)))}
-                    disabled={isLoading}
-                    className="bg-white text-xs whitespace-nowrap"
+                    onClick={() => setSavedPostsModalOpen(true)}
+                    className="gap-2 bg-white hover:bg-blue-50 text-xs whitespace-nowrap"
                   >
-                    Select All
-                  </Button>
-                  <Button
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setSelectedLinkedInPosts(new Set())}
-                    disabled={isLoading || selectedLinkedInPosts.size === 0}
-                    className="bg-white text-xs whitespace-nowrap"
-                  >
-                    Clear Selection
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSaveSelectedLinkedInPosts}
-                    disabled={isLoading || selectedLinkedInPosts.size === 0}
-                    className="gap-2 bg-blue-600 hover:bg-blue-700 text-xs whitespace-nowrap"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-3 w-3" />
-                        Save ({selectedLinkedInPosts.size})
-                      </>
-                    )}
+                    <Folder className="h-3 w-3" />
+                    View Saved Posts
                   </Button>
                 </div>
               </div>
@@ -3360,9 +3241,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
             {linkedinResult.posts.map((post, postIndex) => (
               <Card 
                 key={`${post.id}-${postIndex}`} 
-                className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid ${
-                  selectedLinkedInPosts.has(post.id) ? 'ring-2 ring-blue-500 border-blue-500' : ''
-                }`}
+                className="linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 break-inside-avoid"
               >
                 {/* Post Header */}
                 <CardHeader className="p-4 pb-3">
@@ -3388,25 +3267,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleLinkedInPostSelection(post.id)}
-                        className="h-6 w-6 p-0 hover:bg-blue-50"
-                      >
-                        {selectedLinkedInPosts.has(post.id) ? (
-                          <div className="h-4 w-4 rounded bg-blue-600 text-white flex items-center justify-center text-xs">
-                            ✓
-                          </div>
-                        ) : (
-                          <div className="h-4 w-4 rounded border-2 border-gray-300 hover:border-blue-500"></div>
-                        )}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600">
-                        •••
-                      </Button>
-                    </div>
+
                   </div>
                 </CardHeader>
                 
