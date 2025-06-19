@@ -2830,23 +2830,37 @@ const ScraperPage: React.FC = (): JSX.Element => {
                         {Array.from(organizeTwitterByUser().entries()).map(([username, posts]) => (
                           <Card 
                             key={username}
-                            className={`cursor-pointer transition-all hover:shadow-md ${
+                            className={`transition-all hover:shadow-md ${
                               selectedUsers.twitter.has(username) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                             }`}
-                            onClick={() => toggleUserSelection('twitter', username)}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
+                                <div 
+                                  className="flex-shrink-0 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleUserSelection('twitter', username);
+                                  }}
+                                >
                                   {selectedUsers.twitter.has(username) ? (
                                     <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                                       <div className="h-3 w-3 text-white">✓</div>
                         </div>
                                   ) : (
-                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
                                   )}
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div 
+                                  className="flex-1 min-w-0 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedUsers(prev => ({
+                                      ...prev,
+                                      twitter: new Set([username])
+                                    }));
+                                    proceedToPostSelection();
+                                  }}
+                                >
                                   <div className="flex items-center gap-2">
                                     <Folder className="h-4 w-4 text-gray-500" />
                                     <p className="font-medium text-sm truncate">@{username}</p>
@@ -2873,23 +2887,37 @@ const ScraperPage: React.FC = (): JSX.Element => {
                         {Array.from(organizeLinkedInByUser().entries()).map(([authorName, posts]) => (
                           <Card 
                             key={authorName}
-                            className={`cursor-pointer transition-all hover:shadow-md ${
+                            className={`transition-all hover:shadow-md ${
                               selectedUsers.linkedin.has(authorName) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                             }`}
-                            onClick={() => toggleUserSelection('linkedin', authorName)}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
+                                <div 
+                                  className="flex-shrink-0 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleUserSelection('linkedin', authorName);
+                                  }}
+                                >
                                   {selectedUsers.linkedin.has(authorName) ? (
                                     <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                                       <div className="h-3 w-3 text-white">✓</div>
                                     </div>
                                   ) : (
-                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
                                   )}
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div 
+                                  className="flex-1 min-w-0 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedUsers(prev => ({
+                                      ...prev,
+                                      linkedin: new Set([authorName])
+                                    }));
+                                    proceedToPostSelection();
+                                  }}
+                                >
                                   <div className="flex items-center gap-2">
                                     <Folder className="h-4 w-4 text-gray-500" />
                                     <p className="font-medium text-sm truncate">{authorName}</p>
@@ -3097,6 +3125,46 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 >
                   View Posts from Selected Users
                 </Button>
+              </div>
+            )}
+
+            {/* Action Buttons for Posts View */}
+            {viewMode === 'posts' && (selectedPosts.twitter.size > 0 || selectedPosts.linkedin.size > 0) && (
+              <div className="mt-6 p-4 bg-green-50 rounded-lg flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  Selected: {selectedPosts.twitter.size + selectedPosts.linkedin.size} individual posts
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedPosts({ twitter: new Set(), linkedin: new Set() });
+                    }}
+                  >
+                    Clear Selection
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      // Create a filtered view showing only selected posts
+                      const selectedTwitterPosts = savedTwitterPosts.filter(post => selectedPosts.twitter.has(post.id));
+                      const selectedTwitterThreads = savedTwitterThreads.filter(thread => selectedPosts.twitter.has(thread.id));
+                      const selectedLinkedInPosts = savedLinkedInPosts.filter(post => selectedPosts.linkedin.has(post.mongoId || post._id || post.id));
+                      
+                      console.log('Selected posts:', {
+                        twitter: selectedTwitterPosts.length + selectedTwitterThreads.length,
+                        linkedin: selectedLinkedInPosts.length
+                      });
+                      
+                      toast({
+                        title: "Selected Posts",
+                        description: `Viewing ${selectedPosts.twitter.size + selectedPosts.linkedin.size} selected posts`,
+                      });
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    View Selected Posts Only
+                  </Button>
+                </div>
               </div>
             )}
           </div>

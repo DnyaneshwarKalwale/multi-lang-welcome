@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit, AlertCircle, RefreshCw, Link2 } from "lucide-react";
+import { Check, Info, Upload, Search, LayoutGrid, ChevronLeft, ChevronRight, Youtube, FileText, Loader2, ArrowRight, MessageSquare, Sparkles, FileSpreadsheet, ExternalLink, ImageIcon, Clock4, SearchX, Folder, Save, Copy, Pencil, ChevronDown, Play, Edit, AlertCircle, RefreshCw, Link2, Twitter, Linkedin, Trash2, ArrowLeft, X } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -44,6 +44,8 @@ import { Slide, FontFamily, FontWeight, TextAlign } from "@/editor/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from "@/components/ui/textarea";
 import api, { tokenManager } from '@/services/api';
+import TweetCard from "@/components/twitter/TweetCard";
+import TweetThread from "@/components/twitter/TweetThread";
 // import { tokenManager as tokenManagerUtils } from '../utils/tokenManager';
 
 // Model options with fallbacks
@@ -123,6 +125,47 @@ interface SavedContent {
   videoId?: string;
   videoTitle?: string;
   createdAt: string;
+}
+
+// Tweet and Thread interfaces from ScraperPage
+interface Tweet {
+  id: string;
+  text: string;
+  full_text?: string;
+  created_at: string;
+  public_metrics: {
+    retweet_count: number;
+    reply_count: number;
+    like_count: number;
+    quote_count: number;
+  };
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    profile_image_url: string;
+  };
+  media?: {
+    media_key: string;
+    type: string;
+    url: string;
+    preview_image_url?: string;
+    alt_text?: string;
+    width?: number;
+    height?: number;
+  }[];
+}
+
+interface Thread {
+  id: string;
+  tweets: Tweet[];
+  author?: {
+    id: string;
+    name: string;
+    username: string;
+    profile_image_url: string;
+  };
+  created_at?: string;
 }
 
 // Function to generate dummy transcript based on video ID
@@ -3609,7 +3652,7 @@ const RequestCarouselPage: React.FC = () => {
                       })()}
                     </>
                   ) : (
-                    // Individual Posts View
+                    // Individual Posts View - Show rich post UI like ScraperPage
                     <>
                       {(() => {
                         if (!currentOpenFolder) return null;
@@ -3631,51 +3674,154 @@ const RequestCarouselPage: React.FC = () => {
                               </div>
                               {currentOpenFolder.platform === 'twitter' ? 'Twitter' : 'LinkedIn'} Posts from {currentOpenFolder.author} ({posts.length})
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
-                              {posts.map((post, index) => {
-                                const postId = currentOpenFolder.platform === 'twitter' 
-                                  ? post.id || post._id || post.tweet_id || index.toString()
-                                  : post.id || post._id || post.mongoId || index.toString();
-                                const content = currentOpenFolder.platform === 'twitter'
-                                  ? post.text || post.full_text || 'No content available'
-                                  : post.content || post.text || 'No content available';
-                                const authorDisplay = currentOpenFolder.platform === 'twitter'
-                                  ? post.author?.username || post.user?.username
-                                  : post.author?.name || post.authorName;
-                                
-                                return (
-                                  <div 
-                                    key={post._id || index}
-                                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
-                                      selectedPostsForStyle[currentOpenFolder.platform].has(postId)
-                                        ? "ring-2 ring-blue-500 bg-blue-50" 
-                                        : "hover:bg-gray-50"
-                                    }`}
-                                    onClick={() => togglePostSelection(currentOpenFolder.platform, postId)}
-                                  >
-                                    <div className="flex items-start gap-2">
-                                      <div className="flex-shrink-0">
-                                        {selectedPostsForStyle[currentOpenFolder.platform].has(postId) ? (
-                                          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                            <Check className="h-3 w-3 text-white" />
-                                          </div>
+                            
+                            {currentOpenFolder.platform === 'twitter' ? (
+                              // Twitter Posts with Rich UI
+                              <div className="columns-1 md:columns-2 gap-6 max-h-80 overflow-y-auto">
+                                {posts.map((post, index) => {
+                                  const postId = post.id || post._id || post.tweet_id || index.toString();
+                                  const isSelected = selectedPostsForStyle.twitter.has(postId);
+                                  
+                                  return (
+                                    <div 
+                                      key={post._id || index}
+                                      className="break-inside-avoid mb-6 w-full relative"
+                                    >
+                                      <div 
+                                        className={`cursor-pointer transition-all hover:shadow-md ${
+                                          isSelected ? "ring-2 ring-blue-500" : ""
+                                        }`}
+                                        onClick={() => togglePostSelection('twitter', postId)}
+                                      >
+                                        {/* Selection indicator */}
+                                        <div className="absolute top-2 left-2 z-10">
+                                          {isSelected ? (
+                                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                              <Check className="h-3 w-3 text-white" />
+                                            </div>
+                                          ) : (
+                                            <div className="w-5 h-5 border-2 border-gray-300 bg-white rounded-full hover:border-blue-400"></div>
+                                          )}
+                                        </div>
+                                        
+                                        {/* Check if it's a thread or single tweet */}
+                                        {'tweets' in post ? (
+                                          <TweetThread thread={post as Thread} />
                                         ) : (
-                                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                          <TweetCard tweet={post as Tweet} />
                                         )}
                                       </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm line-clamp-3 text-gray-800">
-                                          {content}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          {authorDisplay && `${currentOpenFolder.platform === 'twitter' ? '@' : 'by '}${authorDisplay}`}
-                                        </p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              // LinkedIn Posts with Rich UI
+                              <div className="masonry-container columns-1 md:columns-2 gap-6 max-h-80 overflow-y-auto">
+                                {posts.map((post, index) => {
+                                  const postData = post.postData || post;
+                                  const postId = post.id || post._id || post.mongoId || index.toString();
+                                  const isSelected = selectedPostsForStyle.linkedin.has(postId);
+                                  
+                                  return (
+                                    <div 
+                                      key={`post-${postData.id}-${index}`} 
+                                      className="break-inside-avoid mb-6 relative"
+                                    >
+                                      <div 
+                                        className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer ${
+                                          isSelected ? "ring-2 ring-blue-500" : ""
+                                        }`}
+                                        onClick={() => togglePostSelection('linkedin', postId)}
+                                      >
+                                        {/* Selection indicator */}
+                                        <div className="absolute top-2 left-2 z-10">
+                                          {isSelected ? (
+                                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                              <Check className="h-3 w-3 text-white" />
+                                            </div>
+                                          ) : (
+                                            <div className="w-5 h-5 border-2 border-gray-300 bg-white rounded-full hover:border-blue-400"></div>
+                                          )}
+                                        </div>
+                                        
+                                        {/* LinkedIn Post Header */}
+                                        <div className="p-4 pb-3">
+                                          <div className="flex items-start gap-3">
+                                            <img 
+                                              src={postData.authorAvatar || 'https://via.placeholder.com/40'} 
+                                              alt={postData.author}
+                                              className="w-10 h-10 rounded-full object-cover" 
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <h4 className="font-semibold text-sm text-gray-900">{postData.author}</h4>
+                                              <p className="text-xs text-gray-600 line-clamp-2">{postData.authorHeadline}</p>
+                                              <p className="text-xs text-gray-400 mt-1">
+                                                Saved • {new Date(postData.savedAt || post.createdAt).toLocaleDateString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        {/* LinkedIn Post Content */}
+                                        <div className="p-4 pt-0">
+                                          <div className="space-y-4">
+                                            <div className="linkedin-post-content">
+                                              {(() => {
+                                                const [isExpanded, setIsExpanded] = React.useState(false);
+                                                const content = postData.content || '';
+                                                return content.length > 250 && !isExpanded ? (
+                                                  <>
+                                                    <p className="whitespace-pre-line break-words">
+                                                      {content.substring(0, 250)}...
+                                                    </p>
+                                                    <button 
+                                                      className="text-blue-500 hover:text-blue-600 text-xs mt-1"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setIsExpanded(true);
+                                                      }}
+                                                    >
+                                                      Show more
+                                                    </button>
+                                                  </>
+                                                ) : (
+                                                  <p className="whitespace-pre-line break-words">{content}</p>
+                                                );
+                                              })()}
+                                            </div>
+                                            
+                                            {/* Media Display */}
+                                            {postData.media && postData.media.length > 0 && (
+                                              <div className="relative">
+                                                {postData.media.length === 1 ? (
+                                                  <img 
+                                                    src={postData.media[0].url} 
+                                                    alt="Post media" 
+                                                    className="w-full rounded-lg object-cover max-h-96"
+                                                  />
+                                                ) : (
+                                                  <div className="grid grid-cols-2 gap-2">
+                                                    {postData.media.slice(0, 4).map((media: any, idx: number) => (
+                                                      <img 
+                                                        key={idx}
+                                                        src={media.url} 
+                                                        alt={`Post media ${idx + 1}`} 
+                                                        className="w-full h-32 rounded-lg object-cover"
+                                                      />
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                             
                             {posts.length === 0 && (
                               <div className="text-center py-8">
