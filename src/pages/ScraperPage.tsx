@@ -1290,7 +1290,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         : `${baseUrl}/api/twitter/user/${username}`;
       
       const response = await axios.get(apiUrl, {
-        timeout: 60000, // 60 second timeout for Twitter scraping
+        timeout: 300000, // 5 minutes timeout for Twitter scraping
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -1692,7 +1692,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 300000 // 5 minutes timeout for large tweet saves
       });
       
       if (response.data.success) {
