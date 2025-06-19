@@ -2746,15 +2746,15 @@ const RequestCarouselPage: React.FC = () => {
                                 {/* LinkedIn Post Attachment Section */}
                                 <div className="mt-4 border-t pt-4">
                                   <div className="flex justify-between items-center mb-3">
-                                    <h4 className="text-sm font-medium flex items-center gap-2">
-                                      <Link2 className="h-4 w-4 text-blue-500" />
+                                                                         <h4 className="text-sm font-medium flex items-center gap-2">
+                                       <Link2 className="h-4 w-4 text-blue-500" />
                                       Writing Style Analysis (Optional)
                                       {selectedPostsCount > 0 && (
                                         <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
                                           {selectedPostsCount} selected
                                         </Badge>
                                       )}
-                                    </h4>
+                                     </h4>
                                     <Button 
                                       variant="outline" 
                                       size="sm"
@@ -2785,17 +2785,17 @@ const RequestCarouselPage: React.FC = () => {
                                         <p className="text-xs text-muted-foreground">
                                           This will help the AI understand your preferred writing style and tone.
                                         </p>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm"
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
                                           onClick={() => {
                                             setAttachedLinkedInPost('');
                                             setSelectedPostsCount(0);
                                           }}
-                                          className="text-xs"
-                                        >
+                                            className="text-xs"
+                                          >
                                           Clear All
-                                        </Button>
+                                          </Button>
                                       </div>
                                     </div>
                                   )}
@@ -3246,11 +3246,11 @@ const RequestCarouselPage: React.FC = () => {
                 }
                 
                                   return filteredContents.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="flex flex-col items-center justify-center py-8 text-center">
                       {contentSearchQuery.trim() ? (
                         <SearchX className="h-16 w-16 text-blue-200 mb-4" />
                       ) : (
-                        <Folder className="h-16 w-16 text-blue-200 mb-4" />
+                  <Folder className="h-16 w-16 text-blue-200 mb-4" />
                       )}
                       <p className="text-blue-800 font-medium">
                         {savedContents.length === 0 
@@ -3278,9 +3278,9 @@ const RequestCarouselPage: React.FC = () => {
                           Clear Search
                         </Button>
                       )}
-                    </div>
-                ) : (
-                  <div className="space-y-4">
+                </div>
+              ) : (
+                <div className="space-y-4">
                     {filteredContents.map((content) => (
                     <div key={content.id} className="border rounded-lg overflow-hidden border-blue-100 hover:shadow-md transition-shadow">
                       <div className="p-3 bg-blue-50 flex items-center justify-between">
@@ -3299,12 +3299,12 @@ const RequestCarouselPage: React.FC = () => {
                               </div>
                             )}
                           </div>
-                          <div>
-                            <h4 className="font-medium text-blue-900">{content.title}</h4>
-                            <p className="text-xs text-blue-700">
-                              {content.videoTitle && `From: ${content.videoTitle} • `}
-                              {new Date(content.createdAt).toLocaleDateString()}
-                            </p>
+                        <div>
+                          <h4 className="font-medium text-blue-900">{content.title}</h4>
+                          <p className="text-xs text-blue-700">
+                            {content.videoTitle && `From: ${content.videoTitle} • `}
+                            {new Date(content.createdAt).toLocaleDateString()}
+                          </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
