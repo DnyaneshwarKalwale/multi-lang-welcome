@@ -248,7 +248,7 @@ const DashboardPage: React.FC = () => {
   // Update the existing fetchLinkedInData function to handle connection status
   const fetchLinkedInData = async () => {
     setLoading({ profile: true });
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const token = localStorage.getItem('google-login-token') || localStorage.getItem('linkedin-login-token');
     
     if (!token) {
@@ -481,7 +481,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLinkedInConnect = () => {
     // Get the backend URL from environment variable or fallback to production URL
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     // Store current URL in localStorage to redirect back after LinkedIn connection
     localStorage.setItem('redirectAfterAuth', '/dashboard');
@@ -568,9 +568,9 @@ const DashboardPage: React.FC = () => {
               ) : (
                 <p className="text-xs text-gray-500 flex items-center gap-1 justify-end">
                     {(user?.authMethod === 'linkedin' || user?.linkedinConnected || isLinkedInConnected || localStorage.getItem('linkedinConnected') === 'true') ? (
-                      <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
+                  <><Linkedin className="h-3 w-3 text-blue-600" /> Connected</>
                     ) : (
-                      <><User className="h-3 w-3" /> Google User</>
+                    <><User className="h-3 w-3" /> Google User</>
                     )}
                   </p>
               )}

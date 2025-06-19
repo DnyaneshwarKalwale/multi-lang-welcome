@@ -117,7 +117,7 @@ const UserDetailPage: React.FC = () => {
         
         // Fetch user profile
         const userResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/users/${userId}`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/users/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -131,7 +131,7 @@ const UserDetailPage: React.FC = () => {
         
         // Fetch user's videos
         const videosResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/content/user/${userId}/videos`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/content/user/${userId}/videos`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -145,7 +145,7 @@ const UserDetailPage: React.FC = () => {
         
         // Fetch user's saved content
         const contentResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/content/user/${userId}/content`,
+          `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/content/user/${userId}/content`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
@@ -215,7 +215,7 @@ const UserDetailPage: React.FC = () => {
     try {
       setIsUpdatingLimit(true);
       await axios.patch(
-        `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/admin/user-limits/${user.id}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/admin/user-limits/${user.id}`,
         { limit: newLimit },
         {
           headers: {

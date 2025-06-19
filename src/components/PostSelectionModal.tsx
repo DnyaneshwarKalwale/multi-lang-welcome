@@ -11,7 +11,7 @@ import { tokenManager } from '@/services/api';
 import { groupThreads } from '@/utils/twitterApi';
 import axios from 'axios';
 
-// LinkedIn post content component
+// LinkedIn post content component (moved outside main component to prevent hook ordering issues)
 const LinkedInPostContent: React.FC<{ content: string }> = ({ content }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldTruncate = content.length > 300;
@@ -32,7 +32,7 @@ const LinkedInPostContent: React.FC<{ content: string }> = ({ content }) => {
   );
 };
 
-// LinkedIn carousel component
+// LinkedIn carousel component (moved outside main component to prevent hook ordering issues)
 const LinkedInCarousel: React.FC<{ post: any }> = ({ post }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -66,7 +66,7 @@ const LinkedInCarousel: React.FC<{ post: any }> = ({ post }) => {
   );
 };
 
-// LinkedIn document carousel component
+// LinkedIn document carousel component (moved outside main component to prevent hook ordering issues)
 const LinkedInDocumentCarousel: React.FC<{ 
   document: any, 
   postId: string,
@@ -108,21 +108,13 @@ interface PostSelectionModalProps {
   onClose: () => void;
   onApplySelection: (selectedContent: string) => void;
   selectedPostsCount: number;
-  selectedVideo?: {
-    id: string;
-    title: string;
-    transcript?: string;
-  };
-  onGenerateContent?: (selectedPosts: string, transcript: string, videoTitle: string) => void;
 }
 
 const PostSelectionModal: React.FC<PostSelectionModalProps> = ({ 
   isOpen, 
   onClose, 
   onApplySelection, 
-  selectedPostsCount,
-  selectedVideo,
-  onGenerateContent
+  selectedPostsCount
 }) => {
   const { toast } = useToast();
   
@@ -159,7 +151,7 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
 
   const loadSavedPosts = async () => {
     setIsLoading(true);
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     // Get token using tokenManager (same as save function)
     const authMethod = localStorage.getItem('auth-method');
@@ -314,13 +306,65 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
       
       if (currentSet.has(username)) {
         currentSet.delete(username);
+        // Also deselect all posts from this user
+        deselectAllPostsFromUser(platform, username);
       } else {
         currentSet.add(username);
+        // Auto-select all posts from this user
+        selectAllPostsFromUser(platform, username);
       }
       
       newSelection[platform] = currentSet;
       return newSelection;
     });
+  };
+
+  const selectAllPostsFromUser = (platform: 'twitter' | 'linkedin', username: string) => {
+    if (platform === 'twitter') {
+      const userPosts = organizeTwitterByUser().get(username) || [];
+      setSelectedPosts(prev => {
+        const newSelected = new Set(prev.twitter);
+        userPosts.forEach(post => {
+          const postId = 'tweets' in post ? post.id : post.id;
+          newSelected.add(postId);
+        });
+        return { ...prev, twitter: newSelected };
+      });
+    } else if (platform === 'linkedin') {
+      const userPosts = organizeLinkedInByUser().get(username) || [];
+      setSelectedPosts(prev => {
+        const newSelected = new Set(prev.linkedin);
+        userPosts.forEach(post => {
+          const postData = post.postData || post;
+          newSelected.add(postData.id);
+        });
+        return { ...prev, linkedin: newSelected };
+      });
+    }
+  };
+
+  const deselectAllPostsFromUser = (platform: 'twitter' | 'linkedin', username: string) => {
+    if (platform === 'twitter') {
+      const userPosts = organizeTwitterByUser().get(username) || [];
+      setSelectedPosts(prev => {
+        const newSelected = new Set(prev.twitter);
+        userPosts.forEach(post => {
+          const postId = 'tweets' in post ? post.id : post.id;
+          newSelected.delete(postId);
+        });
+        return { ...prev, twitter: newSelected };
+      });
+    } else if (platform === 'linkedin') {
+      const userPosts = organizeLinkedInByUser().get(username) || [];
+      setSelectedPosts(prev => {
+        const newSelected = new Set(prev.linkedin);
+        userPosts.forEach(post => {
+          const postData = post.postData || post;
+          newSelected.delete(postData.id);
+        });
+        return { ...prev, linkedin: newSelected };
+      });
+    }
   };
 
   // Toggle individual post selection
@@ -364,6 +408,40 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     return filteredPosts;
   };
 
+  // Check if user has any selected posts
+  const hasSelectedPostsFromUser = (platform: 'twitter' | 'linkedin', username: string) => {
+    if (platform === 'twitter') {
+      const userPosts = organizeTwitterByUser().get(username) || [];
+      return userPosts.some(post => {
+        const postId = 'tweets' in post ? post.id : post.id;
+        return selectedPosts.twitter.has(postId);
+      });
+    } else {
+      const userPosts = organizeLinkedInByUser().get(username) || [];
+      return userPosts.some(post => {
+        const postData = post.postData || post;
+        return selectedPosts.linkedin.has(postData.id);
+      });
+    }
+  };
+
+  // Count selected posts from user
+  const getSelectedPostsCountFromUser = (platform: 'twitter' | 'linkedin', username: string) => {
+    if (platform === 'twitter') {
+      const userPosts = organizeTwitterByUser().get(username) || [];
+      return userPosts.filter(post => {
+        const postId = 'tweets' in post ? post.id : post.id;
+        return selectedPosts.twitter.has(postId);
+      }).length;
+    } else {
+      const userPosts = organizeLinkedInByUser().get(username) || [];
+      return userPosts.filter(post => {
+        const postData = post.postData || post;
+        return selectedPosts.linkedin.has(postData.id);
+      }).length;
+    }
+  };
+
   // Proceed to post selection view
   const proceedToPostSelection = () => {
     if (selectedUsers.twitter.size === 0 && selectedUsers.linkedin.size === 0) {
@@ -379,83 +457,6 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
   // Go back to user selection
   const backToUserSelection = () => {
     setViewMode('folders');
-  };
-
-  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
-
-  const handleGenerateContent = async () => {
-    if (!selectedVideo?.transcript) {
-      toast({
-        title: "No transcript available",
-        description: "Please select a video with a transcript to generate content.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const selectedContent: string[] = [];
-    
-    // Get selected Twitter content
-    const allTwitterContent = getPostsFromSelectedUsers().twitter;
-    allTwitterContent.forEach(item => {
-      const itemId = 'tweets' in item ? item.id : item.id;
-      if (selectedPosts.twitter.has(itemId)) {
-        if ('tweets' in item) {
-          // This is a thread
-          const threadContent = item.tweets.map(tweet => tweet.text || tweet.full_text).join('\n\n');
-          selectedContent.push(threadContent);
-        } else {
-          // This is a standalone tweet
-          selectedContent.push(item.text || item.full_text || '');
-        }
-      }
-    });
-    
-    // Get selected LinkedIn content
-    const allLinkedInContent = getPostsFromSelectedUsers().linkedin;
-    allLinkedInContent.forEach(post => {
-      const postData = post.postData || post;
-      const postId = postData.id;
-      if (selectedPosts.linkedin.has(postId)) {
-        selectedContent.push(postData.content || '');
-      }
-    });
-
-    if (selectedContent.length === 0) {
-      toast({
-        title: "No posts selected",
-        description: "Please select some posts to use as style reference.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const selectedPostsText = selectedContent.join('\n\n---\n\n');
-    
-    setIsGeneratingContent(true);
-    
-    try {
-      if (onGenerateContent) {
-        await onGenerateContent(selectedPostsText, selectedVideo.transcript, selectedVideo.title);
-      }
-      
-      // Close the modal after successful generation
-      onClose();
-      
-      toast({
-        title: "Content Generated",
-        description: `AI carousel content created using ${selectedContent.length} posts as style reference.`,
-      });
-    } catch (error) {
-      console.error('Error generating content:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Failed to generate content. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingContent(false);
-    }
   };
 
   const handleApplySelection = () => {
@@ -497,8 +498,8 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     onClose();
     
     toast({
-      title: "Posts Applied",
-      description: `${selectedContent.length} posts selected for style analysis.`,
+      title: "Writing Style Applied",
+      description: `${selectedContent.length} posts selected as writing style reference for AI content generation.`,
     });
   };
 
@@ -564,19 +565,12 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
             // User Folder View
             <div className="space-y-6">
               <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
-                <h4 className="font-medium mb-2">Select Users:</h4>
-                <p>Choose users whose posts you want to work with. You can select multiple users from both platforms.</p>
-                {selectedVideo?.transcript && onGenerateContent && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      <span className="font-medium text-blue-800">AI Content Generation Available</span>
-                    </div>
-                    <p className="text-blue-700 text-xs">
-                      With a video transcript selected, you can generate AI carousel content using your selected posts as writing style reference.
-                    </p>
-                  </div>
-                )}
+                <h4 className="font-medium mb-2">How to Select Posts:</h4>
+                <div className="space-y-2">
+                  <p><strong>• Click the circle</strong> to select ALL posts from a user (entire folder)</p>
+                  <p><strong>• Click the folder name</strong> to browse and select individual posts</p>
+                  <p>Selected posts will be used as writing style reference for AI content generation.</p>
+                </div>
               </div>
 
               <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
@@ -625,21 +619,29 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                               <div 
                                 className="flex-1 min-w-0 cursor-pointer"
                                 onClick={() => {
-                                  // Directly show posts for this user without requiring selection
+                                  // Show posts for this user without selecting them
                                   setViewMode('posts');
-                                  setActiveTab('twitter'); // Set to Twitter tab
+                                  setActiveTab('twitter');
                                   setSelectedUsers(prev => ({
-                                    ...prev,
-                                    twitter: new Set([username])
+                                    twitter: new Set([username]),
+                                    linkedin: new Set() // Clear LinkedIn selection when browsing Twitter
                                   }));
                                 }}
                               >
                                 <div className="flex items-center gap-2">
                                   <Folder className="h-4 w-4 text-gray-500" />
                                   <p className="font-medium text-sm truncate">@{username}</p>
+                                  {hasSelectedPostsFromUser('twitter', username) && (
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  )}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   {posts.length} post{posts.length !== 1 ? 's' : ''}
+                                  {hasSelectedPostsFromUser('twitter', username) && (
+                                    <span className="text-blue-600 font-medium ml-2">
+                                      • {getSelectedPostsCountFromUser('twitter', username)} selected
+                                    </span>
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -684,10 +686,11 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                               <div 
                                 className="flex-1 min-w-0 cursor-pointer"
                                 onClick={() => {
-                                  // Directly show posts for this user without requiring selection
+                                  // Show posts for this user without selecting them
                                   setViewMode('posts');
+                                  setActiveTab('linkedin');
                                   setSelectedUsers(prev => ({
-                                    ...prev,
+                                    twitter: new Set(), // Clear Twitter selection when browsing LinkedIn
                                     linkedin: new Set([authorName])
                                   }));
                                 }}
@@ -695,9 +698,17 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                                 <div className="flex items-center gap-2">
                                   <Folder className="h-4 w-4 text-gray-500" />
                                   <p className="font-medium text-sm truncate">{authorName}</p>
+                                  {hasSelectedPostsFromUser('linkedin', authorName) && (
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  )}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                   {posts.length} post{posts.length !== 1 ? 's' : ''}
+                                  {hasSelectedPostsFromUser('linkedin', authorName) && (
+                                    <span className="text-blue-600 font-medium ml-2">
+                                      • {getSelectedPostsCountFromUser('linkedin', authorName)} selected
+                                    </span>
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -880,45 +891,31 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
                   )}
                 </TabsContent>
               </Tabs>
-                          </>
-            )}
+            </>
+          )}
         </div>
         
-        {/* Footer with Apply button when in post selection mode */}
-        {viewMode === 'posts' && !isLoading && (
+        {/* Footer with Apply button */}
+        {!isLoading && (
           <div className="border-t p-4 bg-gray-50">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                {selectedPosts.twitter.size + selectedPosts.linkedin.size} posts selected
+                {selectedPosts.twitter.size + selectedPosts.linkedin.size > 0 ? (
+                  <span>{selectedPosts.twitter.size + selectedPosts.linkedin.size} posts selected for writing style reference</span>
+                ) : (
+                  <span>Select posts to use as writing style reference for AI generation</span>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleApplySelection}
-                  disabled={selectedPosts.twitter.size === 0 && selectedPosts.linkedin.size === 0}
-                >
-                  Apply Selection
-                </Button>
-                {selectedVideo?.transcript && onGenerateContent && (
+                {selectedPosts.twitter.size + selectedPosts.linkedin.size > 0 && (
                   <Button 
-                    onClick={handleGenerateContent}
-                    disabled={selectedPosts.twitter.size === 0 && selectedPosts.linkedin.size === 0 || isGeneratingContent}
-                    className="flex items-center gap-2"
+                    onClick={handleApplySelection}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    {isGeneratingContent ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        Generate AI Content
-                      </>
-                    )}
+                    Apply {selectedPosts.twitter.size + selectedPosts.linkedin.size} Posts
                   </Button>
                 )}
               </div>
@@ -928,6 +925,6 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
       </div>
     </div>
   );
-  };
+};
 
 export default PostSelectionModal; 
