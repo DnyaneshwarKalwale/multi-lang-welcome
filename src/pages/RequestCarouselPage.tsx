@@ -3644,16 +3644,16 @@ const RequestCarouselPage: React.FC = () => {
                             
                             {currentOpenFolder.platform === 'twitter' ? (
                               // Twitter Posts with Rich UI
-                              <div className="columns-1 md:columns-2 gap-6 max-h-80 overflow-y-auto">
+                              <div className="space-y-4 max-h-80 overflow-y-auto">
                                 {posts.map((post, index) => {
                                   const postId = post.id || post._id || post.tweet_id || index.toString();
                                   const isSelected = selectedPostsForStyle.twitter.has(postId);
                                   
-                                  return (
-                                    <div 
-                                      key={post._id || index}
-                                      className="break-inside-avoid mb-6 w-full relative"
-                                    >
+                                                                      return (
+                                      <div 
+                                        key={post._id || index}
+                                        className="w-full relative"
+                                      >
                                       <div 
                                         className={`cursor-pointer transition-all hover:shadow-md ${
                                           isSelected ? "ring-2 ring-blue-500" : ""
@@ -3684,17 +3684,17 @@ const RequestCarouselPage: React.FC = () => {
                               </div>
                             ) : (
                               // LinkedIn Posts with Rich UI
-                              <div className="masonry-container columns-1 md:columns-2 gap-6 max-h-80 overflow-y-auto">
+                              <div className="space-y-4 max-h-80 overflow-y-auto">
                                 {posts.map((post, index) => {
                                   const postData = post.postData || post;
                                   const postId = post.id || post._id || post.mongoId || index.toString();
                                   const isSelected = selectedPostsForStyle.linkedin.has(postId);
                                   
-                                  return (
-                                    <div 
-                                      key={`post-${postData.id}-${index}`} 
-                                      className="break-inside-avoid mb-6 relative"
-                                    >
+                                                                      return (
+                                      <div 
+                                        key={`post-${postData.id}-${index}`} 
+                                        className="w-full relative"
+                                      >
                                       <div 
                                         className={`linkedin-post-card bg-white border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer ${
                                           isSelected ? "ring-2 ring-blue-500" : ""
