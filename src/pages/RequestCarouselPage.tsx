@@ -354,6 +354,24 @@ const RequestCarouselPage: React.FC = () => {
   const [attachedLinkedInPost, setAttachedLinkedInPost] = useState<string>('');
   const [showLinkedInPostInput, setShowLinkedInPostInput] = useState(false);
 
+  // Add post selection states
+  const [showPostSelectionModal, setShowPostSelectionModal] = useState(false);
+  const [savedPostsForSelection, setSavedPostsForSelection] = useState<{
+    twitter: any[];
+    linkedin: any[];
+  }>({
+    twitter: [],
+    linkedin: []
+  });
+  const [selectedPostsForStyle, setSelectedPostsForStyle] = useState<{
+    twitter: Set<string>;
+    linkedin: Set<string>;
+  }>({
+    twitter: new Set(),
+    linkedin: new Set()
+  });
+  const [isLoadingPostsForSelection, setIsLoadingPostsForSelection] = useState(false);
+
   // Add a missing state variable for saving content:
   const [isSavingContent, setIsSavingContent] = useState(false);
 
@@ -402,6 +420,111 @@ const RequestCarouselPage: React.FC = () => {
   useEffect(() => {
     fetchCurrentSubscription();
   }, []);
+
+  // Function to load saved posts for style selection
+  const loadSavedPostsForSelection = async () => {
+    setIsLoadingPostsForSelection(true);
+    try {
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
+      
+      if (!token) {
+        console.warn('No auth token found for loading posts');
+        setIsLoadingPostsForSelection(false);
+        return;
+      }
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      // Load Twitter posts
+      try {
+        const twitterApiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/twitter/saved`
+          : `${baseUrl}/api/twitter/saved`;
+        const twitterResponse = await axios.get(twitterApiUrl, { headers });
+        
+        if (twitterResponse.data.success) {
+          const twitterPosts = twitterResponse.data.data || [];
+          setSavedPostsForSelection(prev => ({ ...prev, twitter: twitterPosts }));
+        }
+      } catch (error) {
+        console.error('Error loading Twitter posts for selection:', error);
+      }
+
+      // Load LinkedIn posts
+      try {
+        const linkedinApiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/linkedin/saved-posts`
+          : `${baseUrl}/api/linkedin/saved-posts`;
+        const linkedinResponse = await axios.get(linkedinApiUrl, { headers });
+        
+        if (linkedinResponse.data.success) {
+          const linkedinPosts = linkedinResponse.data.data || [];
+          setSavedPostsForSelection(prev => ({ ...prev, linkedin: linkedinPosts }));
+        }
+      } catch (error) {
+        console.error('Error loading LinkedIn posts for selection:', error);
+      }
+    } catch (error) {
+      console.error('Error in loadSavedPostsForSelection:', error);
+    } finally {
+      setIsLoadingPostsForSelection(false);
+    }
+  };
+
+  // Function to handle post selection toggle
+  const togglePostSelection = (platform: 'twitter' | 'linkedin', postId: string) => {
+    setSelectedPostsForStyle(prev => {
+      const newSelection = { ...prev };
+      const currentSet = new Set(newSelection[platform]);
+      
+      if (currentSet.has(postId)) {
+        currentSet.delete(postId);
+      } else {
+        currentSet.add(postId);
+      }
+      
+      newSelection[platform] = currentSet;
+      return newSelection;
+    });
+  };
+
+  // Function to get selected posts content for style analysis
+  const getSelectedPostsContent = () => {
+    const selectedContent: string[] = [];
+    
+    // Get Twitter content
+    selectedPostsForStyle.twitter.forEach(postId => {
+      const post = savedPostsForSelection.twitter.find(p => p.postData?.id === postId);
+      if (post?.postData?.content || post?.postData?.text) {
+        selectedContent.push(post.postData.content || post.postData.text);
+      }
+    });
+    
+    // Get LinkedIn content
+    selectedPostsForStyle.linkedin.forEach(postId => {
+      const post = savedPostsForSelection.linkedin.find(p => p.postData?.id === postId);
+      if (post?.postData?.content || post?.postData?.text) {
+        selectedContent.push(post.postData.content || post.postData.text);
+      }
+    });
+    
+    return selectedContent.join('\n\n---\n\n');
+  };
+
+  // Function to apply selected posts and close modal
+  const applySelectedPosts = () => {
+    const content = getSelectedPostsContent();
+    setAttachedLinkedInPost(content);
+    setShowPostSelectionModal(false);
+    setShowLinkedInPostInput(true);
+    
+    toast({
+      title: "Posts attached",
+      description: `Selected ${selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} posts for style analysis`,
+    });
+  };
 
   // Add a periodic check for limit updates
   useEffect(() => {
@@ -1220,7 +1343,8 @@ const RequestCarouselPage: React.FC = () => {
         type: type, // Use the type directly since backend now supports 'text-post'
         transcript: selectedVideo.transcript,
         videoId: selectedVideo.id,
-        videoTitle: selectedVideo.title
+        videoTitle: selectedVideo.title,
+        writingStyleSamples: attachedLinkedInPost || undefined // Include writing style samples if available
       });
 
       if (!response.data.success || !response.data.content) {
@@ -2777,25 +2901,62 @@ const RequestCarouselPage: React.FC = () => {
                                                                          <h4 className="text-sm font-medium flex items-center gap-2">
                                        <Link2 className="h-4 w-4 text-blue-500" />
                                        LinkedIn Post Analysis (Optional)
+                                       {(selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size > 0) && (
+                                         <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                                           {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} selected
+                                         </Badge>
+                                       )}
                                      </h4>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => setShowLinkedInPostInput(!showLinkedInPostInput)}
-                                      className="text-xs"
-                                    >
-                                      {showLinkedInPostInput ? 'Hide' : 'Attach Post'}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => {
+                                          loadSavedPostsForSelection();
+                                          setShowPostSelectionModal(true);
+                                        }}
+                                        className="text-xs"
+                                      >
+                                        Select Saved Posts
+                                      </Button>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setShowLinkedInPostInput(!showLinkedInPostInput)}
+                                        className="text-xs"
+                                      >
+                                        {showLinkedInPostInput ? 'Hide' : 'Manual Input'}
+                                      </Button>
+                                    </div>
                                   </div>
                                   
-                                  {showLinkedInPostInput && (
+                                  {(showLinkedInPostInput || attachedLinkedInPost) && (
                                     <div className="space-y-3">
-                                      <Textarea
-                                        placeholder="Paste a LinkedIn post content here to analyze its writing style and structure for your carousel generation..."
-                                        value={attachedLinkedInPost}
-                                        onChange={(e) => setAttachedLinkedInPost(e.target.value)}
-                                        className="min-h-[100px] text-sm"
-                                      />
+                                      {attachedLinkedInPost && (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <Check className="h-4 w-4 text-green-600" />
+                                            <span className="text-sm font-medium text-green-700">
+                                              {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} posts attached for style analysis
+                                            </span>
+                                          </div>
+                                          <div className="max-h-20 overflow-y-auto">
+                                            <p className="text-xs text-green-600 line-clamp-3">
+                                              {attachedLinkedInPost.substring(0, 200)}...
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {showLinkedInPostInput && (
+                                        <Textarea
+                                          placeholder="Or manually paste post content here to analyze writing style..."
+                                          value={attachedLinkedInPost}
+                                          onChange={(e) => setAttachedLinkedInPost(e.target.value)}
+                                          className="min-h-[100px] text-sm"
+                                        />
+                                      )}
+                                      
                                       <div className="flex justify-between items-center">
                                         <p className="text-xs text-muted-foreground">
                                           This will help the AI understand your preferred writing style and tone.
@@ -2804,10 +2965,13 @@ const RequestCarouselPage: React.FC = () => {
                                           <Button 
                                             variant="outline" 
                                             size="sm"
-                                            onClick={() => setAttachedLinkedInPost('')}
+                                            onClick={() => {
+                                              setAttachedLinkedInPost('');
+                                              setSelectedPostsForStyle({ twitter: new Set(), linkedin: new Set() });
+                                            }}
                                             className="text-xs"
                                           >
-                                            Clear
+                                            Clear All
                                           </Button>
                                         )}
                                       </div>
@@ -3177,6 +3341,180 @@ const RequestCarouselPage: React.FC = () => {
             </div>
           </CardFooter>
         </Card>
+      )}
+
+      {/* Post Selection Modal */}
+      {showPostSelectionModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-5xl max-h-[80vh] flex flex-col shadow-xl">
+            <div className="p-4 border-b bg-blue-50 flex items-center justify-between rounded-t-lg">
+              <h3 className="text-lg font-medium text-blue-800 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-blue-600" />
+                Select Posts for Writing Style Analysis
+              </h3>
+                             <Button variant="ghost" size="sm" onClick={() => {
+                 setShowPostSelectionModal(false);
+                 // Reset selections if user closes without applying
+                 if (!attachedLinkedInPost) {
+                   setSelectedPostsForStyle({ twitter: new Set(), linkedin: new Set() });
+                 }
+               }}>
+                 ✕
+               </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {isLoadingPostsForSelection ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2">Loading your saved posts...</span>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
+                    <h4 className="font-medium mb-2">How this works:</h4>
+                    <p>Select posts that represent your preferred writing style. The AI will analyze the tone, structure, and style of these posts to generate content that matches your voice.</p>
+                  </div>
+                  
+                  {/* Twitter Posts Section */}
+                  {savedPostsForSelection.twitter.length > 0 && (
+                    <div>
+                      <h4 className="text-md font-medium mb-3 text-gray-900 flex items-center gap-2">
+                        <div className="w-5 h-5 bg-black rounded flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">𝕏</span>
+                        </div>
+                        Twitter Posts ({savedPostsForSelection.twitter.length})
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                        {savedPostsForSelection.twitter.map((post, index) => (
+                          <div 
+                            key={post._id || index}
+                            className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
+                              selectedPostsForStyle.twitter.has(post.postData?.id || post.postData?.tweetId || index.toString())
+                                ? "ring-2 ring-blue-500 bg-blue-50" 
+                                : "hover:bg-gray-50"
+                            }`}
+                            onClick={() => togglePostSelection('twitter', post.postData?.id || post.postData?.tweetId || index.toString())}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex-shrink-0">
+                                {selectedPostsForStyle.twitter.has(post.postData?.id || post.postData?.tweetId || index.toString()) ? (
+                                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <Check className="h-3 w-3 text-white" />
+                                  </div>
+                                ) : (
+                                  <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm line-clamp-3 text-gray-800">
+                                  {post.postData?.content || post.postData?.text || 'No content available'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {post.postData?.user?.username && `@${post.postData.user.username}`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* LinkedIn Posts Section */}
+                  {savedPostsForSelection.linkedin.length > 0 && (
+                    <div>
+                      <h4 className="text-md font-medium mb-3 text-gray-900 flex items-center gap-2">
+                        <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">in</span>
+                        </div>
+                        LinkedIn Posts ({savedPostsForSelection.linkedin.length})
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                        {savedPostsForSelection.linkedin.map((post, index) => (
+                          <div 
+                            key={post._id || index}
+                            className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
+                              selectedPostsForStyle.linkedin.has(post.postData?.id || index.toString())
+                                ? "ring-2 ring-blue-500 bg-blue-50" 
+                                : "hover:bg-gray-50"
+                            }`}
+                            onClick={() => togglePostSelection('linkedin', post.postData?.id || index.toString())}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div className="flex-shrink-0">
+                                {selectedPostsForStyle.linkedin.has(post.postData?.id || index.toString()) ? (
+                                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <Check className="h-3 w-3 text-white" />
+                                  </div>
+                                ) : (
+                                  <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm line-clamp-3 text-gray-800">
+                                  {post.postData?.content || post.postData?.text || 'No content available'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {post.postData?.author?.name && `by ${post.postData.author.name}`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {savedPostsForSelection.twitter.length === 0 && savedPostsForSelection.linkedin.length === 0 && (
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 font-medium">No saved posts found</p>
+                      <p className="text-sm text-gray-400 mt-1">Start by saving some posts from the scraper page</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => {
+                          setShowPostSelectionModal(false);
+                          navigate('/dashboard/scraper');
+                        }}
+                      >
+                        Go to Scraper
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="border-t p-4 bg-gray-50 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                Selected: {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} posts
+              </div>
+              <div className="flex gap-2">
+                                 <Button 
+                   variant="outline" 
+                   onClick={() => {
+                     setShowPostSelectionModal(false);
+                     // Reset selections if user cancels without applying
+                     if (!attachedLinkedInPost) {
+                       setSelectedPostsForStyle({ twitter: new Set(), linkedin: new Set() });
+                     }
+                   }}
+                 >
+                   Cancel
+                 </Button>
+                <Button 
+                  onClick={applySelectedPosts}
+                  disabled={selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size === 0}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Apply Selected Posts
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Add modal to show saved contents */}

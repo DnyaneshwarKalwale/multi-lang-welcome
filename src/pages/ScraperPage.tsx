@@ -1135,7 +1135,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
       } else if (error.response?.status >= 500) {
         toastError('Server error. Please try again in a few moments.');
       } else {
-        toastError(error.response?.data?.message || 'Failed to scrape LinkedIn profile');
+      toastError(error.response?.data?.message || 'Failed to scrape LinkedIn profile');
       }
     } finally {
       setIsScrapingLinkedIn(false);
@@ -1354,7 +1354,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         // Don't save to localStorage to prevent persistence
         // setLastSearchedTwitterUser(username);
       
-        toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
+      toastSuccess(`Successfully retrieved ${tweets.length} tweets from @${username}`);
         
         // Auto-save all tweets immediately after scraping
         await autoSaveAllTweets(twitterResult, tweets);
@@ -1789,10 +1789,10 @@ const ScraperPage: React.FC = (): JSX.Element => {
 
       // Make a single API call to save all posts
       const response = await axios.post(apiUrl, requestData, {
-        headers: {
+          headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+          }
       });
 
       console.log('Backend response:', response.data);
@@ -2621,23 +2621,23 @@ const ScraperPage: React.FC = (): JSX.Element => {
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Folder className="h-6 w-6 text-blue-600" />
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
-                  <p className="text-sm text-gray-500">
+            <div className="flex items-center gap-3">
+              <Folder className="h-6 w-6 text-blue-600" />
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
+                <p className="text-sm text-gray-500">
                     {savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts
-                  </p>
-                </div>
+                </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onClose}
-                className="p-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="p-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
             </div>
           </div>
           
@@ -2703,7 +2703,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                             ) : (
                               // This is a standalone tweet
                               <div className="relative">
-                                <TweetCard
+                          <TweetCard
                                   tweet={item}
                                 />
                                 <Button
@@ -2716,7 +2716,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
-                              </div>
+                        </div>
                             )}
                           </div>
                         ));
@@ -3104,19 +3104,19 @@ const ScraperPage: React.FC = (): JSX.Element => {
               return (
                 <div className="columns-1 md:columns-2 gap-6">
                   {allContent.map((item) => (
-                                              <div key={'tweets' in item ? `thread-${item.id}` : `tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
-                            {'tweets' in item ? (
-                              // This is a thread
-                              <TweetThread
-                                thread={item}
-                              />
-                            ) : (
-                              // This is a standalone tweet
-                              <TweetCard
-                                tweet={item}
-                              />
-                            )}
-                          </div>
+                    <div key={'tweets' in item ? `thread-${item.id}` : `tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
+                      {'tweets' in item ? (
+                        // This is a thread
+                        <TweetThread
+                          thread={item}
+                        />
+                      ) : (
+                        // This is a standalone tweet
+                        <TweetCard
+                          tweet={item}
+                        />
+                      )}
+                    </div>
                   ))}
                 </div>
               );
@@ -3834,7 +3834,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         savedTwitterThreads={savedTwitterThreads}
         savedLinkedInPosts={savedLinkedInPosts}
       />
-
+      
       {/* PDF Viewer Modal */}
       <PDFViewerModal
         isOpen={pdfViewerState.isOpen}
