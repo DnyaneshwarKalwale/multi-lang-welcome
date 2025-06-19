@@ -2612,63 +2612,21 @@ const ScraperPage: React.FC = (): JSX.Element => {
     savedTwitterThreads: Thread[];
     savedLinkedInPosts: any[];
   }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
-    const [searchQuery, setSearchQuery] = React.useState('');
-
-    // Filter functions
-    const filterTwitterContent = (content: Tweet | Thread) => {
-      if (!searchQuery.trim()) return true;
-      
-      const query = searchQuery.toLowerCase();
-      
-      if ('tweets' in content) {
-        // This is a thread
-        return content.tweets.some(tweet => 
-          tweet.author?.username?.toLowerCase().includes(query) ||
-          tweet.author?.name?.toLowerCase().includes(query) ||
-          tweet.text?.toLowerCase().includes(query)
-        );
-      } else {
-        // This is a single tweet
-        return content.author?.username?.toLowerCase().includes(query) ||
-               content.author?.name?.toLowerCase().includes(query) ||
-               content.text?.toLowerCase().includes(query);
-      }
-    };
-
-    const filterLinkedInPosts = (post: any) => {
-      if (!searchQuery.trim()) return true;
-      
-      const query = searchQuery.toLowerCase();
-      const postData = post.postData || post;
-      
-      return postData.author?.toLowerCase().includes(query) ||
-             postData.authorHeadline?.toLowerCase().includes(query) ||
-             postData.content?.toLowerCase().includes(query);
-    };
-
-    // Apply filters
-    const filteredTwitterPosts = savedTwitterPosts.filter(filterTwitterContent);
-    const filteredTwitterThreads = savedTwitterThreads.filter(filterTwitterContent);
-    const filteredLinkedInPosts = savedLinkedInPosts.filter(filterLinkedInPosts);
-
-    // Conditional return after all hooks are declared
+    // No search functionality - removed to prevent hooks errors
     if (!isOpen) return null;
 
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 space-y-4">
+          <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Folder className="h-6 w-6 text-blue-600" />
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
                   <p className="text-sm text-gray-500">
-                    {searchQuery ? 
-                      `${filteredTwitterPosts.length + filteredTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + filteredLinkedInPosts.length} filtered / ${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total` :
-                      `${savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts`
-                    }
+                    {savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts
                   </p>
                 </div>
               </div>
@@ -2681,92 +2639,39 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search by username, name, or content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery('');
-                  }
-                }}
-                className="pl-10 w-full"
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
           </div>
           
           {/* Content */}
           <div className="flex-1 overflow-auto p-6">
-            {(searchQuery ? 
-              (filteredTwitterPosts.length === 0 && filteredLinkedInPosts.length === 0 && filteredTwitterThreads.length === 0) :
-              (savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 && savedTwitterThreads.length === 0)
-            ) ? (
+            {(savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 && savedTwitterThreads.length === 0) ? (
               <div className="text-center py-16 text-gray-500">
                 <Folder className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">
-                  {searchQuery ? 'No posts match your search' : 'No saved posts yet'}
-                </h3>
-                <p>
-                  {searchQuery ? 'Try adjusting your search terms or clear the search to see all posts.' : 'Start by scraping and saving some content!'}
-                </p>
-                {searchQuery && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setSearchQuery('')}
-                    className="mt-4"
-                  >
-                    Clear Search
-                  </Button>
-                )}
+                <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
+                <p>Start by scraping and saving some content!</p>
               </div>
             ) : (
               <Tabs defaultValue="twitter" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="twitter" className="flex items-center gap-2">
                     <Twitter className="h-4 w-4" />
-                    Twitter ({filteredTwitterPosts.length + filteredTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)})
+                    Twitter ({savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)})
                   </TabsTrigger>
                   <TabsTrigger value="linkedin" className="flex items-center gap-2">
                     <Linkedin className="h-4 w-4" />
-                    LinkedIn ({filteredLinkedInPosts.length})
+                    LinkedIn ({savedLinkedInPosts.length})
                   </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="twitter">
-                  {filteredTwitterPosts.length === 0 && filteredTwitterThreads.length === 0 ? (
+                  {savedTwitterPosts.length === 0 && savedTwitterThreads.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <p>{searchQuery ? 'No Twitter posts match your search' : 'No saved Twitter posts'}</p>
-                      {searchQuery && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setSearchQuery('')}
-                          className="mt-2"
-                          size="sm"
-                        >
-                          Clear Search
-                        </Button>
-                      )}
+                      <p>No saved Twitter posts</p>
                     </div>
                   ) : (
                     <div className="columns-1 md:columns-2 gap-6">
                       {(() => {
                         // Combine and sort tweets and threads chronologically (same as scraper page)
-                        const allContent: (Tweet | Thread)[] = [...filteredTwitterPosts, ...filteredTwitterThreads];
+                        const allContent: (Tweet | Thread)[] = [...savedTwitterPosts, ...savedTwitterThreads];
                         
                         // Sort by date (newest first)
                         allContent.sort((a, b) => {
@@ -2821,23 +2726,13 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 </TabsContent>
                 
                 <TabsContent value="linkedin">
-                  {filteredLinkedInPosts.length === 0 ? (
+                  {savedLinkedInPosts.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <p>{searchQuery ? 'No LinkedIn posts match your search' : 'No saved LinkedIn posts'}</p>
-                      {searchQuery && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setSearchQuery('')}
-                          className="mt-2"
-                          size="sm"
-                        >
-                          Clear Search
-                        </Button>
-                      )}
+                      <p>No saved LinkedIn posts</p>
                     </div>
                   ) : (
                     <div className="masonry-container columns-1 md:columns-2 xl:columns-3 gap-6">
-                      {filteredLinkedInPosts.map((post, index) => {
+                      {savedLinkedInPosts.map((post, index) => {
                         // Normalize post data structure
                         const postData = post.postData || post;
                         return (
