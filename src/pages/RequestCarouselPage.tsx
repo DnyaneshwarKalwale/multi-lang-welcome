@@ -3615,17 +3615,22 @@ const getCarouselSlides = (content: string | null | undefined) => {
                                     <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
                                       {posts.map((post, index) => {
                                         const postId = post.id || post._id || post.tweet_id || index.toString();
-                                        const isThread = 'tweets' in post;
-                                        const content = isThread 
-                                          ? post.tweets[0]?.text || post.tweets[0]?.full_text || 'Thread'
-                                          : post.text || post.full_text || 'No content';
+                                        const isThread = Array.isArray(post.tweets) && post.tweets.length > 0;
+                                        
+                                        // Get the actual tweet content properly
+                                        let content = '';
+                                        if (isThread) {
+                                          content = post.tweets[0]?.text || post.tweets[0]?.full_text || 'Thread content';
+                                        } else {
+                                          content = post.text || post.full_text || post.content || 'Tweet content';
+                                        }
                                         
                                         return (
                                           <div 
                                             key={postId}
                                             className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
                                               selectedPostsForStyle.twitter.has(postId) || selectedAuthors.twitter.has(authorName)
-                                                ? 'ring-1 ring-blue-400 bg-blue-25' 
+                                                ? 'ring-1 ring-blue-400 bg-blue-50' 
                                                 : 'hover:bg-gray-50'
                                             }`}
                                             onClick={() => togglePostSelection('twitter', postId)}
@@ -3641,13 +3646,29 @@ const getCarouselSlides = (content: string | null | undefined) => {
                                                 )}
                                               </div>
                                               <div className="flex-1 min-w-0">
-                                                <p className="text-xs text-gray-800 line-clamp-2">
-                                                  {isThread && <span className="text-blue-600 font-medium">Thread: </span>}
-                                                  {content}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                  {isThread ? `${post.tweets.length} tweets` : 'Single tweet'}
-                                                </p>
+                                                <div className="bg-white border border-gray-200 rounded-lg p-2 mb-2">
+                                                  <div className="flex items-start gap-2">
+                                                    <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                                                      <span className="text-xs font-bold">𝕏</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <div className="flex items-center gap-1 mb-1">
+                                                        <span className="text-xs font-medium text-gray-900">@{authorName}</span>
+                                                        {isThread && (
+                                                          <span className="text-xs bg-blue-100 text-blue-600 px-1 rounded">Thread</span>
+                                                        )}
+                                                      </div>
+                                                      <p className="text-xs text-gray-800 line-clamp-3 whitespace-pre-wrap">
+                                                        {content}
+                                                      </p>
+                                                      {isThread && post.tweets.length > 1 && (
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                          +{post.tweets.length - 1} more tweets in thread
+                                                        </p>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
@@ -3722,14 +3743,15 @@ const getCarouselSlides = (content: string | null | undefined) => {
                                     <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
                                       {posts.map((post, index) => {
                                         const postId = post.id || post._id || post.mongoId || index.toString();
-                                        const content = post.content || post.text || 'No content';
+                                        const content = post.content || post.text || 'LinkedIn post content';
+                                        const authorDisplayName = post.author?.name || post.authorName || authorName;
                                         
                                         return (
                                           <div 
                                             key={postId}
                                             className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
                                               selectedPostsForStyle.linkedin.has(postId) || selectedAuthors.linkedin.has(authorName)
-                                                ? 'ring-1 ring-blue-400 bg-blue-25' 
+                                                ? 'ring-1 ring-blue-400 bg-blue-50' 
                                                 : 'hover:bg-gray-50'
                                             }`}
                                             onClick={() => togglePostSelection('linkedin', postId)}
@@ -3745,12 +3767,32 @@ const getCarouselSlides = (content: string | null | undefined) => {
                                                 )}
                                               </div>
                                               <div className="flex-1 min-w-0">
-                                                <p className="text-xs text-gray-800 line-clamp-2">
-                                                  {content}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                  {post.author?.name || post.authorName} • {new Date(post.savedAt || post.createdAt || Date.now()).toLocaleDateString()}
-                                                </p>
+                                                <div className="bg-white border border-gray-200 rounded-lg p-2 mb-2">
+                                                  <div className="flex items-start gap-2">
+                                                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center flex-shrink-0">
+                                                      <span className="text-white text-xs font-bold">in</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <div className="flex items-center gap-1 mb-1">
+                                                        <span className="text-xs font-medium text-gray-900">{authorDisplayName}</span>
+                                                        <span className="text-xs text-gray-500">•</span>
+                                                        <span className="text-xs text-gray-500">
+                                                          {post.savedAt ? new Date(post.savedAt).toLocaleDateString() : 
+                                                           post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 
+                                                           'Recently'}
+                                                        </span>
+                                                      </div>
+                                                      <p className="text-xs text-gray-800 line-clamp-3 whitespace-pre-wrap">
+                                                        {content}
+                                                      </p>
+                                                      {post.media && post.media.length > 0 && (
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                          📎 {post.media.length} attachment{post.media.length > 1 ? 's' : ''}
+                                                        </p>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
