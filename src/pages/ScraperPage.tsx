@@ -2671,11 +2671,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
     savedTwitterPosts: Tweet[];
     savedTwitterThreads: Thread[];
     savedLinkedInPosts: any[];
-  }> = ({ isOpen, onClose }) => {
-    // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
     const [searchQuery, setSearchQuery] = useState('');
     
-    // Filter functions - always compute these even if modal is closed
+    if (!isOpen) return null;
+    
+    // Filter posts based on search
     const filteredTwitterPosts = savedTwitterPosts.filter(post => 
       !searchQuery.trim() || 
       post.author?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -2697,9 +2698,6 @@ const ScraperPage: React.FC = (): JSX.Element => {
       post.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    
-    // Early return AFTER all hooks
-    if (!isOpen) return null;
 
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
