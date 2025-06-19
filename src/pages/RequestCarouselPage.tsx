@@ -233,11 +233,8 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   
   console.log("Preparing carousel content for editor:", content);
   
-  // First, remove any markdown separators
-  let cleanContent = content.replace(/^---+$/gm, '').trim();
-  
   // Process the content to remove standalone "Slide X" slides and clean slide content
-  const rawSlides = cleanContent.split('\n\n').filter(s => s.trim());
+  const rawSlides = content.split('\n\n').filter(s => s.trim());
   const textSlides = [];
   
   for (let i = 0; i < rawSlides.length; i++) {
@@ -248,17 +245,8 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
       continue;
     }
     
-    // Remove various slide number formats
-    let cleanedSlide = current
-      .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
-      .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
-      .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
-      .trim();
-    
-    // Only add non-empty slides
-    if (cleanedSlide) {
-      textSlides.push(cleanedSlide);
-    }
+    // Remove "Slide X:" prefix if it exists
+    textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
   }
   
   console.log("Created text slides:", textSlides.length);
@@ -353,21 +341,7 @@ const RequestCarouselPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editableContent, setEditableContent] = useState('');
 
-  // Add state for folder-based post organization
-  const [selectedAuthors, setSelectedAuthors] = useState<{
-    twitter: Set<string>;
-    linkedin: Set<string>;
-  }>({
-    twitter: new Set(),
-    linkedin: new Set()
-  });
-  const [openFolders, setOpenFolders] = useState<{
-    twitter: Set<string>;
-    linkedin: Set<string>;
-  }>({
-    twitter: new Set(),
-    linkedin: new Set()
-  });
+
 
   // Inside the RequestCarouselPage component, add these new state variables:
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -380,7 +354,6 @@ const RequestCarouselPage: React.FC = () => {
   
   // LinkedIn post attachment states
   const [attachedLinkedInPost, setAttachedLinkedInPost] = useState<string>('');
-  const [showLinkedInPostInput, setShowLinkedInPostInput] = useState(false);
 
   // Add post selection states
   const [showPostSelectionModal, setShowPostSelectionModal] = useState(false);
@@ -399,6 +372,10 @@ const RequestCarouselPage: React.FC = () => {
     linkedin: new Set()
   });
   const [isLoadingPostsForSelection, setIsLoadingPostsForSelection] = useState(false);
+  
+  // Add states for folder-based selection
+  const [currentViewMode, setCurrentViewMode] = useState<'folders' | 'posts'>('folders');
+  const [currentOpenFolder, setCurrentOpenFolder] = useState<{ platform: 'twitter' | 'linkedin'; author: string } | null>(null);
 
   // Add a missing state variable for saving content:
   const [isSavingContent, setIsSavingContent] = useState(false);
@@ -552,7 +529,6 @@ const RequestCarouselPage: React.FC = () => {
     const content = getSelectedPostsContent();
     setAttachedLinkedInPost(content);
     setShowPostSelectionModal(false);
-    setShowLinkedInPostInput(true);
     
     toast({
       title: "Posts attached",
@@ -586,60 +562,36 @@ const RequestCarouselPage: React.FC = () => {
     return { twitterAuthors, linkedinAuthors };
   };
 
-  // Function to toggle entire user folder selection (circle icon)
-  const toggleAuthorSelection = (platform: 'twitter' | 'linkedin', authorName: string) => {
-    setSelectedAuthors(prev => {
+  // Function to select all posts from an author (folder selection)
+  const selectAllPostsFromAuthor = (platform: 'twitter' | 'linkedin', authorName: string) => {
+    const { twitterAuthors, linkedinAuthors } = organizePostsByAuthor();
+    
+    setSelectedPostsForStyle(prev => {
       const newSelection = { ...prev };
       const currentSet = new Set(newSelection[platform]);
       
-      if (currentSet.has(authorName)) {
-        // User is being deselected - remove all their posts from selection
-        currentSet.delete(authorName);
-        
-        // Remove all posts from this user
-        setSelectedPostsForStyle(prevPosts => {
-          const newPosts = { ...prevPosts };
-          const { twitterAuthors, linkedinAuthors } = organizePostsByAuthor();
-          const userPosts = platform === 'twitter' 
-            ? twitterAuthors.get(authorName) || []
-            : linkedinAuthors.get(authorName) || [];
-          
-          userPosts.forEach(post => {
-            const postId = platform === 'twitter' 
-              ? post.id || post._id || post.tweet_id
-              : post.id || post._id || post.mongoId;
-            
-            if (postId) {
-              newPosts[platform].delete(postId);
-            }
-          });
-          
-          return newPosts;
-        });
+      // Get all posts from this author
+      const authorPosts = platform === 'twitter' 
+        ? twitterAuthors.get(authorName) || []
+        : linkedinAuthors.get(authorName) || [];
+      
+      // Check if all posts from this author are already selected
+      const allPostIds = authorPosts.map(post => {
+        if (platform === 'twitter') {
+          return post.id || post._id || post.tweet_id;
+        } else {
+          return post.id || post._id || post.mongoId;
+        }
+      });
+      
+      const allSelected = allPostIds.every(id => currentSet.has(id));
+      
+      if (allSelected) {
+        // Deselect all posts from this author
+        allPostIds.forEach(id => currentSet.delete(id));
       } else {
-        // User is being selected - auto-select all their posts
-        currentSet.add(authorName);
-        
-        // Auto-select all posts from this user
-        setSelectedPostsForStyle(prevPosts => {
-          const newPosts = { ...prevPosts };
-          const { twitterAuthors, linkedinAuthors } = organizePostsByAuthor();
-          const userPosts = platform === 'twitter' 
-            ? twitterAuthors.get(authorName) || []
-            : linkedinAuthors.get(authorName) || [];
-          
-          userPosts.forEach(post => {
-            const postId = platform === 'twitter' 
-              ? post.id || post._id || post.tweet_id
-              : post.id || post._id || post.mongoId;
-            
-            if (postId) {
-              newPosts[platform].add(postId);
-            }
-          });
-          
-          return newPosts;
-        });
+        // Select all posts from this author
+        allPostIds.forEach(id => currentSet.add(id));
       }
       
       newSelection[platform] = currentSet;
@@ -647,21 +599,16 @@ const RequestCarouselPage: React.FC = () => {
     });
   };
 
-  // Function to toggle folder open/close (folder name click)
-  const toggleFolderOpen = (platform: 'twitter' | 'linkedin', authorName: string) => {
-    setOpenFolders(prev => {
-      const newFolders = { ...prev };
-      const currentSet = new Set(newFolders[platform]);
-      
-      if (currentSet.has(authorName)) {
-        currentSet.delete(authorName);
-      } else {
-        currentSet.add(authorName);
-      }
-      
-      newFolders[platform] = currentSet;
-      return newFolders;
-    });
+  // Function to open a folder (show posts from specific author)
+  const openAuthorFolder = (platform: 'twitter' | 'linkedin', authorName: string) => {
+    setCurrentOpenFolder({ platform, author: authorName });
+    setCurrentViewMode('posts');
+  };
+
+  // Function to close folder and go back to folder view
+  const closeFolderAndBackToFolders = () => {
+    setCurrentOpenFolder(null);
+    setCurrentViewMode('folders');
   };
 
 
@@ -1949,40 +1896,28 @@ const RequestCarouselPage: React.FC = () => {
   // Add the missing functions after the state variables
 
   // Add safety checks in the carousel preview section
-const getCarouselSlides = (content: string | null | undefined) => {
-  if (!content) return [];
-  
-  // First, remove any markdown separators
-  let cleanContent = content.replace(/^---+$/gm, '').trim();
-  
-  // Split by double newlines to get individual slides
-  const rawSlides = cleanContent.split('\n\n').filter(s => s.trim());
-  
-  // Now process slides to remove "Slide X" prefix slides and clean remaining slide content
-  const processedSlides = [];
-  for (let i = 0; i < rawSlides.length; i++) {
-    const current = rawSlides[i].trim();
+  const getCarouselSlides = (content: string | null | undefined) => {
+    if (!content) return [];
     
-    // Skip slides that only contain "Slide X" and nothing else
-    if (/^Slide\s*\d+\s*$/.test(current)) {
-      continue;
+    // First, split by double newlines to get individual slides
+    const rawSlides = content.split('\n\n').filter(s => s.trim());
+    
+    // Now process slides to remove "Slide X" prefix slides and clean remaining slide content
+    const processedSlides = [];
+    for (let i = 0; i < rawSlides.length; i++) {
+      const current = rawSlides[i].trim();
+      
+      // Skip slides that only contain "Slide X" and nothing else
+      if (/^Slide\s*\d+\s*$/.test(current)) {
+        continue;
+      }
+      
+      // Remove "Slide X:" prefix if it exists
+      processedSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
     }
     
-    // Remove various slide number formats
-    let cleanedSlide = current
-      .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
-      .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
-      .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
-      .trim();
-    
-    // Only add non-empty slides
-    if (cleanedSlide) {
-      processedSlides.push(cleanedSlide);
-    }
-  }
-  
-  return processedSlides;
-};
+    return processedSlides;
+  };
 
   const getCarouselSlideCount = (content: string | null | undefined) => {
     const slides = getCarouselSlides(content);
@@ -2016,10 +1951,7 @@ const getCarouselSlides = (content: string | null | undefined) => {
       // Create a mutable copy of the content to process
       let contentToProcess = previewContent;
       
-      // First, remove any markdown separators
-      contentToProcess = contentToProcess.replace(/^---+$/gm, '').trim();
-      
-      // Check if we have content with at least newlines
+      // First check if we have content with at least newlines
       if (!contentToProcess.includes('\n\n')) {
         // Try adding double newlines if it has single newlines
         if (contentToProcess.includes('\n')) {
@@ -2046,17 +1978,8 @@ const getCarouselSlides = (content: string | null | undefined) => {
           continue;
         }
         
-        // Remove various slide number formats
-        let cleanedSlide = current
-          .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
-          .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
-          .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
-          .trim();
-        
-        // Only add non-empty slides
-        if (cleanedSlide) {
-          textSlides.push(cleanedSlide);
-        }
+        // Remove "Slide X:" prefix if it exists
+        textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
       }
       
       console.log("Processed slides for editor:", textSlides.length, textSlides);
@@ -2224,19 +2147,10 @@ const getCarouselSlides = (content: string | null | undefined) => {
 
   // Handle content edit
   const handleContentEdit = (newContent: string) => {
-    // Clean up slide numbers and separators from the content
-    let cleanContent = newContent.replace(/^---+$/gm, '').trim();
-    
-    cleanContent = cleanContent
+    // Clean up slide numbers from the content
+    const cleanContent = newContent
       .split('\n\n')
-      .map(slide => {
-        return slide
-          .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
-          .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
-          .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
-          .trim();
-      })
-      .filter(slide => slide) // Remove empty slides
+      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
       .join('\n\n');
     
     setEditableContent(cleanContent);
@@ -2251,19 +2165,10 @@ const getCarouselSlides = (content: string | null | undefined) => {
     } else {
       // Exiting edit mode - save edited content
       if (previewType === 'carousel') {
-        // Process the content to remove slide numbers and separators
-        let cleanContent = editableContent.replace(/^---+$/gm, '').trim();
-        
-        cleanContent = cleanContent
+        // Process the content to remove "Slide X:" prefixes from each slide
+        const cleanContent = editableContent
           .split('\n\n')
-          .map(slide => {
-            return slide
-              .replace(/^\*\*Slide\s*\d+[^\*]*\*\*[\s\-:]*(.*)$/i, '$1') // **Slide 1 - Title**
-              .replace(/^Slide\s*\d+[\s\-:]+(.*)$/i, '$1') // Slide 1 - Content or Slide 1: Content
-              .replace(/^Slide\s*\d+[\s]*(.*)$/i, '$1') // Slide 1 Content
-              .trim();
-          })
-          .filter(slide => slide) // Remove empty slides
+          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
           .join('\n\n');
         
         setGeneratedContent(cleanContent);
@@ -3080,28 +2985,27 @@ const getCarouselSlides = (content: string | null | undefined) => {
                                 {/* LinkedIn Post Attachment Section */}
                                 <div className="mt-4 border-t pt-4">
                                   <div className="flex justify-between items-center mb-3">
-                                                                         <h4 className="text-sm font-medium flex items-center gap-2">
-                                       <Link2 className="h-4 w-4 text-blue-500" />
-                                       LinkedIn Post Analysis (Optional)
-                                       {(selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size > 0) && (
-                                         <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                                           {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} selected
-                                         </Badge>
-                                       )}
-                                     </h4>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={() => {
-                                          loadSavedPostsForSelection();
-                                          setShowPostSelectionModal(true);
-                                        }}
-                                        className="text-xs"
-                                      >
-                                        Select Saved Posts
-                                      </Button>
-                                    </div>
+                                    <h4 className="text-sm font-medium flex items-center gap-2">
+                                      <Link2 className="h-4 w-4 text-blue-500" />
+                                      Writing Style Analysis (Optional)
+                                      {(selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size > 0) && (
+                                        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                                          {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} selected
+                                        </Badge>
+                                      )}
+                                    </h4>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        loadSavedPostsForSelection();
+                                        setCurrentViewMode('folders');
+                                        setShowPostSelectionModal(true);
+                                      }}
+                                      className="text-xs"
+                                    >
+                                      Select Saved Posts
+                                    </Button>
                                   </div>
                                   
                                   {attachedLinkedInPost && (
@@ -3110,7 +3014,7 @@ const getCarouselSlides = (content: string | null | undefined) => {
                                         <div className="flex items-center gap-2 mb-2">
                                           <Check className="h-4 w-4 text-green-600" />
                                           <span className="text-sm font-medium text-green-700">
-                                            {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} posts attached for style analysis
+                                            {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} posts selected for style analysis
                                           </span>
                                         </div>
                                         <div className="max-h-20 overflow-y-auto">
@@ -3513,21 +3417,31 @@ const getCarouselSlides = (content: string | null | undefined) => {
                 <MessageSquare className="h-5 w-5 text-blue-600" />
                 <div>
                   <h3 className="text-lg font-medium text-blue-800">
-                    Select Posts for Writing Style Analysis
+                    {currentViewMode === 'folders' ? 'Select Posts for Writing Style Analysis' : 
+                     `Posts from ${currentOpenFolder?.author || 'Author'}`}
                   </h3>
                   <p className="text-sm text-blue-600">
-                    Click circles to select entire folders or click folder names to browse individual posts
+                    {currentViewMode === 'folders' 
+                      ? 'Click folder names to browse posts, or click circles to select all posts from that author'
+                      : 'Select individual posts from this author, or go back to select from other authors'
+                    }
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {currentViewMode === 'posts' && (
+                  <Button variant="outline" size="sm" onClick={closeFolderAndBackToFolders}>
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Back to Folders
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" onClick={() => {
                   setShowPostSelectionModal(false);
+                  setCurrentViewMode('folders');
+                  setCurrentOpenFolder(null);
                   // Reset selections if user closes without applying
                   if (!attachedLinkedInPost) {
                     setSelectedPostsForStyle({ twitter: new Set(), linkedin: new Set() });
-                    setSelectedAuthors({ twitter: new Set(), linkedin: new Set() });
-                    setOpenFolders({ twitter: new Set(), linkedin: new Set() });
                   }
                 }}>
                   ✕
@@ -3543,315 +3457,256 @@ const getCarouselSlides = (content: string | null | undefined) => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                                  <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
-                  <h4 className="font-medium mb-2">How this works:</h4>
-                  <p>
-                    Select posts that represent your preferred writing style. Click the circle to select all posts from a user, or click the folder name to browse and select individual posts. The AI will analyze the tone, structure, and style to match your voice.
-                  </p>
-                </div>
+                  <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
+                    <h4 className="font-medium mb-2">How this works:</h4>
+                    <p>
+                      {currentViewMode === 'folders' 
+                        ? 'Click the circle icon to select all posts from an author, or click the folder name to browse individual posts from that author.'
+                        : 'Select individual posts that represent your preferred writing style. The AI will analyze these to match your tone and style.'
+                      }
+                    </p>
+                  </div>
 
-                  {(() => {
-                    const { twitterAuthors, linkedinAuthors } = organizePostsByAuthor();
-                    return (
-                      <div className="space-y-6">
-                        {/* Twitter Authors Section */}
-                        {twitterAuthors.size > 0 && (
+                  {currentViewMode === 'folders' ? (
+                    // Folder View (Authors)
+                    <>
+                      {(() => {
+                        const { twitterAuthors, linkedinAuthors } = organizePostsByAuthor();
+                        
+                        // Helper function to check if all posts from an author are selected
+                        const areAllPostsSelected = (platform: 'twitter' | 'linkedin', posts: any[]) => {
+                          const allPostIds = posts.map(post => {
+                            if (platform === 'twitter') {
+                              return post.id || post._id || post.tweet_id;
+                            } else {
+                              return post.id || post._id || post.mongoId;
+                            }
+                          });
+                          return allPostIds.every(id => selectedPostsForStyle[platform].has(id));
+                        };
+                        
+                        return (
+                          <>
+                            {/* Twitter Authors Section */}
+                            {twitterAuthors.size > 0 && (
+                              <div>
+                                <h4 className="text-md font-medium mb-3 text-gray-900 flex items-center gap-2">
+                                  <div className="w-5 h-5 bg-black rounded flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">𝕏</span>
+                                  </div>
+                                  Twitter Authors ({twitterAuthors.size})
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+                                  {Array.from(twitterAuthors.entries()).map(([authorName, posts]) => (
+                                    <div 
+                                      key={authorName}
+                                      className="border rounded-lg p-3 transition-all hover:shadow-md hover:bg-gray-50"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div 
+                                          className="flex-shrink-0 cursor-pointer"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            selectAllPostsFromAuthor('twitter', authorName);
+                                          }}
+                                        >
+                                          {areAllPostsSelected('twitter', posts) ? (
+                                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                              <Check className="h-3 w-3 text-white" />
+                                            </div>
+                                          ) : (
+                                            <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
+                                          )}
+                                        </div>
+                                        <div 
+                                          className="flex-1 min-w-0 cursor-pointer"
+                                          onClick={() => openAuthorFolder('twitter', authorName)}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <Folder className="h-4 w-4 text-gray-500" />
+                                            <p className="font-medium text-sm truncate">@{authorName}</p>
+                                          </div>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {posts.length} post{posts.length !== 1 ? 's' : ''}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* LinkedIn Authors Section */}
+                            {linkedinAuthors.size > 0 && (
+                              <div>
+                                <h4 className="text-md font-medium mb-3 text-gray-900 flex items-center gap-2">
+                                  <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">in</span>
+                                  </div>
+                                  LinkedIn Authors ({linkedinAuthors.size})
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+                                  {Array.from(linkedinAuthors.entries()).map(([authorName, posts]) => (
+                                    <div 
+                                      key={authorName}
+                                      className="border rounded-lg p-3 transition-all hover:shadow-md hover:bg-gray-50"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div 
+                                          className="flex-shrink-0 cursor-pointer"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            selectAllPostsFromAuthor('linkedin', authorName);
+                                          }}
+                                        >
+                                          {areAllPostsSelected('linkedin', posts) ? (
+                                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                              <Check className="h-3 w-3 text-white" />
+                                            </div>
+                                          ) : (
+                                            <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
+                                          )}
+                                        </div>
+                                        <div 
+                                          className="flex-1 min-w-0 cursor-pointer"
+                                          onClick={() => openAuthorFolder('linkedin', authorName)}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <Folder className="h-4 w-4 text-gray-500" />
+                                            <p className="font-medium text-sm truncate">{authorName}</p>
+                                          </div>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {posts.length} post{posts.length !== 1 ? 's' : ''}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {twitterAuthors.size === 0 && linkedinAuthors.size === 0 && (
+                              <div className="text-center py-8">
+                                <Folder className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-500 font-medium">No saved posts found</p>
+                                <p className="text-sm text-gray-400 mt-1">Start by saving some posts from the scraper page</p>
+                                <Button 
+                                  variant="outline" 
+                                  className="mt-4"
+                                  onClick={() => {
+                                    setShowPostSelectionModal(false);
+                                    navigate('/dashboard/scraper');
+                                  }}
+                                >
+                                  Go to Scraper
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    // Individual Posts View
+                    <>
+                      {(() => {
+                        if (!currentOpenFolder) return null;
+                        
+                        const { twitterAuthors, linkedinAuthors } = organizePostsByAuthor();
+                        const posts = currentOpenFolder.platform === 'twitter' 
+                          ? twitterAuthors.get(currentOpenFolder.author) || []
+                          : linkedinAuthors.get(currentOpenFolder.author) || [];
+                        
+                        return (
                           <div>
                             <h4 className="text-md font-medium mb-3 text-gray-900 flex items-center gap-2">
-                              <div className="w-5 h-5 bg-black rounded flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">𝕏</span>
+                              <div className={`w-5 h-5 rounded flex items-center justify-center ${
+                                currentOpenFolder.platform === 'twitter' ? 'bg-black' : 'bg-blue-600'
+                              }`}>
+                                <span className="text-white text-xs font-bold">
+                                  {currentOpenFolder.platform === 'twitter' ? '𝕏' : 'in'}
+                                </span>
                               </div>
-                              Twitter Authors ({twitterAuthors.size})
+                              {currentOpenFolder.platform === 'twitter' ? 'Twitter' : 'LinkedIn'} Posts from {currentOpenFolder.author} ({posts.length})
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                              {Array.from(twitterAuthors.entries()).map(([authorName, posts]) => (
-                                <div key={authorName} className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+                              {posts.map((post, index) => {
+                                const postId = currentOpenFolder.platform === 'twitter' 
+                                  ? post.id || post._id || post.tweet_id || index.toString()
+                                  : post.id || post._id || post.mongoId || index.toString();
+                                const content = currentOpenFolder.platform === 'twitter'
+                                  ? post.text || post.full_text || 'No content available'
+                                  : post.content || post.text || 'No content available';
+                                const authorDisplay = currentOpenFolder.platform === 'twitter'
+                                  ? post.author?.username || post.user?.username
+                                  : post.author?.name || post.authorName;
+                                
+                                return (
                                   <div 
-                                    className={`border rounded-lg p-3 transition-all hover:shadow-md ${
-                                      selectedAuthors.twitter.has(authorName)
+                                    key={post._id || index}
+                                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
+                                      selectedPostsForStyle[currentOpenFolder.platform].has(postId)
                                         ? "ring-2 ring-blue-500 bg-blue-50" 
                                         : "hover:bg-gray-50"
                                     }`}
+                                    onClick={() => togglePostSelection(currentOpenFolder.platform, postId)}
                                   >
-                                    <div className="flex items-center gap-3">
-                                      <div 
-                                        className="flex-shrink-0 cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleAuthorSelection('twitter', authorName);
-                                        }}
-                                      >
-                                        {selectedAuthors.twitter.has(authorName) ? (
+                                    <div className="flex items-start gap-2">
+                                      <div className="flex-shrink-0">
+                                        {selectedPostsForStyle[currentOpenFolder.platform].has(postId) ? (
                                           <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                                             <Check className="h-3 w-3 text-white" />
                                           </div>
                                         ) : (
-                                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
+                                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
                                         )}
                                       </div>
-                                      <div 
-                                        className="flex-1 min-w-0 cursor-pointer"
-                                        onClick={() => toggleFolderOpen('twitter', authorName)}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <Folder className={`h-4 w-4 ${openFolders.twitter.has(authorName) ? 'text-blue-500' : 'text-gray-500'}`} />
-                                          <p className="font-medium text-sm truncate">@{authorName}</p>
-                                          <div className={`ml-auto transition-transform ${openFolders.twitter.has(authorName) ? 'rotate-90' : ''}`}>
-                                            <ChevronRight className="h-4 w-4 text-gray-400" />
-                                          </div>
-                                        </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm line-clamp-3 text-gray-800">
+                                          {content}
+                                        </p>
                                         <p className="text-xs text-gray-500 mt-1">
-                                          {posts.length} post{posts.length !== 1 ? 's' : ''}
-                                          {selectedAuthors.twitter.has(authorName) && (
-                                            <span className="ml-2 text-blue-600 font-medium">(All selected)</span>
-                                          )}
+                                          {authorDisplay && `${currentOpenFolder.platform === 'twitter' ? '@' : 'by '}${authorDisplay}`}
                                         </p>
                                       </div>
                                     </div>
                                   </div>
-                                  
-                                  {/* Individual posts when folder is open */}
-                                  {openFolders.twitter.has(authorName) && (
-                                    <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
-                                      {posts.map((post, index) => {
-                                        const postId = post.id || post._id || post.tweet_id || index.toString();
-                                        const isThread = Array.isArray(post.tweets) && post.tweets.length > 0;
-                                        
-                                        // Get the actual tweet content properly
-                                        let content = '';
-                                        if (isThread) {
-                                          content = post.tweets[0]?.text || post.tweets[0]?.full_text || 'Thread content';
-                                        } else {
-                                          content = post.text || post.full_text || post.content || 'Tweet content';
-                                        }
-                                        
-                                        return (
-                                          <div 
-                                            key={postId}
-                                            className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
-                                              selectedPostsForStyle.twitter.has(postId) || selectedAuthors.twitter.has(authorName)
-                                                ? 'ring-1 ring-blue-400 bg-blue-50' 
-                                                : 'hover:bg-gray-50'
-                                            }`}
-                                            onClick={() => togglePostSelection('twitter', postId)}
-                                          >
-                                            <div className="flex items-start gap-2">
-                                              <div className="flex-shrink-0 mt-1">
-                                                {selectedPostsForStyle.twitter.has(postId) || selectedAuthors.twitter.has(authorName) ? (
-                                                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                                    <Check className="h-2 w-2 text-white" />
-                                                  </div>
-                                                ) : (
-                                                  <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
-                                                )}
-                                              </div>
-                                              <div className="flex-1 min-w-0">
-                                                <div className="bg-white border border-gray-200 rounded-lg p-2 mb-2">
-                                                  <div className="flex items-start gap-2">
-                                                    <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                                                      <span className="text-xs font-bold">𝕏</span>
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                      <div className="flex items-center gap-1 mb-1">
-                                                        <span className="text-xs font-medium text-gray-900">@{authorName}</span>
-                                                        {isThread && (
-                                                          <span className="text-xs bg-blue-100 text-blue-600 px-1 rounded">Thread</span>
-                                                        )}
-                                                      </div>
-                                                      <p className="text-xs text-gray-800 line-clamp-3 whitespace-pre-wrap">
-                                                        {content}
-                                                      </p>
-                                                      {isThread && post.tweets.length > 1 && (
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                          +{post.tweets.length - 1} more tweets in thread
-                                                        </p>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
-                          </div>
-                        )}
-
-                        {/* LinkedIn Authors Section */}
-                        {linkedinAuthors.size > 0 && (
-                          <div>
-                            <h4 className="text-md font-medium mb-3 text-gray-900 flex items-center gap-2">
-                              <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">in</span>
+                            
+                            {posts.length === 0 && (
+                              <div className="text-center py-8">
+                                <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-500 font-medium">No posts found for this author</p>
+                                <p className="text-sm text-gray-400 mt-1">Go back to select other authors</p>
                               </div>
-                              LinkedIn Authors ({linkedinAuthors.size})
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                              {Array.from(linkedinAuthors.entries()).map(([authorName, posts]) => (
-                                <div key={authorName} className="space-y-2">
-                                  <div 
-                                    className={`border rounded-lg p-3 transition-all hover:shadow-md ${
-                                      selectedAuthors.linkedin.has(authorName)
-                                        ? "ring-2 ring-blue-500 bg-blue-50" 
-                                        : "hover:bg-gray-50"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div 
-                                        className="flex-shrink-0 cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleAuthorSelection('linkedin', authorName);
-                                        }}
-                                      >
-                                        {selectedAuthors.linkedin.has(authorName) ? (
-                                          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                            <Check className="h-3 w-3 text-white" />
-                                          </div>
-                                        ) : (
-                                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
-                                        )}
-                                      </div>
-                                      <div 
-                                        className="flex-1 min-w-0 cursor-pointer"
-                                        onClick={() => toggleFolderOpen('linkedin', authorName)}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <Folder className={`h-4 w-4 ${openFolders.linkedin.has(authorName) ? 'text-blue-500' : 'text-gray-500'}`} />
-                                          <p className="font-medium text-sm truncate">{authorName}</p>
-                                          <div className={`ml-auto transition-transform ${openFolders.linkedin.has(authorName) ? 'rotate-90' : ''}`}>
-                                            <ChevronRight className="h-4 w-4 text-gray-400" />
-                                          </div>
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          {posts.length} post{posts.length !== 1 ? 's' : ''}
-                                          {selectedAuthors.linkedin.has(authorName) && (
-                                            <span className="ml-2 text-blue-600 font-medium">(All selected)</span>
-                                          )}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Individual posts when folder is open */}
-                                  {openFolders.linkedin.has(authorName) && (
-                                    <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
-                                      {posts.map((post, index) => {
-                                        const postId = post.id || post._id || post.mongoId || index.toString();
-                                        const content = post.content || post.text || 'LinkedIn post content';
-                                        const authorDisplayName = post.author?.name || post.authorName || authorName;
-                                        
-                                        return (
-                                          <div 
-                                            key={postId}
-                                            className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
-                                              selectedPostsForStyle.linkedin.has(postId) || selectedAuthors.linkedin.has(authorName)
-                                                ? 'ring-1 ring-blue-400 bg-blue-50' 
-                                                : 'hover:bg-gray-50'
-                                            }`}
-                                            onClick={() => togglePostSelection('linkedin', postId)}
-                                          >
-                                            <div className="flex items-start gap-2">
-                                              <div className="flex-shrink-0 mt-1">
-                                                {selectedPostsForStyle.linkedin.has(postId) || selectedAuthors.linkedin.has(authorName) ? (
-                                                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                                    <Check className="h-2 w-2 text-white" />
-                                                  </div>
-                                                ) : (
-                                                  <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
-                                                )}
-                                              </div>
-                                              <div className="flex-1 min-w-0">
-                                                <div className="bg-white border border-gray-200 rounded-lg p-2 mb-2">
-                                                  <div className="flex items-start gap-2">
-                                                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center flex-shrink-0">
-                                                      <span className="text-white text-xs font-bold">in</span>
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                      <div className="flex items-center gap-1 mb-1">
-                                                        <span className="text-xs font-medium text-gray-900">{authorDisplayName}</span>
-                                                        <span className="text-xs text-gray-500">•</span>
-                                                        <span className="text-xs text-gray-500">
-                                                          {post.savedAt ? new Date(post.savedAt).toLocaleDateString() : 
-                                                           post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 
-                                                           'Recently'}
-                                                        </span>
-                                                      </div>
-                                                      <p className="text-xs text-gray-800 line-clamp-3 whitespace-pre-wrap">
-                                                        {content}
-                                                      </p>
-                                                      {post.media && post.media.length > 0 && (
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                          📎 {post.media.length} attachment{post.media.length > 1 ? 's' : ''}
-                                                        </p>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                            )}
                           </div>
-                        )}
-
-                        {twitterAuthors.size === 0 && linkedinAuthors.size === 0 && (
-                          <div className="text-center py-8">
-                            <Folder className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500 font-medium">No saved posts found</p>
-                            <p className="text-sm text-gray-400 mt-1">Start by saving some posts from the scraper page</p>
-                            <Button 
-                              variant="outline" 
-                              className="mt-4"
-                              onClick={() => {
-                                setShowPostSelectionModal(false);
-                                navigate('/dashboard/scraper');
-                              }}
-                            >
-                              Go to Scraper
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                        );
+                      })()}
+                    </>
+                  )}
                 </div>
               )}
             </div>
             
             <div className="border-t p-4 bg-gray-50 flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                <div className="flex flex-col gap-1">
-                  <div>
-                    Selected: {selectedAuthors.twitter.size + selectedAuthors.linkedin.size} complete folders, 
-                    {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} total posts
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Click circle to select entire folder • Click folder name to browse posts
-                  </div>
-                </div>
+                Selected: {selectedPostsForStyle.twitter.size + selectedPostsForStyle.linkedin.size} posts
               </div>
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
                   onClick={() => {
                     setShowPostSelectionModal(false);
+                    setCurrentViewMode('folders');
+                    setCurrentOpenFolder(null);
                     // Reset selections if user cancels without applying
                     if (!attachedLinkedInPost) {
                       setSelectedPostsForStyle({ twitter: new Set(), linkedin: new Set() });
-                      setSelectedAuthors({ twitter: new Set(), linkedin: new Set() });
-                      setOpenFolders({ twitter: new Set(), linkedin: new Set() });
                     }
                   }}
                 >
