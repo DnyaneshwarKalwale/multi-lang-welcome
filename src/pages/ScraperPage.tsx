@@ -811,6 +811,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
   const [lastSearchedTwitterUser, setLastSearchedTwitterUser] = useState<string>('');
   const [showSavedPosts, setShowSavedPosts] = useState(false);
   const [savedTwitterPosts, setSavedTwitterPosts] = useState<Tweet[]>([]);
+  const [savedTwitterThreads, setSavedTwitterThreads] = useState<Thread[]>([]);
   const [savedLinkedInPosts, setSavedLinkedInPosts] = useState<any[]>([]);
   const [savedPostsModalOpen, setSavedPostsModalOpen] = useState(false);
 
@@ -835,12 +836,34 @@ const ScraperPage: React.FC = (): JSX.Element => {
     
     // Load saved Twitter posts
     try {
-      const twitterResponse = await axios.get(`${apiBaseUrl}/twitter/saved`, { headers });
+      const twitterApiUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/twitter/saved`
+        : `${apiBaseUrl}/api/twitter/saved`;
+      const twitterResponse = await axios.get(twitterApiUrl, { headers });
       if (twitterResponse.data.success) {
-        setSavedTwitterPosts(twitterResponse.data.data || []);
+        const rawTweets = twitterResponse.data.data || [];
+        
+        // Group tweets into threads and standalone tweets (same logic as scraper page)
+        const groupedData = groupThreads(rawTweets);
+        const standaloneTweets: Tweet[] = [];
+        const threads: Thread[] = [];
+        
+        groupedData.forEach(item => {
+          if ('tweets' in item) {
+            // This is a thread
+            threads.push(item);
+          } else {
+            // This is a standalone tweet
+            standaloneTweets.push(item);
+          }
+        });
+        
+        setSavedTwitterPosts(standaloneTweets);
+        setSavedTwitterThreads(threads);
       } else {
         console.warn('Failed to load saved Twitter posts:', twitterResponse.data.message);
         setSavedTwitterPosts([]);
+        setSavedTwitterThreads([]);
       }
     } catch (error) {
       console.error('Error loading saved Twitter posts:', error);
@@ -848,11 +871,15 @@ const ScraperPage: React.FC = (): JSX.Element => {
         toastError('Please log in to view saved posts');
       }
       setSavedTwitterPosts([]);
+      setSavedTwitterThreads([]);
     }
     
     // Load saved LinkedIn posts
     try {
-      const linkedinResponse = await axios.get(`${apiBaseUrl}/linkedin/saved-posts`, { headers });
+      const linkedinApiUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/linkedin/saved-posts`
+        : `${apiBaseUrl}/api/linkedin/saved-posts`;
+      const linkedinResponse = await axios.get(linkedinApiUrl, { headers });
       if (linkedinResponse.data.success) {
         setSavedLinkedInPosts(linkedinResponse.data.data || []);
         console.log('Loaded LinkedIn posts:', linkedinResponse.data.data?.length || 0);
@@ -1701,16 +1728,18 @@ const ScraperPage: React.FC = (): JSX.Element => {
         profileData: linkedinResult.profileData
       });
 
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/linkedin/save-scraped-posts`
+        : `${baseUrl}/api/linkedin/save-scraped-posts`;
+
       // Make a single API call to save all posts
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/linkedin/save-scraped-posts`, 
-        requestData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+      const response = await axios.post(apiUrl, requestData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
       console.log('Backend response:', response.data);
 
@@ -2591,8 +2620,9 @@ const ScraperPage: React.FC = (): JSX.Element => {
     isOpen: boolean;
     onClose: () => void;
     savedTwitterPosts: Tweet[];
+    savedTwitterThreads: Thread[];
     savedLinkedInPosts: any[];
-  }> = ({ isOpen, onClose, savedTwitterPosts, savedLinkedInPosts }) => {
+  }> = ({ isOpen, onClose, savedTwitterPosts, savedTwitterThreads, savedLinkedInPosts }) => {
     if (!isOpen) return null;
 
     return (
@@ -2605,7 +2635,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Saved Posts</h2>
                 <p className="text-sm text-gray-500">
-                  {savedTwitterPosts.length + savedLinkedInPosts.length} total saved posts
+                  {savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0) + savedLinkedInPosts.length} total saved posts
                 </p>
               </div>
             </div>
@@ -2632,7 +2662,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="twitter" className="flex items-center gap-2">
                     <Twitter className="h-4 w-4" />
-                    Twitter ({savedTwitterPosts.length})
+                    Twitter ({savedTwitterPosts.length + savedTwitterThreads.reduce((sum, thread) => sum + thread.tweets.length, 0)})
                   </TabsTrigger>
                   <TabsTrigger value="linkedin" className="flex items-center gap-2">
                     <Linkedin className="h-4 w-4" />
@@ -2641,19 +2671,42 @@ const ScraperPage: React.FC = (): JSX.Element => {
                 </TabsList>
                 
                 <TabsContent value="twitter">
-                  {savedTwitterPosts.length === 0 ? (
+                  {savedTwitterPosts.length === 0 && savedTwitterThreads.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No saved Twitter posts</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {savedTwitterPosts.map((tweet, index) => (
-                        <div key={`${tweet.id}-${tweet.savedAt || index}`} className="w-full">
-                          <TweetCard
-                            tweet={tweet}
-                            isSelected={false}
-                            onSelectToggle={() => {}}
-                          />
-                        </div>
-                      ))}
+                    <div className="columns-1 md:columns-2 gap-6">
+                      {(() => {
+                        // Combine and sort tweets and threads chronologically (same as scraper page)
+                        const allContent: (Tweet | Thread)[] = [...savedTwitterPosts, ...savedTwitterThreads];
+                        
+                        // Sort by date (newest first)
+                        allContent.sort((a, b) => {
+                          const dateA = new Date('tweets' in a ? a.tweets[0]?.created_at || a.created_at : a.created_at || '');
+                          const dateB = new Date('tweets' in b ? b.tweets[0]?.created_at || b.created_at : b.created_at || '');
+                          return dateB.getTime() - dateA.getTime();
+                        });
+                        
+                        return allContent.map((item, index) => (
+                          <div key={'tweets' in item ? `saved-thread-${item.id}` : `saved-tweet-${item.id}`} className="break-inside-avoid mb-6 w-full">
+                            {'tweets' in item ? (
+                              // This is a thread
+                              <TweetThread
+                                thread={item}
+                                selectedTweets={new Set()}
+                                onSelectToggle={() => {}}
+                                onSelectThread={() => {}}
+                              />
+                            ) : (
+                              // This is a standalone tweet
+                              <TweetCard
+                                tweet={item}
+                                isSelected={false}
+                                onSelectToggle={() => {}}
+                              />
+                            )}
+                          </div>
+                        ));
+                      })()}
                     </div>
                   )}
                 </TabsContent>
@@ -2852,6 +2905,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         isOpen={savedPostsModalOpen}
         onClose={() => setSavedPostsModalOpen(false)}
         savedTwitterPosts={savedTwitterPosts}
+        savedTwitterThreads={savedTwitterThreads}
         savedLinkedInPosts={savedLinkedInPosts}
       />
       
