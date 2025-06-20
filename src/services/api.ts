@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // Create axios instance with base URL
 // In Vite, we need to use import.meta.env instead of process.env
-export const API_URL = import.meta.env.VITE_API_URL;
+// Fall back to localhost if environment variable is not available during development
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
 
 console.log("Using API URL:", API_URL);
 
