@@ -54,8 +54,8 @@ export const fetchUserTweets = async (username: string, options?: {
   try {
     const baseUrl = BACKEND_API_URL;
     const apiUrl = baseUrl.endsWith('/api') 
-      ? `${baseUrl}/twitter/user/${username}`
-      : `${baseUrl}/api/twitter/user/${username}`;
+      ? `${baseUrl}/twitter/user/${username}/quick`
+      : `${baseUrl}/api/twitter/user/${username}/quick`;
     
     const response = await fetch(apiUrl, {
       method: 'GET',
