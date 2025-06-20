@@ -1326,8 +1326,8 @@ const ScraperPage: React.FC = (): JSX.Element => {
       // Use the backend API instead of frontend API calls
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
-        ? `${baseUrl}/twitter/user/${username}/quick`
-        : `${baseUrl}/api/twitter/user/${username}/quick`;
+        ? `${baseUrl}/twitter/user/${username}`
+        : `${baseUrl}/api/twitter/user/${username}`;
       
       const response = await axios.get(apiUrl, {
         timeout: 300000, // 5 minutes timeout for Twitter scraping
