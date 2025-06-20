@@ -3,10 +3,10 @@ module.exports = {
     {
       name: 'frontend',
       script: 'npm',
-      args: 'run preview',
+      args: 'run preview -- --port 4173',
       env: {
         NODE_ENV: 'production',
-        PORT: 8080,
+        PORT: 4173,
         VITE_API_URL: 'https://api.brandout.ai'
       },
       instances: 1,
