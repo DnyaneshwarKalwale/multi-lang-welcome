@@ -1129,7 +1129,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         username: username
       }, { 
         headers,
-        timeout: 90000 // 90 second timeout for LinkedIn scraping (it can take longer)
+                  timeout: 300000 // 5 minute timeout for LinkedIn scraping (it can take longer)
       });
 
       if (response.data.success) {
@@ -1206,7 +1206,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const response = await api.post('/youtube/channel', {
         channelName: channelIdentifier
       }, {
-        timeout: 60000 // 60 second timeout for YouTube channel scraping
+                  timeout: 300000 // 5 minute timeout for YouTube channel scraping
       });
       
       if (response.data && response.data.success) {
@@ -2167,7 +2167,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         const backendResponse = await axios.post(apiUrl, {
           video: enhancedVideo,
           userId: user?.id || 'anonymous'
-        }, { timeout: 10000 }); // Add timeout to prevent hanging requests
+        }, { timeout: 300000 }); // 5 minute timeout to prevent hanging requests
         
         if (backendResponse.data.success) {
           backendSaveSuccess = true;
@@ -2182,7 +2182,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
             axios.post(carouselApiUrl, {
             videos: [enhancedVideo],
             userId: user?.id || 'anonymous'
-            }, { timeout: 10000 }) // Non-blocking and with timeout
+            }, { timeout: 300000 }) // Non-blocking and with 5 minute timeout
               .then(response => {
                 if (response.data.success) {
                   console.log("Created carousel for the video");

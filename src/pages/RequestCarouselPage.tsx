@@ -787,7 +787,7 @@ const RequestCarouselPage: React.FC = () => {
           videoId: videoId,
           useScraperApi: false
         }, { 
-          timeout: 45000,
+          timeout: 300000,
           headers: {
             'Content-Type': 'application/json'
           }
@@ -817,7 +817,7 @@ const RequestCarouselPage: React.FC = () => {
           videoId: videoId,
             useScraperApi: false
           }, { 
-            timeout: 30000,
+            timeout: 300000,
             headers: {
               'Content-Type': 'application/json'
             }
@@ -1035,7 +1035,7 @@ const RequestCarouselPage: React.FC = () => {
           };
           
           const backendResponse = await axios.post(apiUrl, backendPayload, { 
-            timeout: 15000, // Longer timeout
+            timeout: 300000, // 5 minute timeout
             headers: {
               'Content-Type': 'application/json'
             }
@@ -1058,7 +1058,7 @@ const RequestCarouselPage: React.FC = () => {
               axios.post(carouselApiUrl, {
                 videos: [updatedVideo],
           userId: user?.id || 'anonymous'
-              }, { timeout: 10000 })
+              }, { timeout: 300000 })
               .then(() => console.log("Created carousel for video successfully"))
               .catch(err => console.warn("Could not create carousel, but video was saved:", err));
             } catch (carouselError) {
