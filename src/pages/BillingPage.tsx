@@ -254,7 +254,7 @@ const BillingPage: React.FC = () => {
       setIsLoadingSubscription(true);
       
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/user-limits/me`, 
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/user-limits/me`, 
         {
         headers: {
           Authorization: `Bearer ${token}`
@@ -419,7 +419,7 @@ const BillingPage: React.FC = () => {
       
       // Update backend user limit
       await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/user-limits/${user?.id}/update-plan`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/user-limits/${user?.id}/update-plan`,
         planData,
           {
             headers: {
@@ -494,7 +494,7 @@ const BillingPage: React.FC = () => {
       }
       
       // Fix the API URL format - ensure consistency
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/stripe/create-checkout-session`
         : `${baseUrl}/api/stripe/create-checkout-session`;
@@ -596,7 +596,7 @@ const BillingPage: React.FC = () => {
       const creditsAmount = creditPack?.credits || parseInt(packId.split('-')[1]) || 0;
       
       // Fix the API URL format
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       // Make sure we're including /api in the URL if not already included
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/stripe/create-checkout-session`
@@ -661,7 +661,7 @@ const BillingPage: React.FC = () => {
   const verifySessionAndUpdatePlan = async (sessionId: string) => {
     try {
       // Fix the API URL format
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       // Make sure we're including /api in the URL if not already included
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/stripe/verify-session`
@@ -749,7 +749,7 @@ const BillingPage: React.FC = () => {
       const lastFour = cardInfo.cardNumber.slice(-4);
       
       // Make API call to save card information
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/payment-methods`
         : `${baseUrl}/api/payment-methods`;
@@ -805,7 +805,7 @@ const BillingPage: React.FC = () => {
       setAutoPayEnabled(enabled);
       
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/users/subscription/auto-pay`, 
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/users/subscription/auto-pay`, 
         { 
           autoPay: enabled 
         },

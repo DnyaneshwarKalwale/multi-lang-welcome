@@ -61,7 +61,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 // API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Add interface for subscription info
 interface SubscriptionInfo {
@@ -478,7 +478,7 @@ const SettingsPage = () => {
   const confirmConnectLinkedIn = () => {
     setShowLinkedInConnectDialog(false);
     try {
-      const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+      const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       const baseUrl = baseApiUrl.replace('/api', '');
       localStorage.setItem('redirectAfterAuth', '/dashboard/settings');
       window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
@@ -561,7 +561,7 @@ const SettingsPage = () => {
   const fetchLinkedInProfile = async () => {
     setLoadingLinkedIn(true);
       const token = tokenManager.getToken();
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'

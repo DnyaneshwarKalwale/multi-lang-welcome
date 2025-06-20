@@ -36,7 +36,7 @@ export function RegistrationSheet({ open, onOpenChange, onSuccess }: Registratio
   // Handle Google auth
   const handleGoogleAuth = () => {
     // Get the base API URL and normalize it
-    let baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
     // Remove trailing slashes and /api suffix to get the clean base URL
     baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
@@ -233,7 +233,7 @@ disabled={loading}
                 className="w-full h-12 flex justify-center gap-3 bg-white border-gray-200 hover:bg-[#0077B5]/10 transition-all duration-200 text-gray-700 shadow-sm" 
                 onClick={() => {
                     // Get the base API URL and normalize it
-                    let baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+                    let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
                     baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
                     onOpenChange(false);
                     const loginUrl = `${baseUrl}/api/auth/linkedin-direct`;

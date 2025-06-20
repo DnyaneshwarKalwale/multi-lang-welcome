@@ -48,7 +48,7 @@ export const uploadToCloudinaryDirect = async (
     formData.append('file', file);
     
     // Get the API URL from environment or use default
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const apiUrl = baseUrl.endsWith('/api') 
       ? `${baseUrl}/upload/upload`
       : `${baseUrl}/api/upload/upload`;

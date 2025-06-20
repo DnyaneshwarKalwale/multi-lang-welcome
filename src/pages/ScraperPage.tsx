@@ -1129,7 +1129,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         username: username
       }, { 
         headers,
-                  timeout: 300000 // 5 minute timeout for LinkedIn scraping (it can take longer)
+        timeout: 90000 // 90 second timeout for LinkedIn scraping (it can take longer)
       });
 
       if (response.data.success) {
@@ -1206,7 +1206,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const response = await api.post('/youtube/channel', {
         channelName: channelIdentifier
       }, {
-                  timeout: 300000 // 5 minute timeout for YouTube channel scraping
+        timeout: 60000 // 60 second timeout for YouTube channel scraping
       });
       
       if (response.data && response.data.success) {
@@ -2043,11 +2043,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
       setCurrentVideoId(videoId);
       setRetryCount(prev => ({ ...prev, [videoId]: 0 }));
       
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://ut.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/youtube/transcript` 
         : `${baseUrl}/api/youtube/transcript`;
       
+      // Primary method: Use YouTube Transcript API (without ScraperAPI)
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -2055,7 +2056,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         },
         body: JSON.stringify({ 
           videoId,
-          useScraperApi: true // Always use ScraperAPI to avoid rate limits
+          useScraperApi: false // Use basic YouTube transcript API as primary
         })
       });
       
@@ -2067,12 +2068,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const data = await response.json();
       
       if (data.success) {
-        // Instead of setting youtubeTranscript state, directly handle saving the video with transcript
+        // Successfully got transcript from YouTube Transcript API
         const video = youtubeChannelResult?.videos.find(v => v.id === videoId);
         if (video) {
-          await handleSaveVideoWithTranscript(video, data.transcript, data.language || "Unknown", data.is_generated || false);
-          toastSuccess("Successfully retrieved and saved the video transcript.");
-            } else {
+          await handleSaveVideoWithTranscript(video, data.transcript, data.language || "English", data.is_generated || false);
+          toastSuccess("Successfully retrieved and saved the video transcript!");
+        } else {
           toastError("Could not find the video data for the transcript.");
         }
         return; // Success, exit function
@@ -2081,7 +2082,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
       }
     } catch (error: any) {
       console.error("Error fetching transcript:", error);
-      toastError(error instanceof Error ? error.message : "Failed to fetch transcript");
+      toastError(error instanceof Error ? error.message : "Failed to fetch transcript. Please try again.");
     } finally {
       setLoadingTranscriptIds(prev => {
         const newSet = new Set(prev);
@@ -2167,7 +2168,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         const backendResponse = await axios.post(apiUrl, {
           video: enhancedVideo,
           userId: user?.id || 'anonymous'
-        }, { timeout: 300000 }); // 5 minute timeout to prevent hanging requests
+        }, { timeout: 10000 }); // Add timeout to prevent hanging requests
         
         if (backendResponse.data.success) {
           backendSaveSuccess = true;
@@ -2182,7 +2183,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
             axios.post(carouselApiUrl, {
             videos: [enhancedVideo],
             userId: user?.id || 'anonymous'
-            }, { timeout: 300000 }) // Non-blocking and with 5 minute timeout
+            }, { timeout: 10000 }) // Non-blocking and with timeout
               .then(response => {
                 if (response.data.success) {
                   console.log("Created carousel for the video");

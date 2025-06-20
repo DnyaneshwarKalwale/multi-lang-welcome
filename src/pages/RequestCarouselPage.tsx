@@ -398,7 +398,7 @@ const RequestCarouselPage: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/stripe/subscription`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/stripe/subscription`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -467,7 +467,7 @@ const RequestCarouselPage: React.FC = () => {
         
         // Try to load videos from backend first
         try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
             ? `${baseUrl}/youtube/saved/${user?.id || 'anonymous'}`
             : `${baseUrl}/api/youtube/saved/${user?.id || 'anonymous'}`;
@@ -564,7 +564,7 @@ const RequestCarouselPage: React.FC = () => {
     }
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const limitResponse = await axios.get(`${baseUrl}/user-limits/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -774,7 +774,7 @@ const RequestCarouselPage: React.FC = () => {
       let transcriptData = null;
       let primaryError = null;
       let fallbackError = null;
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
       // Try the primary method first (yt-dlp), which tends to be more reliable
       const ytdlpApiUrl = baseUrl.endsWith('/api')
@@ -787,7 +787,7 @@ const RequestCarouselPage: React.FC = () => {
           videoId: videoId,
           useScraperApi: false
         }, { 
-          timeout: 300000,
+          timeout: 45000,
           headers: {
             'Content-Type': 'application/json'
           }
@@ -817,7 +817,7 @@ const RequestCarouselPage: React.FC = () => {
           videoId: videoId,
             useScraperApi: false
           }, { 
-            timeout: 300000,
+            timeout: 30000,
             headers: {
               'Content-Type': 'application/json'
             }
@@ -1018,7 +1018,7 @@ const RequestCarouselPage: React.FC = () => {
       // Now try to save to backend with retry logic
       const saveToBackend = async (retryCount = 0, maxRetries = 2) => {
         try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/save-video-transcript`
           : `${baseUrl}/api/youtube/save-video-transcript`;
@@ -1035,7 +1035,7 @@ const RequestCarouselPage: React.FC = () => {
           };
           
           const backendResponse = await axios.post(apiUrl, backendPayload, { 
-            timeout: 300000, // 5 minute timeout
+            timeout: 15000, // Longer timeout
             headers: {
               'Content-Type': 'application/json'
             }
@@ -1058,7 +1058,7 @@ const RequestCarouselPage: React.FC = () => {
               axios.post(carouselApiUrl, {
                 videos: [updatedVideo],
           userId: user?.id || 'anonymous'
-              }, { timeout: 300000 })
+              }, { timeout: 10000 })
               .then(() => console.log("Created carousel for video successfully"))
               .catch(err => console.warn("Could not create carousel, but video was saved:", err));
             } catch (carouselError) {
@@ -1133,7 +1133,7 @@ const RequestCarouselPage: React.FC = () => {
     const loadInitialContent = async () => {
       try {
         // Load content from backend first
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
@@ -1239,16 +1239,10 @@ const RequestCarouselPage: React.FC = () => {
     
     try {
       // Call the backend API to generate content
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/generate-content`
         : `${baseUrl}/api/generate-content`;
-
-      console.log('Generating content with writing style samples:', attachedLinkedInPost ? 'Yes' : 'No');
-      if (attachedLinkedInPost) {
-        console.log('Writing style samples length:', attachedLinkedInPost.length, 'characters');
-        console.log('First 200 characters of writing style samples:', attachedLinkedInPost.substring(0, 200));
-      }
 
       const response = await axios.post(apiUrl, {
         type: type, // Use the type directly since backend now supports 'text-post'
@@ -1274,7 +1268,7 @@ const RequestCarouselPage: React.FC = () => {
         
         toast({
         title: "Content generated & auto-saved",
-        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been generated${attachedLinkedInPost ? ' using your selected writing style' : ''} and automatically saved`,
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been generated and automatically saved`,
       });
       
       // Increment user count after successful generation
@@ -1467,7 +1461,7 @@ const RequestCarouselPage: React.FC = () => {
               const formData = new FormData();
               formData.append('file', file);
               
-              const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
               const apiUrl = baseUrl.endsWith('/api') 
                 ? `${baseUrl}/upload/upload`
                 : `${baseUrl}/api/upload/upload`;
@@ -1524,7 +1518,7 @@ const RequestCarouselPage: React.FC = () => {
       };
       
       // VITE_API_URL already includes /api
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       // Use the original endpoint since the new one doesn't exist yet
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/carousels/submit-request` 
@@ -1621,7 +1615,7 @@ const RequestCarouselPage: React.FC = () => {
   // Helper function for chunked upload of large files
   const handleLargeFileUpload = (file: File, resolve: (url: string) => void, reject: (error: Error) => void) => {
     const CHUNK_SIZE = 10485760; // 10MB chunks
-    const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     // Generate a unique ID for this file
     const fileId = `large_${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
@@ -1647,7 +1641,7 @@ const RequestCarouselPage: React.FC = () => {
       formData.append('originalName', file.name);
       
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const chunkApiUrl = baseUrl.endsWith('/api') 
           ? `${baseUrl}/upload/chunk`
           : `${baseUrl}/api/upload/chunk`;
@@ -1724,21 +1718,15 @@ const RequestCarouselPage: React.FC = () => {
   const getCarouselSlides = (content: string | null | undefined) => {
     if (!content) return [];
     
-    // First, split by double newlines (primary separator)
-    let rawSlides = content.split(/\n\n+/).filter(s => s.trim());
+    // First, split by various separators to get individual slides
+    let rawSlides = content.split(/---+|\n\n/).filter(s => s.trim());
     
-    // If no double newlines, try other separators
-    if (rawSlides.length <= 1) {
-      // Try separators like --- or ===
-      rawSlides = content.split(/---+|===+/).filter(s => s.trim());
-    }
-    
-    // If still no separation, try single newlines as last resort
+    // If no double newlines or separators, try single newlines for fallback
     if (rawSlides.length <= 1) {
       rawSlides = content.split('\n').filter(s => s.trim());
     }
     
-    // Process slides to clean formatting while preserving content structure
+    // Now process slides to clean all formatting
     const processedSlides = [];
     for (let i = 0; i < rawSlides.length; i++) {
       let current = rawSlides[i].trim();
@@ -1748,27 +1736,20 @@ const RequestCarouselPage: React.FC = () => {
         continue;
       }
       
-      // Remove slide number prefixes but keep the content
-      current = current.replace(/^\*\*Slide\s*\d+[:\s]*\*\*\s*/i, '').trim();
+      // Remove "Slide X" prefixes and headers
+      current = current.replace(/^\*\*Slide\s*\d+[^*]*\*\*\s*/i, '').trim();
       current = current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
-      current = current.replace(/^\d+\.\s*/, '').trim(); // Remove numbered list format
       
-      // Remove horizontal separators that might be standalone
+      // Remove horizontal separators
       current = current.replace(/^---+$/gm, '').trim();
-      current = current.replace(/^===+$/gm, '').trim();
       
-      // Clean up multiple newlines but preserve intentional line breaks
-      current = current.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+      // Remove empty lines and clean up
+      current = current.replace(/\n\s*\n/g, '\n').trim();
       
-      // Only add non-empty slides with meaningful content
-      if (current && current.length > 5) { // At least 5 characters to avoid empty or minimal slides
+      // Only add non-empty slides
+      if (current && current.length > 0) {
         processedSlides.push(current);
       }
-    }
-    
-    // If we got no slides, try to create at least one from the original content
-    if (processedSlides.length === 0 && content.trim()) {
-      processedSlides.push(content.trim());
     }
     
     return processedSlides;
@@ -1929,7 +1910,7 @@ const RequestCarouselPage: React.FC = () => {
     try {
       // Delete from backend first
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/youtube/saved/${user?.id || 'anonymous'}/${videoId}`
           : `${baseUrl}/api/youtube/saved/${user?.id || 'anonymous'}/${videoId}`;
@@ -2031,7 +2012,7 @@ const RequestCarouselPage: React.FC = () => {
   const loadSavedContents = async () => {
     try {
       // Try to load from backend first
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
@@ -2098,7 +2079,7 @@ const RequestCarouselPage: React.FC = () => {
       // Try to delete from backend first
       let backendDeleteSuccess = false;
       try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents/${id}`
           : `${baseUrl}/api/carousel-contents/${id}`;
