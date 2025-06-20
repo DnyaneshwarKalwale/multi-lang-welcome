@@ -1,7 +1,7 @@
 import { Tweet, Thread, TwitterResponse } from './twitterTypes';
 
 // Backend API configuration
-const BACKEND_API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+const BACKEND_API_URL = import.meta.env.VITE_API_URL;
 
 // User configurable options
 export const TwitterConfig = {

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { tokenManager } from '@/services/api';
 
-// Import the API_URL from the services/api.ts file or define it here
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+// Import the API_URL from the services/api.ts file
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Helper function to get the best available LinkedIn token
 const getLinkedInToken = (accessToken?: string): string => {

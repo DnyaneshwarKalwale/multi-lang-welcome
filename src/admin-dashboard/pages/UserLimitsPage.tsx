@@ -64,7 +64,7 @@ const UserLimitsPage: React.FC = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL || "https://api.brandout.ai"}/user-limits/all`,
+          `${import.meta.env.VITE_API_URL}/user-limits/all`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("admin-token")}`
