@@ -488,8 +488,6 @@ const CreatePostPage: React.FC = () => {
   
   // LinkedIn posting states
   const [isPublishing, setIsPublishing] = useState(false);
-  const [publishingPlatform, setPublishingPlatform] = useState<'linkedin' | 'facebook'>('linkedin');
-  const [visibility, setVisibility] = usePersistentState<'PUBLIC' | 'CONNECTIONS' | 'LOGGED_IN'>('createPost.visibility', 'PUBLIC');
   
   // Scheduling states
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -788,7 +786,7 @@ const CreatePostPage: React.FC = () => {
             const slideContent = slides.map(slide => slide.content).join('\n\n');
             const fullContent = `${content}\n\n${slideContent}`;
             
-            response = await linkedInApi.createTextPost(fullContent, visibility);
+            response = await linkedInApi.createTextPost(fullContent);
             if (response?.data?.id) {
               linkedInPostId = response.data.id;
             }
@@ -808,8 +806,7 @@ const CreatePostPage: React.FC = () => {
               
               response = await linkedInApi.createCarouselPost(
                 content,
-                transformedSlides,
-                visibility
+                transformedSlides
               );
               
               if (response?.data?.id) {
@@ -836,8 +833,7 @@ const CreatePostPage: React.FC = () => {
                 fullContent,
                 firstImage.secure_url,
                 firstImage.original_filename || 'carousel-image',
-                'Carousel slide 1',
-                visibility
+                'Carousel slide 1'
               );
               
               if (response?.data?.id) {
@@ -858,7 +854,7 @@ const CreatePostPage: React.FC = () => {
             const slideContent = slides.map(slide => slide.content).join('\n\n');
             const fullContent = `${content}\n\n${slideContent}`;
             
-            response = await linkedInApi.createTextPost(fullContent, visibility);
+            response = await linkedInApi.createTextPost(fullContent);
             if (response?.data?.id) {
               linkedInPostId = response.data.id;
             }
@@ -886,8 +882,7 @@ const CreatePostPage: React.FC = () => {
             content, 
             postImage.secure_url,
             postImage.original_filename || 'image',
-            postImage.original_filename || 'Shared image',
-            visibility
+            postImage.original_filename || 'Shared image'
           );
           
           if (response?.data?.id) {
@@ -923,7 +918,7 @@ const CreatePostPage: React.FC = () => {
             const imageTitle = postImage.original_filename || 'image';
             const postWithImage = `${content}\n\n${imageTitle}: ${imageUrl}`;
             
-            response = await linkedInApi.createTextPost(postWithImage, visibility);
+            response = await linkedInApi.createTextPost(postWithImage);
             if (response?.data?.id) {
               linkedInPostId = response.data.id;
             }
@@ -937,7 +932,7 @@ const CreatePostPage: React.FC = () => {
       } else {
         // Simple text post
         console.log('Publishing LinkedIn text post');
-        response = await linkedInApi.createTextPost(content, visibility);
+        response = await linkedInApi.createTextPost(content);
         if (response?.data?.id) {
           linkedInPostId = response.data.id;
         }
@@ -966,7 +961,6 @@ const CreatePostPage: React.FC = () => {
             isPollActive: isPollActive,
             pollOptions: pollOptions.filter(Boolean),
             status: 'published',
-            visibility: visibility,
             publishedTime: new Date().toISOString(),
             platformPostId: linkedInPostId // Add the LinkedIn post ID
           };
@@ -1082,7 +1076,6 @@ const CreatePostPage: React.FC = () => {
         isPollActive: isPollActive,
         pollOptions: pollOptions.filter(Boolean),
         hashtags: hashtags,
-        visibility: visibility,
         provider: 'linkedin',
         status: 'draft',
         date: new Date().toLocaleDateString()
@@ -1192,7 +1185,6 @@ const CreatePostPage: React.FC = () => {
         title: 'Scheduled Post',
         content: content,
         hashtags: hashtags,
-        visibility: visibility,
         platform: 'linkedin',
         status: 'scheduled',
         scheduledTime: scheduledDateTime.toISOString(),
@@ -1296,7 +1288,7 @@ const CreatePostPage: React.FC = () => {
       
       // Directly try a test post without running the connection test first
       const testPostContent = 'This is a test post from BrandOut. ' + new Date().toISOString();
-      const response = await linkedInApi.createTextPost(testPostContent, 'PUBLIC');
+      const response = await linkedInApi.createTextPost(testPostContent);
       
       console.log('Test post successful:', response);
       toast.success('LinkedIn test post successful! Your account is connected properly.');
@@ -1437,6 +1429,25 @@ const CreatePostPage: React.FC = () => {
             <span className="hidden xs:inline">Schedule</span>
           </Button>
           
+          <Button 
+            size="sm" 
+            className="bg-primary text-white gap-2 text-xs sm:text-sm"
+            onClick={publishToLinkedIn}
+            disabled={isPublishing}
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="hidden xs:inline">Publishing...</span>
+              </>
+            ) : (
+              <>
+                <Linkedin size={16} />
+                <span className="hidden xs:inline">Publish to LinkedIn</span>
+              </>
+            )}
+          </Button>
+          
           {/* Schedule Dialog */}
           <Dialog 
             open={showScheduleDialog} 
@@ -1528,20 +1539,6 @@ const CreatePostPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Visibility</label>
-                  <Select value={visibility} onValueChange={(value) => setVisibility(value as any)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select visibility" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PUBLIC">Public - Anyone on LinkedIn</SelectItem>
-                      <SelectItem value="CONNECTIONS">Connections only</SelectItem>
-                      <SelectItem value="LOGGED_IN">LinkedIn users only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
                 <div className="mt-2">
                   <h4 className="text-sm font-medium mb-1">Post Summary</h4>
                 <div className="border rounded p-3 bg-white text-sm">
@@ -1574,48 +1571,24 @@ const CreatePostPage: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-          <Button size="sm" className="bg-primary text-white gap-1 text-xs sm:text-sm">
-                {isPublishing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="hidden xs:inline">Publishing...</span>
-                  </>
-                ) : (
-                  <>
-            <ArrowRightFromLine size={16} />
-            <span className="hidden xs:inline">Publish</span>
-                  </>
-                )}
+          <Button 
+            size="sm" 
+            className="bg-primary text-white gap-2 text-xs sm:text-sm"
+            onClick={publishToLinkedIn}
+            disabled={isPublishing}
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="hidden xs:inline">Publishing...</span>
+              </>
+            ) : (
+              <>
+                <Linkedin size={16} />
+                <span className="hidden xs:inline">Publish to LinkedIn</span>
+              </>
+            )}
           </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem 
-                onClick={publishToLinkedIn}
-                disabled={isPublishing}
-                className="gap-2 cursor-pointer"
-              >
-                <Linkedin size={16} className="text-blue-600" />
-                Publish to LinkedIn
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => toast.info("Twitter integration coming soon!")}
-                className="gap-2 cursor-pointer text-muted-foreground"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M14.258 10.152 23.176 0h-2.113l-7.747 8.813L7.133 0H0l9.352 13.328L0 23.973h2.113l8.176-9.309 6.531 9.309h7.133zm-2.895 3.293-.949-1.328L2.875 1.56h3.246l6.086 8.523.945 1.328 7.91 11.078h-3.246z"/></svg>
-                Publish to X (Twitter)
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => toast.info("Facebook integration coming soon!")}
-                className="gap-2 cursor-pointer text-muted-foreground"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                Publish to Facebook
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
       
