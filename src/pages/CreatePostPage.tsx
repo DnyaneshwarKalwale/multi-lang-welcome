@@ -1382,6 +1382,24 @@ const CreatePostPage: React.FC = () => {
     setShowScheduleDialog(true);
   };
   
+  // Add isLinkedInConnected state
+  const [isLinkedInConnected, setIsLinkedInConnected] = useState(false);
+  
+  // Add effect to check LinkedIn connection status
+  useEffect(() => {
+    const checkLinkedInConnection = async () => {
+      try {
+        const response = await linkedInApi.testConnection();
+        setIsLinkedInConnected(response.success);
+      } catch (error) {
+        console.error('Error checking LinkedIn connection:', error);
+        setIsLinkedInConnected(false);
+      }
+    };
+    
+    checkLinkedInConnection();
+  }, []);
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -1399,54 +1417,43 @@ const CreatePostPage: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1 text-xs sm:text-sm"
-            onClick={saveAsDraft}
-            disabled={isSavingDraft}
-          >
-            {isSavingDraft ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span className="hidden xs:inline">Saving...</span>
-              </>
-            ) : (
-              <>
-                <FileText size={16} />
-                <span className="hidden xs:inline">Save Draft</span>
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200 text-xs sm:text-sm" 
-            onClick={handleScheduleClick}
-          >
-            <Clock size={16} className="mr-1" />
-            <span className="hidden xs:inline">Schedule</span>
-          </Button>
-          
-          <Button 
-            size="sm" 
-            className="bg-primary text-white gap-2 text-xs sm:text-sm"
-            onClick={publishToLinkedIn}
-            disabled={isPublishing}
-          >
-            {isPublishing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="hidden xs:inline">Publishing...</span>
-              </>
-            ) : (
-              <>
-                <Linkedin size={16} />
-                <span className="hidden xs:inline">Publish to LinkedIn</span>
-              </>
-            )}
-          </Button>
+          {/* Post Actions */}
+          <div className="flex items-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-primary hover:text-primary/80"
+              onClick={publishToLinkedIn}
+              disabled={isPublishing || !isLinkedInConnected}
+            >
+              {isPublishing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Linkedin className="h-4 w-4 mr-2" />
+              )}
+              Post to LinkedIn
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleScheduleClick}
+              disabled={isPublishing}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Schedule
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={saveAsDraft}
+              disabled={isPublishing}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Draft
+            </Button>
+          </div>
           
           {/* Schedule Dialog */}
           <Dialog 
@@ -1570,25 +1577,6 @@ const CreatePostPage: React.FC = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          
-          <Button 
-            size="sm" 
-            className="bg-primary text-white gap-2 text-xs sm:text-sm"
-            onClick={publishToLinkedIn}
-            disabled={isPublishing}
-          >
-            {isPublishing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="hidden xs:inline">Publishing...</span>
-              </>
-            ) : (
-              <>
-                <Linkedin size={16} />
-                <span className="hidden xs:inline">Publish to LinkedIn</span>
-              </>
-            )}
-          </Button>
         </div>
       </div>
       
