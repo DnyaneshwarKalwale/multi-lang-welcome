@@ -2073,7 +2073,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         if (video) {
           await handleSaveVideoWithTranscript(video, data.transcript, data.language || "English", data.is_generated || false);
           toastSuccess("Successfully retrieved and saved the video transcript!");
-        } else {
+            } else {
           toastError("Could not find the video data for the transcript.");
         }
         return; // Success, exit function
