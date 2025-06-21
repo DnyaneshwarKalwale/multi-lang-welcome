@@ -142,6 +142,8 @@ const SettingsPage = () => {
   });
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [autoPayEnabled, setAutoPayEnabled] = useState(false);
+  const [isUpdatingAutoPay, setIsUpdatingAutoPay] = useState(false);
   
   // LinkedIn status: use backend/user context, not just localStorage
   const [linkedInStatus, setLinkedInStatus] = useState({
@@ -211,6 +213,9 @@ const SettingsPage = () => {
           credits: userData.limit || 0,
           usedCredits: userData.count || 0
         });
+        
+        // Set auto-pay status
+        setAutoPayEnabled(userData.autoPay || false);
       }
     } catch (error) {
       console.error('Error fetching subscription data:', error);
@@ -243,11 +248,24 @@ const SettingsPage = () => {
       });
       
       if (response.data.success) {
-        setPaymentMethods(response.data.data || []);
+        // Transform the data to match the frontend interface
+        const transformedMethods = response.data.data.map((method: any) => ({
+          id: method._id,
+          type: method.type,
+          lastFour: method.card?.last4 || method.bankAccount?.last4,
+          expiryDate: method.card ? `${method.card.expMonth.toString().padStart(2, '0')}/${method.card.expYear.toString().slice(-2)}` : undefined,
+          brand: method.card?.brand,
+          email: method.paypal?.email,
+          isDefault: method.isDefault
+        }));
+        setPaymentMethods(transformedMethods);
       }
     } catch (error) {
       console.error('Error fetching payment methods:', error);
-      toast.error('Failed to load payment methods');
+      // Don't show error toast for empty payment methods
+      if (error.response?.status !== 404) {
+        toast.error('Failed to load payment methods');
+      }
     }
   };
   
@@ -262,11 +280,22 @@ const SettingsPage = () => {
       });
       
       if (response.data.success) {
-        setInvoices(response.data.data.transactions || []);
+        // Transform the data to match the frontend interface
+        const transformedInvoices = response.data.data.transactions.map((transaction: any) => ({
+          id: transaction.transactionId,
+          amount: transaction.amount,
+          date: new Date(transaction.createdAt),
+          status: transaction.paymentStatus,
+          downloadUrl: `/api/payments/invoices/${transaction.transactionId}/download`
+        }));
+        setInvoices(transformedInvoices);
       }
     } catch (error) {
       console.error('Error fetching invoices:', error);
-      toast.error('Failed to load billing history');
+      // Don't show error toast for empty invoices
+      if (error.response?.status !== 404) {
+        toast.error('Failed to load billing history');
+      }
     }
   };
   
@@ -373,6 +402,40 @@ const SettingsPage = () => {
     } catch (error: any) {
       console.error('Error downloading billing history:', error);
       toast.error(error.response?.data?.message || error.message || 'Failed to download billing history');
+    }
+  };
+
+  // Handle auto-billing toggle
+  const handleAutoPayToggle = async (enabled: boolean) => {
+    try {
+      setIsUpdatingAutoPay(true);
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        logout();
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/stripe/toggle-auto-billing`,
+        { enabled },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (response.data.success) {
+        setAutoPayEnabled(enabled);
+        toast.success(`Auto-billing ${enabled ? 'enabled' : 'disabled'} successfully`, { duration: 2000 });
+      } else {
+        throw new Error(response.data.message || 'Failed to update auto-billing');
+      }
+    } catch (error: any) {
+      console.error('Error toggling auto-billing:', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to update auto-billing settings', { duration: 2000 });
+    } finally {
+      setIsUpdatingAutoPay(false);
     }
   };
   
@@ -873,12 +936,37 @@ const SettingsPage = () => {
                         )}
                       </div>
                       
-                      <Button 
-                        className="w-full" 
-                        onClick={() => navigate('/dashboard/billing')}
-                      >
-                        Manage Subscription
-                      </Button>
+                                          <Button 
+                      className="w-full" 
+                      onClick={() => navigate('/dashboard/billing')}
+                    >
+                      Manage Subscription
+                    </Button>
+                    
+                    {/* Auto-billing toggle */}
+                    {subscriptionInfo.planId !== 'expired' && subscriptionInfo.planId !== 'trial' && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm">
+                            <span className="font-medium text-black">Auto-billing</span>
+                            <p className="text-xs text-black/70 mt-1">
+                              {autoPayEnabled ? 'Subscription will renew automatically' : 'Subscription will not auto-renew'}
+                            </p>
+                          </div>
+                          <Switch
+                            checked={autoPayEnabled}
+                            onCheckedChange={handleAutoPayToggle}
+                            disabled={isUpdatingAutoPay || isLoadingSubscription}
+                          />
+                        </div>
+                        {!autoPayEnabled && (
+                          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                            <AlertCircle className="inline h-3 w-3 mr-1" />
+                            Your subscription will expire at the end of the current period
+                          </div>
+                        )}
+                      </div>
+                    )}
                     </>
                   )}
                 </div>

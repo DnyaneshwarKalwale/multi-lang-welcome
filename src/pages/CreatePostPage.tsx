@@ -662,7 +662,7 @@ const CreatePostPage: React.FC = () => {
     }, 100);
     
     showSaveIndicator();
-    toast.success('Image selected for your post');
+    toast.success('✓ Image selected', { duration: 2000 });
   };
 
   // Handle direct image upload complete
@@ -683,10 +683,10 @@ const CreatePostPage: React.FC = () => {
     }, 100);
     
     showSaveIndicator();
-      toast.success('Image uploaded and added to your gallery');
+      toast.success('✓ Image uploaded and added to gallery', { duration: 2000 });
     } catch (error) {
       console.error('Error saving image to gallery:', error);
-      toast.error('Failed to save image to gallery');
+              toast.error('Failed to save image to gallery', { duration: 2000 });
     }
   };
   
@@ -695,7 +695,7 @@ const CreatePostPage: React.FC = () => {
       setPollOptions([...pollOptions, '']);
       showSaveIndicator();
     } else {
-      toast.error('Maximum 4 options allowed for LinkedIn polls');
+      toast.error('Maximum 4 options allowed', { duration: 2000 });
     }
   };
 
@@ -706,7 +706,7 @@ const CreatePostPage: React.FC = () => {
       setPollOptions(newOptions);
       showSaveIndicator();
     } else {
-      toast.error('Poll requires at least 2 options');
+      toast.error('Poll requires at least 2 options', { duration: 2000 });
     }
   };
 
@@ -737,7 +737,7 @@ const CreatePostPage: React.FC = () => {
       
       // Validate content
       if (!content.trim()) {
-        toast.error('Please add some content to your post');
+        toast.error('Please add some content', { duration: 2000 });
         setIsPublishing(false);
         return;
       }
@@ -746,7 +746,7 @@ const CreatePostPage: React.FC = () => {
       const token = localStorage.getItem('linkedin-login-token');
       
       if (!token) {
-        toast.error(`LinkedIn authentication required. Please login with LinkedIn to post content.`);
+        toast.error('Please connect your LinkedIn account', { duration: 2000 });
         setIsPublishing(false);
         
         // Show a reconnect option
@@ -767,20 +767,20 @@ const CreatePostPage: React.FC = () => {
         if (response?.data?.id) {
           linkedInPostId = response.data.id;
         }
-        toast.success('Poll published to LinkedIn successfully!');
+                  toast.success('✓ Poll published to LinkedIn', { duration: 2000 });
       } else if (activeTab === 'carousel' && slides.length > 0) {
         // Handle carousel post - with slides from state
         console.log('Publishing LinkedIn carousel post with slides:', slides);
         
         try {
-          toast.info('Preparing carousel for LinkedIn...');
+          toast.info('Preparing carousel...', { duration: 2000 });
           
           // Check if all slides have images
           const allSlidesHaveImages = slides.every(slide => slide.cloudinaryImage?.secure_url);
           
           if (!allSlidesHaveImages) {
             // Process as document if not all slides have images
-            toast.warning('Some slides are missing images. Publishing as a document instead.');
+            toast.warning('Some slides missing images, publishing as text', { duration: 2000 });
             
             // Create a combined document from slides
             const slideContent = slides.map(slide => slide.content).join('\n\n');

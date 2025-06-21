@@ -26,10 +26,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, FileText, Image, FileUp, Eye, Download } from 'lucide-react';
+import { Loader2, FileText, Image, FileUp, Eye, Download, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { API_URL } from '../../services/api';
 import { uploadToCloudinaryDirect } from '@/utils/cloudinaryDirectUpload';
+import LinkedInApi from '@/utils/linkedinApi';
 
 // Define types for carousel requests
 interface CarouselFile {
@@ -121,6 +122,8 @@ const CarouselRequestsPage: React.FC = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [viewOriginalContent, setViewOriginalContent] = useState(false);
+  const [postingToLinkedIn, setPostingToLinkedIn] = useState<boolean>(false);
+  const linkedInApi = new LinkedInApi();
 
   useEffect(() => {
     fetchRequests();
@@ -138,40 +141,29 @@ const CarouselRequestsPage: React.FC = () => {
       
       const token = localStorage.getItem("admin-token");
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error('Please log in again to continue');
       }
       
-      // Add logging to debug token
-      console.log('Using token (first 20 chars):', token.substring(0, 20) + '...');
-      
-      // Use the correct API endpoint that matches the backend route
       const requestsUrl = `${API_URL}/carousels/admin/requests`;
-      
-      console.log('Fetching carousel requests from:', requestsUrl);
-      
       const response = await fetch(requestsUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      // Debug response status
-      console.log('Response status:', response.status);
-      
       const data = await response.json();
-      console.log('Received carousel requests data:', data);
       
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch carousel requests');
+        throw new Error(data.message || 'Unable to load requests');
       }
       
       setRequests(data.data || []);
     } catch (error) {
-      console.error('Error fetching carousel requests:', error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to fetch carousel requests',
-        variant: 'destructive'
+        title: 'Unable to load requests',
+        description: error instanceof Error ? error.message : 'Please try again later',
+        variant: 'destructive',
+        duration: 2000
       });
     } finally {
       setLoading(false);
@@ -182,17 +174,11 @@ const CarouselRequestsPage: React.FC = () => {
     try {
       const token = localStorage.getItem("admin-token");
       if (!token) {
-        throw new Error('Authentication token not found');
+        throw new Error('Please log in again to continue');
       }
       
-      // Use the correct API endpoint path and id field
       const apiUrl = `${API_URL}/carousels/requests/${requestId}/status`;
       
-      console.log('Updating request status at:', apiUrl);
-      console.log('Request ID:', requestId);
-      console.log('Status:', status);
-      
-      // Using POST method to avoid CORS issues
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -205,41 +191,30 @@ const CarouselRequestsPage: React.FC = () => {
         body: JSON.stringify({ status })
       });
       
-      // Check if response is JSON before parsing
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        throw new Error(`Received non-JSON response: ${await response.text()}`);
+        throw new Error('Invalid server response');
       }
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update request status');
+        throw new Error(data.message || 'Unable to update status');
       }
       
-      // Refresh the carousel requests list
       await fetchRequests();
       
       toast({
-        title: 'Success',
-        description: `Request status updated to ${status}`,
-        variant: 'default'
+        description: `✓ Status updated to ${status.replace('_', ' ')}`,
+        duration: 2000
       });
 
-      // Close the dialog if open
       setViewDialogOpen(false);
     } catch (error) {
-      console.error('Error updating request status:', error);
-      
-      let errorMessage = 'Failed to update request status';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
       toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
+        description: error instanceof Error ? error.message : 'Unable to update status',
+        variant: 'destructive',
+        duration: 2000
       });
     }
   };
@@ -839,6 +814,36 @@ const CarouselRequestsPage: React.FC = () => {
     }
   };
 
+  const handlePostToLinkedIn = async (request: CarouselRequest) => {
+    try {
+      setPostingToLinkedIn(true);
+      
+      const connectionStatus = await linkedInApi.testConnection();
+      if (!connectionStatus.success) {
+        throw new Error('Please connect your LinkedIn account to continue');
+      }
+
+      if (request.carouselType === 'text' && request.content) {
+        await linkedInApi.createTextPost(request.content);
+        
+        toast({
+          description: '✓ Posted to LinkedIn',
+          duration: 2000
+        });
+      } else {
+        throw new Error('Only text posts can be shared to LinkedIn');
+      }
+    } catch (error) {
+      toast({
+        description: error instanceof Error ? error.message : 'Unable to post to LinkedIn',
+        variant: 'destructive',
+        duration: 2000
+      });
+    } finally {
+      setPostingToLinkedIn(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-4 px-3 sm:px-4 md:py-8">
       <Card>
@@ -934,12 +939,25 @@ const CarouselRequestsPage: React.FC = () => {
           {selectedRequest && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-lg sm:text-xl break-words">{selectedRequest.title}</DialogTitle>
-                <DialogDescription className="text-xs sm:text-sm">
-                  Submitted by {getUserInfo(selectedRequest).name} on {format(new Date(selectedRequest.createdAt), 'MMM d, yyyy')}
-                  {selectedRequest.updatedAt && selectedRequest.updatedAt !== selectedRequest.createdAt && 
-                    ` • Last updated on ${format(new Date(selectedRequest.updatedAt), 'MMM d, yyyy')}`}
-                </DialogDescription>
+                <DialogTitle className="text-xl font-semibold flex items-center justify-between">
+                  <span>Request Details</span>
+                  {selectedRequest.carouselType === 'text' && selectedRequest.content && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePostToLinkedIn(selectedRequest)}
+                      disabled={postingToLinkedIn}
+                      className="ml-2"
+                    >
+                      {postingToLinkedIn ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Share2 className="h-4 w-4 mr-2" />
+                      )}
+                      Post to LinkedIn
+                    </Button>
+                  )}
+                </DialogTitle>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">

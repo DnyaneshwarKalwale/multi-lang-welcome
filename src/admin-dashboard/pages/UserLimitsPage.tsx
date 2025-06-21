@@ -41,7 +41,7 @@ interface UserLimit {
 
 // For plan selection dropdown
 const PLAN_OPTIONS = [
-  { id: 'trial', name: 'Trial', limit: 3 },
+  { id: 'trial', name: 'Free Trial', limit: 3 },
   { id: 'basic', name: 'Basic', limit: 10 },
   { id: 'premium', name: 'Premium', limit: 25 },
   { id: 'custom', name: 'Custom', limit: 50 }

@@ -131,106 +131,9 @@ interface SavedContent {
 
 
 
-// Function to generate dummy transcript based on video ID
+// Function to generate placeholder transcript
 const generateDummyTranscript = (videoId: string): string[] => {
-  switch (videoId) {
-    case "6EEW-9NDM5k":
-      return [
-        "LinkedIn's algorithm favors content that generates meaningful engagement.",
-        "Create content that educates, inspires, or solves specific problems.",
-        "Consistency is key - develop a sustainable posting cadence.",
-        "Utilize LinkedIn's native content formats for maximum reach.",
-        "Text-only posts often outperform those with external links.",
-        "Analytics should guide your content strategy refinements.",
-        "Personal stories and experiences create authentic connections.",
-        "Industry insights and thought leadership position you as an expert."
-      ];
-    case "mTz0GXj8NN0":
-      return [
-        "Your personal brand is how people perceive you when you're not in the room.",
-        "Authenticity trumps perfection when building your brand on LinkedIn.",
-        "Define your unique value proposition and ensure it's reflected in all content.",
-        "Engagement with others' content boosts your own visibility.",
-        "Strategic use of hashtags can expand your content reach significantly.",
-        "Your profile should tell a compelling story, not just list achievements.",
-        "Consistency in visual elements strengthens brand recognition.",
-        "Building a network of advocates amplifies your brand message."
-      ];
-    case "dW7WjA-heYw":
-      return [
-        "Content that generates conversations receives preferential algorithm treatment.",
-        "Ask thought-provoking questions that encourage meaningful responses.",
-        "Timing your posts to match your audience's active hours boosts engagement.",
-        "Share contrarian perspectives to stand out from industry echo chambers.",
-        "Break complex ideas into digestible, easily-shareable content pieces.",
-        "Document your professional journey rather than curating a perfect image.",
-        "Create content frameworks that can be repurposed across different topics.",
-        "Analyze high-performing content to identify patterns and replicate success."
-      ];
-    case "vN4jQKk-MZI":
-      return [
-        "B2B marketing on LinkedIn requires targeting decision-makers directly.",
-        "Educational content establishes credibility with B2B audiences.",
-        "Case studies and success stories provide powerful social proof.",
-        "Employee advocacy programs amplify your B2B content reach.",
-        "Account-based marketing strategies work effectively on LinkedIn.",
-        "Thought leadership content should address industry challenges and trends.",
-        "LinkedIn Live and Events provide opportunities for deeper engagement.",
-        "Analytics should focus on quality leads rather than vanity metrics."
-      ];
-    case "pQFo8JWgHEU":
-      return [
-        "Professional video content must deliver value in the first 3-5 seconds.",
-        "Captions are essential as most LinkedIn videos are watched without sound.",
-        "Vertical video formats are increasingly effective on LinkedIn.",
-        "Authentic, less-polished videos often outperform high-production content.",
-        "Educational video series build anticipation and regular engagement.",
-        "Behind-the-scenes content humanizes your brand and builds connection.",
-        "LinkedIn Live generates 7x more engagement than standard video content.",
-        "Repurpose long-form videos into multiple short-form content pieces."
-      ];
-    case "lD3FfI7zNc4":
-      return [
-        "LinkedIn ads offer unparalleled B2B targeting capabilities.",
-        "Sponsored content achieves the highest engagement among ad formats.",
-        "Lead gen forms can reduce friction in the conversion process.",
-        "Audience segmentation improves campaign performance significantly.",
-        "Video ads under 15 seconds see the highest completion rates.",
-        "Retargeting website visitors on LinkedIn delivers strong ROI.",
-        "A/B testing ad creative is essential for optimizing performance.",
-        "Campaign objectives should align with specific funnel stages."
-      ];
-    case "X9YmkKbTgmk":
-      return [
-        "Compelling hooks in the first line are crucial for LinkedIn post success.",
-        "Breaking text into short paragraphs improves readability and engagement.",
-        "Posts that share personal insights generate more authentic connections.",
-        "Call-to-actions should feel natural, not forced or overly promotional.",
-        "Storytelling frameworks create emotional resonance with readers.",
-        "Data-backed claims establish credibility and encourage sharing.",
-        "Using the 'broetry' format increases the odds of algorithm visibility.",
-        "Testing different content styles reveals what resonates with your audience."
-      ];
-    case "aW7lJMroT2c":
-      return [
-        "LinkedIn's algorithm prioritizes relevant content over recency.",
-        "Initial engagement velocity determines a post's broader distribution.",
-        "Comments hold more algorithmic weight than reactions or shares.",
-        "Native document posts receive preferential reach over external links.",
-        "Creator mode enables additional tools for increased visibility.",
-        "Algorithm changes now favor expertise-based content over viral tactics.",
-        "Hashtag effectiveness depends on specificity and audience alignment.",
-        "The 'golden hour' after posting determines long-term content performance."
-      ];
-    default:
-      return [
-        "Transcript content will appear here after processing the video.",
-        "Each bullet point will represent key concepts from the video.",
-        "These concepts will be used to create your carousel slides.",
-        "Our AI system extracts the most relevant and engaging points.",
-        "The final carousel will be professionally designed and ready to share."
-      ];
-  }
+  return [];
 };
 
 // Add function to prepare carousel data for editor
@@ -244,7 +147,7 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
   const textSlides = [];
   
   for (let i = 0; i < rawSlides.length; i++) {
-    const current = rawSlides[i].trim();
+    let current = rawSlides[i].trim();
     
     // Skip slides that only contain "Slide X" and nothing else
     if (/^Slide\s*\d+\s*$/.test(current)) {
@@ -252,7 +155,17 @@ const prepareCarouselForEditor = (content: string): Slide[] => {
     }
     
     // Remove "Slide X:" prefix if it exists
-    textSlides.push(current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim());
+    current = current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+    
+    // Remove markdown formatting (**text**)
+    current = current.replace(/\*\*(.*?)\*\*/g, '$1');
+    
+    // Remove any remaining asterisks used for emphasis
+    current = current.replace(/\*/g, '');
+    
+    if (current && current.length > 0) {
+      textSlides.push(current);
+    }
   }
   
   console.log("Created text slides:", textSlides.length);
@@ -354,11 +267,9 @@ const RequestCarouselPage: React.FC = () => {
   // Inside the RequestCarouselPage component, add these new state variables:
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestStep, setRequestStep] = useState(1);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [carouselType, setCarouselType] = useState("professional");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // LinkedIn post attachment states
   const [attachedLinkedInPost, setAttachedLinkedInPost] = useState<string>('');
@@ -424,8 +335,8 @@ const RequestCarouselPage: React.FC = () => {
     setSelectedPostsCount(postCount);
     
     toast({
-      title: "Writing Style Applied",
-      description: `${postCount} posts selected as writing style reference for AI content generation.`,
+      description: `✓ Applied ${postCount} posts as writing style reference`,
+      duration: 2000
     });
   };
 
@@ -629,8 +540,8 @@ const RequestCarouselPage: React.FC = () => {
     
     if (file) {
       toast({
-        title: "File uploaded",
-        description: "Your file has been uploaded successfully.",
+        description: "✓ File uploaded successfully",
+        duration: 2000
       });
     }
   };
@@ -717,8 +628,8 @@ const RequestCarouselPage: React.FC = () => {
     }
     
     toast({
-      title: "Video selected",
-      description: "Content from this video will be used for your carousel.",
+      description: "✓ Video selected for carousel content",
+      duration: 2000
     });
   };
 
@@ -737,14 +648,14 @@ const RequestCarouselPage: React.FC = () => {
     if (video.videoUrl) {
       window.open(video.videoUrl, '_blank');
       toast({
-        title: "Opening video",
-        description: "Opening YouTube video in a new tab",
+        description: "Opening video in new tab",
+        duration: 2000
       });
     } else if (video.id) {
       window.open(`https://youtube.com/watch?v=${video.id}`, '_blank');
       toast({
-        title: "Opening video",
-        description: "Opening YouTube video in a new tab",
+        description: "Opening video in new tab",
+        duration: 2000
       });
     }
   };
@@ -753,9 +664,9 @@ const RequestCarouselPage: React.FC = () => {
   const handleFetchTranscript = async (video: YouTubeVideo) => {
     if (!video.id && !video.videoId) {
       toast({
-        title: "Error",
         description: "Video ID not found",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000
       });
       return;
     }
@@ -767,8 +678,8 @@ const RequestCarouselPage: React.FC = () => {
     
     try {
       toast({
-        title: "Fetching transcript",
-        description: "Please wait while we fetch the transcript...",
+        description: "Fetching transcript...",
+        duration: 2000
       });
       
       let transcriptData = null;
@@ -782,7 +693,6 @@ const RequestCarouselPage: React.FC = () => {
         : `${baseUrl}/api/youtube/transcript-yt-dlp`;
       
       try {
-        console.log(`Trying yt-dlp method first for video ID: ${videoId}`);
         const ytdlpResponse = await axios.post(ytdlpApiUrl, {
           videoId: videoId,
           useScraperApi: false
@@ -794,20 +704,16 @@ const RequestCarouselPage: React.FC = () => {
         }); // Longer timeout for yt-dlp
         
         if (ytdlpResponse.data && ytdlpResponse.data.success) {
-          console.log('yt-dlp method succeeded');
           transcriptData = ytdlpResponse.data;
         } else {
-          console.warn('yt-dlp method returned non-success response:', ytdlpResponse.data);
           fallbackError = new Error(ytdlpResponse.data?.message || 'Unknown error with yt-dlp method');
         }
       } catch (ytdlpError: any) {
-        console.warn('yt-dlp method failed:', ytdlpError);
         fallbackError = ytdlpError;
       }
       
       // If yt-dlp method failed, try the primary transcript method
       if (!transcriptData) {
-        console.log('Trying primary transcript method');
         const transcriptApiUrl = baseUrl.endsWith('/api')
         ? `${baseUrl}/youtube/transcript`
         : `${baseUrl}/api/youtube/transcript`;
@@ -824,14 +730,11 @@ const RequestCarouselPage: React.FC = () => {
         });
         
           if (response.data && response.data.success) {
-            console.log('Primary method succeeded');
             transcriptData = response.data;
           } else {
-            console.warn('Primary method returned non-success response:', response.data);
             primaryError = new Error(response.data?.message || 'Unknown error with primary method');
           }
         } catch (error: any) {
-          console.warn('Primary method failed:', error);
           primaryError = error;
         }
       }
@@ -844,8 +747,8 @@ const RequestCarouselPage: React.FC = () => {
         setFetchingVideoId(null);
         
         toast({
-          title: "Transcript fetched",
-          description: "Transcript has been successfully retrieved.",
+          description: "Transcript fetched successfully",
+          duration: 2000
         });
       } else {
         // Both methods failed
@@ -857,9 +760,9 @@ const RequestCarouselPage: React.FC = () => {
         setTranscriptError(errorMessage);
         
           toast({
-          title: "Transcript Error",
-          description: "Failed to fetch transcript. The server might be experiencing issues or this video may not have captions.",
-          variant: "destructive"
+          description: "Failed to fetch transcript",
+          variant: "destructive",
+          duration: 2000
         });
         
         throw new Error(errorMessage);
@@ -871,9 +774,9 @@ const RequestCarouselPage: React.FC = () => {
       setTranscriptError(error.message || "Unknown error fetching transcript");
       
       toast({
-        title: "Error",
         description: "Failed to fetch transcript: " + (error.message || "Unknown error"),
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000
       });
     }
   };
@@ -914,17 +817,17 @@ const RequestCarouselPage: React.FC = () => {
       // Show appropriate toast based on save success
       if (saveResult) {
     toast({
-      title: "Transcript fetched",
-      description: "Successfully retrieved and saved transcript",
+      description: "Transcript saved successfully",
+      duration: 2000
     });
       }
       // If save failed, the saveVideoWithTranscript function will show its own error
     } catch (error) {
       console.error("Error in handleTranscriptSuccess:", error);
       toast({
-        title: "Processing Error",
         description: "Successfully fetched transcript but encountered an error processing it",
-        variant: "destructive" 
+        variant: "destructive",
+        duration: 2000
       });
     }
   };
@@ -1044,9 +947,8 @@ const RequestCarouselPage: React.FC = () => {
           if (backendResponse.data?.success) {
             console.log("Saved transcript to backend successfully");
             toast({
-              title: "Transcript Saved",
-              description: "Successfully saved transcript to server and locally.",
-              variant: "default"
+              description: "Transcript saved successfully",
+              duration: 2000
             });
             
             // Try creating carousel as well, but don't block on it
@@ -1092,9 +994,9 @@ const RequestCarouselPage: React.FC = () => {
           
           console.error(`Error saving to backend: ${errorDetail}`);
           toast({
-            title: "Backend Save Error",
-            description: "Could not save to server, but transcript was saved locally.",
-            variant: "default"
+            description: "Could not save to server, but transcript was saved locally",
+            variant: "destructive",
+            duration: 2000
           });
         }
       };
@@ -1106,9 +1008,9 @@ const RequestCarouselPage: React.FC = () => {
     } catch (error: any) {
       console.error("Fatal error saving video with transcript:", error);
       toast({
-        title: "Save Error",
         description: "Failed to save transcript data: " + (error.message || "Unknown error"),
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000
       });
       return false;
     }
@@ -1267,8 +1169,8 @@ const RequestCarouselPage: React.FC = () => {
       setPreviewType(type); // Set the correct preview type based on selection
         
         toast({
-        title: "Content generated & auto-saved",
-        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been generated and automatically saved`,
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
+        duration: 2000
       });
       
       // Increment user count after successful generation
@@ -1437,71 +1339,9 @@ const RequestCarouselPage: React.FC = () => {
         throw new Error('Authentication token not found. Please login again.');
       }
       
-      // Debug uploaded files
-      console.log("Files to upload:", uploadedFiles);
-      if (uploadedFiles.length === 0) {
-        console.log("No files to upload. Proceeding with empty files array.");
-      }
+      // No file upload needed for YouTube-only functionality
       
-      // Upload files to Cloudinary first, then send metadata to our API
-      let fileUrls: string[] = [];
-      
-      // Only attempt file upload if there are files
-      if (uploadedFiles.length > 0) {
-        // Create an array of upload promises
-        const uploadPromises = uploadedFiles.map(file => {
-          return new Promise<string>((resolve, reject) => {
-            // For files larger than 10MB, use chunked upload approach
-            const CHUNK_SIZE = 10485760; // 10MB chunks
-            
-            if (file.size > CHUNK_SIZE) {
-              handleLargeFileUpload(file, resolve, reject);
-            } else {
-              // Standard upload for smaller files
-              const formData = new FormData();
-              formData.append('file', file);
-              
-              const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-              const apiUrl = baseUrl.endsWith('/api') 
-                ? `${baseUrl}/upload/upload`
-                : `${baseUrl}/api/upload/upload`;
-                
-              fetch(apiUrl, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-              })
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-              })
-              .then(data => {
-                if (data.secure_url) {
-                  resolve(data.secure_url);
-                } else {
-                  reject(new Error('Failed to upload file to Cloudinary - missing secure_url'));
-                }
-              })
-              .catch(error => {
-                reject(error);
-              });
-            }
-          });
-        });
-        
-        try {
-        // Wait for all files to upload
-        fileUrls = await Promise.all(uploadPromises);
-          console.log("All files uploaded successfully:", fileUrls);
-        } catch (uploadError) {
-          console.error("Error uploading files:", uploadError);
-          throw new Error(`File upload failed: ${uploadError.message || 'Please try again with smaller files'}`);
-        }
-      }
-      
-      // Now send the metadata and file URLs to our API
+      // Now send the metadata to our API
       const requestData = {
         title: form.getValues('title'),
         description: additionalNotes || '',  // Add the additional notes as description
@@ -1509,8 +1349,6 @@ const RequestCarouselPage: React.FC = () => {
         carouselType: 'professional',
         content: generatedContent || previewContent || '',
         transcript: selectedVideo?.transcript || '', // Include the transcript
-        fileUrls: fileUrls.length > 0 ? fileUrls : [], // Keep fileUrls for backward compatibility
-        files: fileUrls.length > 0 ? fileUrls.map(url => ({ url })) : [], // Also include properly formatted files array
         videoId: selectedVideo?.id || undefined,
         videoTitle: selectedVideo?.title || undefined,
         userName: user?.firstName || (user as any)?.name || 'Unknown User',
@@ -1593,12 +1431,11 @@ const RequestCarouselPage: React.FC = () => {
       setRequestStep(3);
       setIsSuccess(true);
       
-      // Clear uploaded files
-      setUploadedFiles([]);
+      // No files to clear
 
       toast({
-        title: "Carousel request submitted",
-        description: "We'll notify you when your carousel is ready.",
+        description: "Carousel request submitted successfully",
+        duration: 2000
       });
     } catch (error) {
       console.error("Error submitting carousel request:", error);
@@ -1740,6 +1577,11 @@ const RequestCarouselPage: React.FC = () => {
       current = current.replace(/^\*\*Slide\s*\d+[^*]*\*\*\s*/i, '').trim();
       current = current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
       
+      // Remove markdown formatting (**text**)
+      current = current.replace(/\*\*(.*?)\*\*/g, '$1');
+      // Remove any remaining asterisks used for emphasis
+      current = current.replace(/\*/g, '');
+      
       // Remove horizontal separators
       current = current.replace(/^---+$/gm, '').trim();
       
@@ -1766,7 +1608,16 @@ const RequestCarouselPage: React.FC = () => {
     
     // Ensure index is within bounds
     const safeIndex = Math.min(index, slides.length - 1);
-    return slides[safeIndex] || 'Carousel slide content';
+    let slideContent = slides[safeIndex] || 'Carousel slide content';
+    
+    // Remove markdown formatting (**text**)
+    slideContent = slideContent.replace(/\*\*(.*?)\*\*/g, '$1');
+    // Remove any remaining asterisks used for emphasis
+    slideContent = slideContent.replace(/\*/g, '');
+    // Remove slide numbers
+    slideContent = slideContent.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+    
+    return slideContent;
   };
 
   // Add function to handle editing in editor
@@ -1878,9 +1729,9 @@ const RequestCarouselPage: React.FC = () => {
     navigate('/editor');
     
     toast({
-      title: "Opening in editor",
-        description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`
-      });
+      description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`,
+      duration: 2000
+    });
     } catch (error) {
       console.error("Error preparing slides for editor:", error);
       toast({
@@ -1944,8 +1795,8 @@ const RequestCarouselPage: React.FC = () => {
       }
       
         toast({
-          title: "Video deleted",
-          description: "The video has been removed from your saved videos"
+          description: "Video deleted successfully",
+          duration: 2000
         });
       } catch (backendError) {
         console.error("Error deleting from backend:", backendError);
@@ -1971,10 +1822,17 @@ const RequestCarouselPage: React.FC = () => {
 
   // Handle content edit
   const handleContentEdit = (newContent: string) => {
-    // Clean up slide numbers from the content
+    // Clean up slide numbers and formatting from the content
     const cleanContent = newContent
       .split('\n\n')
-      .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+      .map(slide => {
+        let cleanSlide = slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+        // Remove markdown formatting (**text**)
+        cleanSlide = cleanSlide.replace(/\*\*(.*?)\*\*/g, '$1');
+        // Remove any remaining asterisks used for emphasis
+        cleanSlide = cleanSlide.replace(/\*/g, '');
+        return cleanSlide;
+      })
       .join('\n\n');
     
     setEditableContent(cleanContent);
@@ -1989,10 +1847,17 @@ const RequestCarouselPage: React.FC = () => {
     } else {
       // Exiting edit mode - save edited content
       if (previewType === 'carousel') {
-        // Process the content to remove "Slide X:" prefixes from each slide
+        // Process the content to remove "Slide X:" prefixes and formatting from each slide
         const cleanContent = editableContent
           .split('\n\n')
-          .map(slide => slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim())
+          .map(slide => {
+            let cleanSlide = slide.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+            // Remove markdown formatting (**text**)
+            cleanSlide = cleanSlide.replace(/\*\*(.*?)\*\*/g, '$1');
+            // Remove any remaining asterisks used for emphasis
+            cleanSlide = cleanSlide.replace(/\*/g, '');
+            return cleanSlide;
+          })
           .join('\n\n');
         
         setGeneratedContent(cleanContent);
@@ -2102,10 +1967,8 @@ const RequestCarouselPage: React.FC = () => {
       localStorage.setItem('savedLinkedInContents', JSON.stringify(updatedContents));
 
       toast({
-        title: "Content Deleted",
-        description: backendDeleteSuccess 
-          ? "The content has been removed from your account" 
-          : "The content has been removed locally",
+        description: "Content deleted successfully",
+        duration: 2000
       });
     } catch (error) {
       console.error('Error deleting content:', error);
@@ -2163,62 +2026,12 @@ const RequestCarouselPage: React.FC = () => {
     localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
     
     toast({
-      title: "Content Loaded",
       description: `The saved ${content.type} content has been loaded`,
+      duration: 2000
     });
   };
 
-  // Add file upload handlers
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    
-    if (!files || files.length === 0) return;
-    
-    // Check if adding these files would exceed the limit
-    if (uploadedFiles.length + files.length > 5) {
-      toast({
-        title: "Too many files",
-        description: "You can upload a maximum of 5 files",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Check file size limits - 50MB per file
-    const MAX_FILE_SIZE = 52428800; // 50MB in bytes
-    const oversizedFiles = Array.from(files).filter(file => file.size > MAX_FILE_SIZE);
-    
-    if (oversizedFiles.length > 0) {
-      toast({
-        title: "File too large",
-        description: `${oversizedFiles.length > 1 ? 'Some files exceed' : 'One file exceeds'} the 50MB size limit`,
-        variant: "destructive"
-      });
-      
-      // Only add files that are within size limits
-      const validFiles = Array.from(files).filter(file => file.size <= MAX_FILE_SIZE);
-      setUploadedFiles([...uploadedFiles, ...validFiles]);
-    } else {
-      // All files are within size limits
-      const newFiles = Array.from(files);
-      setUploadedFiles([...uploadedFiles, ...newFiles]);
-      
-      toast({
-        title: "Files uploaded",
-        description: `Added ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`,
-      });
-    }
-    
-    // Reset the input value so the same file can be selected again
-    e.target.value = '';
-  };
-  
-  // Function to remove a file from the uploaded files list
-  const removeFile = (index: number) => {
-    const newFiles = [...uploadedFiles];
-    newFiles.splice(index, 1);
-    setUploadedFiles(newFiles);
-  };
+
 
   // Note: Content auto-saving is now handled in the backend API
 
@@ -2311,16 +2124,10 @@ const RequestCarouselPage: React.FC = () => {
                 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-lg font-medium mb-2">Content Source</h3>
+                    <h3 className="text-lg font-medium mb-2">YouTube Video Source</h3>
                   </div>
                   
-                  <Tabs defaultValue="youtube" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="youtube">YouTube</TabsTrigger>
-                      <TabsTrigger value="upload">Upload File</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="youtube" className="space-y-4">
+                  <div className="space-y-4">
                       <div>
                         <FormField
                           control={form.control}
@@ -2724,61 +2531,7 @@ const RequestCarouselPage: React.FC = () => {
                           )}
                         </div>
                       )}
-                    </TabsContent>
-                    
-                    <TabsContent value="upload" className="space-y-4">
-                      <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                        <Input
-                          type="file"
-                          id="file-upload"
-                          className="hidden"
-                          onChange={handleFileChange}
-                          accept=".pdf,.ppt,.pptx,.doc,.docx,.jpg,.jpeg,.png"
-                        />
-                        <Label
-                          htmlFor="file-upload"
-                          className="cursor-pointer flex flex-col items-center justify-center"
-                        >
-                          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                          <h3 className="font-medium text-lg">
-                            {selectedFile ? selectedFile.name : "Drag & drop or click to upload"}
-                          </h3>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            PDF, PowerPoint, or image files
-                          </div>
-                          {!selectedFile && (
-                            <Button
-                              variant="outline"
-                              type="button"
-                              className="mt-4"
-                              onClick={() => document.getElementById("file-upload")?.click()}
-                            >
-                              Browse Files
-                            </Button>
-                          )}
-                        </Label>
-                        {selectedFile && (
-                          <div className="mt-4 flex items-center gap-2 justify-center">
-                            <Badge variant="outline" className="text-xs py-1 px-2">
-                              {selectedFile.type.split("/")[1].toUpperCase()}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs py-1 px-2">
-                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              type="button"
-                              className="text-xs h-7"
-                              onClick={() => setSelectedFile(null)}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                    </div>
                 </div>
               </CardContent>
             </Card>
@@ -3357,78 +3110,7 @@ const RequestCarouselPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* File Upload */}
-                  <div className="space-y-3">
-                    <Label>Additional Files <span className="text-xs text-muted-foreground">(Optional)</span></Label>
-                    <div className="border-2 border-dashed rounded-lg p-4">
-                      {uploadedFiles.length > 0 ? (
-                        <div className="space-y-3">
-                          {uploadedFiles.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
-                              <div className="flex items-center">
-                                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center mr-2">
-                                  {file.type.includes('image') ? (
-                                    <ImageIcon className="h-4 w-4 text-primary" />
-                                  ) : file.type.includes('pdf') ? (
-                                    <FileText className="h-4 w-4 text-primary" />
-                                  ) : (
-                                    <Folder className="h-4 w-4 text-primary" />
-                                  )}
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium truncate max-w-[200px]">{file.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                                  </div>
-                                </div>
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => removeFile(index)}
-                                className="h-8 w-8 p-0 text-muted-foreground"
-                              >
-                                ✕
-                              </Button>
-                            </div>
-                          ))}
-                          
-                          {uploadedFiles.length < 5 && (
-                            <Button 
-                              variant="outline" 
-                              onClick={() => fileInputRef.current?.click()}
-                              className="w-full mt-3"
-                            >
-                              <Upload className="h-4 w-4 mr-2" />
-                              Add More Files
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6">
-                          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <div className="font-medium">Drag and drop or click to upload</div>
-                          <p className="text-xs text-muted-foreground mt-1 mb-3">
-                            Upload your logo, brand guidelines, or any other files (max 5 files)
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            Select Files
-                          </Button>
-                        </div>
-                      )}
-                      <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        className="hidden" 
-                        multiple 
-                        onChange={handleFileUpload} 
-                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt" 
-                      />
-                    </div>
-                  </div>
+
                   
                   {/* Additional Notes */}
                   <div className="space-y-3">
@@ -3496,33 +3178,7 @@ const RequestCarouselPage: React.FC = () => {
                       </div>
                     </div>
                     
-                    {/* Files */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="border rounded-lg overflow-hidden">
-                        <div className="p-3 bg-muted/30 border-b">
-                          <h3 className="font-medium">Uploaded Files</h3>
-                        </div>
-                        <div className="p-3">
-                          <div className="space-y-2">
-                            {uploadedFiles.map((file, index) => (
-                              <div key={index} className="flex items-center text-sm">
-                                {file.type.includes('image') ? (
-                                  <ImageIcon className="h-3 w-3 text-muted-foreground mr-2" />
-                                ) : file.type.includes('pdf') ? (
-                                  <FileText className="h-3 w-3 text-muted-foreground mr-2" />
-                                ) : (
-                                  <Folder className="h-3 w-3 text-muted-foreground mr-2" />
-                                )}
-                                <span>{file.name}</span>
-                                <span className="text-xs text-muted-foreground ml-2">
-                                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+
                     
                     {/* Notes */}
                     {additionalNotes && (

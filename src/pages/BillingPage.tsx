@@ -57,7 +57,7 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
-  billingPeriod: 'monthly' | 'annual';
+  billingPeriod: 'monthly' | 'annual' | 'trial';
   features: string[];
   limitations: {
     workspaces: number;
@@ -156,7 +156,6 @@ const BillingPage: React.FC = () => {
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false); // Track if user is admin
   const [showAddCardModal, setShowAddCardModal] = useState(false);
-  const [autoPayEnabled, setAutoPayEnabled] = useState(false);
   
   // Current subscription info
   const [currentSubscription, setCurrentSubscription] = useState<Subscription>({
@@ -169,47 +168,10 @@ const BillingPage: React.FC = () => {
   });
   
   // Payment methods
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: 'pm-1',
-      type: 'card',
-      lastFour: '4242',
-      expiryDate: '04/25',
-      brand: 'Visa',
-      isDefault: true
-    },
-    {
-      id: 'pm-2',
-      type: 'paypal',
-      email: 'user@example.com',
-      isDefault: false
-    }
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   
   // Invoices
-  const [invoices, setInvoices] = useState<Invoice[]>([
-    {
-      id: 'inv-001',
-      amount: 100,
-      date: new Date('2023-10-15'),
-      status: 'paid',
-      downloadUrl: '/invoices/inv-001.pdf'
-    },
-    {
-      id: 'inv-002',
-      amount: 100,
-      date: new Date('2023-09-15'),
-      status: 'paid',
-      downloadUrl: '/invoices/inv-002.pdf'
-    },
-    {
-      id: 'inv-003',
-      amount: 100,
-      date: new Date('2023-08-15'),
-      status: 'paid',
-      downloadUrl: '/invoices/inv-003.pdf'
-    }
-  ]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // New state for card information
   const [cardInfo, setCardInfo] = useState<CardInformation>({
@@ -254,7 +216,7 @@ const BillingPage: React.FC = () => {
       setIsLoadingSubscription(true);
       
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/user-limits/me`, 
+        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api'}/user-limits/me`, 
         {
         headers: {
           Authorization: `Bearer ${token}`
@@ -277,8 +239,7 @@ const BillingPage: React.FC = () => {
           totalCredits: userData.limit || 0
         });
         
-        // Set the auto-pay status
-        setAutoPayEnabled(userData.autoPay || false);
+
       } else {
         console.error('Failed to fetch subscription:', response.data?.message);
       setCurrentSubscription({
@@ -305,25 +266,8 @@ const BillingPage: React.FC = () => {
     }
   };
 
-  // Subscription plans
+  // Subscription plans (trial removed since it's automatically given to new users)
   const plans: SubscriptionPlan[] = [
-    {
-      id: 'trial',
-      name: 'Trial',
-      price: 20,
-      billingPeriod: 'monthly',
-      features: [
-        '3 Monthly Credits for AI-Generated Content',
-        'Valid for 7 days',
-        'Content Scraper',
-        'Standard Support'
-      ],
-      limitations: {
-        workspaces: 1,
-        posts: 3,
-        carousels: 3
-      }
-    },
     {
       id: 'basic',
       name: 'Basic',
@@ -388,9 +332,73 @@ const BillingPage: React.FC = () => {
     { id: 'pack-20', credits: 20, price: 160 }
   ];
 
+  // Fetch payment methods
+  const fetchPaymentMethods = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api'}/payments/methods`, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        // Transform the data to match the frontend interface
+        const transformedMethods = response.data.data.map((method: any) => ({
+          id: method._id,
+          type: method.type,
+          lastFour: method.card?.last4 || method.bankAccount?.last4,
+          expiryDate: method.card ? `${method.card.expMonth.toString().padStart(2, '0')}/${method.card.expYear.toString().slice(-2)}` : undefined,
+          brand: method.card?.brand,
+          email: method.paypal?.email,
+          isDefault: method.isDefault
+        }));
+        setPaymentMethods(transformedMethods);
+      }
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      // Don't show error toast for empty payment methods
+      if (error.response?.status !== 404) {
+        toast.error('Failed to load payment methods', { duration: 2000 });
+      }
+    }
+  };
+
+  // Fetch invoices/billing history
+  const fetchInvoices = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api'}/payments/history`, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        // Transform the data to match the frontend interface
+        const transformedInvoices = response.data.data.transactions.map((transaction: any) => ({
+          id: transaction.transactionId,
+          amount: transaction.amount,
+          date: new Date(transaction.createdAt),
+          status: transaction.paymentStatus,
+          downloadUrl: `/api/payments/invoices/${transaction.transactionId}/download`
+        }));
+        setInvoices(transformedInvoices);
+      }
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      // Don't show error toast for empty invoices
+      if (error.response?.status !== 404) {
+        toast.error('Failed to load billing history', { duration: 2000 });
+      }
+    }
+  };
+
   // Fetch current subscription from API
   useEffect(() => {
     fetchCurrentSubscription();
+    fetchPaymentMethods();
+    fetchInvoices();
   }, []);
 
   // Find current plan
@@ -471,27 +479,7 @@ const BillingPage: React.FC = () => {
         return;
       }
       
-      // For direct upgrade without payment (like trial plans)
-      if (planId === 'trial') {
-        // Create a start date and expiry date
-        const startDate = new Date();
-        let expiryDate = new Date(startDate);
-        expiryDate.setDate(expiryDate.getDate() + 7); // 7 days trial
-        
-        const planData = {
-          planId: 'trial',
-          limit: 3,
-          expiresAt: expiryDate.toISOString(),
-          planName: 'Trial'
-        };
-        
-        await updateUserPlan(planData);
-        await fetchCurrentSubscription();
-        
-        toast.success(`Successfully changed to ${planData.planName} plan`);
-        setIsChangingPlan(null);
-        return;
-      }
+
       
       // Fix the API URL format - ensure consistency
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
@@ -564,19 +552,55 @@ const BillingPage: React.FC = () => {
   };
 
   // Set default payment method
-  const handleSetDefaultPayment = (paymentId: string) => {
-    setPaymentMethods(methods => 
-      methods.map(method => ({
-        ...method,
-        isDefault: method.id === paymentId
-      }))
-    );
-    toast.success('Default payment method updated!');
+  const handleSetDefaultPayment = async (paymentId: string) => {
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api'}/payments/methods/${paymentId}/default`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        // Update local state
+        setPaymentMethods(methods => 
+          methods.map(method => ({
+            ...method,
+            isDefault: method.id === paymentId
+          }))
+        );
+        toast.success('Default payment method updated!', { duration: 2000 });
+      }
+    } catch (error) {
+      console.error('Error setting default payment method:', error);
+      toast.error('Failed to update default payment method', { duration: 2000 });
+    }
   };
 
   // Download invoice
-  const handleDownloadInvoice = (invoice: Invoice) => {
-    toast.success('Invoice download started');
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api'}/payments/invoices/${invoice.id}/download`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        // If it's invoice details, show them
+        if (response.data.data) {
+          toast.success('Invoice details retrieved', { duration: 2000 });
+          console.log('Invoice details:', response.data.data);
+        } else {
+          toast.success('Invoice download started', { duration: 2000 });
+        }
+      }
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice', { duration: 2000 });
+    }
   };
 
   // Buy credit pack
@@ -679,20 +703,23 @@ const BillingPage: React.FC = () => {
       const data = await response.json();
       
       if (response.ok && data.success) {
-        // Refresh subscription data
+        // Refresh subscription data and payment information
         await fetchCurrentSubscription();
+        await fetchPaymentMethods();
+        await fetchInvoices();
         
         // Different success messages based on what was purchased
         if (data.productType === 'credit-pack' || data.type === 'credit-pack') {
-          toast.success(`Your payment was successful! ${data.credits || ''} credits have been added to your account.`);
+          toast.success(`Your payment was successful! ${data.credits || ''} credits have been added to your account.`, { duration: 2000 });
         } else {
           // If it was a plan upgrade with credit transfer
           if (data.transferredCredits && data.transferredCredits > 0) {
             toast.success(
-              `Your plan has been successfully upgraded! ${data.transferredCredits} credits from your previous plan have been transferred.`
+              `Your plan has been successfully upgraded! ${data.transferredCredits} credits from your previous plan have been transferred.`,
+              { duration: 2000 }
             );
           } else {
-            toast.success('Your plan has been successfully upgraded!');
+            toast.success('Your plan has been successfully upgraded!', { duration: 2000 });
           }
         }
       } else {
@@ -773,7 +800,7 @@ const BillingPage: React.FC = () => {
 
       // Close modal and show success message
       setShowAddCardModal(false);
-      toast.success('Payment card added successfully');
+      toast.success('Payment card added successfully', { duration: 2000 });
       
       // Clear form
       setCardInfo({
@@ -785,7 +812,7 @@ const BillingPage: React.FC = () => {
       });
       
       // Refresh payment methods
-      await fetchCurrentSubscription();
+      await fetchPaymentMethods();
     } catch (error) {
       console.error('Error saving card information:', error);
       toast.error('Failed to save card information. Please try again.');
@@ -799,35 +826,7 @@ const BillingPage: React.FC = () => {
     }
   };
 
-  // Add this function to handle toggling auto-pay
-  const handleAutoPayToggle = async (enabled: boolean) => {
-    try {
-      setAutoPayEnabled(enabled);
-      
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://api.brandout.ai'}/users/subscription/auto-pay`, 
-        { 
-          autoPay: enabled 
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (response.data.success) {
-        toast.success(`Auto-renewal ${enabled ? 'enabled' : 'disabled'} successfully`);
-      } else {
-        toast.error('Failed to update auto-renewal setting');
-        setAutoPayEnabled(!enabled); // Revert state on failure
-      }
-    } catch (error) {
-      console.error('Error toggling auto-pay:', error);
-      toast.error('Failed to update auto-renewal setting');
-      setAutoPayEnabled(!enabled); // Revert state on failure
-    }
-  };
+
 
   return (
     <div className="w-full pb-12">
@@ -902,397 +901,322 @@ const BillingPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Main Content - Unique Diamond Layout */}
+      {/* Main Content - Reorganized Layout */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Usage & Credit Purchase */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Column - Current Plan Status */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Usage Stats Card */}
-            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
-              <div className="border-b border-primary/10 px-5 py-4 flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-black">Credits Usage</h2>
-                <Badge 
-                  variant="outline" 
-                  className="border-primary/10 text-primary bg-primary/5"
-                >
-                  This Billing Cycle
-                </Badge>
-              </div>
-              
-              <div className="p-5 space-y-4">
-                {/* Visual Circle Progress */}
-                <div className="flex justify-center">
-                  <div className="relative w-32 h-32">
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                      {/* Background circle */}
-                      <circle 
-                        cx="50" cy="50" r="45" 
-                        fill="none" 
-                        stroke="#e2e8f0" 
-                        strokeWidth="10"
-                      />
-                      
-                      {/* Progress circle */}
-                      <circle 
-                        cx="50" cy="50" r="45" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="10"
-                        strokeDasharray="282.7"
-                        strokeDashoffset={282.7 * (1 - usagePercentage / 100)}
-                        strokeLinecap="round"
-                        className="text-primary transition-all duration-700 ease-out"
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-3xl font-bold text-black">{currentSubscription.usedCredits}</span>
-                      <span className="text-xs text-black/70">Used Credits</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Usage Breakdown */}
-                <div className="grid grid-cols-2 gap-4 text-center pt-3">
-                  <div className="bg-primary/5 rounded-lg p-3">
-                    <div className="text-sm text-black/70">Total</div>
-                    <div className="text-xl font-semibold text-black">{currentSubscription.totalCredits}</div>
-                  </div>
-                  
-                  <div className="bg-primary/5 rounded-lg p-3">
-                    <div className="text-sm text-black/70">Remaining</div>
-                    <div className="text-xl font-semibold text-black">
-                      {currentSubscription.totalCredits - currentSubscription.usedCredits}
-                    </div>
-                    </div>
-                </div>
-                
-                {/* Usage Over Time Chart */}
-                <div className="pt-6 pb-2">
-                  <div className="text-sm font-medium text-black mb-3">Usage Over Time</div>
-                  <div className="h-24 flex items-end">
-                    {usageData.map((item, index) => (
-                      <div key={index} className="flex-1 flex flex-col items-center">
-                        <div 
-                          className="w-4/5 bg-primary/20 hover:bg-primary/40 rounded-t transition-all"
-                          style={{ height: `${(item.credits / currentSubscription.totalCredits) * 100}%` }}
-                        ></div>
-                        <div className="text-[10px] text-black/60 mt-1">{item.day}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                      </div>
-                    </div>
-                    
-            {/* Buy More Credits Section */}
+            {/* Current Plan Overview */}
             <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
               <div className="border-b border-primary/10 px-5 py-4">
-                <h2 className="text-lg font-semibold text-black">Need More Credits?</h2>
+                <h2 className="text-lg font-semibold text-black">Current Plan</h2>
               </div>
               
               <div className="p-5 space-y-4">
-                <div className="space-y-3">
-                  {creditPacks.map((pack) => (
-                    <div key={pack.id} className={`
-                      group relative border rounded-xl p-4 transition-all
-                      ${pack.isPopular ? 
-                        'border-primary bg-primary/5' : 
-                        'border-primary/10 hover:border-primary/30 hover:bg-primary/5'}
-                    `}>
-                      {pack.isPopular && (
-                        <div className="absolute -top-2 -right-2 rotate-12">
-                          <Badge className="bg-primary text-white shadow-sm">Best Value</Badge>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <PlusCircle className="w-5 h-5 text-primary" />
+                {currentPlan ? (
+                  <>
+                                         <div className="text-center">
+                       <h3 className="text-xl font-bold text-black">{currentPlan.name}</h3>
+                       <div className="mt-1 text-2xl font-bold text-primary">
+                         {currentPlan.id === 'trial' ? (
+                           <span className="text-green-600">FREE</span>
+                         ) : (
+                           <>
+                             ${currentPlan.price}
+                             <span className="text-sm font-normal text-black/70">
+                               /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
+                             </span>
+                           </>
+                         )}
+                       </div>
+                     </div>
+                    
+                    <div className="bg-primary/5 rounded-lg p-3 text-center">
+                      <div className="text-sm text-black/70">Credits</div>
+                      <div className="text-xl font-semibold text-black">
+                        {currentSubscription.usedCredits} / {currentSubscription.totalCredits}
                       </div>
-                          
-                          <div>
-                            <div className="font-medium text-black">{pack.credits} Credits</div>
-                            <div className="text-black/70">${pack.price}</div>
+                      <div className="w-full bg-primary/20 rounded-full h-2 mt-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${usagePercentage}%` }}
+                        ></div>
                       </div>
                     </div>
                     
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleBuyCreditPack(pack.id)}
-                          disabled={isChangingPlan !== null}
-                          className="border-primary/20 text-primary hover:bg-primary/10"
-                        >
-                          {isChangingPlan === pack.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <span>Buy</span>
-                          )}
-                        </Button>
-                      </div>
+                    <div className="text-center text-sm text-black/70">
+                      {currentSubscription.status === 'cancelled' ? (
+                        <div className="flex items-center justify-center text-black/70">
+                          <Clock className="h-4 w-4 mr-1.5" />
+                          Access until {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center text-black/70">
+                          <RefreshCw className="h-4 w-4 mr-1.5" />
+                          Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    
+
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CreditCard className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-black mb-2">No Active Plan</h3>
+                    <p className="text-black/70 text-sm mb-4">Choose a plan to get started</p>
+                    <Button size="sm" onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}>
+                      View Plans
+                    </Button>
                   </div>
-                
-                <div className="bg-primary/5 text-xs text-black/70 p-3 rounded-lg">
-                  <p>Credits expire at the end of your billing cycle or when your plan expires. Each credit can be used for one AI post or carousel.</p>
-                  <p className="mt-1"><span className="font-medium">Note:</span> Additional credits purchased on the trial plan will also expire when your trial ends.</p>
-                </div>
-                
-                {/* Add Card Button */}
-                <div className="flex justify-center mt-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAddCardModal(true)}
-                    className="w-full"
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Add Payment Method
-                  </Button>
-                </div>
+                )}
               </div>
             </div>
           </div>
           
-          {/* Right Column - Plans & Payment Methods */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Current Plan & Upgrade Card */}
-            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+          {/* Right Column - Plans Selection */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Plans Section */}
+            <div id="plans" className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
               <div className="border-b border-primary/10 px-5 py-4 flex justify-between items-center flex-wrap gap-2">
-                <h2 className="text-lg font-semibold text-black">Your Subscription</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-black">Choose Your Plan</h2>
+                  <p className="text-black/70 text-sm mt-1">Select the perfect plan for your content creation needs</p>
+                </div>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsExpandedView(!isExpandedView)}
+                  className="text-primary hover:text-primary/70 hover:bg-primary/5"
+                >
+                  {isExpandedView ? 'Simple View' : 'Detailed View'}
+                </Button>
+              </div>
               
-                {/* Subscription Plan Selector */}
-                <div className="flex items-center justify-center space-x-4 mb-8">
-                  <span className={!isAnnualBilling ? "font-semibold" : "text-gray-500"}>Monthly</span>
-                  </div>
-                  
+              <div className="p-5">
                 {/* Plan upgrade/downgrade policy information */}
-                <div className=" border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-800 dark:text-blue-300 mb-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800 mb-6">
                   <div className="flex">
                     <svg className="h-5 w-5 text-blue-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div>
-                      <p>Plan Change Policy:</p>
-                <p>You can upgrade your plan at any time to get immediate access to additional features and credits.</p>
-                <p className="mt-1">However, downgrades are only possible at the end of your current billing period. If you request a downgrade, it will automatically take effect once your current subscription expires.</p>
+                      <p className="font-medium mb-1">Plan Information:</p>
+                      <p>• New users automatically get a 7-day free trial with 3 credits</p>
+                      <p>• Upgrade anytime to get immediate access to additional features and credits</p>
+                      <p>• Downgrades take effect at the end of your current billing period</p>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            <div className="px-5 py-6">
-              {/* Current Plan Status */}
-              {currentPlan ? (
-                <div className="mb-8">
-                  <div className={`
-                    border-2 rounded-lg p-5 relative
-                    ${currentSubscription.status === 'cancelled' ? 'border-black/20' : 'border-primary'}
-                  `}>
-                    {currentSubscription.status !== 'cancelled' && (
-                      <div className="absolute -top-3 left-3 px-2 bg-white">
-                        <Badge className="bg-primary text-white">Current Plan</Badge>
-                    </div>
-                  )}
-                  
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-black">{currentPlan.name}</h3>
-                        
-                        <div className="mt-1 text-xl font-bold text-black">
-                          ${currentPlan.price}
-                          <span className="text-sm font-normal text-black/70">
-                            /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
-                      </span>
-                    </div>
-                    
-                        <div className="mt-3 text-black/70">
-                          {currentSubscription.status === 'cancelled' ? (
-                            <div className="flex items-center text-black/70">
-                              <Clock className="h-4 w-4 mr-1.5" />
-                              Access until {format(currentSubscription.expiresAt || new Date(), 'MMMM d, yyyy')}
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-black/70">
-                              <RefreshCw className="h-4 w-4 mr-1.5" />
-                              Renews on {format(currentSubscription.expiresAt || new Date(), 'MMMM d, yyyy')}
-                            </div>
-                          )}
-                        </div>
-                        </div>
-                        
-                      <div className="sm:text-right">
-                        <div className="mt-3 bg-primary/5 px-3 py-2 inline-block rounded-lg text-center">
-                          <div className="text-sm font-medium text-black">
-                            {currentPlan.limitations.carousels} Credits
-                          </div>
-                          <div className="text-xs text-black/70">per {currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}</div>
-                        </div>
-                        
-                        {/* Auto-renewal toggle */}
-                        {currentSubscription.status !== 'cancelled' && (
-                          <div className="mt-3 flex justify-end items-center gap-2">
-                            <div className="text-sm text-right">
-                                <span className="font-medium text-black">Auto-renewal</span>
-                                <p className="text-xs text-black/70">
-                                  {autoPayEnabled 
-                                    ? 'Your subscription will automatically renew' 
-                                    : 'Your subscription will expire at the end of period'}
-                                </p>
-                              </div>
-                              <Switch
-                                checked={autoPayEnabled}
-                                onCheckedChange={handleAutoPayToggle}
-                                disabled={isLoadingSubscription}
-                              />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-8">
-                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-5 text-center">
-                    <h3 className="text-xl font-bold text-black mb-2">No Active Plan</h3>
-                    <p className="text-black/70 mb-4">Purchase a plan to start using our services</p>
-                    <Button onClick={() => window.location.href = '#plans'}>
-                      View Available Plans
-                    </Button>
-                  </div>
-                </div>
-              )}
-                  
-              {/* All Plans Comparison */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-black">Available Plans</h3>
-                    <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setIsExpandedView(!isExpandedView)}
-                    className="text-primary hover:text-primary/70 hover:bg-primary/5"
-                  >
-                    {isExpandedView ? 'Simple View' : 'Detailed View'}
-                    </Button>
-          </div>
                 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {plans.map(plan => (
                     <div
                       key={plan.id}
                       className={`
-                        relative border rounded-xl transition-all overflow-hidden
-                        ${plan.id === currentSubscription.planId ? 'border-primary' : 'border-primary/10 hover:border-primary/30'}
+                        relative border rounded-xl transition-all overflow-hidden h-full
+                        ${plan.id === currentSubscription.planId 
+                          ? 'border-primary ring-2 ring-primary/20' 
+                          : plan.isPopular 
+                            ? 'border-primary shadow-lg' 
+                            : 'border-primary/10 hover:border-primary/30 hover:shadow-md'
+                        }
                       `}
                     >
-                      <div className="p-4 gap-4 grid grid-cols-12">
-                        {/* Plan Name & Price - takes 3 columns on larger screens, full width on mobile */}
-                        <div className="col-span-12 sm:col-span-3 flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-start mb-2 sm:mb-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                            <h4 className="text-lg font-semibold text-black">{plan.name}</h4>
-                            {plan.isPopular && (
-                              <Badge className="bg-primary text-white">Popular</Badge>
-                            )}
-                          </div>
-                          
-                          <div className="text-right sm:text-left mt-0 sm:mt-2">
-                            {plan.id === 'custom' ? (
-                              <span className="font-semibold text-black">Custom</span>
-                            ) : (
-                              <>
-                                <span className="font-semibold text-black">${plan.price}</span>
-                                <span className="text-sm text-black/70">
-                                  /{plan.billingPeriod === 'annual' ? 'yr' : 'mo'}
-                                </span>
-                              </>
-                            )}
+                      {plan.isPopular && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <Badge className="bg-primary text-white shadow-sm">Most Popular</Badge>
+                        </div>
+                      )}
+                      
+                      {plan.id === currentSubscription.planId && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <Badge className="bg-green-500 text-white shadow-sm">Current Plan</Badge>
+                        </div>
+                      )}
+                      
+                      <div className="p-5 h-full flex flex-col">
+                        {/* Plan Header */}
+                        <div className="text-center mb-4">
+                          <h3 className="text-lg font-bold text-black">{plan.name}</h3>
+                                                     <div className="mt-2">
+                             {plan.id === 'custom' ? (
+                               <span className="text-2xl font-bold text-black">Custom</span>
+                             ) : plan.id === 'trial' ? (
+                               <span className="text-3xl font-bold text-green-600">FREE</span>
+                             ) : (
+                               <>
+                                 <span className="text-3xl font-bold text-black">${plan.price}</span>
+                                 <span className="text-black/70">
+                                   /{plan.billingPeriod === 'annual' ? 'year' : 'month'}
+                                 </span>
+                               </>
+                             )}
+                           </div>
+                        </div>
+                        
+                        {/* Credits Badge */}
+                        <div className="text-center mb-4">
+                          <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full">
+                            <Sparkles className="h-4 w-4" />
+                            <span className="font-medium">
+                              {plan.limitations.carousels === Infinity 
+                                ? 'Unlimited Credits' 
+                                : `${plan.limitations.carousels} Credits`}
+                            </span>
                           </div>
                         </div>
                         
-                        {/* Features - takes 6 columns on larger screens, full width on mobile */}
-                        <div className={`col-span-12 sm:col-span-6 ${isExpandedView ? 'block' : 'hidden sm:block'}`}>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex items-center gap-1.5">
-                              <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
-                              <span className="text-sm text-black">
-                                {plan.limitations.carousels === Infinity 
-                                  ? 'Unlimited Credits' 
-                                  : `${plan.limitations.carousels} Credits`}
-                              </span>
+                        {/* Features */}
+                        <div className="flex-1 space-y-2 mb-6">
+                          {(isExpandedView ? plan.features : plan.features.slice(0, 3)).map((feature, idx) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-black">{feature}</span>
+                            </div>
+                          ))}
+                          {!isExpandedView && plan.features.length > 3 && (
+                            <div className="text-xs text-black/70 text-center">
+                              +{plan.features.length - 3} more features
+                            </div>
+                          )}
                         </div>
-                            
-                            {plan.features.slice(0, 3).map((feature, idx) => (
-                              <div key={idx} className="flex items-center gap-1.5">
-                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                <span className="text-sm text-black truncate">
-                                  {feature}
-                                </span>
-                          </div>
-                            ))}
-                          </div>
-                  </div>
-                  
-                        {/* Action Button - takes 3 columns on larger screens, full width on mobile */}
-                        <div className="col-span-12 sm:col-span-3 flex justify-end items-center">
+                        
+                        {/* Action Button */}
+                        <div className="mt-auto">
                           {plan.id === currentSubscription.planId ? (
-                            <Badge 
+                            <Button 
                               variant="outline" 
-                              className="bg-primary/5 border-primary/10 text-primary"
+                              className="w-full bg-primary/5 border-primary/20 text-primary"
+                              disabled
                             >
+                              <BadgeCheck className="h-4 w-4 mr-2" />
                               Current Plan
-                            </Badge>
-                    ) : (
-                      <Button 
+                            </Button>
+                          ) : (
+                            <Button 
                               variant={plan.id === 'custom' ? 'outline' : 'default'}
-                        size="sm"
+                              className={`w-full ${plan.id === 'custom' 
+                                ? 'border-primary/20 text-primary hover:bg-primary/5' 
+                                : plan.isPopular 
+                                  ? 'bg-primary hover:bg-primary/90' 
+                                  : ''
+                              }`}
                               disabled={isChangingPlan !== null}
                               onClick={() => plan.id === 'custom' 
                                 ? window.open('mailto:sales@yourcompany.com', '_blank') 
                                 : handleChangePlan(plan.id)
                               }
-                              className={plan.id === 'custom' 
-                                ? 'border-primary/20 text-primary hover:bg-primary/5' 
-                                : ''
-                              }
                             >
                               {isChangingPlan === plan.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
                               ) : plan.id === 'custom' ? (
-                                <span>Contact Us</span>
+                                <>
+                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                  Contact Sales
+                                </>
                               ) : plan.id === 'trial' ? (
-                                <span>Start Trial</span>
+                                <>
+                                  <Sparkles className="h-4 w-4 mr-2" />
+                                  Start Free Trial
+                                </>
                               ) : (
-                                <span>Upgrade</span>
+                                <>
+                                  <ArrowRight className="h-4 w-4 mr-2" />
+                                  Upgrade Now
+                                </>
                               )}
-                      </Button>
-                    )}
-                  </div>
-                      </div>
-                      
-                      {/* Expanded Features View */}
-                      {isExpandedView && (
-                        <div className="border-t border-primary/10 bg-primary/5 p-4">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {plan.features.map((feature, idx) => (
-                              <div key={idx} className="flex items-center gap-1.5">
-                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                <span className="text-sm text-black">
-                                  {feature}
-                                </span>
-                </div>
-              ))}
-                          </div>
+                            </Button>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+            
+            {/* Credit Packs Section - Moved Down */}
+            {currentPlan && (
+              <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+                <div className="border-b border-primary/10 px-5 py-4">
+                  <h2 className="text-lg font-semibold text-black">Need More Credits?</h2>
+                  <p className="text-black/70 text-sm mt-1">Purchase additional credits for your current plan</p>
+                </div>
+                
+                <div className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {creditPacks.map((pack) => (
+                      <div key={pack.id} className={`
+                        group relative border rounded-xl p-4 transition-all text-center
+                        ${pack.isPopular ? 
+                          'border-primary bg-primary/5 shadow-md' : 
+                          'border-primary/10 hover:border-primary/30 hover:bg-primary/5'}
+                      `}>
+                        {pack.isPopular && (
+                          <div className="absolute -top-2 -right-2">
+                            <Badge className="bg-primary text-white shadow-sm">Best Value</Badge>
+                          </div>
+                        )}
+                        
+                        <div className="mb-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                            <PlusCircle className="w-6 h-6 text-primary" />
+                          </div>
+                          
+                          <div className="text-2xl font-bold text-black">{pack.credits}</div>
+                          <div className="text-sm text-black/70 mb-2">Credits</div>
+                          <div className="text-xl font-semibold text-primary">${pack.price}</div>
+                        </div>
+                        
+                        <Button
+                          variant={pack.isPopular ? "default" : "outline"}
+                          className="w-full"
+                          onClick={() => handleBuyCreditPack(pack.id)}
+                          disabled={isChangingPlan !== null}
+                        >
+                          {isChangingPlan === pack.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <CreditCard className="h-4 w-4 mr-2" />
+                          )}
+                          Buy Now
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+                    <div className="flex">
+                      <svg className="h-5 w-5 text-amber-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <p className="font-medium mb-1">Important:</p>
+                        <p>• Credits expire at the end of your billing cycle</p>
+                        <p>• Each credit can be used for one AI post or carousel</p>
+                        <p>• Credits purchased on trial plans expire when trial ends</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Add Payment Method */}
+                  <div className="mt-4 pt-4 border-t border-primary/10">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAddCardModal(true)}
+                      className="w-full"
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Add Payment Method
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
