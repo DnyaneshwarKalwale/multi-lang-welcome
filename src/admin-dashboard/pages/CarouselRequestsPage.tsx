@@ -26,7 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, FileText, Image, FileUp, Eye, Download, Share2, Linkedin } from 'lucide-react';
+import { Loader2, FileText, Image, FileUp, Eye, Download, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { API_URL } from '../../services/api';
 import { uploadToCloudinaryDirect } from '@/utils/cloudinaryDirectUpload';
@@ -818,81 +818,30 @@ const CarouselRequestsPage: React.FC = () => {
     try {
       setPostingToLinkedIn(true);
       
-      // Only allow posting text content
-      if (!request.content) {
-        throw new Error('No text content available to post');
+      const connectionStatus = await linkedInApi.testConnection();
+      if (!connectionStatus.success) {
+        throw new Error('Please connect your LinkedIn account to continue');
       }
-      
-      // Get LinkedIn access token
-      const token = await linkedInApi.getToken();
-      if (!token) {
-        throw new Error('Please connect your LinkedIn account first');
-      }
-      
-      // Create the post
-      const response = await linkedInApi.createTextPost(request.content);
-      
-      if (response.success) {
+
+      if (request.carouselType === 'text' && request.content) {
+        await linkedInApi.createTextPost(request.content);
+        
         toast({
-          title: 'Posted to LinkedIn',
-          description: 'Your content has been successfully posted to LinkedIn',
+          description: '✓ Posted to LinkedIn',
           duration: 2000
         });
       } else {
-        throw new Error(response.message || 'Failed to post to LinkedIn');
+        throw new Error('Only text posts can be shared to LinkedIn');
       }
     } catch (error) {
-      console.error('LinkedIn posting error:', error);
       toast({
-        title: 'LinkedIn Posting Failed',
-        description: error instanceof Error ? error.message : 'Please try again later',
+        description: error instanceof Error ? error.message : 'Unable to post to LinkedIn',
         variant: 'destructive',
         duration: 2000
       });
     } finally {
       setPostingToLinkedIn(false);
     }
-  };
-
-  // Add LinkedIn posting button to the table actions
-  const renderActionButtons = (request: CarouselRequest) => {
-    return (
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => viewRequest(request)}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-        
-        {request.content && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePostToLinkedIn(request)}
-            disabled={postingToLinkedIn}
-            className="text-blue-600 hover:text-blue-700"
-          >
-            {postingToLinkedIn ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Linkedin className="h-4 w-4" />
-            )}
-          </Button>
-        )}
-        
-        {request.files?.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(getDownloadUrl(request.files[0]), '_blank')}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -944,7 +893,15 @@ const CarouselRequestsPage: React.FC = () => {
                         <TableCell className="whitespace-nowrap">{getStatusBadge(request.status)}</TableCell>
                         <TableCell className="whitespace-nowrap">{request.files.length} files</TableCell>
                         <TableCell className="text-right whitespace-nowrap">
-                        {renderActionButtons(request)}
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                          onClick={() => viewRequest(request)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
