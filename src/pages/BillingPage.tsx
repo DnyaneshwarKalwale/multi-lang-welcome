@@ -901,83 +901,17 @@ const BillingPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Main Content - Reorganized Layout */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Column - Current Plan Status */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Current Plan Overview */}
-            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
-              <div className="border-b border-primary/10 px-5 py-4">
-                <h2 className="text-lg font-semibold text-black">Current Plan</h2>
-              </div>
-              
-              <div className="p-5 space-y-4">
-                {currentPlan ? (
-                  <>
-                                         <div className="text-center">
-                       <h3 className="text-xl font-bold text-black">{currentPlan.name}</h3>
-                       <div className="mt-1 text-2xl font-bold text-primary">
-                         {currentPlan.id === 'trial' ? (
-                           <span className="text-green-600">FREE</span>
-                         ) : (
-                           <>
-                             ${currentPlan.price}
-                             <span className="text-sm font-normal text-black/70">
-                               /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
-                             </span>
-                           </>
-                         )}
-                       </div>
-                     </div>
-                    
-                    <div className="bg-primary/5 rounded-lg p-3 text-center">
-                      <div className="text-sm text-black/70">Credits</div>
-                      <div className="text-xl font-semibold text-black">
-                        {currentSubscription.usedCredits} / {currentSubscription.totalCredits}
-                      </div>
-                      <div className="w-full bg-primary/20 rounded-full h-2 mt-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${usagePercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center text-sm text-black/70">
-                      {currentSubscription.status === 'cancelled' ? (
-                        <div className="flex items-center justify-center text-black/70">
-                          <Clock className="h-4 w-4 mr-1.5" />
-                          Access until {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center text-black/70">
-                          <RefreshCw className="h-4 w-4 mr-1.5" />
-                          Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
-                        </div>
-                      )}
-                    </div>
-                    
-
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CreditCard className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-black mb-2">No Active Plan</h3>
-                    <p className="text-black/70 text-sm mb-4">Choose a plan to get started</p>
-                    <Button size="sm" onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}>
-                      View Plans
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <Tabs defaultValue="plans" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="plans">Plans</TabsTrigger>
+            <TabsTrigger value="usage">Usage</TabsTrigger>
+            <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
+            <TabsTrigger value="billing-history">Billing History</TabsTrigger>
+          </TabsList>
           
-          {/* Right Column - Plans Selection */}
-          <div className="lg:col-span-3 space-y-6">
+          <TabsContent value="plans" className="space-y-6">
             {/* Plans Section */}
             <div id="plans" className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
               <div className="border-b border-primary/10 px-5 py-4 flex justify-between items-center flex-wrap gap-2">
@@ -1139,86 +1073,254 @@ const BillingPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Credit Packs Section - Moved Down */}
-            {currentPlan && (
-              <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
-                <div className="border-b border-primary/10 px-5 py-4">
-                  <h2 className="text-lg font-semibold text-black">Need More Credits?</h2>
-                  <p className="text-black/70 text-sm mt-1">Purchase additional credits for your current plan</p>
-                </div>
-                
-                <div className="p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    {creditPacks.map((pack) => (
-                      <div key={pack.id} className={`
-                        group relative border rounded-xl p-4 transition-all text-center
-                        ${pack.isPopular ? 
-                          'border-primary bg-primary/5 shadow-md' : 
-                          'border-primary/10 hover:border-primary/30 hover:bg-primary/5'}
-                      `}>
-                        {pack.isPopular && (
-                          <div className="absolute -top-2 -right-2">
-                            <Badge className="bg-primary text-white shadow-sm">Best Value</Badge>
-                          </div>
+                      </TabsContent>
+          
+          <TabsContent value="usage" className="space-y-6">
+            {/* Current Plan Overview */}
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Current Plan & Usage</h2>
+              </div>
+              
+              <div className="p-5 space-y-4">
+                {currentPlan ? (
+                  <>
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold text-black">{currentPlan.name}</h3>
+                      <div className="mt-1 text-2xl font-bold text-primary">
+                        {currentPlan.id === 'trial' ? (
+                          <span className="text-green-600">FREE</span>
+                        ) : (
+                          <>
+                            ${currentPlan.price}
+                            <span className="text-sm font-normal text-black/70">
+                              /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
+                            </span>
+                          </>
                         )}
-                        
-                        <div className="mb-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                            <PlusCircle className="w-6 h-6 text-primary" />
-                          </div>
-                          
-                          <div className="text-2xl font-bold text-black">{pack.credits}</div>
-                          <div className="text-sm text-black/70 mb-2">Credits</div>
-                          <div className="text-xl font-semibold text-primary">${pack.price}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-primary/5 rounded-lg p-3 text-center">
+                      <div className="text-sm text-black/70">Credits</div>
+                      <div className="text-xl font-semibold text-black">
+                        {currentSubscription.usedCredits} / {currentSubscription.totalCredits}
+                      </div>
+                      <div className="w-full bg-primary/20 rounded-full h-2 mt-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${usagePercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center text-sm text-black/70">
+                      {currentSubscription.status === 'cancelled' ? (
+                        <div className="flex items-center justify-center text-black/70">
+                          <Clock className="h-4 w-4 mr-1.5" />
+                          Access until {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
                         </div>
-                        
-                        <Button
-                          variant={pack.isPopular ? "default" : "outline"}
-                          className="w-full"
-                          onClick={() => handleBuyCreditPack(pack.id)}
-                          disabled={isChangingPlan !== null}
-                        >
-                          {isChangingPlan === pack.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <div className="flex items-center justify-center text-black/70">
+                          <RefreshCw className="h-4 w-4 mr-1.5" />
+                          Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CreditCard className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-black mb-2">No Active Plan</h3>
+                    <p className="text-black/70 text-sm mb-4">Choose a plan to get started</p>
+                    <Button size="sm" onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}>
+                      View Plans
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="payment-methods" className="space-y-6">
+            {/* Payment Methods */}
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Payment Methods</h2>
+              </div>
+              
+              <div className="p-5">
+                {paymentMethods.length > 0 ? (
+                  <div className="space-y-3 mb-4">
+                    {paymentMethods.map((method) => (
+                      <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {method.type === 'card' ? (
+                            <div className="h-10 w-14 bg-gray-100 rounded flex items-center justify-center">
+                              <CreditCard className="h-5 w-5" />
+                            </div>
                           ) : (
-                            <CreditCard className="h-4 w-4 mr-2" />
+                            <div className="h-10 w-14 bg-blue-100 rounded flex items-center justify-center">
+                              <svg className="h-5 w-5 text-blue-700" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.076 21.337H2.47a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008A1.044 1.044 0 0 1 2.47 2.663h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036zm7.949 0h-4.606a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008a1.044 1.044 0 0 1 1.057-.766h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036zm7.948 0h-4.606a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008a1.044 1.044 0 0 1 1.057-.766h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036z" />
+                              </svg>
+                            </div>
                           )}
-                          Buy Now
-                        </Button>
+                          <div>
+                            <p className="font-medium">
+                              {method.type === 'card'
+                                ? `${method.brand} ****${method.lastFour}`
+                                : `PayPal (${method.email})`}
+                            </p>
+                            {method.type === 'card' && method.expiryDate && (
+                              <p className="text-xs text-gray-500">Expires {method.expiryDate}</p>
+                            )}
+                          </div>
+                        </div>
+                        {method.isDefault ? (
+                          <Badge variant="outline" className="bg-primary/5 text-primary">Default</Badge>
+                        ) : (
+                          <Button variant="ghost" size="sm" onClick={() => handleSetDefaultPayment(method.id)}>
+                            Set Default
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
-                  
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-                    <div className="flex">
-                      <svg className="h-5 w-5 text-amber-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      <div>
-                        <p className="font-medium mb-1">Important:</p>
-                        <p>• Credits expire at the end of your billing cycle</p>
-                        <p>• Each credit can be used for one AI post or carousel</p>
-                        <p>• Credits purchased on trial plans expire when trial ends</p>
-                      </div>
-                    </div>
+                ) : (
+                  <div className="text-center p-6 border rounded-lg mb-4">
+                    <CreditCard className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                    <p className="mb-4">No payment methods found</p>
                   </div>
-                  
-                  {/* Add Payment Method */}
-                  <div className="mt-4 pt-4 border-t border-primary/10">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAddCardModal(true)}
-                      className="w-full"
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Add Payment Method
-                    </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddCardModal(true)}
+                  className="w-full"
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Add Payment Method
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="billing-history" className="space-y-6">
+            {/* Billing History */}
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Billing History</h2>
+              </div>
+              
+              <div className="p-5">
+                {invoices.length > 0 ? (
+                  <div className="space-y-3">
+                    {invoices.map((invoice) => (
+                      <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">${invoice.amount.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500">
+                            {format(invoice.date, 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={invoice.status === 'paid' ? 'default' : 'destructive'}
+                            className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
+                          >
+                            {invoice.status}
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDownloadInvoice(invoice)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-6 border rounded-lg">
+                    <FileText className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                    <p>No invoices available</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Credit Packs Section - Moved Down */}
+          {currentPlan && (
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden mt-6">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Need More Credits?</h2>
+                <p className="text-black/70 text-sm mt-1">Purchase additional credits for your current plan</p>
+              </div>
+              
+              <div className="p-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {creditPacks.map((pack) => (
+                    <div key={pack.id} className={`
+                      group relative border rounded-xl p-4 transition-all text-center
+                      ${pack.isPopular ? 
+                        'border-primary bg-primary/5 shadow-md' : 
+                        'border-primary/10 hover:border-primary/30 hover:bg-primary/5'}
+                    `}>
+                      {pack.isPopular && (
+                        <div className="absolute -top-2 -right-2">
+                          <Badge className="bg-primary text-white shadow-sm">Best Value</Badge>
+                        </div>
+                      )}
+                      
+                      <div className="mb-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                          <PlusCircle className="w-6 h-6 text-primary" />
+                        </div>
+                        
+                        <div className="text-2xl font-bold text-black">{pack.credits}</div>
+                        <div className="text-sm text-black/70 mb-2">Credits</div>
+                        <div className="text-xl font-semibold text-primary">${pack.price}</div>
+                      </div>
+                      
+                      <Button
+                        variant={pack.isPopular ? "default" : "outline"}
+                        className="w-full"
+                        onClick={() => handleBuyCreditPack(pack.id)}
+                        disabled={isChangingPlan !== null}
+                      >
+                        {isChangingPlan === pack.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <CreditCard className="h-4 w-4 mr-2" />
+                        )}
+                        Buy Now
+                      </Button>
+                  </div>
+                ))}
+              </div>
+                
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+                  <div className="flex">
+                    <svg className="h-5 w-5 text-amber-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="font-medium mb-1">Important:</p>
+                      <p>• Credits expire at the end of your billing cycle</p>
+                      <p>• Each credit can be used for one AI post or carousel</p>
+                      <p>• Credits purchased on trial plans expire when trial ends</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </Tabs>
       </div>
       
       {/* Add Card Modal */}
