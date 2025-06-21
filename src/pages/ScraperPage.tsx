@@ -1206,7 +1206,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const response = await api.post('/youtube/channel', {
         channelName: channelIdentifier
       }, {
-        timeout: 60000 // 60 second timeout for YouTube channel scraping
+        timeout: 240000 // 4 minute timeout for YouTube channel scraping
       });
       
       if (response.data && response.data.success) {
@@ -2168,7 +2168,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
         const backendResponse = await axios.post(apiUrl, {
           video: enhancedVideo,
           userId: user?.id || 'anonymous'
-        }, { timeout: 10000 }); // Add timeout to prevent hanging requests
+        }, { timeout: 240000 }); // Add timeout to prevent hanging requests
         
         if (backendResponse.data.success) {
           backendSaveSuccess = true;

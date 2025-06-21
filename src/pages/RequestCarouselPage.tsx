@@ -787,7 +787,7 @@ const RequestCarouselPage: React.FC = () => {
           videoId: videoId,
           useScraperApi: false
         }, { 
-          timeout: 45000,
+          timeout: 240000,
           headers: {
             'Content-Type': 'application/json'
           }
@@ -817,7 +817,7 @@ const RequestCarouselPage: React.FC = () => {
           videoId: videoId,
             useScraperApi: false
           }, { 
-            timeout: 30000,
+            timeout: 240000,
             headers: {
               'Content-Type': 'application/json'
             }
