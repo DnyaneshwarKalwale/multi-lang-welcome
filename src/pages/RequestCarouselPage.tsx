@@ -1179,29 +1179,40 @@ const RequestCarouselPage: React.FC = () => {
         const saveResponse = await axios.post(saveUrl, {
           title: selectedVideo.title,
           content: generatedContent,
-          type: type === 'text-post' ? 'post-short' : 'carousel',
+          type: 'post-short',  // Always use post-short for text posts
           videoId: selectedVideo.id,
           videoTitle: selectedVideo.title,
-          userId: user?.id || 'anonymous'
+          userId: user?.id || 'anonymous',
+          source: 'youtube',  // Add source
+          status: 'ready'     // Add status
         });
 
-        if (saveResponse.data.success) {
+        if (saveResponse?.data?.data?.id) {  // More defensive checking
           // Update local state with the new content
           const newContent: SavedContent = {
             id: saveResponse.data.data.id,
             title: selectedVideo.title,
             content: generatedContent,
-            type: type as 'text-post' | 'carousel',
+            type: 'text-post',  // Keep as text-post in frontend
             videoId: selectedVideo.id,
             videoTitle: selectedVideo.title,
             createdAt: new Date().toISOString()
           };
           
+          // Update local state immediately
           setSavedContents(prev => [newContent, ...prev]);
           
           // Update localStorage
           const existingContents = JSON.parse(localStorage.getItem('savedLinkedInContents') || '[]');
           localStorage.setItem('savedLinkedInContents', JSON.stringify([newContent, ...existingContents]));
+          
+          // Refresh saved contents from backend immediately
+          await loadSavedContents();
+          
+          toast({
+            title: "Success",
+            description: "Content saved successfully!",
+          });
         }
       } catch (saveError) {
         console.error('Error saving content:', saveError);
