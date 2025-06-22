@@ -1176,33 +1176,26 @@ const RequestCarouselPage: React.FC = () => {
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
 
-        // Ensure type is properly set for backend
-        const backendType = type === 'text-post' ? 'post-short' : 'carousel';
-        console.log('Saving content with type:', backendType);  // Debug log
-        
         const saveResponse = await axios.post(saveUrl, {
-          id: uuidv4(),
-          title: selectedVideo.title || 'Untitled',
-          content: generatedContent || '',
-          type: backendType,  // Use the validated type
-          videoId: selectedVideo.id || null,
-          videoTitle: selectedVideo.title || null,
+          title: selectedVideo.title,
+          content: generatedContent,
+          type: type,  // Now we can use type directly since both frontend and backend use 'text-post'
+          videoId: selectedVideo.id,
+          videoTitle: selectedVideo.title,
           userId: user?.id || 'anonymous',
           source: 'youtube',
-          status: 'ready',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          status: 'ready'
         });
 
         if (saveResponse?.data?.data?.id) {  // More defensive checking
           // Update local state with the new content
           const newContent: SavedContent = {
             id: saveResponse.data.data.id,
-            title: selectedVideo.title || 'Untitled',
-            content: generatedContent || '',
-            type: type === 'text-post' ? 'text-post' : 'carousel',
-            videoId: selectedVideo.id || null,
-            videoTitle: selectedVideo.title || null,
+            title: selectedVideo.title,
+            content: generatedContent,
+            type: type as 'text-post' | 'carousel',
+            videoId: selectedVideo.id,
+            videoTitle: selectedVideo.title,
             createdAt: new Date().toISOString()
           };
           
@@ -1223,21 +1216,7 @@ const RequestCarouselPage: React.FC = () => {
         }
       } catch (saveError) {
         console.error('Error saving content:', saveError);
-        console.error('Save request data:', {
-          id: uuidv4(),
-          title: selectedVideo.title || 'Untitled',
-          content: generatedContent || '',
-          type: backendType,
-          videoId: selectedVideo.id || null,
-          videoTitle: selectedVideo.title || null,
-          userId: user?.id || 'anonymous'
-        });
-        // Show error to help debug
-        toast({
-          title: "Warning",
-          description: "Content was generated but failed to save. Please try again.",
-          variant: "destructive"
-        });
+        // Don't show error to user since the content was generated successfully
       }
         
         toast({
