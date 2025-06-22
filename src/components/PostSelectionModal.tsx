@@ -895,12 +895,12 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
         <Button
           onClick={() => activeTab === 'linkedin' ? handleLinkedInScrape() : handleTwitterScrape()}
           disabled={isScrapingLinkedIn || isScrapingTwitter || !inputUrl}
-          className="min-w-[120px]"
+          className="min-w-[140px] relative"
         >
           {(isScrapingLinkedIn || isScrapingTwitter) ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Scraping...
+              {isScrapingLinkedIn ? 'Scraping Profile...' : 'Fetching Tweets...'}
             </>
           ) : (
             <>
@@ -964,6 +964,38 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
               <h3 className="text-lg font-semibold mb-2">Loading saved posts...</h3>
               <p>Please wait while we fetch your saved content.</p>
+            </div>
+          ) : (isScrapingLinkedIn || isScrapingTwitter) ? (
+            <div className="text-center py-16">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-8 max-w-md mx-auto">
+                <div className="relative mb-6">
+                  <div className="w-16 h-16 mx-auto">
+                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                  </div>
+                  {isScrapingLinkedIn ? (
+                    <Linkedin className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-blue-600" />
+                  ) : (
+                    <Twitter className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-sky-600" />
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {isScrapingLinkedIn ? 'Scraping LinkedIn Profile' : 'Fetching Twitter Data'}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {isScrapingLinkedIn 
+                    ? 'This may take 30-60 seconds. We\'re extracting posts, media, and profile data...'
+                    : 'This may take 1-2 minutes. We\'re extracting tweets, threads, and media...'
+                  }
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                  <div className={`w-2 h-2 ${isScrapingLinkedIn ? 'bg-blue-600' : 'bg-sky-600'} rounded-full animate-pulse`}></div>
+                  <span>{isScrapingLinkedIn ? 'Connecting to LinkedIn' : 'Connecting to Twitter'}</span>
+                  <div className={`w-2 h-2 ${isScrapingLinkedIn ? 'bg-blue-600' : 'bg-sky-600'} rounded-full animate-pulse`} style={{ animationDelay: '0.5s' }}></div>
+                  <span>{isScrapingLinkedIn ? 'Extracting posts' : 'Fetching tweets'}</span>
+                  <div className={`w-2 h-2 ${isScrapingLinkedIn ? 'bg-blue-600' : 'bg-sky-600'} rounded-full animate-pulse`} style={{ animationDelay: '1s' }}></div>
+                  <span>{isScrapingLinkedIn ? 'Processing media' : 'Processing threads'}</span>
+                </div>
+              </div>
             </div>
           ) : (savedTwitterPosts.length === 0 && savedLinkedInPosts.length === 0 && savedTwitterThreads.length === 0) ? (
             <div className="text-center py-16 text-gray-500">

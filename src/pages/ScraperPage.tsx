@@ -3252,12 +3252,19 @@ const ScraperPage: React.FC = (): JSX.Element => {
               <Button
                 onClick={handleScrape}
                 disabled={isLoading || !inputUrl || (activeTab === 'linkedin' && isScrapingLinkedIn)}
-                className="min-w-[120px]"
+                className="min-w-[120px] relative"
               >
                 {(isLoading || (activeTab === 'linkedin' && isScrapingLinkedIn)) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {activeTab === 'linkedin' ? 'Scraping...' : 'Loading'}
+                    {activeTab === 'linkedin' 
+                      ? 'Scraping Profile...' 
+                      : activeTab === 'twitter'
+                      ? 'Fetching Tweets...'
+                      : activeTab === 'youtube'
+                      ? 'Getting Videos...'
+                      : 'Loading...'
+                    }
                   </>
                 ) : (
                   <>
@@ -3278,6 +3285,36 @@ const ScraperPage: React.FC = (): JSX.Element => {
         </CardContent>
       </Card>
       
+      {/* Twitter Loading Overlay */}
+      {activeTab === 'twitter' && isLoading && !twitterResult && (
+        <Card className="bg-gradient-to-br from-sky-50 to-blue-100 border-sky-200">
+          <CardContent className="p-8">
+            <div className="text-center space-y-4">
+              <div className="relative">
+                <div className="w-16 h-16 mx-auto">
+                  <div className="w-16 h-16 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>
+                </div>
+                <Twitter className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-sky-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">Fetching Twitter Data</h3>
+                <p className="text-sm text-gray-600">
+                  This may take 1-2 minutes. We're extracting tweets, threads, and media...
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                  <div className="w-2 h-2 bg-sky-600 rounded-full animate-pulse"></div>
+                  <span>Connecting to Twitter</span>
+                  <div className="w-2 h-2 bg-sky-600 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                  <span>Fetching tweets</span>
+                  <div className="w-2 h-2 bg-sky-600 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                  <span>Processing threads</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Twitter Results Section */}
       {activeTab === 'twitter' && twitterResult && (
         <div className="w-full space-y-6">
@@ -3379,8 +3416,38 @@ const ScraperPage: React.FC = (): JSX.Element => {
         </div>
       )}
       
+      {/* YouTube Loading Overlay */}
+      {activeTab === 'youtube' && isFetchingChannel && (
+        <Card className="bg-gradient-to-br from-red-50 to-pink-100 border-red-200">
+          <CardContent className="p-8">
+            <div className="text-center space-y-4">
+              <div className="relative">
+                <div className="w-16 h-16 mx-auto">
+                  <div className="w-16 h-16 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+                </div>
+                <Youtube className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-red-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">Fetching YouTube Videos</h3>
+                <p className="text-sm text-gray-600">
+                  This may take 30-45 seconds. We're extracting video data and metadata...
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+                  <span>Connecting to YouTube</span>
+                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                  <span>Fetching videos</span>
+                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                  <span>Processing metadata</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* YouTube Channel Results */}
-      {activeTab === 'youtube' && youtubeChannelResult && (
+      {activeTab === 'youtube' && youtubeChannelResult && !isFetchingChannel && (
         <div className="space-y-6">
           {loadingTranscriptIds.size > 0 && (
             <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-center mb-4">
@@ -3511,7 +3578,37 @@ const ScraperPage: React.FC = (): JSX.Element => {
       )}
       
       {/* LinkedIn Profile Results */}
-      {activeTab === 'linkedin' && linkedinResult && (
+      {/* LinkedIn Loading Overlay */}
+      {activeTab === 'linkedin' && isScrapingLinkedIn && (
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+          <CardContent className="p-8">
+            <div className="text-center space-y-4">
+              <div className="relative">
+                <div className="w-16 h-16 mx-auto">
+                  <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                </div>
+                <Linkedin className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-blue-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">Scraping LinkedIn Profile</h3>
+                <p className="text-sm text-gray-600">
+                  This may take 30-60 seconds. We're extracting posts, media, and profile data...
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                  <span>Connecting to LinkedIn</span>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                  <span>Extracting posts</span>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                  <span>Processing media</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'linkedin' && linkedinResult && !isScrapingLinkedIn && (
         <div className="space-y-6">
           {/* Profile Header */}
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
