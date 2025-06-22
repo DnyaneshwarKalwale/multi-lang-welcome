@@ -1177,14 +1177,13 @@ const RequestCarouselPage: React.FC = () => {
           : `${baseUrl}/api/carousel-contents`;
 
         const saveResponse = await axios.post(saveUrl, {
+          id: uuidv4(), // Add unique ID
           title: selectedVideo.title,
           content: generatedContent,
-          type: type,  // Now we can use type directly since both frontend and backend use 'text-post'
+          type: type === 'text-post' ? 'text-post' : 'carousel',
           videoId: selectedVideo.id,
           videoTitle: selectedVideo.title,
-          userId: user?.id || 'anonymous',
-          source: 'youtube',
-          status: 'ready'
+          userId: user?.id || 'anonymous'
         });
 
         if (saveResponse?.data?.data?.id) {  // More defensive checking
@@ -1193,7 +1192,7 @@ const RequestCarouselPage: React.FC = () => {
             id: saveResponse.data.data.id,
             title: selectedVideo.title,
             content: generatedContent,
-            type: type as 'text-post' | 'carousel',
+            type: type === 'text-post' ? 'text-post' : 'carousel',
             videoId: selectedVideo.id,
             videoTitle: selectedVideo.title,
             createdAt: new Date().toISOString()
