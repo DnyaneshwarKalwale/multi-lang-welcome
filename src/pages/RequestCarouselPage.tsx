@@ -1217,29 +1217,34 @@ const RequestCarouselPage: React.FC = () => {
         console.error('Error saving content:', saveError);
         // Don't show error to user since the content was generated successfully
       }
-        
-        toast({
-        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
+      
+      // Show generation success toast
+      toast({
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated successfully`,
         duration: 2000
       });
       
       // Increment user count
-      const token = tokenManager.getToken();
-      await axios.post(
-        `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
+      try {
+        const token = tokenManager.getToken();
+        await axios.post(
+          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        }
-      );
-      
-      // Update local state
-      setUserLimit(prev => prev ? {
-        ...prev,
-        count: prev.count + 1
-      } : null);
+        );
+        
+        // Update local state
+        setUserLimit(prev => prev ? {
+          ...prev,
+          count: prev.count + 1
+        } : null);
+      } catch (error) {
+        console.error('Error incrementing user count:', error);
+      }
     } catch (error) {
       console.error("Error generating content:", error);
       toast({
@@ -1926,65 +1931,38 @@ const RequestCarouselPage: React.FC = () => {
   // Add function to load saved contents from both backend and localStorage
   const loadSavedContents = async () => {
     try {
-      // Try to load from backend first
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-        const apiUrl = baseUrl.endsWith('/api')
-          ? `${baseUrl}/carousel-contents`
-          : `${baseUrl}/api/carousel-contents`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api')
+        ? `${baseUrl}/carousel-contents`
+        : `${baseUrl}/api/carousel-contents`;
 
-        const response = await axios.get(apiUrl, {
-          params: { userId: user?.id || 'anonymous' }
-        });
+      const response = await axios.get(apiUrl, {
+        params: { userId: user?.id || 'anonymous' },
+        headers: {
+          Authorization: `Bearer ${tokenManager.getToken()}`
+        }
+      });
 
-        if (response.data.success && Array.isArray(response.data.data)) {
-        // Set the contents from backend
-        setSavedContents(response.data.data);
+      if (response.data.success && Array.isArray(response.data.data)) {
+        const contents = response.data.data.map((content: any) => ({
+          id: content.id,
+          title: content.title,
+          content: content.content,
+          type: content.type,
+          videoId: content.videoId,
+          videoTitle: content.videoTitle,
+          createdAt: new Date(content.createdAt).toISOString()
+        }));
+
+        // Update state with fresh data
+        setSavedContents(contents);
         
-        // Also update localStorage with backend data for offline access
-        localStorage.setItem('savedLinkedInContents', JSON.stringify(response.data.data));
-        
-        // If we have a currently selected video, check for its content
-        if (selectedVideo?.id) {
-          const videoContent = response.data.data.find(
-            content => content.videoId === selectedVideo.id
-          );
-          if (videoContent) {
-            setGeneratedContent(videoContent.content);
-            setPreviewContent(videoContent.content);
-            setPreviewTitle(videoContent.title);
-            setPreviewType(videoContent.type);
-          }
-        }
-        return;
-        }
-      } catch (backendError) {
-        console.error('Error loading content from backend:', backendError);
-      // Fall back to localStorage
-      try {
-      const localContentJSON = localStorage.getItem('savedLinkedInContents');
-      if (localContentJSON) {
-        const localContents = JSON.parse(localContentJSON);
-        setSavedContents(localContents);
-          
-          // If we have a currently selected video, check for its content
-          if (selectedVideo?.id) {
-            const videoContent = localContents.find(
-              content => content.videoId === selectedVideo.id
-            );
-            if (videoContent) {
-              setGeneratedContent(videoContent.content);
-              setPreviewContent(videoContent.content);
-              setPreviewTitle(videoContent.title);
-              setPreviewType(videoContent.type);
-            }
-          }
-      } else {
-        setSavedContents([]);
+        // Update localStorage to stay in sync
+        localStorage.setItem('savedLinkedInContents', JSON.stringify(contents));
       }
-      } catch (localStorageError) {
-        console.error('Error loading from localStorage:', localStorageError);
-      setSavedContents([]);
-      }
+    } catch (error) {
+      console.error('Error loading saved contents:', error);
+      // Don't show error to user as this is a background refresh
     }
   };
 
