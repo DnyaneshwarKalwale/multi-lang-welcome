@@ -1226,22 +1226,22 @@ const RequestCarouselPage: React.FC = () => {
       
       // Increment user count
       try {
-        const token = tokenManager.getToken();
-        await axios.post(
-          `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+      const token = tokenManager.getToken();
+      await axios.post(
+        `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
           }
-        );
-        
-        // Update local state
-        setUserLimit(prev => prev ? {
-          ...prev,
-          count: prev.count + 1
-        } : null);
+        }
+      );
+      
+      // Update local state
+      setUserLimit(prev => prev ? {
+        ...prev,
+        count: prev.count + 1
+      } : null);
       } catch (error) {
         console.error('Error incrementing user count:', error);
       }
@@ -1931,19 +1931,19 @@ const RequestCarouselPage: React.FC = () => {
   // Add function to load saved contents from both backend and localStorage
   const loadSavedContents = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-      const apiUrl = baseUrl.endsWith('/api')
-        ? `${baseUrl}/carousel-contents`
-        : `${baseUrl}/api/carousel-contents`;
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const apiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents`
+          : `${baseUrl}/api/carousel-contents`;
 
-      const response = await axios.get(apiUrl, {
+        const response = await axios.get(apiUrl, {
         params: { userId: user?.id || 'anonymous' },
         headers: {
           Authorization: `Bearer ${tokenManager.getToken()}`
         }
-      });
+        });
 
-      if (response.data.success && Array.isArray(response.data.data)) {
+        if (response.data.success && Array.isArray(response.data.data)) {
         const contents = response.data.data.map((content: any) => ({
           id: content.id,
           title: content.title,

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Folder, ArrowLeft, Twitter, Linkedin, Trash2 } from 'lucide-react';
+import { X, Folder, ArrowLeft, Twitter, Linkedin, Trash2, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
 import TweetCard from '@/components/twitter/TweetCard';
 import TweetThread from '@/components/twitter/TweetThread';
 import { Tweet, Thread } from '@/utils/twitterTypes';
@@ -135,6 +136,13 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     linkedin: new Set()
   });
   const [activeTab, setActiveTab] = useState<'twitter' | 'linkedin'>('twitter');
+  
+  // New state for scraping functionality
+  const [inputUrl, setInputUrl] = useState('');
+  const [isScrapingLinkedIn, setIsScrapingLinkedIn] = useState(false);
+  const [isScrapingTwitter, setIsScrapingTwitter] = useState(false);
+  const [lastSearchedLinkedInProfile, setLastSearchedLinkedInProfile] = useState<string>('');
+  const [lastSearchedTwitterUser, setLastSearchedTwitterUser] = useState<string>('');
   
   // Saved posts data
   const [savedTwitterPosts, setSavedTwitterPosts] = useState<Tweet[]>([]);
@@ -503,6 +511,225 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     });
   };
 
+  // Handle LinkedIn profile scraping
+  const handleLinkedInScrape = async () => {
+    if (!inputUrl) {
+      toast({
+        title: "Error",
+        description: "Please enter a LinkedIn username or profile URL",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Extract username from URL or use as is
+    let username = inputUrl.trim();
+    
+    // Handle different URL formats
+    if (username.includes('linkedin.com/in/')) {
+      const match = username.match(/linkedin\.com\/in\/([^\/\?]+)/);
+      username = match ? match[1] : username;
+    } else if (username.includes('linkedin.com/company/')) {
+      const match = username.match(/linkedin\.com\/company\/([^\/\?]+)/);
+      username = match ? match[1] : username;
+    }
+    
+    // Remove @ if present and any trailing slashes
+    username = username.replace('@', '').replace(/\/+$/, '');
+
+    setIsScrapingLinkedIn(true);
+
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const token = localStorage.getItem('token');
+      
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const apiUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/linkedin/scrape-profile`
+        : `${apiBaseUrl}/api/linkedin/scrape-profile`;
+        
+      const response = await axios.post(apiUrl, {
+        username: username
+      }, { 
+        headers,
+        timeout: 90000
+      });
+
+      if (response.data.success) {
+        // Auto-save all LinkedIn posts immediately after scraping
+        const posts = response.data.posts || [];
+        setSavedLinkedInPosts(prev => [...prev, ...posts]);
+        
+        toast({
+          title: "Success",
+          description: `Successfully scraped ${posts.length} posts from ${username}`,
+        });
+        
+        // Clear input after successful scrape
+        setInputUrl('');
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.message || 'Failed to scrape LinkedIn profile',
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error('LinkedIn scraping error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || 'Failed to scrape LinkedIn profile',
+        variant: "destructive"
+      });
+    } finally {
+      setIsScrapingLinkedIn(false);
+    }
+  };
+
+  // Handle Twitter scraping
+  const handleTwitterScrape = async () => {
+    if (!inputUrl) {
+      toast({
+        title: "Error",
+        description: "Please enter a Twitter username or profile URL",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Extract username from URL or use as is
+    let username = inputUrl.trim();
+    
+    // Handle different URL formats
+    if (username.includes('twitter.com/') || username.includes('x.com/')) {
+      const urlParts = username.split('/');
+      username = urlParts[urlParts.length - 1];
+      username = username.split('?')[0]; // Remove query parameters
+    }
+    
+    // Remove @ if present and any trailing slashes
+    username = username.replace('@', '').replace(/\/+$/, '');
+    
+    if (!username) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid Twitter username",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsScrapingTwitter(true);
+    
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const apiUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/twitter/user/${username}`
+        : `${baseUrl}/api/twitter/user/${username}`;
+      
+      const response = await axios.get(apiUrl, {
+        timeout: 300000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+    
+      if (response.data && response.data.success) {
+        const tweets: Tweet[] = response.data.data;
+        
+        // Group tweets into threads
+        const groupedData = groupThreads(tweets);
+        const threads: Thread[] = [];
+        const standaloneTweets: Tweet[] = [];
+        
+        groupedData.forEach(item => {
+          if ('tweets' in item) {
+            threads.push(item);
+          } else {
+            standaloneTweets.push(item);
+          }
+        });
+        
+        // Update state with new tweets
+        setSavedTwitterPosts(prev => [...prev, ...standaloneTweets]);
+        setSavedTwitterThreads(prev => [...prev, ...threads]);
+        
+        toast({
+          title: "Success",
+          description: `Successfully retrieved ${tweets.length} tweets from @${username}`,
+        });
+        
+        // Clear input after successful scrape
+        setInputUrl('');
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to retrieve tweets",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error('Twitter scraping error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || 'Failed to retrieve tweets',
+        variant: "destructive"
+      });
+    } finally {
+      setIsScrapingTwitter(false);
+    }
+  };
+
+  // Add scraping UI to the header section
+  const renderScrapingUI = () => (
+    <div className="mb-6 border-b pb-6">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Input
+          type="text"
+          placeholder={
+            activeTab === 'linkedin'
+              ? "Enter LinkedIn username (e.g., johndoe or linkedin.com/in/johndoe)"
+              : "Enter Twitter username (e.g., @username or twitter.com/username)"
+          }
+          value={inputUrl}
+          onChange={(e) => setInputUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !isScrapingLinkedIn && !isScrapingTwitter) {
+              e.preventDefault();
+              activeTab === 'linkedin' ? handleLinkedInScrape() : handleTwitterScrape();
+            }
+          }}
+          className="flex-1"
+        />
+        <Button
+          onClick={() => activeTab === 'linkedin' ? handleLinkedInScrape() : handleTwitterScrape()}
+          disabled={isScrapingLinkedIn || isScrapingTwitter || !inputUrl}
+          className="min-w-[120px]"
+        >
+          {(isScrapingLinkedIn || isScrapingTwitter) ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Scraping...
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              {activeTab === 'linkedin' ? 'Scrape Profile' : 'Get Tweets'}
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
@@ -559,11 +786,15 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
             <div className="text-center py-16 text-gray-500">
               <Folder className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
-              <p>Start by scraping and saving some content!</p>
+              <p className="mb-6">Start by scraping some content below!</p>
+              {renderScrapingUI()}
             </div>
           ) : viewMode === 'folders' ? (
             // User Folder View
             <div className="space-y-6">
+              {/* Add scraping UI at the top */}
+              {renderScrapingUI()}
+
               <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
                 <h4 className="font-medium mb-2">How to Select Posts:</h4>
                 <div className="space-y-2">
