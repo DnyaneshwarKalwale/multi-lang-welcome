@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
@@ -48,7 +48,7 @@ import TweetCard from "@/components/twitter/TweetCard";
 import TweetThread from "@/components/twitter/TweetThread";
 import { Tweet as TwitterTweet, Thread as TwitterThread } from '@/utils/twitterTypes';
 import PostSelectionModal from "@/components/PostSelectionModal";
-// import { tokenManager as tokenManagerUtils } from '../utils/tokenManager';
+import { linkedInApi } from '@/utils/linkedinApi';
 
 // Model options with fallbacks
 const AI_MODELS = {
@@ -129,7 +129,13 @@ interface SavedContent {
   createdAt: string;
 }
 
-
+// LinkedIn post response interface
+interface LinkedInPostResponse {
+  id: string;
+  data?: {
+    id: string;
+  };
+}
 
 // Function to generate placeholder transcript
 const generateDummyTranscript = (videoId: string): string[] => {
@@ -229,6 +235,7 @@ const RequestCarouselPage: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPublishing, setIsPublishing] = useState(false);
   const videosPerPage = 4;
   
   // Saved videos state
@@ -1162,13 +1169,69 @@ const RequestCarouselPage: React.FC = () => {
       const generatedContent = response.data.content;
       
       // Update UI state
-        setGeneratedContent(generatedContent);
+      setGeneratedContent(generatedContent);
       setShowContentGenerator(true);
       setSelectedContentType(type);
-        setPreviewContent(generatedContent);
+      setPreviewContent(generatedContent);
       setPreviewType(type); // Set the correct preview type based on selection
+      
+      // Auto-save the generated content
+      try {
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const saveApiUrl = baseUrl.endsWith('/api')
+          ? `${baseUrl}/carousel-contents`
+          : `${baseUrl}/api/carousel-contents`;
+
+        const saveResponse = await axios.post(saveApiUrl, {
+          title: selectedVideo.title,
+          content: generatedContent,
+          type: type,
+          videoId: selectedVideo.id,
+          videoTitle: selectedVideo.title,
+          userId: user?.id || 'anonymous',
+          createdAt: new Date().toISOString()
+        });
+
+        if (saveResponse.data.success) {
+          // Update local state with the new content
+          setSavedContents(prev => {
+            const newContent = {
+              id: saveResponse.data.data.id,
+              title: selectedVideo.title,
+              content: generatedContent,
+              type: type,
+              videoId: selectedVideo.id,
+              videoTitle: selectedVideo.title,
+              createdAt: new Date().toISOString()
+            };
+            return [...prev, newContent];
+          });
+
+          // Update localStorage
+          localStorage.setItem('ai_generated_content', generatedContent);
+          localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
+          localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
+
+          // Update saved contents in localStorage
+          const savedContentsStr = localStorage.getItem('savedLinkedInContents');
+          const savedContents = savedContentsStr ? JSON.parse(savedContentsStr) : [];
+          savedContents.push({
+            id: saveResponse.data.data.id,
+            title: selectedVideo.title,
+            content: generatedContent,
+            type: type,
+            videoId: selectedVideo.id,
+            videoTitle: selectedVideo.title,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem('savedLinkedInContents', JSON.stringify(savedContents));
+        }
+      } catch (saveError) {
+        console.error('Error saving content:', saveError);
+        // Don't show error toast here since content was generated successfully
+      }
         
-        toast({
+      toast({
         description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
         duration: 2000
       });
@@ -2040,6 +2103,85 @@ const RequestCarouselPage: React.FC = () => {
     navigate("/settings/billing");
   };
 
+  // Function to handle LinkedIn reconnection
+  const handleReconnectLinkedIn = () => {
+    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
+    const baseUrl = baseApiUrl.replace('/api', '');
+    localStorage.setItem('redirectAfterAuth', '/dashboard/request-carousel');
+    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
+  };
+
+  // Function to publish post directly to LinkedIn
+  const publishToLinkedIn = async () => {
+    try {
+      setIsPublishing(true);
+      
+      // Validate content
+      if (!previewContent?.trim()) {
+        toast({
+          title: "Error",
+          description: "Please add some content",
+          variant: "destructive"
+        });
+        setIsPublishing(false);
+        return;
+      }
+      
+      // Check for LinkedIn authentication
+      const token = localStorage.getItem('linkedin-login-token');
+      
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "Please connect your LinkedIn account",
+          variant: "destructive"
+        });
+        setIsPublishing(false);
+        
+        // Show a reconnect option
+        if (window.confirm('Would you like to connect your LinkedIn account now?')) {
+          handleReconnectLinkedIn();
+        }
+        return;
+      }
+      
+      // Publish as text post
+      const response = await linkedInApi.createTextPost(previewContent);
+      
+      if (response?.data?.id) {
+        toast({
+          title: "Success",
+          description: "Post published to LinkedIn successfully!",
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('Error publishing to LinkedIn:', error);
+      
+      // Check for token expiration
+      if (error.message?.includes('authentication expired')) {
+        toast({
+          title: "Error",
+          description: "Your LinkedIn authentication has expired. Please reconnect your account.",
+          variant: "destructive"
+        });
+        
+        if (window.confirm('Would you like to reconnect your LinkedIn account now?')) {
+          handleReconnectLinkedIn();
+        }
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: error.message || "Failed to publish post",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
     return (
     <div className="container max-w-6xl py-4 sm:py-8 px-1 sm:px-2 md:px-4 w-full overflow-hidden">
       {userLimit && (
@@ -2591,7 +2733,29 @@ const RequestCarouselPage: React.FC = () => {
                   {previewContent ? (
                     <div>
                       {previewType?.includes('post') ? (
-                        <p className="text-sm whitespace-pre-line">{previewContent}</p>
+                        <>
+                          <p className="text-sm whitespace-pre-line">{previewContent}</p>
+                          {/* Add LinkedIn Post Button */}
+                          <div className="mt-4">
+                            <Button 
+                              className="w-full bg-primary text-white gap-2 text-xs sm:text-sm"
+                              onClick={publishToLinkedIn}
+                              disabled={isPublishing}
+                            >
+                              {isPublishing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Publishing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Linkedin size={16} />
+                                  <span>Publish to LinkedIn</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </>
                       ) : previewType === 'carousel' && (
                         <div className="aspect-square w-full relative overflow-hidden">
                           <div className="absolute inset-0 flex flex-col">
