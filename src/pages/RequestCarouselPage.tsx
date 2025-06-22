@@ -1177,25 +1177,28 @@ const RequestCarouselPage: React.FC = () => {
           : `${baseUrl}/api/carousel-contents`;
 
         const saveResponse = await axios.post(saveUrl, {
-          title: selectedVideo.title,
-          content: generatedContent,
+          id: uuidv4(), // Generate a unique ID
+          title: selectedVideo.title || 'Untitled',
+          content: generatedContent || '',
           type: type === 'text-post' ? 'post-short' : 'carousel',
-          videoId: selectedVideo.id,
-          videoTitle: selectedVideo.title,
+          videoId: selectedVideo.id || null,
+          videoTitle: selectedVideo.title || null,
           userId: user?.id || 'anonymous',
           source: 'youtube',
-          status: 'ready'
+          status: 'ready',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         });
 
         if (saveResponse?.data?.data?.id) {  // More defensive checking
           // Update local state with the new content
           const newContent: SavedContent = {
             id: saveResponse.data.data.id,
-            title: selectedVideo.title,
-            content: generatedContent,
-            type: type === 'text-post' ? 'text-post' : 'carousel', // Keep frontend type consistent
-            videoId: selectedVideo.id,
-            videoTitle: selectedVideo.title,
+            title: selectedVideo.title || 'Untitled',
+            content: generatedContent || '',
+            type: type === 'text-post' ? 'text-post' : 'carousel',
+            videoId: selectedVideo.id || null,
+            videoTitle: selectedVideo.title || null,
             createdAt: new Date().toISOString()
           };
           
