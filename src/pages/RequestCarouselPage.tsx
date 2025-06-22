@@ -1176,11 +1176,15 @@ const RequestCarouselPage: React.FC = () => {
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
 
+        // Ensure type is properly set for backend
+        const backendType = type === 'text-post' ? 'post-short' : 'carousel';
+        console.log('Saving content with type:', backendType);  // Debug log
+        
         const saveResponse = await axios.post(saveUrl, {
-          id: uuidv4(), // Generate a unique ID
+          id: uuidv4(),
           title: selectedVideo.title || 'Untitled',
           content: generatedContent || '',
-          type: type === 'text-post' ? 'post-short' : 'carousel',
+          type: backendType,  // Use the validated type
           videoId: selectedVideo.id || null,
           videoTitle: selectedVideo.title || null,
           userId: user?.id || 'anonymous',
@@ -1219,7 +1223,21 @@ const RequestCarouselPage: React.FC = () => {
         }
       } catch (saveError) {
         console.error('Error saving content:', saveError);
-        // Don't show error to user since the content was generated successfully
+        console.error('Save request data:', {
+          id: uuidv4(),
+          title: selectedVideo.title || 'Untitled',
+          content: generatedContent || '',
+          type: backendType,
+          videoId: selectedVideo.id || null,
+          videoTitle: selectedVideo.title || null,
+          userId: user?.id || 'anonymous'
+        });
+        // Show error to help debug
+        toast({
+          title: "Warning",
+          description: "Content was generated but failed to save. Please try again.",
+          variant: "destructive"
+        });
       }
         
         toast({
