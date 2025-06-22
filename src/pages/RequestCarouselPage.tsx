@@ -1731,7 +1731,7 @@ const RequestCarouselPage: React.FC = () => {
     toast({
       description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`,
       duration: 2000
-      });
+    });
     } catch (error) {
       console.error("Error preparing slides for editor:", error);
       toast({
@@ -2531,7 +2531,7 @@ const RequestCarouselPage: React.FC = () => {
                           )}
                         </div>
                       )}
-                          </div>
+                    </div>
                 </div>
               </CardContent>
             </Card>
