@@ -1342,5 +1342,5 @@ class LinkedInApi {
   }
 }
 
-export const linkedInApi = new LinkedInApi();
+export const linkedInApi = new LinkedInApi(); 
 export default LinkedInApi; 

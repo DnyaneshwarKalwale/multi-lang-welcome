@@ -264,7 +264,7 @@ const SettingsPage = () => {
       console.error('Error fetching payment methods:', error);
       // Don't show error toast for empty payment methods
       if (error.response?.status !== 404) {
-        toast.error('Failed to load payment methods');
+      toast.error('Failed to load payment methods');
       }
     }
   };
@@ -294,7 +294,7 @@ const SettingsPage = () => {
       console.error('Error fetching invoices:', error);
       // Don't show error toast for empty invoices
       if (error.response?.status !== 404) {
-        toast.error('Failed to load billing history');
+      toast.error('Failed to load billing history');
       }
     }
   };
@@ -936,12 +936,12 @@ const SettingsPage = () => {
                         )}
                       </div>
                       
-                                          <Button 
-                      className="w-full" 
-                      onClick={() => navigate('/dashboard/billing')}
-                    >
-                      Manage Subscription
-                    </Button>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => navigate('/dashboard/billing')}
+                      >
+                        Manage Subscription
+                      </Button>
                     
                     {/* Auto-billing toggle */}
                     {subscriptionInfo.planId !== 'expired' && subscriptionInfo.planId !== 'trial' && (

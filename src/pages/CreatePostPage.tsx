@@ -1570,6 +1570,25 @@ const CreatePostPage: React.FC = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          
+          <Button 
+            size="sm" 
+            className="bg-primary text-white gap-2 text-xs sm:text-sm"
+            onClick={publishToLinkedIn}
+            disabled={isPublishing}
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="hidden xs:inline">Publishing...</span>
+              </>
+            ) : (
+              <>
+                <Linkedin size={16} />
+                <span className="hidden xs:inline">Publish to LinkedIn</span>
+              </>
+            )}
+          </Button>
         </div>
       </div>
       

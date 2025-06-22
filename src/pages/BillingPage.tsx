@@ -903,171 +903,360 @@ const BillingPage: React.FC = () => {
       
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="space-y-6">
-          {/* Plans Section */}
-          <div id="plans" className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
-            <div className="border-b border-primary/10 px-5 py-4 flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h2 className="text-xl font-semibold text-black">Choose Your Plan</h2>
-                <p className="text-black/70 text-sm mt-1">Select the perfect plan for your content creation needs</p>
-              </div>
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsExpandedView(!isExpandedView)}
-                className="text-primary hover:text-primary/70 hover:bg-primary/5"
-              >
-                {isExpandedView ? 'Simple View' : 'Detailed View'}
-              </Button>
-            </div>
-            
-            <div className="p-5">
-              {/* Plan upgrade/downgrade policy information */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800 mb-6">
-                <div className="flex">
-                  <svg className="h-5 w-5 text-blue-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <div>
-                    <p className="font-medium mb-1">Plan Information:</p>
-                    <p>• New users automatically get a 7-day free trial with 3 credits</p>
-                    <p>• Upgrade anytime to get immediate access to additional features and credits</p>
-                    <p>• Downgrades take effect at the end of your current billing period</p>
+        <Tabs defaultValue="plans" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="plans">Plans</TabsTrigger>
+            <TabsTrigger value="usage">Usage</TabsTrigger>
+            <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
+            <TabsTrigger value="billing-history">Billing History</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="plans" className="space-y-6">
+            {/* Plans Section */}
+            <div id="plans" className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4 flex justify-between items-center flex-wrap gap-2">
+          <div>
+                  <h2 className="text-xl font-semibold text-black">Choose Your Plan</h2>
+                  <p className="text-black/70 text-sm mt-1">Select the perfect plan for your content creation needs</p>
+          </div>
+          
+            <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsExpandedView(!isExpandedView)}
+                  className="text-primary hover:text-primary/70 hover:bg-primary/5"
+                >
+                  {isExpandedView ? 'Simple View' : 'Detailed View'}
+            </Button>
+        </div>
+
+              <div className="p-5">
+                {/* Plan upgrade/downgrade policy information */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800 mb-6">
+                  <div className="flex">
+                    <svg className="h-5 w-5 text-blue-500 mr-2 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="font-medium mb-1">Plan Information:</p>
+                      <p>• New users automatically get a 7-day free trial with 3 credits</p>
+                      <p>• Upgrade anytime to get immediate access to additional features and credits</p>
+                      <p>• Downgrades take effect at the end of your current billing period</p>
+                    </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {plans.map(plan => (
-                  <div
-                    key={plan.id}
-                    className={`
-                      relative border rounded-xl transition-all overflow-hidden h-full
-                      ${plan.id === currentSubscription.planId 
-                        ? 'border-primary ring-2 ring-primary/20' 
-                        : plan.isPopular 
-                          ? 'border-primary shadow-lg' 
-                          : 'border-primary/10 hover:border-primary/30 hover:shadow-md'
-                      }
-                    `}
-                  >
-                    {plan.isPopular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-primary text-white shadow-sm">Most Popular</Badge>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {plans.map(plan => (
+                <div
+                  key={plan.id}
+                  className={`
+                        relative border rounded-xl transition-all overflow-hidden h-full
+                    ${plan.id === currentSubscription.planId 
+                          ? 'border-primary ring-2 ring-primary/20' 
+                      : plan.isPopular 
+                            ? 'border-primary shadow-lg' 
+                            : 'border-primary/10 hover:border-primary/30 hover:shadow-md'
+                    }
+                  `}
+                >
+                  {plan.isPopular && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <Badge className="bg-primary text-white shadow-sm">Most Popular</Badge>
+                        </div>
+                      )}
+                      
+                      {plan.id === currentSubscription.planId && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <Badge className="bg-green-500 text-white shadow-sm">Current Plan</Badge>
+                        </div>
+                      )}
+                      
+                      <div className="p-5 h-full flex flex-col">
+                        {/* Plan Header */}
+                        <div className="text-center mb-4">
+                          <h3 className="text-lg font-bold text-black">{plan.name}</h3>
+                                                     <div className="mt-2">
+                      {plan.id === 'custom' ? (
+                               <span className="text-2xl font-bold text-black">Custom</span>
+                             ) : plan.id === 'trial' ? (
+                               <span className="text-3xl font-bold text-green-600">FREE</span>
+                      ) : (
+                        <>
+                                 <span className="text-3xl font-bold text-black">${plan.price}</span>
+                                 <span className="text-black/70">
+                            /{plan.billingPeriod === 'annual' ? 'year' : 'month'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                        {/* Credits Badge */}
+                        <div className="text-center mb-4">
+                          <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full">
+                            <Sparkles className="h-4 w-4" />
+                            <span className="font-medium">
+                              {plan.limitations.carousels === Infinity 
+                                ? 'Unlimited Credits' 
+                                : `${plan.limitations.carousels} Credits`}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Features */}
+                        <div className="flex-1 space-y-2 mb-6">
+                          {(isExpandedView ? plan.features : plan.features.slice(0, 3)).map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                              <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-black">{feature}</span>
                       </div>
-                    )}
-                    
-                    {plan.id === currentSubscription.planId && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-green-500 text-white shadow-sm">Current Plan</Badge>
-                      </div>
-                    )}
-                    
-                    <div className="p-5 h-full flex flex-col">
-                      {/* Plan Header */}
-                      <div className="text-center mb-4">
-                        <h3 className="text-lg font-bold text-black">{plan.name}</h3>
-                        <div className="mt-2">
-                          {plan.id === 'custom' ? (
-                            <span className="text-2xl font-bold text-black">Custom</span>
-                          ) : plan.id === 'trial' ? (
-                            <span className="text-3xl font-bold text-green-600">FREE</span>
+                    ))}
+                          {!isExpandedView && plan.features.length > 3 && (
+                            <div className="text-xs text-black/70 text-center">
+                              +{plan.features.length - 3} more features
+                            </div>
+                          )}
+                  </div>
+
+                        {/* Action Button */}
+                        <div className="mt-auto">
+                          {plan.id === currentSubscription.planId ? (
+                  <Button
+                              variant="outline" 
+                              className="w-full bg-primary/5 border-primary/20 text-primary"
+                              disabled
+                            >
+                              <BadgeCheck className="h-4 w-4 mr-2" />
+                              Current Plan
+                            </Button>
                           ) : (
-                            <>
-                              <span className="text-3xl font-bold text-black">${plan.price}</span>
-                              <span className="text-black/70">
-                                /{plan.billingPeriod === 'annual' ? 'year' : 'month'}
-                              </span>
-                            </>
+                            <Button 
+                              variant={plan.id === 'custom' ? 'outline' : 'default'}
+                              className={`w-full ${plan.id === 'custom' 
+                                ? 'border-primary/20 text-primary hover:bg-primary/5' 
+                                : plan.isPopular 
+                                  ? 'bg-primary hover:bg-primary/90' 
+                                  : ''
+                              }`}
+                              disabled={isChangingPlan !== null}
+                    onClick={() => plan.id === 'custom' 
+                      ? window.open('mailto:sales@yourcompany.com', '_blank')
+                      : handleChangePlan(plan.id)
+                    }
+                  >
+                    {isChangingPlan === plan.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : plan.id === 'custom' ? (
+                      <>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contact Sales
+                      </>
+                              ) : plan.id === 'trial' ? (
+                                <>
+                                  <Sparkles className="h-4 w-4 mr-2" />
+                                  Start Free Trial
+                                </>
+                    ) : (
+                      <>
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                                  Upgrade Now
+                      </>
+                    )}
+                  </Button>
                           )}
                         </div>
                       </div>
-                      
-                      {/* Credits Badge */}
-                      <div className="text-center mb-4">
-                        <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full">
-                          <Sparkles className="h-4 w-4" />
-                          <span className="font-medium">
-                            {plan.limitations.carousels === Infinity 
-                              ? 'Unlimited Credits' 
-                              : `${plan.limitations.carousels} Credits`}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Features */}
-                      <div className="flex-1 space-y-2 mb-6">
-                        {(isExpandedView ? plan.features : plan.features.slice(0, 3)).map((feature, idx) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-black">{feature}</span>
-                          </div>
-                        ))}
-                        {!isExpandedView && plan.features.length > 3 && (
-                          <div className="text-xs text-black/70 text-center">
-                            +{plan.features.length - 3} more features
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Action Button */}
-                      <div className="mt-auto">
-                        {plan.id === currentSubscription.planId ? (
-                          <Button 
-                            variant="outline" 
-                            className="w-full bg-primary/5 border-primary/20 text-primary"
-                            disabled
-                          >
-                            <BadgeCheck className="h-4 w-4 mr-2" />
-                            Current Plan
-                          </Button>
+                </div>
+              ))}
+            </div>
+              </div>
+            </div>
+            
+                      </TabsContent>
+          
+          <TabsContent value="usage" className="space-y-6">
+            {/* Current Plan Overview */}
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Current Plan & Usage</h2>
+                    </div>
+
+              <div className="p-5 space-y-4">
+                {currentPlan ? (
+                  <>
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold text-black">{currentPlan.name}</h3>
+                      <div className="mt-1 text-2xl font-bold text-primary">
+                        {currentPlan.id === 'trial' ? (
+                          <span className="text-green-600">FREE</span>
                         ) : (
-                          <Button 
-                            variant={plan.id === 'custom' ? 'outline' : 'default'}
-                            className={`w-full ${plan.id === 'custom' 
-                              ? 'border-primary/20 text-primary hover:bg-primary/5' 
-                              : plan.isPopular 
-                                ? 'bg-primary hover:bg-primary/90' 
-                                : ''
-                            }`}
-                            disabled={isChangingPlan !== null}
-                            onClick={() => plan.id === 'custom' 
-                              ? window.open('mailto:sales@yourcompany.com', '_blank') 
-                              : handleChangePlan(plan.id)
-                            }
-                          >
-                            {isChangingPlan === plan.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : plan.id === 'custom' ? (
-                              <>
-                                <MessageSquare className="h-4 w-4 mr-2" />
-                                Contact Sales
-                              </>
-                            ) : plan.id === 'trial' ? (
-                              <>
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                Start Free Trial
-                              </>
-                            ) : (
-                              <>
-                                <ArrowRight className="h-4 w-4 mr-2" />
-                                Upgrade Now
-                              </>
-                            )}
-                          </Button>
+                          <>
+                            ${currentPlan.price}
+                            <span className="text-sm font-normal text-black/70">
+                              /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
+                            </span>
+                          </>
                         )}
                       </div>
+                    </div>
+
+                    <div className="bg-primary/5 rounded-lg p-3 text-center">
+                      <div className="text-sm text-black/70">Credits</div>
+                      <div className="text-xl font-semibold text-black">
+                        {currentSubscription.usedCredits} / {currentSubscription.totalCredits}
+                      </div>
+                      <div className="w-full bg-primary/20 rounded-full h-2 mt-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${usagePercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center text-sm text-black/70">
+                      {currentSubscription.status === 'cancelled' ? (
+                        <div className="flex items-center justify-center text-black/70">
+                          <Clock className="h-4 w-4 mr-1.5" />
+                          Access until {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center text-black/70">
+                          <RefreshCw className="h-4 w-4 mr-1.5" />
+                          Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
+                        </div>
+                      )}
+                    </div>
+                        </>
+                      ) : (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CreditCard className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-black mb-2">No Active Plan</h3>
+                    <p className="text-black/70 text-sm mb-4">Choose a plan to get started</p>
+                    <Button size="sm" onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}>
+                      View Plans
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="payment-methods" className="space-y-6">
+        {/* Payment Methods */}
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Payment Methods</h2>
+              </div>
+              
+              <div className="p-5">
+            {paymentMethods.length > 0 ? (
+                  <div className="space-y-3 mb-4">
+                    {paymentMethods.map((method) => (
+                      <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                      {method.type === 'card' ? (
+                            <div className="h-10 w-14 bg-gray-100 rounded flex items-center justify-center">
+                              <CreditCard className="h-5 w-5" />
+                        </div>
+                      ) : (
+                            <div className="h-10 w-14 bg-blue-100 rounded flex items-center justify-center">
+                              <svg className="h-5 w-5 text-blue-700" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.076 21.337H2.47a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008A1.044 1.044 0 0 1 2.47 2.663h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036zm7.949 0h-4.606a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008a1.044 1.044 0 0 1 1.057-.766h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036zm7.948 0h-4.606a1.006 1.006 0 0 1-1.065-.977V3.668c0-.075 0-.154.008-.231v-.008a1.044 1.044 0 0 1 1.057-.766h4.606a1.006 1.006 0 0 1 1.065.977v16.684a1.006 1.006 0 0 1-1.065.977v.036z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div>
+                            <p className="font-medium">
+                          {method.type === 'card'
+                            ? `${method.brand} ****${method.lastFour}`
+                                : `PayPal (${method.email})`}
+                            </p>
+                        {method.type === 'card' && method.expiryDate && (
+                              <p className="text-xs text-gray-500">Expires {method.expiryDate}</p>
+                        )}
+                      </div>
+                    </div>
+                    {method.isDefault ? (
+                          <Badge variant="outline" className="bg-primary/5 text-primary">Default</Badge>
+                        ) : (
+                          <Button variant="ghost" size="sm" onClick={() => handleSetDefaultPayment(method.id)}>
+                        Set Default
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+                  <div className="text-center p-6 border rounded-lg mb-4">
+                    <CreditCard className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                    <p className="mb-4">No payment methods found</p>
+              </div>
+            )}
+                
+              <Button
+                variant="outline"
+                  onClick={() => setShowAddCardModal(true)}
+                className="w-full"
+              >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                Add Payment Method
+              </Button>
+            </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="billing-history" className="space-y-6">
+        {/* Billing History */}
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+              <div className="border-b border-primary/10 px-5 py-4">
+                <h2 className="text-lg font-semibold text-black">Billing History</h2>
+              </div>
+              
+              <div className="p-5">
+            {invoices.length > 0 ? (
+                  <div className="space-y-3">
+                    {invoices.map((invoice) => (
+                      <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                          <p className="font-medium">${invoice.amount.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500">
+                        {format(invoice.date, 'MMM d, yyyy')}
+                          </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={invoice.status === 'paid' ? 'default' : 'destructive'}
+                            className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
+                          >
+                        {invoice.status}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                            size="sm"
+                        onClick={() => handleDownloadInvoice(invoice)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
+            ) : (
+                  <div className="text-center p-6 border rounded-lg">
+                    <FileText className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                    <p>No invoices available</p>
+              </div>
+            )}
+              </div>
             </div>
-          </div>
-
-          {/* Credit Packs Section */}
+          </TabsContent>
+          
+          {/* Credit Packs Section - Moved Down */}
           {currentPlan && (
-            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden mt-6">
               <div className="border-b border-primary/10 px-5 py-4">
                 <h2 className="text-lg font-semibold text-black">Need More Credits?</h2>
                 <p className="text-black/70 text-sm mt-1">Purchase additional credits for your current plan</p>
@@ -1111,9 +1300,9 @@ const BillingPage: React.FC = () => {
                         )}
                         Buy Now
                       </Button>
-                    </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+              </div>
                 
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
                   <div className="flex">
@@ -1131,192 +1320,78 @@ const BillingPage: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* Current Plan & Usage Overview */}
-          {currentPlan && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Current Plan Card */}
-              <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
-                <div className="border-b border-primary/10 px-5 py-4">
-                  <h2 className="text-lg font-semibold text-black">Current Plan</h2>
-                </div>
-                
-                <div className="p-5 space-y-4">
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-black">{currentPlan.name}</h3>
-                    <div className="mt-1 text-2xl font-bold text-primary">
-                      {currentPlan.id === 'trial' ? (
-                        <span className="text-green-600">FREE</span>
-                      ) : (
-                        <>
-                          ${currentPlan.price}
-                          <span className="text-sm font-normal text-black/70">
-                            /{currentPlan.billingPeriod === 'annual' ? 'year' : 'month'}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="bg-primary/5 rounded-lg p-3 text-center">
-                    <div className="text-sm text-black/70">Credits</div>
-                    <div className="text-xl font-semibold text-black">
-                      {currentSubscription.usedCredits} / {currentSubscription.totalCredits}
-                    </div>
-                    <div className="w-full bg-primary/20 rounded-full h-2 mt-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${usagePercentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center text-sm text-black/70">
-                    {currentSubscription.status === 'cancelled' ? (
-                      <div className="flex items-center justify-center text-black/70">
-                        <Clock className="h-4 w-4 mr-1.5" />
-                        Access until {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center text-black/70">
-                        <RefreshCw className="h-4 w-4 mr-1.5" />
-                        Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Methods Card */}
-              <div className="bg-white rounded-2xl border border-primary/10 shadow-sm overflow-hidden">
-                <div className="border-b border-primary/10 px-5 py-4">
-                  <h2 className="text-lg font-semibold text-black">Payment Methods</h2>
-                </div>
-                
-                <div className="p-5">
-                  {paymentMethods.length > 0 ? (
-                    <div className="space-y-3 mb-4">
-                      {paymentMethods.slice(0, 2).map((method) => (
-                        <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-3">
-                            {method.type === 'card' ? (
-                              <div className="h-8 w-12 bg-gray-100 rounded flex items-center justify-center">
-                                <CreditCard className="h-4 w-4" />
-                              </div>
-                            ) : (
-                              <div className="h-8 w-12 bg-blue-100 rounded flex items-center justify-center">
-                                <span className="text-xs font-bold text-blue-700">PP</span>
-                              </div>
-                            )}
-                            <div>
-                              <p className="text-sm font-medium">
-                                {method.type === 'card'
-                                  ? `****${method.lastFour}`
-                                  : `PayPal`}
-                              </p>
-                              {method.type === 'card' && method.expiryDate && (
-                                <p className="text-xs text-gray-500">Expires {method.expiryDate}</p>
-                              )}
-                            </div>
-                          </div>
-                          {method.isDefault && (
-                            <Badge variant="outline" className="bg-primary/5 text-primary text-xs">Default</Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <CreditCard className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">No payment methods</p>
-                    </div>
-                  )}
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAddCardModal(true)}
-                    className="w-full"
-                    size="sm"
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Add Payment Method
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        </Tabs>
       </div>
-      
-      {/* Add Card Modal */}
-      <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}>
-        <DialogContent>
-          <DialogHeader>
+
+        {/* Add Card Modal */}
+        <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}>
+          <DialogContent>
+            <DialogHeader>
             <DialogTitle>Add Payment Card</DialogTitle>
-            <DialogDescription>
+              <DialogDescription>
               Add a new payment method to your account
-            </DialogDescription>
-          </DialogHeader>
-          
+              </DialogDescription>
+            </DialogHeader>
+            
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="cardholderName">Cardholder Name</Label>
-              <Input
-                id="cardholderName"
-                value={cardInfo.cardholderName}
-                onChange={(e) => handleCardInfoChange('cardholderName', e.target.value)}
-                placeholder="John Doe"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <Input
-                id="cardNumber"
-                value={cardInfo.cardNumber}
-                onChange={(e) => handleCardInfoChange('cardNumber', e.target.value.replace(/\D/g, ''))}
-                placeholder="1234 5678 9012 3456"
-                maxLength={16}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Label htmlFor="cardholderName">Cardholder Name</Label>
                 <Input
-                  id="expiryDate"
-                  value={cardInfo.expiryDate}
-                  onChange={(e) => handleCardInfoChange('expiryDate', e.target.value)}
-                  placeholder="MM/YY"
-                  maxLength={5}
+                  id="cardholderName"
+                  value={cardInfo.cardholderName}
+                  onChange={(e) => handleCardInfoChange('cardholderName', e.target.value)}
+                  placeholder="John Doe"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="cvc">CVC</Label>
+                <Label htmlFor="cardNumber">Card Number</Label>
                 <Input
-                  id="cvc"
-                  value={cardInfo.cvc}
-                  onChange={(e) => handleCardInfoChange('cvc', e.target.value.replace(/\D/g, ''))}
-                  placeholder="123"
-                  maxLength={3}
+                  id="cardNumber"
+                  value={cardInfo.cardNumber}
+                  onChange={(e) => handleCardInfoChange('cardNumber', e.target.value.replace(/\D/g, ''))}
+                  placeholder="1234 5678 9012 3456"
+                  maxLength={16}
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="expiryDate">Expiry Date</Label>
+                  <Input
+                    id="expiryDate"
+                    value={cardInfo.expiryDate}
+                    onChange={(e) => handleCardInfoChange('expiryDate', e.target.value)}
+                    placeholder="MM/YY"
+                    maxLength={5}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cvc">CVC</Label>
+                  <Input
+                    id="cvc"
+                    value={cardInfo.cvc}
+                    onChange={(e) => handleCardInfoChange('cvc', e.target.value.replace(/\D/g, ''))}
+                    placeholder="123"
+                    maxLength={3}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="defaultCard"
+                  checked={cardInfo.isDefault}
+                  onCheckedChange={(checked) => handleCardInfoChange('isDefault', Boolean(checked))}
+                />
+                <Label htmlFor="defaultCard">Set as default payment method</Label>
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="defaultCard"
-                checked={cardInfo.isDefault}
-                onCheckedChange={(checked) => handleCardInfoChange('isDefault', Boolean(checked))}
-              />
-              <Label htmlFor="defaultCard">Set as default payment method</Label>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddCardModal(false)}>
-              Cancel
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddCardModal(false)}>
+                Cancel
             </Button>
             <Button onClick={saveCardInformation}>
               Add Card

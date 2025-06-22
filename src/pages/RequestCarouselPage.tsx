@@ -48,7 +48,7 @@ import TweetCard from "@/components/twitter/TweetCard";
 import TweetThread from "@/components/twitter/TweetThread";
 import { Tweet as TwitterTweet, Thread as TwitterThread } from '@/utils/twitterTypes';
 import PostSelectionModal from "@/components/PostSelectionModal";
-import { linkedInApi } from '@/utils/linkedinApi';
+// import { tokenManager as tokenManagerUtils } from '../utils/tokenManager';
 
 // Model options with fallbacks
 const AI_MODELS = {
@@ -1116,6 +1116,9 @@ const RequestCarouselPage: React.FC = () => {
       return;
     }
     
+    // Remove the carousel-only restriction to allow all content types
+    // The old code had a check here that only allowed 'carousel' type
+
     if (!selectedVideo) {
       toast({
         title: "Video required",
@@ -1126,7 +1129,7 @@ const RequestCarouselPage: React.FC = () => {
     }
 
     if (!selectedVideo.transcript) {
-      toast({
+        toast({
         title: "Transcript required",
         description: "Please ensure the video has a transcript before generating content",
         variant: "destructive"
@@ -1144,7 +1147,7 @@ const RequestCarouselPage: React.FC = () => {
         : `${baseUrl}/api/generate-content`;
 
       const response = await axios.post(apiUrl, {
-        type: type,
+        type: type, // Use the type directly since backend now supports 'text-post'
         transcript: selectedVideo.transcript,
         videoId: selectedVideo.id,
         videoTitle: selectedVideo.title,
@@ -1159,44 +1162,16 @@ const RequestCarouselPage: React.FC = () => {
       const generatedContent = response.data.content;
       
       // Update UI state
-      setGeneratedContent(generatedContent);
+        setGeneratedContent(generatedContent);
       setShowContentGenerator(true);
       setSelectedContentType(type);
-      setPreviewContent(generatedContent);
-      setPreviewType(type);
-
-      // Auto-save the content
-      const savedContent: SavedContent = {
-        id: uuidv4(),
-        title: selectedVideo.title || 'AI Generated Content',
-        content: generatedContent,
-        type: type as 'text-post' | 'carousel',
-        videoId: selectedVideo.id,
-        videoTitle: selectedVideo.title,
-        createdAt: new Date().toISOString()
-      };
-
-      try {
-        // Save to backend
-        await api.post('/saved-contents', savedContent, {
-          headers: { Authorization: `Bearer ${tokenManager.getToken()}` }
-        });
-        
-        // Update local state
-        setSavedContents(prev => [...prev, savedContent]);
+        setPreviewContent(generatedContent);
+      setPreviewType(type); // Set the correct preview type based on selection
         
         toast({
-          description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
-          duration: 2000
-        });
-      } catch (error) {
-        console.error('Error auto-saving content:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to auto-save content"
-        });
-      }
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
+        duration: 2000
+      });
       
       // Increment user count after successful generation
       const token = tokenManager.getToken();
@@ -1580,17 +1555,12 @@ const RequestCarouselPage: React.FC = () => {
   const getCarouselSlides = (content: string | null | undefined) => {
     if (!content) return [];
     
-    // First remove all markdown formatting from the entire content
-    let cleanedContent = content;
-    cleanedContent = cleanedContent.replace(/\*\*(.*?)\*\*/g, '$1');
-    cleanedContent = cleanedContent.replace(/\*/g, '');
-    
     // First, split by various separators to get individual slides
-    let rawSlides = cleanedContent.split(/---+|\n\n/).filter(s => s.trim());
+    let rawSlides = content.split(/---+|\n\n/).filter(s => s.trim());
     
     // If no double newlines or separators, try single newlines for fallback
     if (rawSlides.length <= 1) {
-      rawSlides = cleanedContent.split('\n').filter(s => s.trim());
+      rawSlides = content.split('\n').filter(s => s.trim());
     }
     
     // Now process slides to clean all formatting
@@ -1603,14 +1573,14 @@ const RequestCarouselPage: React.FC = () => {
         continue;
       }
       
-      // Skip Slide 10 specifically
-      if (/^Slide\s*10[\s:.]+/i.test(current)) {
-        continue;
-      }
-      
       // Remove "Slide X" prefixes and headers
       current = current.replace(/^\*\*Slide\s*\d+[^*]*\*\*\s*/i, '').trim();
       current = current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
+      
+      // Remove markdown formatting (**text**)
+      current = current.replace(/\*\*(.*?)\*\*/g, '$1');
+      // Remove any remaining asterisks used for emphasis
+      current = current.replace(/\*/g, '');
       
       // Remove horizontal separators
       current = current.replace(/^---+$/gm, '').trim();
@@ -1761,7 +1731,7 @@ const RequestCarouselPage: React.FC = () => {
     toast({
       description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`,
       duration: 2000
-    });
+      });
     } catch (error) {
       console.error("Error preparing slides for editor:", error);
       toast({
@@ -2068,106 +2038,6 @@ const RequestCarouselPage: React.FC = () => {
   // Add a function to handle subscription navigation
   const handleSubscribe = () => {
     navigate("/settings/billing");
-  };
-
-  // Add LinkedIn posting states and functions
-  const [isPublishingToLinkedIn, setIsPublishingToLinkedIn] = useState(false);
-  const [linkedInConnected, setLinkedInConnected] = useState(false);
-
-  // Check LinkedIn connection status
-  useEffect(() => {
-    const token = localStorage.getItem('linkedin-login-token');
-    setLinkedInConnected(!!token);
-  }, []);
-
-  // Function to handle LinkedIn reconnection
-  const handleReconnectLinkedIn = () => {
-    const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
-    const baseUrl = baseApiUrl.replace('/api', '');
-    localStorage.setItem('redirectAfterAuth', window.location.pathname);
-    window.location.href = `${baseUrl}/api/auth/linkedin-direct`;
-  };
-
-  // Function to publish text post to LinkedIn
-  const publishToLinkedIn = async () => {
-    try {
-      setIsPublishingToLinkedIn(true);
-      
-      // Validate content
-      if (!generatedContent?.trim()) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please generate content before publishing"
-        });
-        return;
-      }
-      
-      // Check LinkedIn authentication
-      const token = localStorage.getItem('linkedin-login-token');
-      if (!token) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please connect your LinkedIn account"
-        });
-        if (window.confirm('Would you like to connect your LinkedIn account now?')) {
-          handleReconnectLinkedIn();
-        }
-        return;
-      }
-      
-      // Create text post
-      const response = await linkedInApi.createTextPost(generatedContent);
-      
-      if (response?.id) {
-        toast({
-          title: "Success",
-          description: "Successfully published to LinkedIn!"
-        });
-        
-        // Auto-save the content
-        const savedContent: SavedContent = {
-          id: uuidv4(),
-          title: selectedVideo?.title || 'AI Generated Post',
-          content: generatedContent,
-          type: 'text-post',
-          videoId: selectedVideo?.id,
-          videoTitle: selectedVideo?.title,
-          createdAt: new Date().toISOString()
-        };
-        
-        try {
-          // Save to backend
-          await api.post('/saved-contents', savedContent, {
-            headers: { Authorization: `Bearer ${tokenManager.getToken()}` }
-          });
-          
-          // Update local state
-          setSavedContents(prev => [...prev, savedContent]);
-          toast({
-            title: "Success",
-            description: "Content auto-saved successfully"
-          });
-        } catch (error) {
-          console.error('Error auto-saving content:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to auto-save content"
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error publishing to LinkedIn:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to publish to LinkedIn: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-    } finally {
-      setIsPublishingToLinkedIn(false);
-    }
   };
 
     return (
@@ -2661,7 +2531,7 @@ const RequestCarouselPage: React.FC = () => {
                           )}
                         </div>
                       )}
-                    </div>
+                          </div>
                 </div>
               </CardContent>
             </Card>
@@ -3526,36 +3396,6 @@ const RequestCarouselPage: React.FC = () => {
               </Button>
             </CardFooter>
           </Card>
-        </div>
-      )}
-
-      {/* Add LinkedIn posting button above Preview & Information */}
-      {generatedContent && (
-        <div className="mb-4">
-          <Button
-            variant="default"
-            className="w-full sm:w-auto gap-2"
-            onClick={publishToLinkedIn}
-            disabled={isPublishingToLinkedIn || !linkedInConnected}
-          >
-            {isPublishingToLinkedIn ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Publishing to LinkedIn...
-              </>
-            ) : (
-              <>
-                <Linkedin className="h-4 w-4" />
-                Post to LinkedIn
-              </>
-            )}
-          </Button>
-          {!linkedInConnected && (
-            <p className="text-sm text-muted-foreground mt-2">
-              <AlertCircle className="h-4 w-4 inline mr-1" />
-              Please connect your LinkedIn account to publish posts
-            </p>
-          )}
         </div>
       )}
     </div>
