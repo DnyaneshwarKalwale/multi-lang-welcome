@@ -111,6 +111,75 @@ interface PostSelectionModalProps {
   selectedPostsCount: number;
 }
 
+// Add these helper functions before the component
+const autoSaveLinkedInPosts = async (posts: any[], token: string | null) => {
+  if (!posts.length) return;
+  
+  try {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiUrl = apiBaseUrl.endsWith('/api') 
+      ? `${apiBaseUrl}/linkedin/save-scraped-posts`
+      : `${apiBaseUrl}/api/linkedin/save-scraped-posts`;
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await axios.post(apiUrl, {
+      posts: posts,
+      profileData: posts[0]?.author ? {
+        name: posts[0].author.name,
+        headline: posts[0].author.info,
+        profileUrl: posts[0].author.linkedinUrl,
+        avatar: posts[0].author.avatar?.url,
+        username: posts[0].author.publicIdentifier
+      } : null
+    }, { headers });
+
+    return response.data.success;
+  } catch (error) {
+    console.error('Error saving LinkedIn posts:', error);
+    return false;
+  }
+};
+
+const autoSaveTwitterPosts = async (tweets: Tweet[], token: string | null) => {
+  if (!tweets.length) return;
+  
+  try {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+    const apiUrl = apiBaseUrl.endsWith('/api') 
+      ? `${apiBaseUrl}/twitter/save-posts`
+      : `${apiBaseUrl}/api/twitter/save-posts`;
+
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await axios.post(apiUrl, {
+      tweets: tweets,
+      userData: tweets[0]?.author ? {
+        username: tweets[0].author.username,
+        name: tweets[0].author.name,
+        profileImageUrl: tweets[0].author.profile_image_url
+      } : null
+    }, { headers });
+
+    return response.data.success;
+  } catch (error) {
+    console.error('Error saving Twitter posts:', error);
+    return false;
+  }
+};
+
 const PostSelectionModal: React.FC<PostSelectionModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -511,7 +580,7 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     });
   };
 
-  // Handle LinkedIn profile scraping
+  // Modify handleLinkedInScrape to include auto-save
   const handleLinkedInScrape = async () => {
     if (!inputUrl) {
       toast({
@@ -563,14 +632,25 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
       });
 
       if (response.data.success) {
-        // Auto-save all LinkedIn posts immediately after scraping
         const posts = response.data.posts || [];
-        setSavedLinkedInPosts(prev => [...prev, ...posts]);
         
-        toast({
-          title: "Success",
-          description: `Successfully scraped ${posts.length} posts from ${username}`,
-        });
+        // Auto-save the scraped posts
+        const saveSuccess = await autoSaveLinkedInPosts(posts, token);
+        if (saveSuccess) {
+          // Update local state only after successful save
+          setSavedLinkedInPosts(prev => [...prev, ...posts]);
+          
+          toast({
+            title: "Success",
+            description: `Successfully scraped and saved ${posts.length} posts from ${username}`,
+          });
+        } else {
+          toast({
+            title: "Warning",
+            description: "Posts were scraped but couldn't be saved. Please try saving them manually.",
+            variant: "destructive"
+          });
+        }
         
         // Clear input after successful scrape
         setInputUrl('');
@@ -593,7 +673,7 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     }
   };
 
-  // Handle Twitter scraping
+  // Modify handleTwitterScrape to include auto-save
   const handleTwitterScrape = async () => {
     if (!inputUrl) {
       toast({
@@ -630,6 +710,7 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+      const token = localStorage.getItem('token');
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/user/${username}`
         : `${baseUrl}/api/twitter/user/${username}`;
@@ -638,34 +719,46 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
         timeout: 300000,
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
     
       if (response.data && response.data.success) {
         const tweets: Tweet[] = response.data.data;
         
-        // Group tweets into threads
-        const groupedData = groupThreads(tweets);
-        const threads: Thread[] = [];
-        const standaloneTweets: Tweet[] = [];
+        // Auto-save the scraped tweets
+        const saveSuccess = await autoSaveTwitterPosts(tweets, token);
         
-        groupedData.forEach(item => {
-          if ('tweets' in item) {
-            threads.push(item);
-          } else {
-            standaloneTweets.push(item);
-          }
-        });
-        
-        // Update state with new tweets
-        setSavedTwitterPosts(prev => [...prev, ...standaloneTweets]);
-        setSavedTwitterThreads(prev => [...prev, ...threads]);
-        
-        toast({
-          title: "Success",
-          description: `Successfully retrieved ${tweets.length} tweets from @${username}`,
-        });
+        if (saveSuccess) {
+          // Group tweets into threads after successful save
+          const groupedData = groupThreads(tweets);
+          const threads: Thread[] = [];
+          const standaloneTweets: Tweet[] = [];
+          
+          groupedData.forEach(item => {
+            if ('tweets' in item) {
+              threads.push(item);
+            } else {
+              standaloneTweets.push(item);
+            }
+          });
+          
+          // Update state with new tweets
+          setSavedTwitterPosts(prev => [...prev, ...standaloneTweets]);
+          setSavedTwitterThreads(prev => [...prev, ...threads]);
+          
+          toast({
+            title: "Success",
+            description: `Successfully retrieved and saved ${tweets.length} tweets from @${username}`,
+          });
+        } else {
+          toast({
+            title: "Warning",
+            description: "Tweets were retrieved but couldn't be saved. Please try saving them manually.",
+            variant: "destructive"
+          });
+        }
         
         // Clear input after successful scrape
         setInputUrl('');
