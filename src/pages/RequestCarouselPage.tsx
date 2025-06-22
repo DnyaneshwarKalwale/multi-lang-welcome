@@ -1163,10 +1163,10 @@ const RequestCarouselPage: React.FC = () => {
       const generatedContent = response.data.content;
       
       // Update UI state
-      setGeneratedContent(generatedContent);
+        setGeneratedContent(generatedContent);
       setShowContentGenerator(true);
       setSelectedContentType(type);
-      setPreviewContent(generatedContent);
+        setPreviewContent(generatedContent);
       setPreviewType(type);
       
       // Save the content to backend and localStorage
@@ -1179,7 +1179,7 @@ const RequestCarouselPage: React.FC = () => {
         const saveResponse = await axios.post(saveUrl, {
           title: selectedVideo.title,
           content: generatedContent,
-          type: type,
+          type: type === 'text-post' ? 'post-short' : 'carousel',
           videoId: selectedVideo.id,
           videoTitle: selectedVideo.title,
           userId: user?.id || 'anonymous'
@@ -1207,8 +1207,8 @@ const RequestCarouselPage: React.FC = () => {
         console.error('Error saving content:', saveError);
         // Don't show error to user since the content was generated successfully
       }
-      
-      toast({
+        
+        toast({
         description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
         duration: 2000
       });
@@ -2126,7 +2126,7 @@ const RequestCarouselPage: React.FC = () => {
       const response = await linkedInApi.createTextPost(previewContent);
       
       if (response.id) {  // Check for id directly instead of response?.data?.id
-        toast({
+      toast({
           title: "Success",
           description: "Post published to LinkedIn successfully!",
         });
