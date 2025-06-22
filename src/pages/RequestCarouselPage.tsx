@@ -1179,12 +1179,12 @@ const RequestCarouselPage: React.FC = () => {
         const saveResponse = await axios.post(saveUrl, {
           title: selectedVideo.title,
           content: generatedContent,
-          type: 'post-short',  // Always use post-short for text posts
+          type: type === 'text-post' ? 'post-short' : 'carousel',
           videoId: selectedVideo.id,
           videoTitle: selectedVideo.title,
           userId: user?.id || 'anonymous',
-          source: 'youtube',  // Add source
-          status: 'ready'     // Add status
+          source: 'youtube',
+          status: 'ready'
         });
 
         if (saveResponse?.data?.data?.id) {  // More defensive checking
@@ -1193,7 +1193,7 @@ const RequestCarouselPage: React.FC = () => {
             id: saveResponse.data.data.id,
             title: selectedVideo.title,
             content: generatedContent,
-            type: 'text-post',  // Keep as text-post in frontend
+            type: type === 'text-post' ? 'text-post' : 'carousel', // Keep frontend type consistent
             videoId: selectedVideo.id,
             videoTitle: selectedVideo.title,
             createdAt: new Date().toISOString()
@@ -1208,8 +1208,8 @@ const RequestCarouselPage: React.FC = () => {
           
           // Refresh saved contents from backend immediately
           await loadSavedContents();
-          
-          toast({
+        
+        toast({
             title: "Success",
             description: "Content saved successfully!",
           });
