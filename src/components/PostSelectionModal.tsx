@@ -112,7 +112,7 @@ interface PostSelectionModalProps {
 }
 
 // Add these helper functions before the component
-const autoSaveLinkedInPosts = async (posts: any[], token: string | null) => {
+const autoSaveLinkedInPosts = async (posts: any[]) => {
   if (!posts.length) return;
   
   try {
@@ -121,13 +121,19 @@ const autoSaveLinkedInPosts = async (posts: any[], token: string | null) => {
       ? `${apiBaseUrl}/linkedin/save-scraped-posts`
       : `${apiBaseUrl}/api/linkedin/save-scraped-posts`;
 
-    const headers: any = {
-      'Content-Type': 'application/json'
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    // Get token using tokenManager
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+
+    if (!token) {
+      console.warn('No auth token found');
+      throw new Error('Authentication required');
     }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
 
     const response = await axios.post(apiUrl, {
       posts: posts,
@@ -141,13 +147,16 @@ const autoSaveLinkedInPosts = async (posts: any[], token: string | null) => {
     }, { headers });
 
     return response.data.success;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving LinkedIn posts:', error);
+    if (error.response?.status === 401) {
+      throw new Error('Please log in to save posts');
+    }
     return false;
   }
 };
 
-const autoSaveTwitterPosts = async (tweets: Tweet[], token: string | null) => {
+const autoSaveTwitterPosts = async (tweets: Tweet[]) => {
   if (!tweets.length) return;
   
   try {
@@ -156,13 +165,19 @@ const autoSaveTwitterPosts = async (tweets: Tweet[], token: string | null) => {
       ? `${apiBaseUrl}/twitter/save-posts`
       : `${apiBaseUrl}/api/twitter/save-posts`;
 
-    const headers: any = {
-      'Content-Type': 'application/json'
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    // Get token using tokenManager
+    const authMethod = localStorage.getItem('auth-method');
+    const token = authMethod ? tokenManager.getToken(authMethod) : null;
+
+    if (!token) {
+      console.warn('No auth token found');
+      throw new Error('Authentication required');
     }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
 
     const response = await axios.post(apiUrl, {
       tweets: tweets,
@@ -174,8 +189,11 @@ const autoSaveTwitterPosts = async (tweets: Tweet[], token: string | null) => {
     }, { headers });
 
     return response.data.success;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving Twitter posts:', error);
+    if (error.response?.status === 401) {
+      throw new Error('Please log in to save posts');
+    }
     return false;
   }
 };
@@ -580,7 +598,7 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     });
   };
 
-  // Modify handleLinkedInScrape to include auto-save
+  // Modify handleLinkedInScrape to use tokenManager
   const handleLinkedInScrape = async () => {
     if (!inputUrl) {
       toast({
@@ -610,15 +628,19 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
 
     try {
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-      const token = localStorage.getItem('token');
       
-      const headers: any = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      // Get token using tokenManager
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
+
+      if (!token) {
+        throw new Error('Authentication required');
       }
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
       
       const apiUrl = apiBaseUrl.endsWith('/api') 
         ? `${apiBaseUrl}/linkedin/scrape-profile`
@@ -634,22 +656,38 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
       if (response.data.success) {
         const posts = response.data.posts || [];
         
-        // Auto-save the scraped posts
-        const saveSuccess = await autoSaveLinkedInPosts(posts, token);
-        if (saveSuccess) {
-          // Update local state only after successful save
-          setSavedLinkedInPosts(prev => [...prev, ...posts]);
-          
-          toast({
-            title: "Success",
-            description: `Successfully scraped and saved ${posts.length} posts from ${username}`,
-          });
-        } else {
-          toast({
-            title: "Warning",
-            description: "Posts were scraped but couldn't be saved. Please try saving them manually.",
-            variant: "destructive"
-          });
+        try {
+          // Auto-save the scraped posts
+          const saveSuccess = await autoSaveLinkedInPosts(posts);
+          if (saveSuccess) {
+            // Update local state only after successful save
+            setSavedLinkedInPosts(prev => [...prev, ...posts]);
+            
+            toast({
+              title: "Success",
+              description: `Successfully scraped and saved ${posts.length} posts from ${username}`,
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: "Posts were scraped but couldn't be saved. Please try saving them manually.",
+              variant: "destructive"
+            });
+          }
+        } catch (saveError: any) {
+          if (saveError.message === 'Authentication required' || saveError.message === 'Please log in to save posts') {
+            toast({
+              title: "Authentication Required",
+              description: "Please log in to save posts",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: "Posts were scraped but couldn't be saved. Please try saving them manually.",
+              variant: "destructive"
+            });
+          }
         }
         
         // Clear input after successful scrape
@@ -663,17 +701,31 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
       }
     } catch (error: any) {
       console.error('LinkedIn scraping error:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || 'Failed to scrape LinkedIn profile',
-        variant: "destructive"
-      });
+      if (error.message === 'Authentication required') {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to scrape LinkedIn profiles",
+          variant: "destructive"
+        });
+      } else if (error.response?.status === 401) {
+        toast({
+          title: "Authentication Error",
+          description: "Your session has expired. Please log in again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || 'Failed to scrape LinkedIn profile',
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsScrapingLinkedIn(false);
     }
   };
 
-  // Modify handleTwitterScrape to include auto-save
+  // Modify handleTwitterScrape to use tokenManager
   const handleTwitterScrape = async () => {
     if (!inputUrl) {
       toast({
@@ -710,7 +762,15 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
     
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-      const token = localStorage.getItem('token');
+      
+      // Get token using tokenManager
+      const authMethod = localStorage.getItem('auth-method');
+      const token = authMethod ? tokenManager.getToken(authMethod) : null;
+
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
       const apiUrl = baseUrl.endsWith('/api') 
         ? `${baseUrl}/twitter/user/${username}`
         : `${baseUrl}/api/twitter/user/${username}`;
@@ -720,44 +780,60 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          'Authorization': `Bearer ${token}`
         }
       });
     
       if (response.data && response.data.success) {
         const tweets: Tweet[] = response.data.data;
         
-        // Auto-save the scraped tweets
-        const saveSuccess = await autoSaveTwitterPosts(tweets, token);
-        
-        if (saveSuccess) {
-          // Group tweets into threads after successful save
-          const groupedData = groupThreads(tweets);
-          const threads: Thread[] = [];
-          const standaloneTweets: Tweet[] = [];
+        try {
+          // Auto-save the scraped tweets
+          const saveSuccess = await autoSaveTwitterPosts(tweets);
           
-          groupedData.forEach(item => {
-            if ('tweets' in item) {
-              threads.push(item);
-            } else {
-              standaloneTweets.push(item);
-            }
-          });
-          
-          // Update state with new tweets
-          setSavedTwitterPosts(prev => [...prev, ...standaloneTweets]);
-          setSavedTwitterThreads(prev => [...prev, ...threads]);
-          
-          toast({
-            title: "Success",
-            description: `Successfully retrieved and saved ${tweets.length} tweets from @${username}`,
-          });
-        } else {
-          toast({
-            title: "Warning",
-            description: "Tweets were retrieved but couldn't be saved. Please try saving them manually.",
-            variant: "destructive"
-          });
+          if (saveSuccess) {
+            // Group tweets into threads after successful save
+            const groupedData = groupThreads(tweets);
+            const threads: Thread[] = [];
+            const standaloneTweets: Tweet[] = [];
+            
+            groupedData.forEach(item => {
+              if ('tweets' in item) {
+                threads.push(item);
+              } else {
+                standaloneTweets.push(item);
+              }
+            });
+            
+            // Update state with new tweets
+            setSavedTwitterPosts(prev => [...prev, ...standaloneTweets]);
+            setSavedTwitterThreads(prev => [...prev, ...threads]);
+            
+            toast({
+              title: "Success",
+              description: `Successfully retrieved and saved ${tweets.length} tweets from @${username}`,
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: "Tweets were retrieved but couldn't be saved. Please try saving them manually.",
+              variant: "destructive"
+            });
+          }
+        } catch (saveError: any) {
+          if (saveError.message === 'Authentication required' || saveError.message === 'Please log in to save posts') {
+            toast({
+              title: "Authentication Required",
+              description: "Please log in to save tweets",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: "Tweets were retrieved but couldn't be saved. Please try saving them manually.",
+              variant: "destructive"
+            });
+          }
         }
         
         // Clear input after successful scrape
@@ -771,11 +847,25 @@ const PostSelectionModal: React.FC<PostSelectionModalProps> = ({
       }
     } catch (error: any) {
       console.error('Twitter scraping error:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || 'Failed to retrieve tweets',
-        variant: "destructive"
-      });
+      if (error.message === 'Authentication required') {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to scrape Twitter profiles",
+          variant: "destructive"
+        });
+      } else if (error.response?.status === 401) {
+        toast({
+          title: "Authentication Error",
+          description: "Your session has expired. Please log in again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || 'Failed to retrieve tweets',
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsScrapingTwitter(false);
     }
