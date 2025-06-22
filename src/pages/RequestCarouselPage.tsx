@@ -129,13 +129,7 @@ interface SavedContent {
   createdAt: string;
 }
 
-// LinkedIn post response interface
-interface LinkedInPostResponse {
-  id: string;
-  data?: {
-    id: string;
-  };
-}
+
 
 // Function to generate placeholder transcript
 const generateDummyTranscript = (videoId: string): string[] => {
@@ -226,6 +220,7 @@ const RequestCarouselPage: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isPublishing, setIsPublishing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
@@ -235,7 +230,6 @@ const RequestCarouselPage: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isPublishing, setIsPublishing] = useState(false);
   const videosPerPage = 4;
   
   // Saved videos state
@@ -1173,70 +1167,53 @@ const RequestCarouselPage: React.FC = () => {
       setShowContentGenerator(true);
       setSelectedContentType(type);
       setPreviewContent(generatedContent);
-      setPreviewType(type); // Set the correct preview type based on selection
+      setPreviewType(type);
       
-      // Auto-save the generated content
+      // Save the content to backend and localStorage
       try {
         const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
-        const saveApiUrl = baseUrl.endsWith('/api')
+        const saveUrl = baseUrl.endsWith('/api')
           ? `${baseUrl}/carousel-contents`
           : `${baseUrl}/api/carousel-contents`;
 
-        const saveResponse = await axios.post(saveApiUrl, {
+        const saveResponse = await axios.post(saveUrl, {
           title: selectedVideo.title,
           content: generatedContent,
           type: type,
           videoId: selectedVideo.id,
           videoTitle: selectedVideo.title,
-          userId: user?.id || 'anonymous',
-          createdAt: new Date().toISOString()
+          userId: user?.id || 'anonymous'
         });
 
         if (saveResponse.data.success) {
           // Update local state with the new content
-          setSavedContents(prev => {
-            const newContent = {
-              id: saveResponse.data.data.id,
-              title: selectedVideo.title,
-              content: generatedContent,
-              type: type,
-              videoId: selectedVideo.id,
-              videoTitle: selectedVideo.title,
-              createdAt: new Date().toISOString()
-            };
-            return [...prev, newContent];
-          });
-
-          // Update localStorage
-          localStorage.setItem('ai_generated_content', generatedContent);
-          localStorage.setItem('ai_generated_content_videoId', selectedVideo.id);
-          localStorage.setItem('ai_generated_content_timestamp', new Date().toISOString());
-
-          // Update saved contents in localStorage
-          const savedContentsStr = localStorage.getItem('savedLinkedInContents');
-          const savedContents = savedContentsStr ? JSON.parse(savedContentsStr) : [];
-          savedContents.push({
+          const newContent: SavedContent = {
             id: saveResponse.data.data.id,
             title: selectedVideo.title,
             content: generatedContent,
-            type: type,
+            type: type as 'text-post' | 'carousel',
             videoId: selectedVideo.id,
             videoTitle: selectedVideo.title,
             createdAt: new Date().toISOString()
-          });
-          localStorage.setItem('savedLinkedInContents', JSON.stringify(savedContents));
+          };
+          
+          setSavedContents(prev => [newContent, ...prev]);
+          
+          // Update localStorage
+          const existingContents = JSON.parse(localStorage.getItem('savedLinkedInContents') || '[]');
+          localStorage.setItem('savedLinkedInContents', JSON.stringify([newContent, ...existingContents]));
         }
       } catch (saveError) {
         console.error('Error saving content:', saveError);
-        // Don't show error toast here since content was generated successfully
+        // Don't show error to user since the content was generated successfully
       }
-        
+      
       toast({
         description: `${type.charAt(0).toUpperCase() + type.slice(1)} content generated and auto-saved`,
         duration: 2000
       });
       
-      // Increment user count after successful generation
+      // Increment user count
       const token = tokenManager.getToken();
       await axios.post(
         `${import.meta.env.VITE_API_URL || "https://backend-scripe.onrender.com"}/user-limits/${user?.id}/increment`,
@@ -1794,7 +1771,7 @@ const RequestCarouselPage: React.FC = () => {
     toast({
       description: `Preparing ${konvaSlides.length} slides for editing (4:5 ratio)`,
       duration: 2000
-    });
+      });
     } catch (error) {
       console.error("Error preparing slides for editor:", error);
       toast({
@@ -2118,24 +2095,24 @@ const RequestCarouselPage: React.FC = () => {
       
       // Validate content
       if (!previewContent?.trim()) {
-        toast({
+      toast({
           title: "Error",
           description: "Please add some content",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
-        return;
-      }
-      
+      return;
+    }
+    
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
-      
+    
       if (!token) {
-        toast({
+      toast({
           title: "Error",
           description: "Please connect your LinkedIn account",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
         
         // Show a reconnect option
@@ -2148,7 +2125,7 @@ const RequestCarouselPage: React.FC = () => {
       // Publish as text post
       const response = await linkedInApi.createTextPost(previewContent);
       
-      if (response?.data?.id) {
+      if (response.id) {  // Check for id directly instead of response?.data?.id
         toast({
           title: "Success",
           description: "Post published to LinkedIn successfully!",
@@ -2673,7 +2650,7 @@ const RequestCarouselPage: React.FC = () => {
                           )}
                         </div>
                       )}
-                    </div>
+                          </div>
                 </div>
               </CardContent>
             </Card>
@@ -2734,7 +2711,7 @@ const RequestCarouselPage: React.FC = () => {
                     <div>
                       {previewType?.includes('post') ? (
                         <>
-                          <p className="text-sm whitespace-pre-line">{previewContent}</p>
+                        <p className="text-sm whitespace-pre-line">{previewContent}</p>
                           {/* Add LinkedIn Post Button */}
                           <div className="mt-4">
                             <Button 

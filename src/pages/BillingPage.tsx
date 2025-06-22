@@ -564,12 +564,12 @@ const BillingPage: React.FC = () => {
       
       if (response.data.success) {
         // Update local state
-        setPaymentMethods(methods => 
-          methods.map(method => ({
-            ...method,
-            isDefault: method.id === paymentId
-          }))
-        );
+    setPaymentMethods(methods => 
+      methods.map(method => ({
+        ...method,
+        isDefault: method.id === paymentId
+      }))
+    );
         toast.success('Default payment method updated!', { duration: 2000 });
       }
     } catch (error) {
@@ -836,7 +836,7 @@ const BillingPage: React.FC = () => {
           Manage your subscription, credits and payment methods
         </p>
       </div>
-
+        
       {/* Current Plan Overview */}
       <div className="grid gap-6 mb-8">
         <Card>
@@ -853,12 +853,12 @@ const BillingPage: React.FC = () => {
                 {currentPlan ? (
                   <>
                     <div className="flex items-center justify-between mb-4">
-                      <div>
+                    <div>
                         <h3 className="text-lg font-semibold">{currentPlan.name}</h3>
                         <p className="text-muted-foreground">
                           {currentSubscription.status === 'cancelled' ? 'Cancelled' : 'Active'}
                         </p>
-                      </div>
+              </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold">
                           ${currentPlan.price}
@@ -867,11 +867,11 @@ const BillingPage: React.FC = () => {
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
-                        </div>
-                      </div>
-                    </div>
-
+                      Renews {format(currentSubscription.expiresAt || new Date(), 'MMM d')}
+          </div>
+        </div>
+      </div>
+      
                     {/* Credits Usage */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
@@ -879,36 +879,36 @@ const BillingPage: React.FC = () => {
                         <span className="font-medium">
                           {currentSubscription.usedCredits} / {currentSubscription.totalCredits}
                         </span>
-                      </div>
+              </div>
                       <div className="w-full bg-secondary h-2 rounded-full">
                         <div 
                           className="bg-primary h-2 rounded-full transition-all"
                           style={{ width: `${usagePercentage}%` }}
                         />
-                      </div>
                     </div>
+                  </div>
                   </>
                 ) : (
                   <div className="text-center py-6">
                     <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
                       <CreditCard className="w-6 h-6" />
-                    </div>
+                </div>
                     <h3 className="text-lg font-semibold mb-2">No Active Plan</h3>
                     <p className="text-muted-foreground mb-4">Choose a plan to get started</p>
-                  </div>
-                )}
-              </div>
-
+                        </div>
+                      )}
+                      </div>
+                          
               {/* Quick Actions */}
               <div className="flex flex-col gap-2 min-w-[200px]">
-                <Button
-                  variant="outline"
+                        <Button
+                          variant="outline"
                   className="w-full justify-start"
                   onClick={() => setShowAddCardModal(true)}
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
                   Payment Methods
-                </Button>
+                        </Button>
                 {isAdmin && (
                   <Button
                     variant="outline"
@@ -919,32 +919,32 @@ const BillingPage: React.FC = () => {
                     Admin View
                   </Button>
                 )}
-              </div>
-            </div>
+                    </div>
+                            </div>
           </CardContent>
         </Card>
 
         {/* Available Plans */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <div>
+              <div>
               <CardTitle>Available Plans</CardTitle>
               <CardDescription>Choose the perfect plan for your needs</CardDescription>
             </div>
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpandedView(!isExpandedView)}
-            >
-              {isExpandedView ? 'Simple View' : 'Detailed View'}
-            </Button>
+                    <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setIsExpandedView(!isExpandedView)}
+                  >
+                    {isExpandedView ? 'Simple View' : 'Detailed View'}
+                    </Button>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6">
-              {plans.map(plan => (
-                <div
-                  key={plan.id}
-                  className={`
+                  {plans.map(plan => (
+                    <div
+                      key={plan.id}
+                      className={`
                     relative border rounded-lg p-6 transition-all
                     ${plan.id === currentSubscription.planId 
                       ? 'border-primary ring-2 ring-primary/20' 
@@ -954,7 +954,7 @@ const BillingPage: React.FC = () => {
                     }
                   `}
                 >
-                  {plan.isPopular && (
+                            {plan.isPopular && (
                     <Badge className="absolute -top-2 -right-2 bg-primary">
                       Most Popular
                     </Badge>
@@ -966,31 +966,31 @@ const BillingPage: React.FC = () => {
                       ${plan.price}
                       <span className="text-sm font-normal text-muted-foreground">
                         /{plan.billingPeriod}
-                      </span>
-                    </div>
-                  </div>
-
+                                </span>
+                          </div>
+                        </div>
+                        
                   <div className="space-y-4 mb-6">
                     {(isExpandedView ? plan.features : plan.features.slice(0, 3)).map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-primary flex-shrink-0 mt-1" />
                         <span className="text-sm">{feature}</span>
-                      </div>
-                    ))}
+                          </div>
+                            ))}
                     {!isExpandedView && plan.features.length > 3 && (
                       <p className="text-sm text-center text-muted-foreground">
                         +{plan.features.length - 3} more features
                       </p>
                     )}
                   </div>
-
-                  <Button
+                  
+                      <Button 
                     variant={plan.id === currentSubscription.planId ? 'outline' : 'default'}
                     className="w-full"
                     disabled={isChangingPlan !== null || plan.id === currentSubscription.planId}
                     onClick={() => handleChangePlan(plan.id)}
-                  >
-                    {isChangingPlan === plan.id ? (
+                            >
+                              {isChangingPlan === plan.id ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : plan.id === currentSubscription.planId ? (
                       <>
@@ -1002,11 +1002,11 @@ const BillingPage: React.FC = () => {
                         <ArrowRight className="h-4 w-4 mr-2" />
                         {plan.id === 'custom' ? 'Contact Sales' : 'Choose Plan'}
                       </>
-                    )}
-                  </Button>
-                </div>
+                              )}
+                      </Button>
+                  </div>
               ))}
-            </div>
+                      </div>
           </CardContent>
         </Card>
 
@@ -1039,11 +1039,11 @@ const BillingPage: React.FC = () => {
                     <div className="text-center mb-6">
                       <div className="w-12 h-12 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
                         <PlusCircle className="w-6 h-6 text-primary" />
-                      </div>
+                </div>
                       <div className="text-2xl font-bold mb-1">{pack.credits}</div>
                       <div className="text-sm text-muted-foreground mb-2">Credits</div>
                       <div className="text-xl font-semibold text-primary">${pack.price}</div>
-                    </div>
+                          </div>
 
                     <Button
                       variant={pack.isPopular ? "default" : "outline"}
@@ -1058,9 +1058,9 @@ const BillingPage: React.FC = () => {
                       )}
                       Buy Now
                     </Button>
-                  </div>
-                ))}
-              </div>
+                    </div>
+                  ))}
+                </div>
 
               <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
                 <h4 className="font-medium mb-2">Important Notes:</h4>
@@ -1074,7 +1074,7 @@ const BillingPage: React.FC = () => {
           </Card>
         )}
       </div>
-
+      
       {/* Add Card Modal */}
       <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}>
         <DialogContent>
@@ -1155,4 +1155,4 @@ const BillingPage: React.FC = () => {
   );
 };
 
-export default BillingPage;
+export default BillingPage; 
