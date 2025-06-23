@@ -312,34 +312,37 @@ const DashboardPage: React.FC = () => {
         'Content-Type': 'application/json'
       };
 
-      // Fetch all data in parallel
-      const [postsResponse, carouselRequestsResponse, carouselsResponse] = await Promise.all([
+      // Fetch all data in parallel, including generated content
+      const [postsResponse, carouselRequestsResponse, carouselsResponse, generatedContentResponse] = await Promise.all([
         axios.get(`${apiBaseUrl}/posts`, { headers }),
         axios.get(`${apiBaseUrl}/carousels/user/requests`, { headers }),
-        axios.get(`${apiBaseUrl}/carousels`, { headers })
+        axios.get(`${apiBaseUrl}/carousels`, { headers }),
+        axios.get(`${apiBaseUrl}/carousel-contents?userId=${user?.id || 'anonymous'}`, { headers }).catch(() => ({ data: { data: [] } }))
       ]);
 
       const posts = postsResponse.data.data || [];
       const carouselRequests = carouselRequestsResponse.data.data || [];
       const carousels = carouselsResponse.data.data || [];
+      const generatedContents = generatedContentResponse.data.data || [];
       
       // Get saved videos from localStorage
       const savedVideos = JSON.parse(localStorage.getItem('savedYoutubeVideos') || '[]');
 
-      // Calculate statistics
+      // Calculate AI generated content properly
+      // Count actual generated content from CarouselContent model
+      const aiGeneratedContent = generatedContents.length;
+      
+      // Count posts that are explicitly marked as AI generated
       const savedAiPosts = posts.filter(post => {
-        const content = post.content?.toLowerCase() || '';
-        const title = post.title?.toLowerCase() || '';
-        return content.includes('ai') || content.includes('artificial intelligence') || 
-               title.includes('ai') || title.includes('artificial intelligence') ||
-               post.isAI === true || post.aiGenerated === true;
+        return post.isAI === true || post.aiGenerated === true || post.generatedFromAI === true;
       }).length;
 
       const videoTranscripts = savedVideos.filter(video => 
         video.transcript && video.transcript.length > 0
       ).length;
 
-      const totalAiContent = savedAiPosts + videoTranscripts;
+      // Total AI content includes generated content + AI posts (not transcripts, as they're just source material)
+      const totalAiContent = aiGeneratedContent + savedAiPosts;
 
       const pendingRequests = carouselRequests.filter(request => 
         request.status === 'pending' || request.status === 'in_progress'
@@ -355,7 +358,7 @@ const DashboardPage: React.FC = () => {
         scheduledPosts: posts.filter(post => post.status === 'scheduled').length,
         publishedPosts: posts.filter(post => post.status === 'published').length,
         aiGeneratedContent: totalAiContent,
-        savedAiPosts,
+        savedAiPosts: aiGeneratedContent, // Show generated content count instead of AI keyword search
         videoTranscripts,
         carouselRequests: carouselRequests.length,
         pendingCarousels: pendingRequests,
@@ -393,6 +396,8 @@ const DashboardPage: React.FC = () => {
   // Fetch data on mount and when dependencies change
   useEffect(() => {
     if (token) {
+      // Clear cache to ensure fresh data after the fix
+      localStorage.removeItem(DASHBOARD_CACHE_KEY);
       fetchDashboardData();
     }
   }, [token]);
@@ -699,13 +704,13 @@ const DashboardPage: React.FC = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-green-600" />
-                    AI Content
+                    Generated Content
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Generated Posts</span>
+                      <span className="text-sm text-gray-600">Generated Content</span>
                       <span className="font-semibold text-green-600">{dashboardData.savedAiPosts}</span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -715,8 +720,11 @@ const DashboardPage: React.FC = () => {
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-green-500 to-blue-500 rounded-full"
-                        style={{ width: `${Math.min((dashboardData.aiGeneratedContent / 50) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((dashboardData.aiGeneratedContent / 100) * 100, 100)}%` }}
                       />
+                    </div>
+                    <div className="text-xs text-gray-500 text-center">
+                      {dashboardData.aiGeneratedContent} total AI content pieces
                     </div>
                   </div>
             </CardContent>
