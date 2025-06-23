@@ -1604,7 +1604,48 @@ const RequestCarouselPage: React.FC = () => {
     { value: "storytelling", label: "Storytelling", description: "Narrative-focused with image backgrounds" },
   ];
 
-  // Add the missing functions after the state variables
+  // Function to clean carousel content
+  const cleanCarouselContent = (content: string): string => {
+    let cleanedContent = content;
+    
+    // Remove markdown headers
+    cleanedContent = cleanedContent.replace(/^#{1,6}\s+/gm, '');
+    
+    // Remove markdown formatting (**text**, __text__)
+    cleanedContent = cleanedContent.replace(/\*\*(.*?)\*\*/g, '$1');
+    cleanedContent = cleanedContent.replace(/__(.*?)__/g, '$1');
+    cleanedContent = cleanedContent.replace(/\*(.*?)\*/g, '$1');
+    cleanedContent = cleanedContent.replace(/_(.*?)_/g, '$1');
+    
+    // Remove any remaining asterisks and underscores used for emphasis
+    cleanedContent = cleanedContent.replace(/\*/g, '');
+    cleanedContent = cleanedContent.replace(/(?<!\w)_(?!\w)/g, '');
+    
+    // Remove structural elements specific to carousels
+    cleanedContent = cleanedContent.replace(/^(### )?LinkedIn Carousel:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^(### )?Carousel Notes:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^(#### )?Call to Action:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^- Visual Elements:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^- Engagement:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^- Tone:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^- Brand Colors:.*$/gim, '');
+    
+    // Remove ALL slide number patterns and prefixes
+    cleanedContent = cleanedContent.replace(/^(#### )?Slide\s*\d+[\s:.-]*.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^Slide\s*\d+[\s:.-]*/gim, '');
+    cleanedContent = cleanedContent.replace(/^(Slide|Page)\s*\d+[:.]/gim, '');
+    cleanedContent = cleanedContent.replace(/^(\d+\.?\s*)+/gm, '');
+    
+    // Remove separator lines
+    cleanedContent = cleanedContent.replace(/^-{3,}$/gm, '');
+    cleanedContent = cleanedContent.replace(/^\s*-{3,}\s*$/gm, '');
+    
+    // Clean up extra whitespace and empty lines
+    cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+    cleanedContent = cleanedContent.replace(/^\s+|\s+$/g, '').trim();
+    
+    return cleanedContent;
+  };
 
   // Add safety checks in the carousel preview section
   const getCarouselSlides = (content: string | null | undefined): string[] => {
