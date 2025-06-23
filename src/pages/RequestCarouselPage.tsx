@@ -1607,72 +1607,45 @@ const RequestCarouselPage: React.FC = () => {
   // Add the missing functions after the state variables
 
   // Add safety checks in the carousel preview section
-  const getCarouselSlides = (content: string | null | undefined) => {
+  const getCarouselSlides = (content: string | null | undefined): string[] => {
     if (!content) return [];
     
-    // First, split by various separators to get individual slides
-    let rawSlides = content.split(/---+|\n\n/).filter(s => s.trim());
+    // Clean the content first
+    const cleanedContent = cleanCarouselContent(content);
     
-    // If no double newlines or separators, try single newlines for fallback
-    if (rawSlides.length <= 1) {
-      rawSlides = content.split('\n').filter(s => s.trim());
-    }
+    // Split by double newlines to get individual slides
+    const slides = cleanedContent.split(/\n\s*\n/)
+      .map(slide => slide.trim())
+      .filter(slide => {
+        // Skip empty content or structural elements
+        if (!slide || slide.length < 10) return false;
+        
+        // Skip metadata sections
+        if (/^(Visual Elements|Engagement|Tone|Brand Colors|Carousel Notes|Call to Action)/i.test(slide)) {
+          return false;
+        }
+        
+        // Skip slides that still have formatting markers
+        if (slide.match(/^(Slide|###|####|\*\*)/)) {
+          return false;
+        }
+        
+        return true;
+      });
     
-    // Now process slides to clean all formatting
-    const processedSlides = [];
-    for (let i = 0; i < rawSlides.length; i++) {
-      let current = rawSlides[i].trim();
-      
-      // Skip slides that only contain "Slide X" and nothing else
-      if (/^Slide\s*\d+\s*$/.test(current)) {
-        continue;
-      }
-      
-      // Remove "Slide X" prefixes and headers
-      current = current.replace(/^\*\*Slide\s*\d+[^*]*\*\*\s*/i, '').trim();
-      current = current.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
-      
-      // Remove markdown formatting (**text**)
-      current = current.replace(/\*\*(.*?)\*\*/g, '$1');
-      // Remove any remaining asterisks used for emphasis
-      current = current.replace(/\*/g, '');
-      
-      // Remove horizontal separators
-      current = current.replace(/^---+$/gm, '').trim();
-      
-      // Remove empty lines and clean up
-      current = current.replace(/\n\s*\n/g, '\n').trim();
-      
-      // Only add non-empty slides
-      if (current && current.length > 0) {
-        processedSlides.push(current);
-      }
-    }
-    
-    return processedSlides;
+    return slides;
   };
 
-  const getCarouselSlideCount = (content: string | null | undefined) => {
-    const slides = getCarouselSlides(content);
-    return slides.length || 7; // Default to 7 if no slides
+  const getCarouselSlideCount = (content: string | null | undefined): number => {
+    if (!content) return 0;
+    return getCarouselSlides(content).length;
   };
 
-  const getCarouselSlideContent = (content: string | null | undefined, index: number) => {
+  const getCarouselSlideContent = (content: string | null | undefined, index: number): string => {
+    if (!content) return '';
+    
     const slides = getCarouselSlides(content);
-    if (slides.length === 0) return 'Carousel slide content';
-    
-    // Ensure index is within bounds
-    const safeIndex = Math.min(index, slides.length - 1);
-    let slideContent = slides[safeIndex] || 'Carousel slide content';
-    
-    // Remove markdown formatting (**text**)
-    slideContent = slideContent.replace(/\*\*(.*?)\*\*/g, '$1');
-    // Remove any remaining asterisks used for emphasis
-    slideContent = slideContent.replace(/\*/g, '');
-    // Remove slide numbers
-    slideContent = slideContent.replace(/^Slide\s*\d+[\s:.]+/i, '').trim();
-    
-    return slideContent;
+    return slides[index] || '';
   };
 
   // Add function to handle editing in editor
