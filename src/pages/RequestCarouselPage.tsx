@@ -1639,7 +1639,7 @@ const RequestCarouselPage: React.FC = () => {
     // Remove separator lines
     cleanedContent = cleanedContent.replace(/^-{3,}$/gm, '');
     cleanedContent = cleanedContent.replace(/^\s*-{3,}\s*$/gm, '');
-    
+      
     // Clean up extra whitespace and empty lines
     cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
     cleanedContent = cleanedContent.replace(/^\s+|\s+$/g, '').trim();

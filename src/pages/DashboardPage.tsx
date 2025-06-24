@@ -28,7 +28,10 @@ interface LinkedInProfile {
   joinedDate: string;
   connections: number;
   followers: number;
+  totalPosts: number;
+  impressions: number;
   verified: boolean;
+  summary: string;
 }
 
 // Interface for LinkedIn post data
@@ -807,7 +810,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <p className="text-lg font-bold text-blue-600">{linkedInProfile?.connections || '0+'}</p>
                     <p className="text-xs text-gray-600">Connections</p>
@@ -816,6 +819,35 @@ const DashboardPage: React.FC = () => {
                     <p className="text-lg font-bold text-green-600">{linkedInProfile?.followers || '0+'}</p>
                     <p className="text-xs text-gray-600">Followers</p>
                   </div>
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <p className="text-lg font-bold text-purple-600">{linkedInProfile?.totalPosts || '0'}</p>
+                    <p className="text-xs text-gray-600">Posts</p>
+                  </div>
+                </div>
+
+                {linkedInProfile?.impressions > 0 && (
+                  <div className="mt-3 bg-gray-50 p-3 rounded-lg text-center">
+                    <p className="text-lg font-bold text-gray-700">{linkedInProfile.impressions.toLocaleString()}</p>
+                    <p className="text-xs text-gray-600">Total Impressions</p>
+                  </div>
+                )}
+
+                {linkedInProfile?.bio && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    <p className="line-clamp-2">{linkedInProfile.bio}</p>
+                  </div>
+                )}
+
+                <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                  <span>Joined {linkedInProfile?.joinedDate || 'Recently'}</span>
+                  <a 
+                    href={linkedInProfile?.url || `https://linkedin.com/in/${linkedInProfile?.username}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    View Profile
+                  </a>
                 </div>
                   </>
                 ) : (
