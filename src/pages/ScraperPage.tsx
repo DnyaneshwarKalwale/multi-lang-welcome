@@ -2652,6 +2652,37 @@ const ScraperPage: React.FC = (): JSX.Element => {
     });
     const [activeTab, setActiveTab] = useState<'twitter' | 'linkedin'>('twitter');
 
+    // Custom delete handlers that preserve the current view mode
+    const handleDeleteTwitterPostWithViewPreservation = async (tweetId: string) => {
+      const currentViewMode = viewMode;
+      const currentSelectedUsers = { ...selectedUsers };
+      const currentActiveTab = activeTab;
+      
+      await handleDeleteTwitterPost(tweetId);
+      
+      // After deletion, preserve the view state
+      setTimeout(() => {
+        setViewMode(currentViewMode);
+        setSelectedUsers(currentSelectedUsers);
+        setActiveTab(currentActiveTab);
+      }, 100);
+    };
+
+    const handleDeleteLinkedInPostWithViewPreservation = async (postId: string) => {
+      const currentViewMode = viewMode;
+      const currentSelectedUsers = { ...selectedUsers };
+      const currentActiveTab = activeTab;
+      
+      await handleDeleteLinkedInPost(postId);
+      
+      // After deletion, preserve the view state
+      setTimeout(() => {
+        setViewMode(currentViewMode);
+        setSelectedUsers(currentSelectedUsers);
+        setActiveTab(currentActiveTab);
+      }, 100);
+    };
+
     if (!isOpen) return null;
 
     // Organize Twitter posts by user
@@ -3012,7 +3043,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => {
-                                    item.tweets.forEach(tweet => handleDeleteTwitterPost(tweet.id));
+                                    item.tweets.forEach(tweet => handleDeleteTwitterPostWithViewPreservation(tweet.id));
                                   }}
                                   className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
                                 >
@@ -3027,7 +3058,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => {
-                                    handleDeleteTwitterPost(item.id);
+                                    handleDeleteTwitterPostWithViewPreservation(item.id);
                                   }}
                                   className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100"
                                 >
@@ -3060,7 +3091,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                               variant="destructive"
                               size="sm"
                               onClick={() => {
-                                handleDeleteLinkedInPost(post.mongoId || post._id || post.id);
+                                handleDeleteLinkedInPostWithViewPreservation(post.mongoId || post._id || post.id);
                               }}
                               className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-500 hover:bg-red-600 opacity-80 hover:opacity-100 z-10"
                             >
