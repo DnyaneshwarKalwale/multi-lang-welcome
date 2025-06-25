@@ -898,8 +898,12 @@ class LinkedInApi {
 
   // Save a published post
   async savePublishedPost(post: any): Promise<any> {
-    // Just return the post without making API call
-    return post;
+    const response = await axios.post(`${this.POSTS_API_URL}/save`, {
+      ...post,
+      status: 'published',  // Ensure status is always set to published
+      provider: 'linkedin'  // Add provider information
+    });
+    return response.data;
   }
 
   // Save a draft post

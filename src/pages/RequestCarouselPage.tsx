@@ -2169,10 +2169,16 @@ const RequestCarouselPage: React.FC = () => {
           videoTitle: selectedVideo?.title,
           status: "published",
           publishedToLinkedIn: true,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          provider: 'linkedin',
+          visibility: 'PUBLIC',
+          userId: localStorage.getItem('userId') // Add user ID for proper filtering
         });
 
-        // Refresh the saved posts list
+        // Clear the preview content after successful publish
+        setPreviewContent('');
+        
+        // Refresh both the saved posts list and any other relevant content
         await loadSavedContents();
 
         toast({
