@@ -127,6 +127,8 @@ interface SavedContent {
   videoId?: string;
   videoTitle?: string;
   createdAt: string;
+  publishedToLinkedIn?: boolean;
+  status?: 'draft' | 'published';
 }
 
 
@@ -444,21 +446,29 @@ const RequestCarouselPage: React.FC = () => {
       }
     };
     
-  // Load saved videos on component mount and when user changes
+  // Load saved videos and contents on component mount and when user changes
   useEffect(() => {
     loadSavedVideos();
+    loadSavedContents(); // Load saved posts immediately
     
     // Set up a listener to reload when localStorage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'savedYoutubeVideos') {
         loadSavedVideos();
       }
+      if (e.key === 'savedLinkedInContents') {
+        loadSavedContents();
+      }
     };
+    
+    // Set up interval to refresh saved posts every minute
+    const refreshInterval = setInterval(loadSavedContents, 60000);
     
     window.addEventListener('storage', handleStorageChange);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(refreshInterval);
     };
   }, [user?.id]);
 
@@ -590,17 +600,8 @@ const RequestCarouselPage: React.FC = () => {
       form.setValue("youtubeUrl", `https://youtube.com/watch?v=${video.id}`);
     }
     
-    // Check if we have saved content for this video from localStorage
-    const savedVideoId = localStorage.getItem('ai_generated_content_videoId');
-    if (savedVideoId === video.id) {
-      const savedContent = localStorage.getItem('ai_generated_content');
-      if (savedContent) {
-        setPreviewContent(savedContent);
-      }
-    } else {
-      // Clear preview if selecting a different video
-      setPreviewContent(null);
-    }
+    // Keep existing preview content when selecting a new video
+    // Only clear content if explicitly requested by the user
     
     // Check if the video has a valid formatted transcript (array of bullet points)
     if (video.formattedTranscript && 
@@ -1148,12 +1149,22 @@ const RequestCarouselPage: React.FC = () => {
         : `${baseUrl}/api/generate-content`;
 
       const response = await axios.post(apiUrl, {
-        type: type, // Use the type directly since backend now supports 'text-post'
+        type: type,
         transcript: selectedVideo.transcript,
         videoId: selectedVideo.id,
         videoTitle: selectedVideo.title,
-        userId: user?.id || 'anonymous', // Pass userId for auto-saving
-        writingStyleSamples: attachedLinkedInPost || undefined // Include writing style samples if available
+        userId: user?.id || 'anonymous',
+        writingStyleSamples: attachedLinkedInPost || undefined,
+        options: {
+          naturalTitle: true,
+          removeSlideNumbers: true,
+          formatPreferences: {
+            titleStyle: 'engaging', // Add engaging title style
+            contentStyle: 'professional', // Keep content professional
+            removeAIIndicators: true, // Remove any AI-generated indicators
+            preserveEmojis: true // Keep emojis in the content
+          }
+        }
       });
 
       if (!response.data.success || !response.data.content) {
@@ -1162,11 +1173,14 @@ const RequestCarouselPage: React.FC = () => {
 
       const generatedContent = response.data.content;
       
+      // Clean the generated content to ensure no slide numbers
+      const cleanedContent = cleanCarouselContent(generatedContent);
+      
       // Update UI state
-        setGeneratedContent(generatedContent);
+      setGeneratedContent(cleanedContent);
       setShowContentGenerator(true);
       setSelectedContentType(type);
-        setPreviewContent(generatedContent);
+      setPreviewContent(cleanedContent);
       setPreviewType(type);
       
       // Save the content to backend and localStorage
@@ -1179,7 +1193,7 @@ const RequestCarouselPage: React.FC = () => {
         const saveResponse = await axios.post(saveUrl, {
           id: uuidv4(), // Add unique ID
           title: selectedVideo.title,
-          content: generatedContent,
+          content: cleanedContent,
           type: type === 'text-post' ? 'text-post' : 'carousel',
           videoId: selectedVideo.id,
           videoTitle: selectedVideo.title,
@@ -1191,7 +1205,7 @@ const RequestCarouselPage: React.FC = () => {
           const newContent: SavedContent = {
             id: saveResponse.data.data.id,
             title: selectedVideo.title,
-            content: generatedContent,
+            content: cleanedContent,
             type: type === 'text-post' ? 'text-post' : 'carousel',
             videoId: selectedVideo.id,
             videoTitle: selectedVideo.title,
@@ -1635,14 +1649,31 @@ const RequestCarouselPage: React.FC = () => {
     cleanedContent = cleanedContent.replace(/^Slide\s*\d+[\s:.-]*/gim, '');
     cleanedContent = cleanedContent.replace(/^(Slide|Page)\s*\d+[:.]/gim, '');
     cleanedContent = cleanedContent.replace(/^(\d+\.?\s*)+/gm, '');
+    cleanedContent = cleanedContent.replace(/^(#\s*)?\d+[\s:.-]*/gm, ''); // Additional number pattern
+    cleanedContent = cleanedContent.replace(/^(Part|Section)\s*\d+[:.]/gim, ''); // Remove part/section numbers
+    
+    // Remove AI-generated content markers
+    cleanedContent = cleanedContent.replace(/^AI-generated:?\s*/gim, '');
+    cleanedContent = cleanedContent.replace(/^Generated by AI:?\s*/gim, '');
+    cleanedContent = cleanedContent.replace(/^Generated content:?\s*/gim, '');
+    cleanedContent = cleanedContent.replace(/\[AI-generated\]/gi, '');
+    cleanedContent = cleanedContent.replace(/\[Generated by AI\]/gi, '');
     
     // Remove separator lines
     cleanedContent = cleanedContent.replace(/^-{3,}$/gm, '');
     cleanedContent = cleanedContent.replace(/^\s*-{3,}\s*$/gm, '');
+    cleanedContent = cleanedContent.replace(/^_{3,}$/gm, '');
+    cleanedContent = cleanedContent.replace(/^\s*_{3,}\s*$/gm, '');
       
-    // Clean up extra whitespace and empty lines
+    // Clean up extra whitespace and empty lines while preserving emojis
     cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
     cleanedContent = cleanedContent.replace(/^\s+|\s+$/g, '').trim();
+    
+    // Remove any remaining metadata or structural markers
+    cleanedContent = cleanedContent.replace(/^Title:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^Description:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^Summary:.*$/gim, '');
+    cleanedContent = cleanedContent.replace(/^Hashtags:.*$/gim, '');
     
     return cleanedContent;
   };
@@ -2097,24 +2128,24 @@ const RequestCarouselPage: React.FC = () => {
       
       // Validate content
       if (!previewContent?.trim()) {
-      toast({
+        toast({
           title: "Error",
           description: "Please add some content",
-        variant: "destructive"
-      });
+          variant: "destructive"
+        });
         setIsPublishing(false);
-      return;
-    }
+        return;
+      }
     
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
     
       if (!token) {
-      toast({
+        toast({
           title: "Error",
           description: "Please connect your LinkedIn account",
-        variant: "destructive"
-      });
+          variant: "destructive"
+        });
         setIsPublishing(false);
         
         // Show a reconnect option
@@ -2128,7 +2159,23 @@ const RequestCarouselPage: React.FC = () => {
       const response = await linkedInApi.createTextPost(previewContent);
       
       if (response.id) {  // Check for id directly instead of response?.data?.id
-      toast({
+        // Save the published post to the backend
+        await linkedInApi.savePublishedPost({
+          id: response.id,
+          title: selectedVideo?.title || "Text Post",
+          content: previewContent,
+          type: "text-post",
+          videoId: selectedVideo?.id,
+          videoTitle: selectedVideo?.title,
+          status: "published",
+          publishedToLinkedIn: true,
+          createdAt: new Date().toISOString()
+        });
+
+        // Refresh the saved posts list
+        await loadSavedContents();
+
+        toast({
           title: "Success",
           description: "Post published to LinkedIn successfully!",
         });
@@ -2161,8 +2208,80 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
+  // Add new section for saved posts that's always visible
+  const SavedPostsSection = () => {
     return (
-    <div className="container max-w-6xl py-4 sm:py-8 px-1 sm:px-2 md:px-4 w-full overflow-hidden">
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-lg">Saved & Published Posts</CardTitle>
+          <CardDescription>Your previously generated, saved, and published content</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {savedContents.map((content) => (
+              <div key={content.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-sm">{content.title}</h4>
+                      {content.publishedToLinkedIn && (
+                        <Badge variant="secondary" className="text-xs">
+                          Published
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(content.createdAt).toLocaleDateString()}
+                    </p>
+                    {content.videoTitle && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        From: {content.videoTitle}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => loadSavedContent(content)}
+                      className="h-8"
+                    >
+                      Load
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteSavedContent(content.id)}
+                      className="h-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground line-clamp-2">
+                  {content.content}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="outline" className="text-xs">
+                    {content.type === 'text-post' ? 'Text Post' : 'Carousel'}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+            {savedContents.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No saved posts yet</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Add SavedPostsSection to the render section
+  return (
+    <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {userLimit && (
         <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -3541,6 +3660,9 @@ const RequestCarouselPage: React.FC = () => {
           </Card>
         </div>
       )}
+      
+      {/* Add SavedPostsSection here, before the subscription modal */}
+      <SavedPostsSection />
     </div>
   );
 };
