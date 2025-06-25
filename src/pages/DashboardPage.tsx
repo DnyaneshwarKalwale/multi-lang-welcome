@@ -841,7 +841,7 @@ const DashboardPage: React.FC = () => {
                 <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                   <span>Joined {linkedInProfile?.joinedDate || 'Recently'}</span>
                   <a 
-                    href={linkedInProfile?.url || `https://linkedin.com/in/${linkedInProfile?.username}`} 
+                    href={linkedInProfile?.url || `https://linkedin.com/in/${linkedInProfile?.username || ''}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
