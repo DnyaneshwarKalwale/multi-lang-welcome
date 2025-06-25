@@ -2158,9 +2158,9 @@ const RequestCarouselPage: React.FC = () => {
       // Publish as text post
       const response = await linkedInApi.createTextPost(previewContent);
       
-      if (response.id) {  // Check for id directly instead of response?.data?.id
-        // Save the published post to the backend
-        await linkedInApi.savePublishedPost({
+      if (response.id) {
+        // Save the published post to the backend with all necessary fields
+        const savedPost = await linkedInApi.savePublishedPost({
           id: response.id,
           title: selectedVideo?.title || "Text Post",
           content: previewContent,
@@ -2171,14 +2171,20 @@ const RequestCarouselPage: React.FC = () => {
           publishedToLinkedIn: true,
           createdAt: new Date().toISOString(),
           provider: 'linkedin',
-          visibility: 'PUBLIC',
-          userId: localStorage.getItem('userId') // Add user ID for proper filtering
+          publishedAt: new Date().toISOString()
         });
 
-        // Clear the preview content after successful publish
-        setPreviewContent('');
-        
-        // Refresh both the saved posts list and any other relevant content
+        // Update local state
+        setSavedContents(prev => [
+          {
+            ...savedPost,
+            publishedToLinkedIn: true,
+            status: 'published'
+          },
+          ...prev
+        ]);
+
+        // Refresh the saved posts list to ensure it's up to date
         await loadSavedContents();
 
         toast({

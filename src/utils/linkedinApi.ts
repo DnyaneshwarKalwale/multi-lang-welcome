@@ -898,12 +898,19 @@ class LinkedInApi {
 
   // Save a published post
   async savePublishedPost(post: any): Promise<any> {
-    const response = await axios.post(`${this.POSTS_API_URL}/save`, {
-      ...post,
-      status: 'published',  // Ensure status is always set to published
-      provider: 'linkedin'  // Add provider information
-    });
-    return response.data;
+    try {
+      const response = await axios.post(`${this.POSTS_API_URL}/save`, {
+        ...post,
+        status: 'published',  // Ensure status is always set to published
+        publishedToLinkedIn: true,  // Ensure publishedToLinkedIn is always true
+        provider: 'linkedin',  // Add provider information
+        publishedAt: new Date().toISOString()  // Add publish timestamp
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error saving published post:', error);
+      throw error;
+    }
   }
 
   // Save a draft post
