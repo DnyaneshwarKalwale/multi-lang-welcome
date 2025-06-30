@@ -2658,14 +2658,43 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const currentSelectedUsers = { ...selectedUsers };
       const currentActiveTab = activeTab;
       
-      await handleDeleteTwitterPost(tweetId);
-      
-      // After deletion, preserve the view state
-      setTimeout(() => {
-        setViewMode(currentViewMode);
-        setSelectedUsers(currentSelectedUsers);
-        setActiveTab(currentActiveTab);
-      }, 100);
+      try {
+        const authMethod = localStorage.getItem('auth-method');
+        const token = authMethod ? tokenManager.getToken(authMethod) : null;
+        if (!token) {
+          toastError('Please log in to delete posts');
+          return;
+        }
+
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const apiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/twitter/${tweetId}`
+          : `${baseUrl}/api/twitter/${tweetId}`;
+
+        const response = await axios.delete(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          toastSuccess('Tweet deleted successfully');
+          
+          // Reload saved posts but preserve view state
+          await loadSavedPosts();
+          
+          // Preserve the view state immediately after loading
+          setViewMode(currentViewMode);
+          setSelectedUsers(currentSelectedUsers);
+          setActiveTab(currentActiveTab);
+        } else {
+          toastError(response.data.message || 'Failed to delete tweet');
+        }
+      } catch (error) {
+        console.error('Error deleting tweet:', error);
+        toastError(error.response?.data?.message || 'Failed to delete tweet');
+      }
     };
 
     const handleDeleteLinkedInPostWithViewPreservation = async (postId: string) => {
@@ -2673,14 +2702,62 @@ const ScraperPage: React.FC = (): JSX.Element => {
       const currentSelectedUsers = { ...selectedUsers };
       const currentActiveTab = activeTab;
       
-      await handleDeleteLinkedInPost(postId);
-      
-      // After deletion, preserve the view state
-      setTimeout(() => {
-        setViewMode(currentViewMode);
-        setSelectedUsers(currentSelectedUsers);
-        setActiveTab(currentActiveTab);
-      }, 100);
+      try {
+        const authMethod = localStorage.getItem('auth-method');
+        const token = authMethod ? tokenManager.getToken(authMethod) : null;
+        if (!token || !user?.id) {
+          toastError('Please log in to delete posts');
+          return;
+        }
+
+        // The postId should be the MongoDB _id from the saved post
+        // If it's not, try to find the correct _id from savedLinkedInPosts
+        let mongoId = postId;
+        
+        // Check if postId looks like a MongoDB ObjectId (24 hex characters)
+        if (!/^[a-f\d]{24}$/i.test(postId)) {
+          // It's not a MongoDB ObjectId, find it in the saved posts array
+          const savedPost = savedLinkedInPosts.find(post => 
+            post.id === postId || post.url === postId || post.mongoId === postId
+          );
+          
+          if (!savedPost) {
+            toastError('Post not found in saved posts');
+            return;
+          }
+          
+          mongoId = savedPost.mongoId || savedPost._id;
+        }
+
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const apiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/saved-posts/${mongoId}`
+          : `${baseUrl}/api/saved-posts/${mongoId}`;
+
+        const response = await axios.delete(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          toastSuccess('LinkedIn post deleted successfully');
+          
+          // Reload saved posts but preserve view state
+          await loadSavedPosts();
+          
+          // Preserve the view state immediately after loading
+          setViewMode(currentViewMode);
+          setSelectedUsers(currentSelectedUsers);
+          setActiveTab(currentActiveTab);
+        } else {
+          toastError(response.data.message || 'Failed to delete LinkedIn post');
+        }
+      } catch (error) {
+        console.error('Error deleting LinkedIn post:', error);
+        toastError(error.response?.data?.message || 'Failed to delete LinkedIn post');
+      }
     };
 
     if (!isOpen) return null;

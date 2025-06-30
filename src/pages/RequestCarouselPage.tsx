@@ -2128,24 +2128,24 @@ const RequestCarouselPage: React.FC = () => {
       
       // Validate content
       if (!previewContent?.trim()) {
-        toast({
+      toast({
           title: "Error",
           description: "Please add some content",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
-        return;
-      }
+      return;
+    }
     
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
     
       if (!token) {
-        toast({
+      toast({
           title: "Error",
           description: "Please connect your LinkedIn account",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
         
         // Show a reconnect option
@@ -2158,9 +2158,9 @@ const RequestCarouselPage: React.FC = () => {
       // Publish as text post
       const response = await linkedInApi.createTextPost(previewContent);
       
-      if (response.id) {
-        // Save the published post to the backend with all necessary fields
-        const savedPost = await linkedInApi.savePublishedPost({
+      if (response.id) {  // Check for id directly instead of response?.data?.id
+        // Save the published post to the backend
+        await linkedInApi.savePublishedPost({
           id: response.id,
           title: selectedVideo?.title || "Text Post",
           content: previewContent,
@@ -2169,25 +2169,13 @@ const RequestCarouselPage: React.FC = () => {
           videoTitle: selectedVideo?.title,
           status: "published",
           publishedToLinkedIn: true,
-          createdAt: new Date().toISOString(),
-          provider: 'linkedin',
-          publishedAt: new Date().toISOString()
+          createdAt: new Date().toISOString()
         });
 
-        // Update local state
-        setSavedContents(prev => [
-          {
-            ...savedPost,
-            publishedToLinkedIn: true,
-            status: 'published'
-          },
-          ...prev
-        ]);
-
-        // Refresh the saved posts list to ensure it's up to date
+        // Refresh the saved posts list
         await loadSavedContents();
 
-        toast({
+      toast({
           title: "Success",
           description: "Post published to LinkedIn successfully!",
         });
@@ -2220,78 +2208,8 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Add new section for saved posts that's always visible
-  const SavedPostsSection = () => {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-lg">Saved & Published Posts</CardTitle>
-          <CardDescription>Your previously generated, saved, and published content</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {savedContents.map((content) => (
-              <div key={content.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-sm">{content.title}</h4>
-                      {content.publishedToLinkedIn && (
-                        <Badge variant="secondary" className="text-xs">
-                          Published
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(content.createdAt).toLocaleDateString()}
-                    </p>
-                    {content.videoTitle && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        From: {content.videoTitle}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => loadSavedContent(content)}
-                      className="h-8"
-                    >
-                      Load
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteSavedContent(content.id)}
-                      className="h-8 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground line-clamp-2">
-                  {content.content}
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="outline" className="text-xs">
-                    {content.type === 'text-post' ? 'Text Post' : 'Carousel'}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-            {savedContents.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No saved posts yet</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
-  // Add SavedPostsSection to the render section
+
   return (
     <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {userLimit && (
@@ -2335,11 +2253,21 @@ const RequestCarouselPage: React.FC = () => {
         </div>
       )}
 
-      <div className="mb-4 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold">Request a Carousel</h1>
-        <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base break-words max-w-[90vw] sm:max-w-none">
-          Provide content from a YouTube video and we'll create a professional carousel for you
-        </p>
+      <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Request a Carousel</h1>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base break-words max-w-[90vw] sm:max-w-none">
+            Provide content from a YouTube video and we'll create a professional carousel for you
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowSavedContents(true)}
+          className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          <Folder className="h-4 w-4 text-blue-600" />
+          Saved Content ({savedContents.length})
+        </Button>
       </div>
       
       <div className="grid lg:grid-cols-2 gap-4 sm:gap-8 w-full">
@@ -2689,15 +2617,6 @@ const RequestCarouselPage: React.FC = () => {
                                     <Sparkles className="h-4 w-4 text-amber-500" />
                                     Generate LinkedIn Content
                                   </h3>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setShowSavedContents(true)}
-                                    className="flex items-center gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
-                                  >
-                                    <Folder className="h-4 w-4 text-blue-600" />
-                                    Saved ({savedContents.length})
-                                  </Button>
                                 </div>
                                 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">
@@ -3672,9 +3591,6 @@ const RequestCarouselPage: React.FC = () => {
           </Card>
         </div>
       )}
-      
-      {/* Add SavedPostsSection here, before the subscription modal */}
-      <SavedPostsSection />
     </div>
   );
 };
