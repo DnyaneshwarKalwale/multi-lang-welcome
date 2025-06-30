@@ -113,7 +113,7 @@ const PDFViewerModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -2684,16 +2684,68 @@ const ScraperPage: React.FC = (): JSX.Element => {
           // Reload saved posts but preserve view state
           await loadSavedPosts();
           
-          // Preserve the view state immediately after loading
-          setViewMode(currentViewMode);
-          setSelectedUsers(currentSelectedUsers);
-          setActiveTab(currentActiveTab);
+          // Use setTimeout to ensure state updates after loadSavedPosts completes
+          setTimeout(() => {
+            setViewMode(currentViewMode);
+            setSelectedUsers(currentSelectedUsers);
+            setActiveTab(currentActiveTab);
+          }, 100);
         } else {
           toastError(response.data.message || 'Failed to delete tweet');
         }
       } catch (error) {
         console.error('Error deleting tweet:', error);
         toastError(error.response?.data?.message || 'Failed to delete tweet');
+      }
+    };
+
+    // Delete entire Twitter user folder
+    const handleDeleteTwitterUserFolder = async (username: string) => {
+      const currentViewMode = viewMode;
+      const currentSelectedUsers = { ...selectedUsers };
+      const currentActiveTab = activeTab;
+      
+      if (!confirm(`⚠️ Delete User Folder\n\nAre you sure you want to delete ALL tweets from @${username}?\n\nThis will permanently remove:\n• All saved tweets\n• All saved threads\n• All associated media\n\nThis action cannot be undone!`)) {
+        return;
+      }
+
+      try {
+        const authMethod = localStorage.getItem('auth-method');
+        const token = authMethod ? tokenManager.getToken(authMethod) : null;
+        if (!token) {
+          toastError('Please log in to delete posts');
+          return;
+        }
+
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const apiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/twitter/user/${username}`
+          : `${baseUrl}/api/twitter/user/${username}`;
+
+        const response = await axios.delete(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          toastSuccess(`All tweets from @${username} deleted successfully`);
+          
+          // Reload saved posts and go back to folders view
+          await loadSavedPosts();
+          
+          setTimeout(() => {
+            setViewMode('folders');
+            setSelectedUsers({ twitter: new Set(), linkedin: new Set() });
+            setActiveTab(currentActiveTab);
+          }, 100);
+        } else {
+          toastError(response.data.message || 'Failed to delete user folder');
+        }
+      } catch (error) {
+        console.error('Error deleting Twitter user folder:', error);
+        toastError(error.response?.data?.message || 'Failed to delete user folder');
       }
     };
 
@@ -2747,16 +2799,68 @@ const ScraperPage: React.FC = (): JSX.Element => {
           // Reload saved posts but preserve view state
           await loadSavedPosts();
           
-          // Preserve the view state immediately after loading
-          setViewMode(currentViewMode);
-          setSelectedUsers(currentSelectedUsers);
-          setActiveTab(currentActiveTab);
+          // Use setTimeout to ensure state updates after loadSavedPosts completes
+          setTimeout(() => {
+            setViewMode(currentViewMode);
+            setSelectedUsers(currentSelectedUsers);
+            setActiveTab(currentActiveTab);
+          }, 100);
         } else {
           toastError(response.data.message || 'Failed to delete LinkedIn post');
         }
       } catch (error) {
         console.error('Error deleting LinkedIn post:', error);
         toastError(error.response?.data?.message || 'Failed to delete LinkedIn post');
+      }
+    };
+
+    // Delete entire LinkedIn user folder
+    const handleDeleteLinkedInUserFolder = async (authorName: string) => {
+      const currentViewMode = viewMode;
+      const currentSelectedUsers = { ...selectedUsers };
+      const currentActiveTab = activeTab;
+      
+      if (!confirm(`⚠️ Delete User Folder\n\nAre you sure you want to delete ALL LinkedIn posts from ${authorName}?\n\nThis will permanently remove:\n• All saved posts\n• All associated media\n• All document attachments\n\nThis action cannot be undone!`)) {
+        return;
+      }
+
+      try {
+        const authMethod = localStorage.getItem('auth-method');
+        const token = authMethod ? tokenManager.getToken(authMethod) : null;
+        if (!token || !user?.id) {
+          toastError('Please log in to delete posts');
+          return;
+        }
+
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://api.brandout.ai';
+        const apiUrl = baseUrl.endsWith('/api') 
+          ? `${baseUrl}/linkedin/user/${encodeURIComponent(authorName)}`
+          : `${baseUrl}/api/linkedin/user/${encodeURIComponent(authorName)}`;
+
+        const response = await axios.delete(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          toastSuccess(`All LinkedIn posts from ${authorName} deleted successfully`);
+          
+          // Reload saved posts and go back to folders view
+          await loadSavedPosts();
+          
+          setTimeout(() => {
+            setViewMode('folders');
+            setSelectedUsers({ twitter: new Set(), linkedin: new Set() });
+            setActiveTab(currentActiveTab);
+          }, 100);
+        } else {
+          toastError(response.data.message || 'Failed to delete user folder');
+        }
+      } catch (error) {
+        console.error('Error deleting LinkedIn user folder:', error);
+        toastError(error.response?.data?.message || 'Failed to delete user folder');
       }
     };
 
@@ -2879,7 +2983,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
     };
 
     return (
-      <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg w-full max-w-6xl h-full max-h-[90vh] flex flex-col">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
@@ -2933,9 +3037,12 @@ const ScraperPage: React.FC = (): JSX.Element => {
             ) : viewMode === 'folders' ? (
               // User Folder View
               <div className="space-y-6">
-                <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
+                                  <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
                   <h4 className="font-medium mb-2">Select Users:</h4>
                   <p>Choose users whose posts you want to work with. You can select multiple users from both platforms.</p>
+                  <p className="text-xs mt-2 text-amber-700">
+                    💡 <strong>Tip:</strong> Hover over any folder to see the delete option (🗑️) to remove all posts from that user.
+                  </p>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'twitter' | 'linkedin')} className="w-full">
@@ -2962,7 +3069,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                             key={username}
                             className={`transition-all hover:shadow-md ${
                               selectedUsers.twitter.has(username) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
-                            }`}
+                            } relative group`}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
@@ -2976,7 +3083,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   {selectedUsers.twitter.has(username) ? (
                                     <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                                       <div className="h-3 w-3 text-white">✓</div>
-                        </div>
+                                    </div>
                                   ) : (
                                     <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
                                   )}
@@ -3001,10 +3108,23 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                     {posts.length} post{posts.length !== 1 ? 's' : ''}
                                   </p>
                                 </div>
+                                {/* Delete folder button */}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteTwitterUserFolder(username);
+                                  }}
+                                  className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-red-500 hover:bg-red-600 hover:scale-110 shadow-md"
+                                  title={`Delete all posts from @${username}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </CardContent>
                           </Card>
-                      ))}
+                        ))}
                     </div>
                   )}
                 </TabsContent>
@@ -3021,7 +3141,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                             key={authorName}
                             className={`transition-all hover:shadow-md ${
                               selectedUsers.linkedin.has(authorName) ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
-                            }`}
+                            } relative group`}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
@@ -3059,6 +3179,19 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                     {posts.length} post{posts.length !== 1 ? 's' : ''}
                                   </p>
                                 </div>
+                                {/* Delete folder button */}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteLinkedInUserFolder(authorName);
+                                  }}
+                                  className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-red-500 hover:bg-red-600 hover:scale-110 shadow-md"
+                                  title={`Delete all posts from ${authorName}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </CardContent>
                           </Card>

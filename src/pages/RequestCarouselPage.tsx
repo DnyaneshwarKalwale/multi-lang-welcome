@@ -2128,24 +2128,35 @@ const RequestCarouselPage: React.FC = () => {
       
       // Validate content
       if (!previewContent?.trim()) {
-      toast({
+        toast({
           title: "Error",
           description: "Please add some content",
-        variant: "destructive"
-      });
+          variant: "destructive"
+        });
         setIsPublishing(false);
-      return;
-    }
+        return;
+      }
+
+      // Prevent carousel content from being published
+      if (previewType === 'carousel') {
+        toast({
+          title: "Error",
+          description: "Carousel content cannot be published to LinkedIn. Please use text posts only.",
+          variant: "destructive"
+        });
+        setIsPublishing(false);
+        return;
+      }
     
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
     
       if (!token) {
-      toast({
+        toast({
           title: "Error",
           description: "Please connect your LinkedIn account",
-        variant: "destructive"
-      });
+          variant: "destructive"
+        });
         setIsPublishing(false);
         
         // Show a reconnect option
@@ -2155,37 +2166,50 @@ const RequestCarouselPage: React.FC = () => {
         return;
       }
       
-      // Publish as text post
+      // Publish content to LinkedIn as text post only
       const response = await linkedInApi.createTextPost(previewContent);
       
-      if (response.id) {  // Check for id directly instead of response?.data?.id
-        // Save the published post to the backend
-        await linkedInApi.savePublishedPost({
-          id: response.id,
-          title: selectedVideo?.title || "Text Post",
-          content: previewContent,
-          type: "text-post",
-          videoId: selectedVideo?.id,
-          videoTitle: selectedVideo?.title,
-          status: "published",
-          publishedToLinkedIn: true,
-          createdAt: new Date().toISOString()
-        });
+      if (response.id) {
+        try {
+          // Save the published post to the main posts library
+          await linkedInApi.savePublishedPost({
+            title: previewTitle || selectedVideo?.title || "LinkedIn Post",
+            content: previewContent,
+            type: "text-post",
+            videoId: selectedVideo?.id,
+            videoTitle: selectedVideo?.title,
+            platformPostId: response.id,
+            createdAt: new Date().toISOString()
+          });
 
-        // Refresh the saved posts list
-        await loadSavedContents();
-
-      toast({
-          title: "Success",
-          description: "Post published to LinkedIn successfully!",
-        });
+          // Refresh the saved contents list
+          await loadSavedContents();
+          
+          toast({
+            title: "🎉 Success!",
+            description: (
+              <div className="flex flex-col gap-1">
+                <p>Post published to LinkedIn and saved to your post library!</p>
+                <p className="text-xs text-gray-600">You can view all your posts in the Scraper page → Saved Posts.</p>
+              </div>
+            ),
+            duration: 5000
+          });
+        } catch (saveError) {
+          console.error('Error saving published post:', saveError);
+          toast({
+            title: "✅ Published to LinkedIn",
+            description: "Post was published successfully, but there was an issue saving to your post library.",
+            variant: "default",
+            duration: 4000
+          });
+        }
       }
-      
     } catch (error: any) {
       console.error('Error publishing to LinkedIn:', error);
       
       // Check for token expiration
-      if (error.message?.includes('authentication expired')) {
+      if (error.message?.includes('authentication expired') || error.message?.includes('token not available')) {
         toast({
           title: "Error",
           description: "Your LinkedIn authentication has expired. Please reconnect your account.",
@@ -2774,7 +2798,7 @@ const RequestCarouselPage: React.FC = () => {
                               {isPublishing ? (
                                 <>
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>Publishing...</span>
+                                  <span>Publishing & Saving...</span>
                                 </>
                               ) : (
                                 <>
@@ -2898,9 +2922,9 @@ const RequestCarouselPage: React.FC = () => {
               </div>
             )}
             
-            {/* Add Edit in Editor button for carousel content */}
+            {/* Add button for carousel content */}
             {previewContent && previewType === 'carousel' && (
-              <div className="mt-4">
+              <div className="mt-4 space-y-2">
                 <Button 
                   onClick={handleEditInEditor}
                   className="w-full"

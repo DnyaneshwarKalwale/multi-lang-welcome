@@ -896,15 +896,41 @@ class LinkedInApi {
     }
   }
 
-  // Save a published post
+  // Save a published post to the main posts library
   async savePublishedPost(post: any): Promise<any> {
     try {
-      const response = await axios.post(`${this.POSTS_API_URL}/save`, {
-        ...post,
-        status: 'published',  // Ensure status is always set to published
-        publishedToLinkedIn: true,  // Ensure publishedToLinkedIn is always true
-        provider: 'linkedin',  // Add provider information
-        publishedAt: new Date().toISOString()  // Add publish timestamp
+      const token = tokenManager.getToken();
+      
+      if (!token) {
+        throw new Error("Authentication token not available. Please login again.");
+      }
+
+      // Create post data for the main posts system
+      const postData = {
+        title: post.title,
+        content: post.content,
+        status: 'published',
+        platform: 'linkedin',
+        platformPostId: post.platformPostId, // Store the LinkedIn post ID
+        mediaType: post.type === 'carousel' ? 'carousel' : 'none',
+        slides: post.type === 'carousel' && post.slides ? post.slides : [],
+        visibility: 'PUBLIC',
+        publishedToLinkedIn: true,
+        publishedTime: new Date(),
+        // Add metadata for tracking the source
+        metadata: {
+          source: 'request-carousel',
+          videoId: post.videoId,
+          videoTitle: post.videoTitle,
+          generatedAt: post.createdAt
+        }
+      };
+
+      const response = await axios.post(this.POSTS_API_URL, postData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       return response.data;
     } catch (error) {
