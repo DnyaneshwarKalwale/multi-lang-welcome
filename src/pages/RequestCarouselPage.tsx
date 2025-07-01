@@ -289,8 +289,7 @@ const RequestCarouselPage: React.FC = () => {
     count: 0, 
     remaining: 0, 
     planId: 'expired',
-    planName: 'No Plan',
-    status: 'inactive'
+    planName: 'No Plan' 
   });
 
   // Add state for plan upgrade tracking
@@ -496,13 +495,13 @@ const RequestCarouselPage: React.FC = () => {
       if (limitResponse.data.success) {
         const userData = limitResponse.data.data;
         
-        // Check if plan is expired
-        const isExpired = userData.planId === 'expired' || 
-                         userData.status === 'inactive' ||
-                         (userData.expiresAt && new Date(userData.expiresAt) < new Date());
+        // Check if plan is expired or inactive
+        const isExpiredOrInactive = userData.status === 'inactive' || 
+                                  userData.planId === 'expired' ||
+                                  (userData.expiresAt && new Date(userData.expiresAt) < new Date());
         
-        // If expired, set all counts to 0
-        if (isExpired) {
+        // If plan is expired/inactive, set all limits to 0
+        if (isExpiredOrInactive) {
           setUserLimit({ 
             limit: 0, 
             count: 0, 
@@ -510,18 +509,18 @@ const RequestCarouselPage: React.FC = () => {
             planId: 'expired',
             planName: 'No Plan',
             status: 'inactive',
-            expiresAt: null
+            expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
           });
           setNeedsPlanUpgrade(true);
         } else {
-          // For active plans, use the data from API
+          // Plan is active, show actual limits
           setUserLimit({ 
             limit: userData.limit || 0, 
             count: userData.count || 0, 
             remaining: Math.max(0, (userData.limit || 0) - (userData.count || 0)), 
             planId: userData.planId,
-            planName: userData.planName,
-            status: userData.status,
+            planName: userData.planName || 'No Plan',
+            status: userData.status || 'active',
             expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
           });
           setNeedsPlanUpgrade(false);
@@ -2271,37 +2270,30 @@ const RequestCarouselPage: React.FC = () => {
         <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-medium text-gray-900">
-                {userLimit.planId === 'expired' ? 'No Active Plan' : `${userLimit.planName} Plan`}
-              </h3>
+              <h3 className="text-sm font-medium text-gray-900">Credits {userLimit.planId !== 'expired' ? `(${userLimit.planName} Plan)` : ''}</h3>
               <p className="text-xs sm:text-sm text-gray-500">
-                {userLimit.planId === 'expired' ? 
-                  'Purchase a plan to get started' :
-                  `${userLimit.count || 0} / ${userLimit.limit || 0} credits used`
-                }
+                {userLimit.count || 0} / {userLimit.limit || 0} credits used
                 {userLimit.expiresAt && userLimit.planId !== 'expired' && (
-                  <span className="ml-2">• Expires {format(new Date(userLimit.expiresAt), 'MMM dd, yyyy')}</span>
+                  <span className="ml-2">• Expires {format(userLimit.expiresAt, 'MMM dd, yyyy')}</span>
                 )}
               </p>
             </div>
             <div className="w-full sm:w-48 bg-gray-200 rounded-full h-2">
               <div 
-                className={`h-2 rounded-full ${userLimit.planId === 'expired' ? 'bg-gray-400' : 'bg-primary'}`}
+                className="bg-primary h-2 rounded-full" 
                 style={{ 
-                  width: userLimit.planId === 'expired' ? '100%' : 
-                    `${Math.min(((userLimit.count || 0) / (userLimit.limit || 1)) * 100, 100)}%` 
+                  width: `${Math.min(((userLimit.count || 0) / (userLimit.limit || 1)) * 100, 100)}%` 
                 }}
               />
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-2">
             <p className="text-xs text-gray-500">
-              {userLimit.planId === 'expired' ? 
-                'Your plan has expired. Purchase a new plan to continue using our services.' :
-                "Each credit can be used for generating either AI content or a carousel request"
-              }
+              {userLimit.planId !== 'expired' 
+                ? "Each credit can be used for generating either AI content or a carousel request"
+                : "Purchase a plan to get credits for AI content and carousel requests"}
             </p>
-            {(!userLimit.planId || userLimit.planId === 'expired' || userLimit.status === 'inactive') && (
+            {(!userLimit.planId || userLimit.planId === 'expired') && (
               <Button 
                 variant="outline" 
                 size="sm" 
