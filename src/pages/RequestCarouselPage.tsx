@@ -289,7 +289,8 @@ const RequestCarouselPage: React.FC = () => {
     count: 0, 
     remaining: 0, 
     planId: 'expired',
-    planName: 'No Plan' 
+    planName: 'No Plan',
+    status: 'inactive'
   });
 
   // Add state for plan upgrade tracking
@@ -495,19 +496,36 @@ const RequestCarouselPage: React.FC = () => {
       if (limitResponse.data.success) {
         const userData = limitResponse.data.data;
         
-        // Directly use the data from API without excessive conditions
-        setUserLimit({ 
-          limit: userData.limit || 0, 
-          count: userData.count || 0, 
-          remaining: Math.max(0, (userData.limit || 0) - (userData.count || 0)), 
-          planId: userData.planId || 'expired',
-          planName: userData.planName || 'No Plan',
-          status: userData.status || 'inactive',
-          expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
-        });
+        // Check if plan is expired
+        const isExpired = userData.planId === 'expired' || 
+                         userData.status === 'inactive' ||
+                         (userData.expiresAt && new Date(userData.expiresAt) < new Date());
         
-        // Set upgrade flag based on plan status
-        setNeedsPlanUpgrade(userData.planId === 'expired' || userData.status === 'inactive');
+        // If expired, set all counts to 0
+        if (isExpired) {
+          setUserLimit({ 
+            limit: 0, 
+            count: 0, 
+            remaining: 0, 
+            planId: 'expired',
+            planName: 'No Plan',
+            status: 'inactive',
+            expiresAt: null
+          });
+          setNeedsPlanUpgrade(true);
+        } else {
+          // For active plans, use the data from API
+          setUserLimit({ 
+            limit: userData.limit || 0, 
+            count: userData.count || 0, 
+            remaining: Math.max(0, (userData.limit || 0) - (userData.count || 0)), 
+            planId: userData.planId,
+            planName: userData.planName,
+            status: userData.status,
+            expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
+          });
+          setNeedsPlanUpgrade(false);
+        }
       } else {
         console.error('Failed to fetch user limit:', limitResponse.data.message);
         setUserLimit({ 
@@ -2155,11 +2173,11 @@ const RequestCarouselPage: React.FC = () => {
         toast({
           title: "Error",
           description: "Carousel content cannot be published to LinkedIn. Please use text posts only.",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
-        return;
-      }
+      return;
+    }
     
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
@@ -2253,30 +2271,37 @@ const RequestCarouselPage: React.FC = () => {
         <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-medium text-gray-900">Credits {userLimit.planId !== 'expired' ? `(${userLimit.planName} Plan)` : ''}</h3>
+              <h3 className="text-sm font-medium text-gray-900">
+                {userLimit.planId === 'expired' ? 'No Active Plan' : `${userLimit.planName} Plan`}
+              </h3>
               <p className="text-xs sm:text-sm text-gray-500">
-                {userLimit.count || 0} / {userLimit.limit || 0} credits used
+                {userLimit.planId === 'expired' ? 
+                  'Purchase a plan to get started' :
+                  `${userLimit.count || 0} / ${userLimit.limit || 0} credits used`
+                }
                 {userLimit.expiresAt && userLimit.planId !== 'expired' && (
-                  <span className="ml-2">• Expires {format(userLimit.expiresAt, 'MMM dd, yyyy')}</span>
+                  <span className="ml-2">• Expires {format(new Date(userLimit.expiresAt), 'MMM dd, yyyy')}</span>
                 )}
               </p>
             </div>
             <div className="w-full sm:w-48 bg-gray-200 rounded-full h-2">
               <div 
-                className="bg-primary h-2 rounded-full" 
+                className={`h-2 rounded-full ${userLimit.planId === 'expired' ? 'bg-gray-400' : 'bg-primary'}`}
                 style={{ 
-                  width: `${Math.min(((userLimit.count || 0) / (userLimit.limit || 1)) * 100, 100)}%` 
+                  width: userLimit.planId === 'expired' ? '100%' : 
+                    `${Math.min(((userLimit.count || 0) / (userLimit.limit || 1)) * 100, 100)}%` 
                 }}
               />
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-2">
             <p className="text-xs text-gray-500">
-              {userLimit.planId !== 'expired' 
-                ? "Each credit can be used for generating either AI content or a carousel request"
-                : "Purchase a plan to get credits for AI content and carousel requests"}
+              {userLimit.planId === 'expired' ? 
+                'Your plan has expired. Purchase a new plan to continue using our services.' :
+                "Each credit can be used for generating either AI content or a carousel request"
+              }
             </p>
-            {(!userLimit.planId || userLimit.planId === 'expired') && (
+            {(!userLimit.planId || userLimit.planId === 'expired' || userLimit.status === 'inactive') && (
               <Button 
                 variant="outline" 
                 size="sm" 
