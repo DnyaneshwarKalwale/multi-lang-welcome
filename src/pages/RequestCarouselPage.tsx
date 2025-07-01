@@ -2141,14 +2141,14 @@ const RequestCarouselPage: React.FC = () => {
       
       // Validate content
       if (!previewContent?.trim()) {
-        toast({
+      toast({
           title: "Error",
           description: "Please add some content",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
-        return;
-      }
+      return;
+    }
 
       // Prevent carousel content from being published
       if (previewType === 'carousel') {
@@ -2165,11 +2165,11 @@ const RequestCarouselPage: React.FC = () => {
       const token = localStorage.getItem('linkedin-login-token');
     
       if (!token) {
-        toast({
+      toast({
           title: "Error",
           description: "Please connect your LinkedIn account",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
         
         // Show a reconnect option
@@ -2198,7 +2198,7 @@ const RequestCarouselPage: React.FC = () => {
           // Refresh the saved contents list
           await loadSavedContents();
           
-          toast({
+      toast({
             title: "🎉 Success!",
             description: (
               <div className="flex flex-col gap-1">
@@ -2247,7 +2247,7 @@ const RequestCarouselPage: React.FC = () => {
 
 
 
-  return (
+    return (
     <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {userLimit && (
         <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
@@ -2292,10 +2292,10 @@ const RequestCarouselPage: React.FC = () => {
 
       <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Request a Carousel</h1>
-          <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base break-words max-w-[90vw] sm:max-w-none">
-            Provide content from a YouTube video and we'll create a professional carousel for you
-          </p>
+        <h1 className="text-2xl sm:text-3xl font-bold">Request a Carousel</h1>
+        <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base break-words max-w-[90vw] sm:max-w-none">
+          Provide content from a YouTube video and we'll create a professional carousel for you
+        </p>
         </div>
         <Button 
           variant="outline" 
