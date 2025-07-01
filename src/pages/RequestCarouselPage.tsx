@@ -495,40 +495,19 @@ const RequestCarouselPage: React.FC = () => {
       if (limitResponse.data.success) {
         const userData = limitResponse.data.data;
         
-        // Check if plan is expired or inactive
-        const isExpiredOrInactive = userData.status === 'inactive' || 
-                                  userData.planId === 'expired' ||
-                                  (userData.expiresAt && new Date(userData.expiresAt) < new Date());
+        // Directly use the data from API without excessive conditions
+        setUserLimit({ 
+          limit: userData.limit || 0, 
+          count: userData.count || 0, 
+          remaining: Math.max(0, (userData.limit || 0) - (userData.count || 0)), 
+          planId: userData.planId || 'expired',
+          planName: userData.planName || 'No Plan',
+          status: userData.status || 'inactive',
+          expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
+        });
         
-        // If plan is expired/inactive, set all limits to 0
-        if (isExpiredOrInactive) {
-          setUserLimit({ 
-            limit: 0, 
-            count: 0, 
-            remaining: 0, 
-            planId: 'expired',
-            planName: 'No Plan',
-            status: 'inactive',
-            expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
-          });
-          setNeedsPlanUpgrade(true);
-        } else {
-          // Plan is active, show actual limits
-          const usedCredits = userData.count || 0;
-          const totalCredits = userData.limit || 0;
-          const remainingCredits = Math.max(0, totalCredits - usedCredits);
-          
-          setUserLimit({ 
-            limit: totalCredits, 
-            count: usedCredits, 
-            remaining: remainingCredits, 
-            planId: userData.planId,
-            planName: userData.planName || 'No Plan',
-            status: userData.status || 'active',
-            expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : undefined
-          });
-          setNeedsPlanUpgrade(false);
-        }
+        // Set upgrade flag based on plan status
+        setNeedsPlanUpgrade(userData.planId === 'expired' || userData.status === 'inactive');
       } else {
         console.error('Failed to fetch user limit:', limitResponse.data.message);
         setUserLimit({ 
@@ -2176,11 +2155,11 @@ const RequestCarouselPage: React.FC = () => {
         toast({
           title: "Error",
           description: "Carousel content cannot be published to LinkedIn. Please use text posts only.",
-        variant: "destructive"
-      });
+          variant: "destructive"
+        });
         setIsPublishing(false);
-      return;
-    }
+        return;
+      }
     
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
