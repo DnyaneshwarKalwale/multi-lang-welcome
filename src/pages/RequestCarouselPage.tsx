@@ -514,10 +514,14 @@ const RequestCarouselPage: React.FC = () => {
           setNeedsPlanUpgrade(true);
         } else {
           // Plan is active, show actual limits
+          const usedCredits = userData.count || 0;
+          const totalCredits = userData.limit || 0;
+          const remainingCredits = Math.max(0, totalCredits - usedCredits);
+          
           setUserLimit({ 
-            limit: userData.limit || 0, 
-            count: userData.count || 0, 
-            remaining: Math.max(0, (userData.limit || 0) - (userData.count || 0)), 
+            limit: totalCredits, 
+            count: usedCredits, 
+            remaining: remainingCredits, 
             planId: userData.planId,
             planName: userData.planName || 'No Plan',
             status: userData.status || 'active',

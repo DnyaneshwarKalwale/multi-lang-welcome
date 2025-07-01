@@ -228,21 +228,34 @@ const BillingPage: React.FC = () => {
         const userData = response.data.data;
         console.log('User subscription data:', userData);
         
-        // Direct use the data from API response
-        // This ensures we display what's actually in the database
-        setCurrentSubscription({
-          planId: userData.planId || 'expired',
-          planName: userData.planName || 'No Plan',
-          status: userData.status || 'inactive',
-          expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : null,
-          usedCredits: userData.count || 0,
-          totalCredits: userData.limit || 0
-        });
+        // Check if plan is expired or inactive
+        const isExpiredOrInactive = userData.status === 'inactive' || 
+                                  userData.planId === 'expired' ||
+                                  (userData.expiresAt && new Date(userData.expiresAt) < new Date());
         
-
+        if (isExpiredOrInactive) {
+          setCurrentSubscription({
+            planId: 'expired',
+            planName: 'No Plan',
+            status: 'inactive',
+            expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : null,
+            usedCredits: 0,
+            totalCredits: 0
+          });
+        } else {
+          // Plan is active, show actual usage
+          setCurrentSubscription({
+            planId: userData.planId,
+            planName: userData.planName || 'No Plan',
+            status: userData.status || 'active',
+            expiresAt: userData.expiresAt ? new Date(userData.expiresAt) : null,
+            usedCredits: userData.count || 0,
+            totalCredits: userData.limit || 0
+          });
+        }
       } else {
         console.error('Failed to fetch subscription:', response.data?.message);
-      setCurrentSubscription({
+        setCurrentSubscription({
           planId: 'expired',
           planName: 'No Plan',
           status: 'inactive',
