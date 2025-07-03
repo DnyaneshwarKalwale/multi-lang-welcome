@@ -2113,7 +2113,7 @@ const RequestCarouselPage: React.FC = () => {
 
   // Add a function to handle subscription navigation
   const handleSubscribe = () => {
-    navigate("/settings/billing");
+    navigate("/billing");
   };
 
   // Function to handle LinkedIn reconnection
@@ -2145,11 +2145,11 @@ const RequestCarouselPage: React.FC = () => {
         toast({
           title: "Error",
           description: "Carousel content cannot be published to LinkedIn. Please use text posts only.",
-          variant: "destructive"
-        });
+        variant: "destructive"
+      });
         setIsPublishing(false);
-        return;
-      }
+      return;
+    }
     
       // Check for LinkedIn authentication
       const token = localStorage.getItem('linkedin-login-token');
