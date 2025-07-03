@@ -945,7 +945,7 @@ const BillingPage: React.FC = () => {
                     <div
                       key={plan.id}
                       className={`
-                    relative border rounded-lg p-6 transition-all
+                    relative border rounded-lg p-6 transition-all flex flex-col min-h-[400px]
                     ${plan.id === currentSubscription.planId 
                       ? 'border-primary ring-2 ring-primary/20' 
                       : plan.isPopular 
@@ -966,17 +966,17 @@ const BillingPage: React.FC = () => {
                       ${plan.price}
                       <span className="text-sm font-normal text-muted-foreground">
                         /{plan.billingPeriod}
-                                </span>
-                          </div>
-                        </div>
+                      </span>
+                    </div>
+                  </div>
                         
-                  <div className="space-y-4 mb-6">
+                  <div className="space-y-4 flex-grow">
                     {(isExpandedView ? plan.features : plan.features.slice(0, 3)).map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-primary flex-shrink-0 mt-1" />
                         <span className="text-sm">{feature}</span>
-                          </div>
-                            ))}
+                      </div>
+                    ))}
                     {!isExpandedView && plan.features.length > 3 && (
                       <p className="text-sm text-center text-muted-foreground">
                         +{plan.features.length - 3} more features
@@ -984,27 +984,29 @@ const BillingPage: React.FC = () => {
                     )}
                   </div>
                   
-                      <Button 
-                    variant={plan.id === currentSubscription.planId ? 'outline' : 'default'}
-                    className="w-full"
-                    disabled={isChangingPlan !== null || plan.id === currentSubscription.planId}
-                    onClick={() => handleChangePlan(plan.id)}
-                            >
-                              {isChangingPlan === plan.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : plan.id === currentSubscription.planId ? (
-                      <>
-                        <BadgeCheck className="h-4 w-4 mr-2" />
-                        Current Plan
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-4 w-4 mr-2" />
-                        {plan.id === 'custom' ? 'Contact Sales' : 'Choose Plan'}
-                      </>
-                              )}
-                      </Button>
+                  <div className="mt-6">
+                    <Button 
+                      variant={plan.id === currentSubscription.planId ? 'outline' : 'default'}
+                      className="w-full"
+                      disabled={isChangingPlan !== null || plan.id === currentSubscription.planId}
+                      onClick={() => handleChangePlan(plan.id)}
+                    >
+                      {isChangingPlan === plan.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : plan.id === currentSubscription.planId ? (
+                        <>
+                          <BadgeCheck className="h-4 w-4 mr-2" />
+                          Current Plan
+                        </>
+                      ) : (
+                        <>
+                          <ArrowRight className="h-4 w-4 mr-2" />
+                          {plan.id === 'custom' ? 'Contact Sales' : 'Choose Plan'}
+                        </>
+                      )}
+                    </Button>
                   </div>
+                </div>
               ))}
                       </div>
           </CardContent>
