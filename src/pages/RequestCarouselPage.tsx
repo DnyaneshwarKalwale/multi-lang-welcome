@@ -294,7 +294,6 @@ const RequestCarouselPage: React.FC = () => {
 
   // Add state for subscription modal
   const [needsPlanUpgrade, setNeedsPlanUpgrade] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // Add currentSubscription state
   const [currentSubscription, setCurrentSubscription] = useState<{
@@ -1113,8 +1112,9 @@ const RequestCarouselPage: React.FC = () => {
       toast({
         variant: "destructive",
         title: "Limit Reached",
-        description: "You have reached your content generation limit. Please contact support to increase your limit.",
+        description: "You have reached your content generation limit. Redirecting to billing page...",
       });
+      setTimeout(() => navigate("/billing"), 1500);
       return;
     }
     
@@ -1382,7 +1382,12 @@ const RequestCarouselPage: React.FC = () => {
     
     // Check if user needs to upgrade (no active subscription or reached limit)
     if (!userLimit.planId || userLimit.planId === 'expired') {
-      setShowSubscriptionModal(true);
+      toast({
+        variant: "destructive",
+        title: "Subscription Required",
+        description: "A subscription is required to access this feature. Redirecting to billing page...",
+      });
+      setTimeout(() => navigate("/billing"), 1500);
       return;
     }
     
@@ -1390,11 +1395,9 @@ const RequestCarouselPage: React.FC = () => {
       toast({
         variant: "destructive",
         title: "Credit Limit Reached",
-        description: `You have used all ${userLimit.limit} credits from your ${userLimit.planName} plan. Please upgrade your plan or buy additional credits.`,
+        description: `You have used all ${userLimit.limit} credits from your ${userLimit.planName} plan. Redirecting to billing page...`,
       });
-      
-      // Show subscription modal for upgrade
-      setShowSubscriptionModal(true);
+      setTimeout(() => navigate("/billing"), 1500);
       return;
     }
     
@@ -2267,7 +2270,7 @@ const RequestCarouselPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setShowSubscriptionModal(true)}
+                onClick={() => navigate("/billing")}
                 className="text-xs h-7 w-full sm:w-auto mt-2 sm:mt-0"
               >
                 Choose a Plan
@@ -3500,121 +3503,7 @@ const RequestCarouselPage: React.FC = () => {
         </div>
       )}
       
-      {/* Subscription Modal */}
-      {showSubscriptionModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-lg">
-            <CardHeader>
-              <CardTitle>Subscription Required</CardTitle>
-              <CardDescription>
-                {userLimit.count >= userLimit.limit 
-                  ? "You've reached your credit limit." 
-                  : "A subscription is required to access this feature."}
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm flex items-start gap-2.5">
-                  <div className="mt-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
-                  </div>
-                  <div>
-                    {userLimit.count >= userLimit.limit ? (
-                      <p>You have used all {userLimit.limit} credits from your {userLimit.planName} plan.</p>
-                    ) : !userLimit.planId || userLimit.planId === 'expired' ? (
-                      <p>You don't have an active subscription. Please select a plan to continue using this feature.</p>  
-                    ) : (
-                      <p>Your plan doesn't include access to this feature. Please upgrade to continue.</p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card className="border-2 border-primary">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Basic Plan</CardTitle>
-                      <CardDescription>$100/month</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="text-2xl font-bold">10 Credits</div>
-                      <div className="text-sm text-muted-foreground mt-1">per month</div>
-                      <div className="border-t my-3"></div>
-                      <ul className="text-sm space-y-1.5">
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> AI Content Generation
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> Carousel Requests
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> Priority Support
-                        </li>
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        className="w-full" 
-                        onClick={handleSubscribe}
-                      >
-                        Choose Basic
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Premium Plan</CardTitle>
-                      <CardDescription>$200/month</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="text-2xl font-bold">25 Credits</div>
-                      <div className="text-sm text-muted-foreground mt-1">per month</div>
-                      <div className="border-t my-3"></div>
-                      <ul className="text-sm space-y-1.5">
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> AI Content Generation
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> Carousel Requests
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> Priority Support
-                        </li>
-                        <li className="flex items-center gap-1.5">
-                          <Check className="h-4 w-4 text-primary" /> White Label Options
-                        </li>
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        className="w-full" 
-                        variant="outline"
-                        onClick={handleSubscribe}
-                      >
-                        Choose Premium
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </div>
-                
-                <div className="text-center text-sm text-muted-foreground pt-2">
-                  <p>Need a custom plan? <Button variant="link" className="h-auto p-0" onClick={handleSubscribe}>Contact us</Button></p>
-                </div>
-              </div>
-            </CardContent>
-            
-            <CardFooter className="flex justify-between border-t pt-4">
-              <Button variant="ghost" onClick={() => setShowSubscriptionModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSubscribe}>
-                View All Plans
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
+
     </div>
   );
 };
