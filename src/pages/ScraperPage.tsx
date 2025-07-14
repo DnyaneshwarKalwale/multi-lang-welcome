@@ -3037,7 +3037,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
             ) : viewMode === 'folders' ? (
               // User Folder View
               <div className="space-y-6">
-                                  <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
+                <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm">
                   <h4 className="font-medium mb-2">Select Users:</h4>
                   <p>Choose users whose posts you want to work with. You can select multiple users from both platforms.</p>
                   <p className="text-xs mt-2 text-amber-700">
@@ -3083,7 +3083,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                                   {selectedUsers.twitter.has(username) ? (
                                     <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                                       <div className="h-3 w-3 text-white">✓</div>
-                                    </div>
+                        </div>
                                   ) : (
                                     <div className="w-5 h-5 border-2 border-gray-300 rounded-full hover:border-blue-400"></div>
                                   )}
@@ -3124,7 +3124,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
                               </div>
                             </CardContent>
                           </Card>
-                        ))}
+                      ))}
                     </div>
                   )}
                 </TabsContent>
@@ -3555,7 +3555,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
           </CardContent>
         </Card>
       )}
-
+      
       {/* Twitter Results Section */}
       {activeTab === 'twitter' && twitterResult && (
         <div className="w-full space-y-6">
@@ -3686,7 +3686,7 @@ const ScraperPage: React.FC = (): JSX.Element => {
           </CardContent>
         </Card>
       )}
-
+      
       {/* YouTube Channel Results */}
       {activeTab === 'youtube' && youtubeChannelResult && !isFetchingChannel && (
         <div className="space-y-6">

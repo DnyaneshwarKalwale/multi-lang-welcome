@@ -63,7 +63,7 @@ interface DashboardData {
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, token, fetchUser } = useAuth();
+  const { user, token, fetchUser, isAuthReady } = useAuth(); // Add isAuthReady
   
   // State for LinkedIn data
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
@@ -396,21 +396,21 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Fetch data on mount and when dependencies change
+  // Fetch data on mount and when dependencies change - UPDATED TO USE isAuthReady
   useEffect(() => {
-    if (token) {
+    if (isAuthReady && token && user?.id) {
       // Clear cache to ensure fresh data after the fix
       localStorage.removeItem(DASHBOARD_CACHE_KEY);
       fetchDashboardData();
     }
-  }, [token]);
+  }, [isAuthReady, token, user?.id]); // Add isAuthReady and user?.id as dependencies
 
-  // Fetch LinkedIn data when user LinkedIn connection status changes
+  // Fetch LinkedIn data when user LinkedIn connection status changes - UPDATED TO USE isAuthReady
   useEffect(() => {
-    if (user?.linkedinConnected && token) {
+    if (isAuthReady && user?.linkedinConnected && token) {
       fetchLinkedInData();
     }
-  }, [user?.linkedinConnected, token]);
+  }, [isAuthReady, user?.linkedinConnected, token]); // Add isAuthReady as dependency
 
   // Update LinkedIn connection state when user data changes
   useEffect(() => {

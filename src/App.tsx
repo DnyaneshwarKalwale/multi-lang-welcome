@@ -62,7 +62,7 @@ function LoadingSpinner() {
 
   // Protected Dashboard Route Component with optimized loading
   function ProtectedDashboardRoute() {
-    const { user, isAuthenticated, loading } = useAuth();
+    const { user, isAuthenticated, loading, isAuthReady } = useAuth();
     const [showLoader, setShowLoader] = useState(false);
     
     // Only show loader after 500ms of loading
@@ -93,6 +93,11 @@ function LoadingSpinner() {
     if (!isAuthenticated && !loading && !hasToken) {
       console.log('ProtectedDashboardRoute - User not authenticated, redirecting to homepage');
       return <Navigate to="/" replace />;
+    }
+    
+    // Wait for authentication to be fully ready before proceeding
+    if (!isAuthReady) {
+      return <LoadingSpinner />;
     }
     
     // Check both localStorage and user object for onboarding completion

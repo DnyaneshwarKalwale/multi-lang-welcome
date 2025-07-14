@@ -59,6 +59,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 
 // API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.brandout.ai/api';
@@ -109,28 +110,28 @@ interface LinkedInProfile {
   verified: boolean;
 }
 
-const SettingsPage = () => {
-  const { user, logout, updateUserProfile, fetchUser } = useAuth();
+const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isAuthReady, updateUserProfile, fetchUser } = useAuth(); // Add isAuthReady
+  const { toast } = useToast();
+  
+  // State for active tab
   const [activeTab, setActiveTab] = useState('profile');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showLinkedInConnectDialog, setShowLinkedInConnectDialog] = useState(false);
-  const [showLinkedInDisconnectDialog, setShowLinkedInDisconnectDialog] = useState(false);
   
-  // For deletion confirmation
-  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
-  const [confirmText, setConfirmText] = useState('');
-  
-  // User profile state
+  // State for profile data
   const [profile, setProfile] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    profilePicture: user?.profilePicture || ''
+    firstName: '',
+    lastName: '',
+    email: '',
+    profilePicture: ''
   });
   
-  // Billing related states
-  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  // State for LinkedIn connection
+  const [linkedInStatus, setLinkedInStatus] = useState({
+    connected: false
+  });
+  
+  // State for subscription info
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     planId: 'expired',
     planName: 'No Plan',
@@ -140,15 +141,27 @@ const SettingsPage = () => {
     credits: 0,
     usedCredits: 0
   });
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [autoPayEnabled, setAutoPayEnabled] = useState(false);
-  const [isUpdatingAutoPay, setIsUpdatingAutoPay] = useState(false);
   
-  // LinkedIn status: use backend/user context, not just localStorage
-  const [linkedInStatus, setLinkedInStatus] = useState({
-    connected: !!user?.linkedinConnected
-  });
+  // State for payment methods
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  
+  // State for invoices
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  
+  // State for auto-pay
+  const [autoPayEnabled, setAutoPayEnabled] = useState(false);
+  
+  // Loading states
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isDisconnectingLinkedIn, setIsDisconnectingLinkedIn] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  
+  // For deletion confirmation
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
   
   // LinkedIn profile state and fetch logic
   const [linkedInProfile, setLinkedInProfile] = useState<LinkedInProfile | null>(null);
@@ -169,17 +182,21 @@ const SettingsPage = () => {
     }
   }, [user]);
   
-  // Fetch subscription and billing data when tab changes to billing
+  // Fetch subscription and billing data when tab changes to billing - UPDATED TO USE isAuthReady
   useEffect(() => {
-    if (activeTab === 'billing') {
+    if (isAuthReady && activeTab === 'billing') {
       fetchSubscriptionData();
       fetchPaymentMethods();
       fetchInvoices();
     }
-  }, [activeTab]);
-  
-  // Fetch current subscription data
+  }, [isAuthReady, activeTab]); // Add isAuthReady as dependency
+
+  // Fetch current subscription data - UPDATED TO USE isAuthReady
   const fetchSubscriptionData = async () => {
+    if (!isAuthReady) {
+      return;
+    }
+
     try {
       setIsLoadingSubscription(true);
       
@@ -613,8 +630,6 @@ const SettingsPage = () => {
     }
   };
   
-  const navigate = useNavigate();
-
   useEffect(() => {
     if (user && tokenManager.getToken()) {
       fetchLinkedInProfile();

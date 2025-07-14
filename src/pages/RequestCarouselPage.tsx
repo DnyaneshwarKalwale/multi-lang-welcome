@@ -221,7 +221,7 @@ const RequestCarouselPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAuthReady } = useAuth(); // Add isAuthReady
   const [isPublishing, setIsPublishing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -304,6 +304,10 @@ const RequestCarouselPage: React.FC = () => {
 
   // Add fetchCurrentSubscription function
   const fetchCurrentSubscription = async () => {
+    if (!isAuthReady) {
+      return;
+    }
+
     try {
       const token = tokenManager.getToken();
       if (!token) {
@@ -323,10 +327,12 @@ const RequestCarouselPage: React.FC = () => {
     }
   };
 
-  // Add useEffect to fetch subscription on component mount
+  // Add useEffect to fetch subscription on component mount - UPDATED TO USE isAuthReady
   useEffect(() => {
-    fetchCurrentSubscription();
-  }, []);
+    if (isAuthReady) {
+      fetchCurrentSubscription();
+    }
+  }, [isAuthReady]); // Add isAuthReady as dependency
 
   // Function to apply selected posts from modal
   const applySelectedPosts = (selectedContent: string) => {
@@ -344,8 +350,12 @@ const RequestCarouselPage: React.FC = () => {
 
 
 
-  // Add a periodic check for limit updates
+  // Add a periodic check for limit updates - UPDATED TO USE isAuthReady
   useEffect(() => {
+    if (!isAuthReady || !user?.id) {
+      return;
+    }
+
     // Initial fetch
     fetchUserLimit();
 
@@ -364,7 +374,7 @@ const RequestCarouselPage: React.FC = () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [user?.id]);
+  }, [isAuthReady, user?.id]); // Add isAuthReady as dependency
 
   // Update localStorage when userLimit changes
   useEffect(() => {
@@ -471,9 +481,9 @@ const RequestCarouselPage: React.FC = () => {
     };
   }, [user?.id]);
 
-  // Define fetchUserLimit before using it in useEffect
+  // Define fetchUserLimit before using it in useEffect - UPDATED TO USE isAuthReady
   const fetchUserLimit = async () => {
-    if (!user?.id) {
+    if (!isAuthReady || !user?.id) {
       return;
     }
 

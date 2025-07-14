@@ -51,6 +51,7 @@ import {
 import {
   Switch,
 } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/use-toast';
 
 // Subscription plan interface
 interface SubscriptionPlan {
@@ -146,31 +147,46 @@ interface CardInformation {
   isDefault: boolean;
 }
 
+interface SubscriptionInfo {
+  planId: string;
+  planName: string;
+  status: string;
+  expiresAt: Date | null;
+  price: number;
+  credits: number;
+  usedCredits: number;
+  totalCredits: number;
+}
+
 const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, token } = useAuth();
+  const { user, token, isAuthReady } = useAuth();
+  const { toast } = useToast();
   const [isAnnualBilling, setIsAnnualBilling] = useState(false); // Default to monthly
   const [isChangingPlan, setIsChangingPlan] = useState<string | null>(null); // Change to track which plan is being changed
   const [isExpandedView, setIsExpandedView] = useState(false);
-  const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false); // Track if user is admin
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   
-  // Current subscription info
-  const [currentSubscription, setCurrentSubscription] = useState<Subscription>({
+  // State for current subscription
+  const [currentSubscription, setCurrentSubscription] = useState<SubscriptionInfo>({
     planId: 'expired',
     planName: 'No Plan',
-    status: 'expired',
+    status: 'inactive',
     expiresAt: null,
-    usedCredits: 0,
-    totalCredits: 0
+    price: 0,
+    credits: 0,
+    usedCredits: 0
   });
   
-  // Payment methods
+  // State for payment methods
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   
-  // Invoices
+  // State for invoices/billing history
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // New state for card information
@@ -210,8 +226,12 @@ const BillingPage: React.FC = () => {
     }
   }, [location, navigate]);
   
-  // Fetch current subscription from API
+  // Fetch current subscription from API - UPDATED TO USE isAuthReady
   const fetchCurrentSubscription = async () => {
+    if (!isAuthReady || !token) {
+      return;
+    }
+
     try {
       setIsLoadingSubscription(true);
       
@@ -394,12 +414,14 @@ const BillingPage: React.FC = () => {
     }
   };
 
-  // Fetch current subscription from API
+  // Fetch current subscription from API - UPDATED TO USE isAuthReady
   useEffect(() => {
-    fetchCurrentSubscription();
-    fetchPaymentMethods();
-    fetchInvoices();
-  }, []);
+    if (isAuthReady && token) {
+      fetchCurrentSubscription();
+      fetchPaymentMethods();
+      fetchInvoices();
+    }
+  }, [isAuthReady, token]); // Add isAuthReady as dependency
 
   // Find current plan
   const currentPlan = plans.find(plan => plan.id === currentSubscription.planId);
@@ -966,17 +988,17 @@ const BillingPage: React.FC = () => {
                       ${plan.price}
                       <span className="text-sm font-normal text-muted-foreground">
                         /{plan.billingPeriod}
-                      </span>
-                    </div>
-                  </div>
+                                </span>
+                          </div>
+                        </div>
                         
                   <div className="space-y-4 flex-grow">
                     {(isExpandedView ? plan.features : plan.features.slice(0, 3)).map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-primary flex-shrink-0 mt-1" />
                         <span className="text-sm">{feature}</span>
-                      </div>
-                    ))}
+                          </div>
+                            ))}
                     {!isExpandedView && plan.features.length > 3 && (
                       <p className="text-sm text-center text-muted-foreground">
                         +{plan.features.length - 3} more features
@@ -985,28 +1007,28 @@ const BillingPage: React.FC = () => {
                   </div>
                   
                   <div className="mt-6">
-                    <Button 
-                      variant={plan.id === currentSubscription.planId ? 'outline' : 'default'}
-                      className="w-full"
-                      disabled={isChangingPlan !== null || plan.id === currentSubscription.planId}
-                      onClick={() => handleChangePlan(plan.id)}
-                    >
-                      {isChangingPlan === plan.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : plan.id === currentSubscription.planId ? (
-                        <>
-                          <BadgeCheck className="h-4 w-4 mr-2" />
-                          Current Plan
-                        </>
-                      ) : (
-                        <>
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          {plan.id === 'custom' ? 'Contact Sales' : 'Choose Plan'}
-                        </>
-                      )}
-                    </Button>
+                      <Button 
+                    variant={plan.id === currentSubscription.planId ? 'outline' : 'default'}
+                    className="w-full"
+                    disabled={isChangingPlan !== null || plan.id === currentSubscription.planId}
+                    onClick={() => handleChangePlan(plan.id)}
+                            >
+                              {isChangingPlan === plan.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : plan.id === currentSubscription.planId ? (
+                      <>
+                        <BadgeCheck className="h-4 w-4 mr-2" />
+                        Current Plan
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        {plan.id === 'custom' ? 'Contact Sales' : 'Choose Plan'}
+                      </>
+                              )}
+                      </Button>
                   </div>
-                </div>
+                  </div>
               ))}
                       </div>
           </CardContent>

@@ -30,6 +30,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  isAuthReady: boolean; // New state to track when auth is fully ready
   linkedinAuth: (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => Promise<void>;
   googleAuth: (userData: { name: string; googleId: string; email: string; profileImage?: string }) => Promise<void>;
   logout: () => void;
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(tokenManager.getToken(localStorage.getItem('auth-method') || undefined));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false); // New state
   const navigate = useNavigate();
 
   // Optimized fetch user function with refresh capability
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (!token) {
       setLoading(false);
+      setIsAuthReady(true); // Mark as ready even if no token
       return null;
     }
     
@@ -82,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('onboardingCompleted', 'true');
         }
         
+        setIsAuthReady(true); // Mark as ready after user data is loaded
         return user;
       } else {
         console.log('AuthContext - fetchUser - No user data returned from API');
@@ -89,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenManager.clearAllTokens();
         setUser(null);
         setToken(null);
+        setIsAuthReady(true); // Mark as ready even if no user
         return null;
       }
     } catch (error) {
@@ -97,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       tokenManager.clearAllTokens();
       setUser(null);
       setToken(null);
+      setIsAuthReady(true); // Mark as ready even on error
       return null;
     } finally {
       setLoading(false);
@@ -110,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!token) {
         setLoading(false);
+        setIsAuthReady(true); // Mark as ready if no token
         return;
       }
       
@@ -135,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } finally {
         setLoading(false);
+        setIsAuthReady(true); // Mark as ready after initial auth check
       }
     };
     
@@ -143,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const linkedinAuth = async (userData: { name: string; linkedinId: string; email: string; profileImage?: string }) => {
     setLoading(true);
+    setIsAuthReady(false); // Reset auth ready state during login
     
     try {
       const response = await authApi.linkedinAuth(userData);
@@ -163,11 +172,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw err;
     } finally {
       setLoading(false);
+      setIsAuthReady(true); // Mark as ready after login attempt
     }
   };
 
   const googleAuth = async (userData: { name: string; googleId: string; email: string; profileImage?: string }) => {
     setLoading(true);
+    setIsAuthReady(false); // Reset auth ready state during login
     
     try {
       const response = await authApi.googleAuth(userData);
@@ -188,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw err;
     } finally {
       setLoading(false);
+      setIsAuthReady(true); // Mark as ready after login attempt
     }
   };
 
@@ -205,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear user state
     setUser(null);
     setToken(null);
+    setIsAuthReady(false); // Reset auth ready state
     // Navigate to home
     navigate('/');
   };
@@ -236,6 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         loading,
         error,
+        isAuthReady, // Add the new state
         linkedinAuth,
         googleAuth,
         logout,
